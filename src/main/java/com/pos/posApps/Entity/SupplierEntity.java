@@ -2,12 +2,11 @@ package com.pos.posApps.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Data
+@Table(name = "supplier")
 public class SupplierEntity {
 
     @Id
@@ -18,8 +17,8 @@ public class SupplierEntity {
     private String supplierName;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 }

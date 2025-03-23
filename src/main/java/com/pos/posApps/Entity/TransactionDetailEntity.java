@@ -4,16 +4,17 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 //Gambar = sold_product
 @Entity
 @Data
+@Table(name = "transaction_detail")
 public class TransactionDetailEntity {
 
     @Id
     @Column(name = "transaction_detail_id")
-    private String transactionProductId;
+    private String transactionDetailId;
 
     @Column(name = "total_product")
     private Long totalProduct;
@@ -26,8 +27,8 @@ public class TransactionDetailEntity {
     private BigDecimal discount;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 }

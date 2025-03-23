@@ -4,11 +4,12 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 //gambar = Sales
 @Entity
 @Data
+@Table(name = "transaction")
 public class TransactionEntity {
 
     @Id
@@ -33,10 +34,10 @@ public class TransactionEntity {
     private BigDecimal totalDiscount;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 
 
 }

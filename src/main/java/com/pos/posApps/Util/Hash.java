@@ -7,10 +7,10 @@ import java.util.Base64;
 
 public class Hash {
 
-    private static final int SALT_LENGTH = 16;
-    private static final int ITERATIONS = 65536;
+    private static final int SALT_LENGTH = 256;
+    private static final int ITERATIONS = 210000;
     private static final int KEY_LENGTH = 256;
-    private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
+    private static final String ALGORITHM = "PBKDF2WithHmacSHA512";
 
     // Generate a random salt
     public static byte[] generateSalt() {
@@ -20,8 +20,14 @@ public class Hash {
         return salt;
     }
 
+    //Convert salt from byte to string
     public static String saltToString(byte[] saltInput){
         return Base64.getEncoder().encodeToString(saltInput);
+    }
+
+    //Convert salt from string to byte
+    public static byte[] stringToSalt(String saltInput){
+        return Base64.getDecoder().decode(saltInput);
     }
 
     // Hash the password using PBKDF2
@@ -31,5 +37,4 @@ public class Hash {
         byte[] hashedPassword = factory.generateSecret(spec).getEncoded();
         return Base64.getEncoder().encodeToString(hashedPassword);
     }
-
 }

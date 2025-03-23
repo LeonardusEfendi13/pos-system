@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LoginTokenRepository extends JpaRepository<LoginTokenEntity, String> {
+
+    LoginTokenEntity findFirstByOrderByTokenIdDesc();
+
+    LoginTokenEntity findByToken(String token);
 }
