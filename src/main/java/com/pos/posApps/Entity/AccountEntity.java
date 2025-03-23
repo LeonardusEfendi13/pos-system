@@ -1,14 +1,13 @@
 package com.pos.posApps.Entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.pos.posApps.DTO.EnumRole.Roles;
+import jakarta.persistence.*;
 import lombok.Data;
-
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Data
+@Table(name = "account")
 public class AccountEntity {
 
     @Id
@@ -22,20 +21,25 @@ public class AccountEntity {
     private String password;
 
     @Column(name = "user_name")
-    private String userName;
+    private String username;
 
     @Column(name = "role")
-    private String role;
+    private Roles role;
 
     @Column(name = "salt")
     private String salt;
 
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private ClientEntity clientEntity;
+
     @Column(name = "last_login")
-    private Timestamp lastLogin;
+    private Instant lastLogin;
 
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 }
+

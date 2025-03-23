@@ -3,14 +3,15 @@ package com.pos.posApps.Entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 
 //todo make sure gonna use this or not
 @Entity
 @Data
+@Table(name = "customer_level")
 public class CustomerLevelEntity {
 
     @Id
@@ -18,9 +19,6 @@ public class CustomerLevelEntity {
 
     @Column(name = "title")
     private String title;
-
-    @Column(name = "customer_level_id")
-    private String customerLevelid;
 
     @Column(name = "minimal_spending")
     private BigDecimal minimalSpending;
