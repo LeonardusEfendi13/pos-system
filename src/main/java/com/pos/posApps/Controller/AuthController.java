@@ -4,6 +4,8 @@ import com.pos.posApps.DTO.LoginDTO.LoginRequest;
 import com.pos.posApps.DTO.LoginDTO.LoginResponse;
 import com.pos.posApps.DTO.RegisterDTO.RegisterRequest;
 import com.pos.posApps.Service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,7 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
         LoginResponse loginResponse  = new LoginResponse();
         if(token == null){
@@ -32,8 +34,13 @@ public class AuthController {
     }
 
     @PostMapping("/add-admin")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest){
-        String clientId = authService.validateToken(registerRequest.getToken());
+    public ResponseEntity<String> register(HttpServletRequest headerRequest, @Valid @RequestBody RegisterRequest registerRequest){
+        String headerToken = headerRequest.getHeader("Authorization");
+        if (headerToken == null || !headerToken.startsWith("Bearer ")) {
+            return new ResponseEntity<>("Authorization header is missing or invalid", HttpStatus.BAD_REQUEST);
+        }
+        String token = headerToken.substring(7);
+        String clientId = authService.validateToken(token);
         if(clientId == null){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }

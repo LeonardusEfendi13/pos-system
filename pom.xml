@@ -78,6 +78,20 @@
 			<scope>runtime</scope>
 			<version>42.7.2</version>
 		</dependency>
+<!--	End Database	-->
+<!--		Start bcrypt encryption-->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+		</dependency>
+<!--		End bcrypt-->
+
+<!--		Start built in validation-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+<!--		end built in validation-->
 	</dependencies>
 
 	<build>
