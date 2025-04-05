@@ -23,11 +23,9 @@ public class AccountEntity {
     @Column(name = "user_name")
     private String username;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Roles role;
-
-    @Column(name = "salt")
-    private String salt;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

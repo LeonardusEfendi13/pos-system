@@ -2,13 +2,17 @@ package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.RegisterDTO.RegisterRequest;
 import com.pos.posApps.Entity.AccountEntity;
+import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
+import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.LoginTokenRepository;
 import com.pos.posApps.Util.Generator;
-import com.pos.posApps.Util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
 public class AuthService {
@@ -19,20 +23,22 @@ public class AuthService {
     @Autowired
     private LoginTokenRepository loginTokenRepository;
 
+    @Autowired
+    private ClientRepository clientRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public String doLoginAndGetToken(String username, String password) {
         try {
-
             AccountEntity accountData = accountRepository.findByUsername(username);
             if (accountData == null) {
                 System.out.println("Account not found");
                 return null;
             }
 
-            //Encrypt password input with salt from db
-            String encryptedPassword = Hash.hashPassword(password, Hash.stringToSalt(accountData.getSalt()));
-
-            //Validate password
-            if(!encryptedPassword.equals(accountData.getPassword())) {
+            boolean isPasswordEqual = passwordEncoder.matches(password, accountData.getPassword());
+            if(!isPasswordEqual) {
                 return null;
             }
 
@@ -40,27 +46,32 @@ public class AuthService {
             String generatedToken = Generator.generateToken();
 
             //Get last token id
-            String lastTokenId = loginTokenRepository.findFirstByOrderByTokenIdDesc().getTokenId();
+            LoginTokenEntity tokenData = loginTokenRepository.findFirstByOrderByTokenIdDesc();
             String newToken;
 
             //If no data, then the id is 0, otherwise get last id from db
-            if(lastTokenId == null) {
+            if(tokenData == null) {
                 newToken = Generator.generateId("LTN0");
             }else{
-                newToken = Generator.generateId(lastTokenId);
+                newToken = Generator.generateId(tokenData.getTokenId());
             }
+
+            //Update Account Data
+            accountData.setLastLogin(getCurrentTimestamp());
+            accountData.setUpdatedAt(getCurrentTimestamp());
+            accountRepository.save(accountData);
 
             //Insert into LoginToken table
             LoginTokenEntity loginToken = new LoginTokenEntity();
             loginToken.setTokenId(newToken);
             loginToken.setToken(generatedToken);
-            loginToken.setCreatedAt(Generator.getCurrentTimestamp());
+            loginToken.setCreatedAt(getCurrentTimestamp());
             loginToken.setAccountEntity(accountData);
             loginTokenRepository.save(loginToken);
 
             return generatedToken;
         } catch (Exception e) {
-            System.out.println("Error in encryption");
+            System.out.println("Error in login");
             e.printStackTrace();
             return null;
         }
@@ -71,13 +82,35 @@ public class AuthService {
         if(loginTokenEntity == null) {
             return null;
         }
-//        AccountEntity accountEntity = loginTokenEntity.getAccountEntity();
-        System.out.println("account entity : " + loginTokenEntity.getAccountEntity());
         return loginTokenEntity.getAccountEntity().getClientEntity().getClientId();
     }
 
     public boolean doCreateAccount(RegisterRequest request, String clientId){
+        AccountEntity accountEntity = accountRepository.findByUsername(request.getUsername());
+        if(accountEntity != null){
+            return false;
+        }
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+        String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().getAccountId();
+        String newAccountId;
+        if(lastAccountId == null) {
+            newAccountId = Generator.generateId("ACC0");
+        }else{
+            newAccountId = Generator.generateId(lastAccountId);
+        }
 
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+
+        AccountEntity newAccountEntity = new AccountEntity();
+        newAccountEntity.setAccountId(newAccountId);
+        newAccountEntity.setName(request.getName());
+        newAccountEntity.setUsername(request.getUsername());
+        newAccountEntity.setPassword(hashedPassword);
+        newAccountEntity.setRole(request.getRole());
+        newAccountEntity.setClientEntity(clientEntity);
+        newAccountEntity.setCreatedAt(getCurrentTimestamp());
+        newAccountEntity.setUpdatedAt(getCurrentTimestamp());
+        accountRepository.save(newAccountEntity);
         return true;
     }
 }
