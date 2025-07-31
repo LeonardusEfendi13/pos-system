@@ -1,7 +1,8 @@
 package com.pos.posApps.Util;
 
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 
 public class Generator {
@@ -34,7 +35,7 @@ public class Generator {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes); //Convert byte into base64
     }
 
-    public static Instant getCurrentTimestamp(){
-        return Instant.now();
+    public static LocalDateTime getCurrentTimestamp(){
+        return LocalDateTime.now(ZoneId.of("Asia/Jakarta"));
     }
 }

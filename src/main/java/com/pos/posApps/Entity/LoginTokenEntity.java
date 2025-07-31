@@ -2,7 +2,7 @@ package com.pos.posApps.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -17,10 +17,10 @@ public class LoginTokenEntity {
     private String token;
 
     @Column(name = "created_at")
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "deleted_at")
-    private Instant deletedAt;
+    private LocalDateTime deletedAt;
 
     @ManyToOne
     @JoinColumn(name = "account_id")

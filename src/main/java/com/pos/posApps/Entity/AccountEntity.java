@@ -1,9 +1,9 @@
 package com.pos.posApps.Entity;
 
-import com.pos.posApps.DTO.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -32,12 +32,12 @@ public class AccountEntity {
     private ClientEntity clientEntity;
 
     @Column(name = "last_login")
-    private Instant lastLogin;
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at")
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 }
 

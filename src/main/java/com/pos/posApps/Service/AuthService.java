@@ -1,11 +1,8 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.RegisterDTO.RegisterRequest;
 import com.pos.posApps.Entity.AccountEntity;
-import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
-import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.LoginTokenRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +19,6 @@ public class AuthService {
 
     @Autowired
     private LoginTokenRepository loginTokenRepository;
-
-    @Autowired
-    private ClientRepository clientRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -68,7 +62,6 @@ public class AuthService {
             loginToken.setCreatedAt(getCurrentTimestamp());
             loginToken.setAccountEntity(accountData);
             loginTokenRepository.save(loginToken);
-
             return generatedToken;
         } catch (Exception e) {
             System.out.println("Error in login");
@@ -85,32 +78,5 @@ public class AuthService {
         return loginTokenEntity.getAccountEntity().getClientEntity().getClientId();
     }
 
-    public boolean doCreateAccount(RegisterRequest request, String clientId){
-        AccountEntity accountEntity = accountRepository.findByUsername(request.getUsername());
-        if(accountEntity != null){
-            return false;
-        }
-        String hashedPassword = passwordEncoder.encode(request.getPassword());
-        String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().getAccountId();
-        String newAccountId;
-        if(lastAccountId == null) {
-            newAccountId = Generator.generateId("ACC0");
-        }else{
-            newAccountId = Generator.generateId(lastAccountId);
-        }
 
-        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
-
-        AccountEntity newAccountEntity = new AccountEntity();
-        newAccountEntity.setAccountId(newAccountId);
-        newAccountEntity.setName(request.getName());
-        newAccountEntity.setUsername(request.getUsername());
-        newAccountEntity.setPassword(hashedPassword);
-        newAccountEntity.setRole(request.getRole());
-        newAccountEntity.setClientEntity(clientEntity);
-        newAccountEntity.setCreatedAt(getCurrentTimestamp());
-        newAccountEntity.setUpdatedAt(getCurrentTimestamp());
-        accountRepository.save(newAccountEntity);
-        return true;
-    }
 }

@@ -1,4 +1,4 @@
-package com.pos.posApps.DTO.LoginDTO;
+package com.pos.posApps.DTO.Dtos.LoginDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

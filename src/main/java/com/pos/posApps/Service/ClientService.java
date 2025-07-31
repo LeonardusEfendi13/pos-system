@@ -1,0 +1,37 @@
+package com.pos.posApps.Service;
+
+import com.pos.posApps.DTO.Dtos.CreateClientDTO.CreateClientRequest;
+import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Repository.ClientRepository;
+import com.pos.posApps.Util.Generator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+
+@Service
+public class ClientService {
+
+    @Autowired
+    private ClientRepository clientRepository;
+
+    public boolean doCreateClient(CreateClientRequest req){
+        String lastClientId = clientRepository.findFirstByOrderByClientIdDesc().getClientId();
+        String newClientId;
+        System.out.println("last client id : " + lastClientId);
+        if(lastClientId == null){
+            newClientId = Generator.generateId("CLN0");
+        }else {
+            newClientId = Generator.generateId(lastClientId);
+        }
+
+        ClientEntity clientEntity = new ClientEntity();
+        clientEntity.setClientId(newClientId);
+        clientEntity.setName(req.getName());
+        clientEntity.setCreatedAt(getCurrentTimestamp());
+        clientEntity.setUpdatedAt(getCurrentTimestamp());
+        clientRepository.save(clientEntity);
+
+        return true;
+    }
+}
