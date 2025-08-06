@@ -1,6 +1,6 @@
 package com.pos.posApps.Controller;
 
-import com.pos.posApps.DTO.Dtos.LoginDTO.LoginRequest;
+import com.pos.posApps.DTO.Dtos.LoginRequest;
 import com.pos.posApps.Service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;

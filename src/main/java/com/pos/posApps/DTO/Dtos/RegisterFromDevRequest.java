@@ -1,6 +1,5 @@
-package com.pos.posApps.DTO.Dtos.RegisterFromDevDTO;
+package com.pos.posApps.DTO.Dtos;
 
-import com.pos.posApps.DTO.Dtos.RegisterDTO.RegisterRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

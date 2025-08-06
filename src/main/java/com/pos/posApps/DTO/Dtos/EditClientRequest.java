@@ -1,4 +1,4 @@
-package com.pos.posApps.DTO.Dtos.EditClientDTO;
+package com.pos.posApps.DTO.Dtos;
 
 import lombok.Data;
 

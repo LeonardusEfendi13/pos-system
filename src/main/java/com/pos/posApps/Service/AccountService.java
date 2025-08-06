@@ -1,8 +1,8 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.EditUserDTO.EditUserRequest;
-import com.pos.posApps.DTO.Dtos.RegisterDTO.RegisterRequest;
-import com.pos.posApps.DTO.Dtos.UserDTO.UserDTO;
+import com.pos.posApps.DTO.Dtos.EditUserRequest;
+import com.pos.posApps.DTO.Dtos.RegisterRequest;
+import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.AccountRepository;
@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 

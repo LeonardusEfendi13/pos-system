@@ -1,8 +1,8 @@
 package com.pos.posApps.Controller;
 
-import com.pos.posApps.DTO.Dtos.EditUserDTO.EditUserRequest;
-import com.pos.posApps.DTO.Dtos.RegisterDTO.RegisterRequest;
-import com.pos.posApps.DTO.Dtos.UserDTO.UserDTO;
+import com.pos.posApps.DTO.Dtos.EditUserRequest;
+import com.pos.posApps.DTO.Dtos.RegisterRequest;
+import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AccountService;

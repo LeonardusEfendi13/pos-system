@@ -1,4 +1,4 @@
-package com.pos.posApps.DTO.Dtos.UserDTO;
+package com.pos.posApps.DTO.Dtos;
 
 
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;

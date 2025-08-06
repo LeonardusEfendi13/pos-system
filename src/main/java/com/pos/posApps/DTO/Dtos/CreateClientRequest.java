@@ -1,4 +1,4 @@
-package com.pos.posApps.DTO.Dtos.CreateClientDTO;
+package com.pos.posApps.DTO.Dtos;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

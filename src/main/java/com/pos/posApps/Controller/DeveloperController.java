@@ -1,9 +1,9 @@
 package com.pos.posApps.Controller;
 
-import com.pos.posApps.DTO.Dtos.CreateClientDTO.CreateClientRequest;
-import com.pos.posApps.DTO.Dtos.EditClientDTO.EditClientRequest;
-import com.pos.posApps.DTO.Dtos.EditUserDTO.EditUserRequest;
-import com.pos.posApps.DTO.Dtos.RegisterFromDevDTO.RegisterFromDevRequest;
+import com.pos.posApps.DTO.Dtos.CreateClientRequest;
+import com.pos.posApps.DTO.Dtos.EditClientRequest;
+import com.pos.posApps.DTO.Dtos.EditUserRequest;
+import com.pos.posApps.DTO.Dtos.RegisterFromDevRequest;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ClientService;

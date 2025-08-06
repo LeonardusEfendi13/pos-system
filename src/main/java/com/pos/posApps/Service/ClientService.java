@@ -1,7 +1,7 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.CreateClientDTO.CreateClientRequest;
-import com.pos.posApps.DTO.Dtos.EditClientDTO.EditClientRequest;
+import com.pos.posApps.DTO.Dtos.CreateClientRequest;
+import com.pos.posApps.DTO.Dtos.EditClientRequest;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Util.Generator;
