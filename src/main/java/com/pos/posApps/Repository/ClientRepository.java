@@ -7,4 +7,6 @@ public interface ClientRepository extends JpaRepository<ClientEntity, String> {
     ClientEntity findByClientId(String clientId);
 
     ClientEntity findFirstByOrderByClientIdDesc();
+
+
 }

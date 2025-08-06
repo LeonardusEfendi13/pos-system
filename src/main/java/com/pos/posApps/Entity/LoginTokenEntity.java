@@ -22,6 +22,7 @@ public class LoginTokenEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+
     @ManyToOne
     @JoinColumn(name = "account_id")
     private AccountEntity accountEntity;

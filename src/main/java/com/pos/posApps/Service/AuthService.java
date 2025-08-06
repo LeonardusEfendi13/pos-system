@@ -1,5 +1,6 @@
 package com.pos.posApps.Service;
 
+import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
@@ -26,7 +27,7 @@ public class AuthService {
     public String doLoginAndGetToken(String username, String password) {
         try {
             AccountEntity accountData = accountRepository.findByUsername(username);
-            if (accountData == null) {
+            if (accountData == null || accountData.getDeletedAt() != null) {
                 System.out.println("Account not found");
                 return null;
             }
@@ -70,12 +71,17 @@ public class AuthService {
         }
     }
 
-    public String validateToken(String token) {
+    public AccountEntity validateToken(String token) {
         LoginTokenEntity loginTokenEntity = loginTokenRepository.findByToken(token);
         if(loginTokenEntity == null) {
             return null;
         }
-        return loginTokenEntity.getAccountEntity().getClientEntity().getClientId();
+        return loginTokenEntity.getAccountEntity();
+//        return loginTokenEntity.getAccountEntity().getClientEntity().getClientId();
+    }
+
+    public boolean hasAccessToModifyData(Roles role){
+        return (role.equals(Roles.SUPER_ADMIN) || role.equals(Roles.GOD_ADMIN));
     }
 
 

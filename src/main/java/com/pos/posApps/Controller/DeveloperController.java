@@ -1,6 +1,8 @@
 package com.pos.posApps.Controller;
 
 import com.pos.posApps.DTO.Dtos.CreateClientDTO.CreateClientRequest;
+import com.pos.posApps.DTO.Dtos.EditClientDTO.EditClientRequest;
+import com.pos.posApps.DTO.Dtos.EditUserDTO.EditUserRequest;
 import com.pos.posApps.DTO.Dtos.RegisterFromDevDTO.RegisterFromDevRequest;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
@@ -8,8 +10,6 @@ import com.pos.posApps.Service.ClientService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,40 +28,124 @@ public class DeveloperController {
     private AccountService accountService;
 
     @PostMapping("/add-client")
-    public ResponseEntity<String> createClient(
+    public String createClient(
             @Valid @RequestBody CreateClientRequest req,
             HttpSession session
     ) {
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
-        if (clientId == null || !clientId.equalsIgnoreCase("CLN0")) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (isNotDeveloper(clientId)) {
+            return "401";
         }
 
         boolean isInserted = clientService.doCreateClient(req);
         if(isInserted){
-            return new ResponseEntity<>("New Client Created", HttpStatus.OK);
+            return "200";
         }
-        return new ResponseEntity<>("Failed to create client", HttpStatus.INTERNAL_SERVER_ERROR);
+        return "500";
     }
 
-    @PostMapping("/add-cashier")
-    public ResponseEntity<String> createAccount(
-            @Valid @RequestBody RegisterFromDevRequest req, HttpSession session)
-    {
+    @PostMapping("/edit-client")
+    public String editClient(
+            @Valid EditClientRequest req,
+            HttpSession session
+    ){
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        // Check if clientId is null or the clientId is not CLNO (Developer)
+        if (isNotDeveloper(clientId)) {
+            return "401";
+        }
+        boolean isUpdated = clientService.doEditClient(req);
+        if(isUpdated){
+            System.out.println("Client Edited");
+            return "200";
+        }
+        System.out.println("Failed to edit client");
+        return "500";
+    }
+
+    @PostMapping("/disable-client")
+    public String disableClient(
+            @Valid String idClient,
+            HttpSession session
+    ){
+        String token = (String) session.getAttribute(authSessionKey);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
-        if (clientId == null || !clientId.equalsIgnoreCase("CLN0")) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (isNotDeveloper(clientId)) {
+            return "401";
+        }
+
+        boolean isDisabled = clientService.doDisableClient(idClient);
+
+        if(isDisabled){
+            return "200";
+        }
+        return "500";
+    }
+
+    @PostMapping("/add-user")
+    public String createAccount(
+            @Valid RegisterFromDevRequest req, HttpSession session)
+    {
+        String token = (String) session.getAttribute(authSessionKey);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+
+        // Check if clientId is null or the clientId is not CLNO (Developer)
+        if (isNotDeveloper(clientId)) {
+            return "401";
         }
         boolean isInserted = accountService.doCreateAccount(req.getRegisterRequest(), req.getClientId());
         if(isInserted){
-            return new ResponseEntity<>("Account created", HttpStatus.CREATED);
+            return "201";
         }
-        return new ResponseEntity<>("Account not created", HttpStatus.OK);
+        return "500";
+    }
+
+    @PostMapping("/edit-user")
+    public String editUser(
+            @Valid EditUserRequest req,
+            HttpSession session
+    ){
+        String token = (String) session.getAttribute(authSessionKey);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        // Check if clientId is null or the clientId is not CLNO (Developer)
+        if (isNotDeveloper(clientId)) {
+            return "401";
+        }
+        boolean isUpdated = accountService.doUpdateAccount(req);
+        if(isUpdated){
+            return "201";
+        }
+        return "500";
+    }
+
+    @PostMapping("/disable-user")
+    public String disableUser(
+            @Valid String idUser,
+            HttpSession session
+    ){
+        String token = (String) session.getAttribute(authSessionKey);
+        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+
+        // Check if clientId is null or the clientId is not CLNO (Developer)
+        if (isNotDeveloper(clientId)) {
+            return "401";
+        }
+
+        boolean isDisabled = accountService.doDisableAccount(idUser);
+
+        if(isDisabled){
+            return "200";
+        }
+        return "500";
+    }
+
+    private boolean isNotDeveloper(String clientId){
+        return (clientId == null || !clientId.equalsIgnoreCase("CLN0"));
     }
 }

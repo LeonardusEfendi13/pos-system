@@ -1,6 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.CreateClientDTO.CreateClientRequest;
+import com.pos.posApps.DTO.Dtos.EditClientDTO.EditClientRequest;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Util.Generator;
@@ -34,4 +35,29 @@ public class ClientService {
 
         return true;
     }
+
+    public boolean doEditClient(EditClientRequest req){
+        ClientEntity clientEntity = clientRepository.findByClientId(req.getClientId());
+        if(clientEntity == null){
+            System.out.println("Client Not Found");
+            return false;
+        }
+
+        clientEntity.setName(req.getName());
+        clientRepository.save(clientEntity);
+        return true;
+    }
+
+    public boolean doDisableClient(String clientId){
+        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+        if(clientEntity == null || clientEntity.getDeletedAt() != null){
+            System.out.println("Client Not Found");
+            return false;
+        }
+
+        clientEntity.setDeletedAt(getCurrentTimestamp());
+        clientRepository.save(clientEntity);
+        return true;
+    }
+
 }

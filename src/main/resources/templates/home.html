@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sidebar with Nested Menu</title>
+
+    <!-- Tabler Core CSS -->
+    <link
+            href="https://unpkg.com/@tabler/core@latest/dist/css/tabler.min.css"
+            rel="stylesheet"
+    />
+
+    <style>
+        body {
+          background-color: #f4f4f4;
+        }
+        .sidebar-wrapper {
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+        .logout-button {
+          margin-top: auto;
+          padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="page d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div class="page-wrapper flex-fill">
+        <div class="container py-4">
+            <h1>Welcome to Dashboard</h1>
+        </div>
+    </div>
+</div>
+
+<!-- Tabler Core JS -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!-- fragments/sidebar.html -->
+<div th:fragment="sidebar" xmlns:th="http://www.w3.org/1999/xhtml">
+  <aside class="navbar navbar-vertical navbar-expand-sm" data-bs-theme="dark">
+    <div class="container-fluid sidebar-wrapper">
+      <h1 class="navbar-brand navbar-brand-autodark">
+        <a href="#">Anugrah Motor</a>
+      </h1>
+
+      <div class="collapse navbar-collapse" id="sidebar-menu">
+        <ul class="navbar-nav pt-lg-3">
+          <!-- Kasir -->
+          <li class="nav-item">
+            <a href="/" class="nav-link">
+              <span class="nav-link-title">Kasir</span>
+            </a>
+          </li>
+
+          <!-- User -->
+          <li class="nav-item">
+            <a href="/user" class="nav-link">
+              <span class="nav-link-title">User</span>
+            </a>
+          </li>
+
+          <!-- Master Barang -->
+          <li class="nav-item">
+            <a class="nav-link" href="/barang">
+              <span class="nav-link-title">Master Barang</span>
+            </a>
+          </li>
+
+          <!-- Penjualan -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#sidebar-penjualan" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebar-penjualan">
+              <span class="nav-link-title">Penjualan</span>
+            </a>
+            <div class="collapse" id="sidebar-penjualan">
+              <ul class="nav flex-column ms-3">
+                <li class="nav-item">
+                  <a class="nav-link" href="/penjualan/tambah">Tambah Penjualan</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/penjualan/daftar">Daftar Penjualan</a>
+                </li>
+              </ul>
+            </div>
+          </li>
+
+          <!-- Pembelian -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#sidebar-pembelian" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebar-pembelian">
+              <span class="nav-link-title">Pembelian</span>
+            </a>
+            <div class="collapse" id="sidebar-pembelian">
+              <ul class="nav flex-column ms-3">
+                <li class="nav-item">
+                  <a class="nav-link" href="/pembelian/tambah">Tambah Pembelian</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/pembelian/daftar">Daftar Pembelian</a>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Logout Button -->
+      <div class="logout-button">
+        <a href="/logout" class="btn btn-outline-danger w-100"
+           onclick="return confirm('Are you sure you want to logout?');">
+          Logout
+        </a>
+      </div>
+    </div>
+  </aside>
+</div>
