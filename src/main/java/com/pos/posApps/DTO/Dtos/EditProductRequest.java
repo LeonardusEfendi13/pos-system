@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-public class CreateProductRequest {
-
+public class EditProductRequest {
+    @NotBlank
     private String productId;
 
     @NotBlank

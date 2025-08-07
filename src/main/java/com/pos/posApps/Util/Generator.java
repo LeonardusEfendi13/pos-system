@@ -11,6 +11,7 @@ public class Generator {
     //Customer Level = CSL
     //Login Token = LTN
     //Product = PDT
+    //Product Prices = PRS
     //Purchased Product = PPC
     //Purchasing = PCG
     //Supplier = SPP

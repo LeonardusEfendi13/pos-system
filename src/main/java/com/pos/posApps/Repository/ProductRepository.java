@@ -14,4 +14,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, String> 
     ProductEntity findFirstByFullNameOrShortNameOrProductId(String fullName, String shortName, String productId);
 
     ProductEntity findFirstByOrderByProductIdDesc();
+
+    ProductEntity findFirstByProductId(String productId);
 }

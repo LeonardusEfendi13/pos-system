@@ -18,8 +18,8 @@ public class ProductPricesEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity productEntity;
 
-    @Column(name = "discount")
-    private BigDecimal discount;
+//    @Column(name = "discount")
+//    private BigDecimal discount;
 
     @Column(name = "price")
     private BigDecimal price;
