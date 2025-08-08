@@ -31,50 +31,55 @@ public class ProductService {
     ProductPricesRepository productPricesRepository;
 
     public List<ProductEntity> getProductData(String clientId){
-        return productRepository.findAllByClientId(clientId);
+        return productRepository.findAllByClientEntity_ClientId(clientId);
     }
 
     @Transactional
     public boolean insertProducts(CreateProductRequest req, ClientEntity clientData){
-        ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductId(req.getFullName(), req.getShortName(), req.getProductId());
-        if(productEntity != null){
-            System.out.println("Product already exists");
+        try{
+            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductId(req.getFullName(), req.getShortName(), req.getProductId());
+            if(productEntity != null){
+                System.out.println("Product already exists");
+                return false;
+            }
+
+            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().getProductId();
+            String newProductId = Generator.generateId(lastProductId == null ? "PDT0" : lastProductId);
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
+            if(supplierEntity == null){
+                System.out.println("Can't find supplier with id : " + req.getSupplierId());
+                return false;
+            }
+
+            //Insert Product
+            ProductEntity newProduct = new ProductEntity();
+            newProduct.setProductId(newProductId);
+            newProduct.setShortName(req.getShortName());
+            newProduct.setFullName(req.getFullName());
+            newProduct.setSupplierPrice(req.getSupplierPrice());
+            newProduct.setSupplierEntity(supplierEntity);
+            newProduct.setStock(req.getStock());
+            newProduct.setClientEntity(clientData);
+            productRepository.save(newProduct);
+
+            //Insert Product Prices
+            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().getProductPricesId();
+            String newProductPricesId = Generator.generateId(lastProductPricesId == null ? "PRS0" : lastProductPricesId);
+
+            for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
+                ProductPricesEntity newProductPrices = new ProductPricesEntity();
+                newProductPrices.setProductPricesId(newProductPricesId);
+                newProductPrices.setProductEntity(newProduct);
+                newProductPrices.setPrice(productPricesData.getPrice());
+                newProductPrices.setMinimalCount(productPricesData.getMinimalCount());
+                newProductPricesId = Generator.generateId(newProductPricesId);
+                productPricesRepository.save(newProductPrices);
+            }
+            return true;
+        }catch (Exception e){
             return false;
         }
 
-        String lastProductId = productRepository.findFirstByOrderByProductIdDesc().getProductId();
-        String newProductId = Generator.generateId(lastProductId == null ? "PDT0" : lastProductId);
-        SupplierEntity supplierEntity = supplierRepository.findFirstById(req.getSupplierId());
-        if(supplierEntity == null){
-            System.out.println("Can't find supplier with id : " + req.getSupplierId());
-            return false;
-        }
-
-        //Insert Product
-        ProductEntity newProduct = new ProductEntity();
-        newProduct.setProductId(newProductId);
-        newProduct.setShortName(req.getShortName());
-        newProduct.setFullName(req.getFullName());
-        newProduct.setSupplierPrice(req.getSupplierPrice());
-        newProduct.setSupplierEntity(supplierEntity);
-        newProduct.setStock(req.getStock());
-        newProduct.setClientEntity(clientData);
-        productRepository.save(newProduct);
-
-        //Insert Product Prices
-        String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().getProductPricesId();
-        String newProductPricesId = Generator.generateId(lastProductPricesId == null ? "PRS0" : lastProductPricesId);
-
-        for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
-            ProductPricesEntity newProductPrices = new ProductPricesEntity();
-            newProductPrices.setProductPricesId(newProductPricesId);
-            newProductPrices.setProductEntity(newProduct);
-            newProductPrices.setPrice(productPricesData.getPrice());
-            newProductPrices.setMinimalCount(productPricesData.getMinimalCount());
-            newProductPricesId = Generator.generateId(newProductPricesId);
-            productPricesRepository.save(newProductPrices);
-        }
-        return true;
     }
 
     @Transactional
@@ -85,7 +90,7 @@ public class ProductService {
             return false;
         }
 
-        SupplierEntity supplierEntity = supplierRepository.findFirstById(req.getSupplierId());
+        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
         if(supplierEntity == null){
             System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;

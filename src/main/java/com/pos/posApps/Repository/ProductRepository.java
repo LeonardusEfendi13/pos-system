@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, String> {
 
-    List<ProductEntity> findAllByClientId(String clientId);
+    List<ProductEntity> findAllByClientEntity_ClientId(String clientId);
 
     ProductEntity findFirstByFullNameOrShortNameOrProductId(String fullName, String shortName, String productId);
 

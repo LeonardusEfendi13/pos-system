@@ -7,6 +7,7 @@ import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -16,24 +17,29 @@ public class ClientService {
     @Autowired
     private ClientRepository clientRepository;
 
+    @Transactional
     public boolean doCreateClient(CreateClientRequest req){
-        String lastClientId = clientRepository.findFirstByOrderByClientIdDesc().getClientId();
-        String newClientId;
-        System.out.println("last client id : " + lastClientId);
-        if(lastClientId == null){
-            newClientId = Generator.generateId("CLN0");
-        }else {
-            newClientId = Generator.generateId(lastClientId);
+        try{
+            String lastClientId = clientRepository.findFirstByOrderByClientIdDesc().getClientId();
+            String newClientId = Generator.generateId(lastClientId == null ? "CLN0" : lastClientId);
+//        if(lastClientId == null){
+//            newClientId = Generator.generateId("CLN0");
+//        }else {
+//            newClientId = Generator.generateId(lastClientId);
+//        }
+
+            ClientEntity clientEntity = new ClientEntity();
+            clientEntity.setClientId(newClientId);
+            clientEntity.setName(req.getName());
+            clientEntity.setCreatedAt(getCurrentTimestamp());
+            clientEntity.setUpdatedAt(getCurrentTimestamp());
+            clientRepository.save(clientEntity);
+
+            return true;
+        }catch (Exception e){
+            return false;
         }
 
-        ClientEntity clientEntity = new ClientEntity();
-        clientEntity.setClientId(newClientId);
-        clientEntity.setName(req.getName());
-        clientEntity.setCreatedAt(getCurrentTimestamp());
-        clientEntity.setUpdatedAt(getCurrentTimestamp());
-        clientRepository.save(clientEntity);
-
-        return true;
     }
 
     public boolean doEditClient(EditClientRequest req){
