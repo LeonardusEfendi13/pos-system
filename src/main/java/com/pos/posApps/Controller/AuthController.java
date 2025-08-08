@@ -27,7 +27,7 @@ public class AuthController {
             System.out.println("Masuk sini");
             return "redirect:/login";
         }
-        return "redirect:/api/v1/index";
+        return "redirect:/home";
     }
 
     @GetMapping("/login")
@@ -57,7 +57,7 @@ public class AuthController {
             return "redirec:/login";
         }
         httpSession.setAttribute(authSessionKey, token);
-        return "redirect:/api/v1/home";
+        return "redirect:/home";
     }
 
     @GetMapping("/logout")

@@ -20,7 +20,7 @@ import java.util.List;
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
-@RequestMapping("api/v1/products")
+@RequestMapping("products")
 @AllArgsConstructor
 public class ProductController {
     private AuthService authService;

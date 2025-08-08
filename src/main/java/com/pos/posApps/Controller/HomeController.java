@@ -10,13 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
-@RequestMapping("api/v1")
+@RequestMapping("home")
 @AllArgsConstructor
 public class HomeController {
 
     private AuthService authService;
 
-    @GetMapping("/home")
     public String home(HttpSession session){
         String token = (String) session.getAttribute(authSessionKey);
         String clientId = authService.validateToken(token).getClientEntity().getClientId();

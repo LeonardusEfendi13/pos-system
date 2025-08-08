@@ -32,6 +32,10 @@ public class TransactionDetailEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "transaction_id")
+    private TransactionEntity transactionEntity;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

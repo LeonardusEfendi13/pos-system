@@ -1,12 +1,10 @@
 package com.pos.posApps.Entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -16,18 +14,23 @@ public class PreorderDetailEntity {
     @Column(name = "preorder_detail_id")
     private String preorderDetailId;
 
-    @Column(name = "short_name")
-    private String shortName;
-
-    @Column(name = "full_name")
-    private String fullName;
-
     @Column(name = "quantity")
     private Long quantity;
 
-    @Column(name= "stock")
-    private Long stock;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "supplier_price")
-    private BigDecimal supplierPrice;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "preorder_id")
+    private PreorderEntity preorderEntity;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private ProductEntity productEntity;
 }

@@ -14,6 +14,8 @@ public class Generator {
     //Product Prices = PRS
     //Purchased Product = PPC
     //Purchasing = PCG
+    //Preorder = POR
+    //Preorder Detail = POL
     //Supplier = SPP
     //Transaction Detail = TDL
     //Transaction = TSC
