@@ -23,10 +23,13 @@
 </head>
 <body>
 <div class="page">
-    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <a th:href="@{/home}">Back to main menu</a>
+<!--    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>-->
+
     <div class="page-wrapper">
         <div style="background-color:red">
-            <h1>Welcome to Dashboard Home</h1>
+            <h1>Welcome to kasir Menu</h1>
+            <h3 th:text="${pembelianData}"></h3>
         </div>
     </div>
 </div>

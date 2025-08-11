@@ -1,10 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Supplier List</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>POS</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+
+
+    <style>
+        body {
+          background-color: #f4f4f4;
+        }
+
+        .logout-button {
+          margin-top: auto;
+          padding: 1rem;
+        }
+
+    </style>
 </head>
 <body>
-
+<div class="page">
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <div class="page-wrapper">
+        <div style="background-color:red">
+            <h1>Welcome to Supplier Menu</h1>
+            <h3 th:text="${supplierData}"></h3>
+        </div>
+    </div>
+</div>
+<!-- Tabler Core JS -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
 </body>
 </html>

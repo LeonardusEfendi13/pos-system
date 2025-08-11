@@ -1,12 +1,15 @@
 package com.pos.posApps.Controller;
 
 import com.pos.posApps.DTO.Dtos.CreatePreorderRequest;
+import com.pos.posApps.DTO.Dtos.EditPreorderRequest;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.PreorderEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.PreorderService;
+import com.pos.posApps.Util.Utils;
 import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,20 +22,24 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
 @RequestMapping("preorder")
+@AllArgsConstructor
 public class PreorderController {
     private AuthService authService;
     private PreorderService preorderService;
 
-    @GetMapping("/list-preorder")
+    @GetMapping
     public String showListPreorder(String supplierId, HttpSession session, Model model){
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if(clientId == null){
-            System.out.println("Failed");
-            return "login";
+        String clientId;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        }catch (Exception e){
+            System.out.println("catch preorder");
+            return "redirect:/login";
         }
         List<PreorderEntity> preorderEntity = preorderService.getPreorderData(clientId, supplierId);
-        model.addAttribute("preorderEntity", preorderEntity);
+        model.addAttribute("preorderData", preorderEntity);
+        model.addAttribute("activePage", "preorder");
         return "display_preorder";
     }
 
@@ -43,7 +50,7 @@ public class PreorderController {
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
             System.out.println("No Access to products");
-            return "401";
+            return "redirect:/login";
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
@@ -53,6 +60,45 @@ public class PreorderController {
             }
             return "500";
         }
-        return "401";
+        return "redirect:/login";
+    }
+
+    @PostMapping("/edit-preorder")
+    public String editPreorder(HttpSession session, EditPreorderRequest req){
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accEntity = authService.validateToken(token);
+        ClientEntity clientData = accEntity.getClientEntity();
+        if (clientData.getClientId() == null) {
+            System.out.println("No Access to products");
+            return "redirect:/login";
+        }
+
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            boolean isInserted = preorderService.editPreorder(req, clientData);
+            if (isInserted) {
+                return "200";
+            }
+            return "500";
+        }
+        return "redirect:/login";
+    }
+
+    @PostMapping("/delete-preorder")
+    public String deletePreorder(HttpSession session, String preorderId){
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accEntity = authService.validateToken(token);
+        ClientEntity clientData = accEntity.getClientEntity();
+        if (clientData.getClientId() == null) {
+            System.out.println("No Access to products");
+            return "redirect:/login";
+        }
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            boolean isEdited = preorderService.deleteProducts(preorderId);
+            if(isEdited){
+                return "200";
+            }
+            return "500";
+        }
+        return "redirect:/login";
     }
 }

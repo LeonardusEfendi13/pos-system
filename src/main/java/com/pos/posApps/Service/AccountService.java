@@ -80,8 +80,9 @@ public class AccountService {
     }
 
     public List<UserDTO> getUserList(String clientId){
-        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientId(clientId);
+        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNull(clientId);
         return accountEntities.stream().map(user -> new UserDTO(
+                user.getAccountId(),
                 user.getName(),
                 user.getUsername(),
                 user.getRole()

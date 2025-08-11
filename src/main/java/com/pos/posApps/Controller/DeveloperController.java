@@ -37,7 +37,7 @@ public class DeveloperController {
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
 
         boolean isInserted = clientService.doCreateClient(req);
@@ -56,7 +56,7 @@ public class DeveloperController {
         String clientId = authService.validateToken(token).getClientEntity().getClientId();
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
         boolean isUpdated = clientService.doEditClient(req);
         if(isUpdated){
@@ -77,7 +77,7 @@ public class DeveloperController {
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
 
         boolean isDisabled = clientService.doDisableClient(idClient);
@@ -97,7 +97,7 @@ public class DeveloperController {
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
         boolean isInserted = accountService.doCreateAccount(req.getRegisterRequest(), req.getClientId());
         if(isInserted){
@@ -115,7 +115,7 @@ public class DeveloperController {
         String clientId = authService.validateToken(token).getClientEntity().getClientId();
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
         boolean isUpdated = accountService.doUpdateAccount(req);
         if(isUpdated){
@@ -134,7 +134,7 @@ public class DeveloperController {
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
-            return "401";
+            return "redirect:/login";
         }
 
         boolean isDisabled = accountService.doDisableAccount(idUser);

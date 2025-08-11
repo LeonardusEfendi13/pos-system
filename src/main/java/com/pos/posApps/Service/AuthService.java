@@ -72,12 +72,15 @@ public class AuthService {
     }
 
     public AccountEntity validateToken(String token) {
+        System.out.println("mAsuk validate token5=0");
         LoginTokenEntity loginTokenEntity = loginTokenRepository.findByToken(token);
         if(loginTokenEntity == null) {
+            System.out.println("sempet kesini");
             return null;
         }
+        System.out.println("brrti kesini");
+        System.out.println(loginTokenEntity);
         return loginTokenEntity.getAccountEntity();
-//        return loginTokenEntity.getAccountEntity().getClientEntity().getClientId();
     }
 
     public boolean hasAccessToModifyData(Roles role){

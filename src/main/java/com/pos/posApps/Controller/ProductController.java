@@ -26,16 +26,17 @@ public class ProductController {
     private AuthService authService;
     private ProductService productService;
 
-    @GetMapping("/list-products")
+    @GetMapping
     public String showListProducts(HttpSession session, Model model){
         String token = (String) session.getAttribute(authSessionKey);
         String clientId = authService.validateToken(token).getClientEntity().getClientId();
         if(clientId == null){
             System.out.println("Failed");
-            return "login";
+            return "redirect:/login";
         }
         List<ProductEntity> productEntity = productService.getProductData(clientId);
-        model.addAttribute("productEntity", productEntity);
+        model.addAttribute("productData", productEntity);
+        model.addAttribute("activePage", "masterBarang");
         return "display_products";
     }
 
@@ -46,7 +47,7 @@ public class ProductController {
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
             System.out.println("No Access to products");
-            return "401";
+            return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
@@ -55,7 +56,7 @@ public class ProductController {
             }
             return "500";
         }
-        return "401";
+        return "redirect:/login";
     }
 
     @PostMapping("edit-products")
@@ -65,7 +66,7 @@ public class ProductController {
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
             System.out.println("No Access to products");
-            return "401";
+            return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.editProducts(req);
@@ -74,7 +75,7 @@ public class ProductController {
             }
             return "500";
         }
-        return "401";
+        return "redirect:/login";
     }
 
     @PostMapping("delete-products")
@@ -84,7 +85,7 @@ public class ProductController {
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
             System.out.println("No Access to products");
-            return "401";
+            return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.deleteProducts(productId);
@@ -93,6 +94,6 @@ public class ProductController {
             }
             return "500";
         }
-        return "401";
+        return "redirect:/login";
     }
 }

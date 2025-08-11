@@ -1,9 +1,6 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.CreatePreorderRequest;
-import com.pos.posApps.DTO.Dtos.PreorderDTO;
-import com.pos.posApps.DTO.Dtos.PreorderDetailDTO;
-import com.pos.posApps.DTO.Dtos.ProductPricesDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.PreorderDetailRepository;
 import com.pos.posApps.Repository.PreorderRepository;
@@ -15,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
 public class PreorderService {
@@ -77,5 +76,58 @@ public class PreorderService {
         }catch (Exception e){
             return false;
         }
+    }
+
+    @Transactional
+    public boolean editPreorder(EditPreorderRequest req, ClientEntity clientData){
+        try{
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
+            if(supplierEntity == null){
+                System.out.println("Can't find supplier with id : " + req.getSupplierId());
+                return false;
+            }
+
+            //Insert Preorder
+            PreorderEntity newPreorder = preorderRepository.findFirstByPreorderId(req.getPreorderId());
+            if(newPreorder == null || newPreorder.getDeletedAt() != null){
+                System.out.println("Preorder data not found");
+                return false;
+            }
+            newPreorder.setSupplierEntity(supplierEntity);
+            newPreorder.setClientEntity(clientData);
+            preorderRepository.save(newPreorder);
+
+            for(PreorderDetailDTO preorderDetailData : req.getPreorderDetailData()){
+                PreorderDetailEntity newData = preorderDetailRepository.findFirstByPreorderDetailId(preorderDetailData.getPreorderDetailId());
+
+                ProductEntity productEntity = productRepository.findFirstByProductId(preorderDetailData.getProductId());
+                newData.setQuantity(preorderDetailData.getQuantity());
+                newData.setPreorderEntity(newPreorder);
+                newData.setProductEntity(productEntity);
+                preorderDetailRepository.save(newData);
+            }
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    @Transactional
+    public boolean deleteProducts(String preorderId){
+        PreorderEntity preorderEntity = preorderRepository.findFirstByPreorderId(preorderId);
+        if(preorderEntity == null){
+            System.out.println("Preorder not found");
+            return false;
+        }
+        preorderEntity.setDeletedAt(getCurrentTimestamp());
+        preorderRepository.save(preorderEntity);
+
+        List<PreorderDetailEntity> preorderDetailEntities = preorderDetailRepository.findAllByPreorderEntity_PreorderId(preorderId);
+
+        for(PreorderDetailEntity data : preorderDetailEntities){
+            data.setDeletedAt(getCurrentTimestamp());
+            preorderDetailRepository.save(data);
+        }
+        return true;
     }
 }

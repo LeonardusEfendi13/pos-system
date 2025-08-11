@@ -11,7 +11,10 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -24,15 +27,25 @@ public class AccountController {
     private AccountService accountService;
     private AuthService authService;
 
-    @GetMapping("/list-user")
-    public String showUser(HttpSession session) {
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if (clientId == null) {
-            return "logout";
+    @GetMapping
+    public String showUser(HttpSession session, Model model) {
+        String clientId;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        }catch (Exception e){
+            return "redirect:/login";
         }
+//        String token = (String) session.getAttribute(authSessionKey);
+//        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+//        if (clientId == null) {
+//            return "redirect:/login";
+//        }
 
         List<UserDTO> userList = accountService.getUserList(clientId);
+        System.out.println(userList);
+        model.addAttribute("userData", userList);
+        model.addAttribute("activePage", "user");
         return "display_user";
     }
 
@@ -45,7 +58,7 @@ public class AccountController {
         String clientId = accEntity.getClientEntity().getClientId();
         if (clientId == null) {
             System.out.println("No Access to register");
-            return "401";
+            return "redirect:/login";
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
@@ -59,24 +72,79 @@ public class AccountController {
         return "500";
     }
 
-    @PostMapping("/edit-user")
+    @PostMapping("/edit")
     public String editUser(
             HttpSession session,
-            @Valid EditUserRequest request
+            @Valid EditUserRequest request,
+            RedirectAttributes redirectAttributes
     ) {
-        String token = (String) session.getAttribute(authSessionKey);
-        Roles role = authService.validateToken(token).getRole();
+        Roles role;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            role = authService.validateToken(token).getRole();
+        }catch (Exception e){
+            return "redirect:/login";
+        }
+
         if (authService.hasAccessToModifyData(role)) {
             boolean isUpdated = accountService.doUpdateAccount(request);
             if (isUpdated) {
-                System.out.println("Account Updated");
-                return "200";
+                redirectAttributes.addFlashAttribute("user_status", "success");
+                redirectAttributes.addFlashAttribute("message", "Account Updated");
+                return "redirect:/user";
             }
-            System.out.println("Account Failed to update");
-            return "500";
+            redirectAttributes.addFlashAttribute("user_status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to update Account");
+            return "redirect:/user";
         }
+        //todo add redirect attributes
         System.out.println("No Access to Update Account Data");
-        return "401";
+        return "redirect:/login";
+    }
+
+    @PostMapping("/delete/{userId}")
+    public String deleteUser(
+            HttpSession session,
+            @PathVariable("userId") String userId,
+            RedirectAttributes redirectAttributes
+    ) {
+        Roles role;
+
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            role = authService.validateToken(token).getRole();
+        }catch (Exception e){
+            return "redirect:/login";
+        }
+
+        if (authService.hasAccessToModifyData(role)) {
+            boolean isDeleted = accountService.doDisableAccount(userId);
+            if (isDeleted) {
+                System.out.println("success delete");
+                redirectAttributes.addFlashAttribute("user_status", "success");
+                redirectAttributes.addFlashAttribute("message", "Account Created");
+                return "redirect:/user";
+            }
+            System.out.println("failed delete");
+            redirectAttributes.addFlashAttribute("user_status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to Delete Account");
+            return "redirect:/user";
+        }
+
+        //todo add redirect attributes
+        System.out.println("No Access to Update Account Data");
+        return "redirect:/login";
+    }
+
+
+    @GetMapping("/detail/{userId}")
+    public String getUserDetail(
+            HttpSession session,
+            @PathVariable("userId") String userId
+    ){
+        //todo
+        return "redirect:/login";
+
     }
 
 

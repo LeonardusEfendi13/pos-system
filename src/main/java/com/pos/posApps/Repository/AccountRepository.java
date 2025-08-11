@@ -13,6 +13,7 @@ public interface AccountRepository extends JpaRepository<AccountEntity, String> 
     AccountEntity findFirstByOrderByAccountIdDesc();
 
     List<AccountEntity> findAllByClientEntity_ClientId(String clientId);
+    List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNull(String clientId);
 
     AccountEntity findByAccountId(String id);
 }

@@ -1,7 +1,11 @@
 package com.pos.posApps.Controller;
 
 import com.pos.posApps.DTO.Dtos.LoginRequest;
+import com.pos.posApps.Entity.AccountEntity;
+import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.LoginTokenService;
+import com.pos.posApps.Util.Utils;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -18,16 +22,23 @@ public class AuthController {
 
     private AuthService authService;
 
+    private LoginTokenService loginTokenService;
+
 
     @GetMapping("/")
     public String redirect(HttpSession session) {
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if(clientId == null){
-            System.out.println("Masuk sini");
-            return "redirect:/login";
-        }
-        return "redirect:/home";
+        return Utils.validateSession(session, null, "home");
+//        String token = (String) session.getAttribute(authSessionKey);
+//        AccountEntity accountData = authService.validateToken(token);
+//        if(accountData == null){
+//            return "redirect:/login";
+//        }
+//        ClientEntity clientData = accountData.getClientEntity();
+//        if(clientData.getClientId() == null){
+//            System.out.println("Masuk sini");
+//            return "redirect:/login";
+//        }
+//        return "redirect:/home";
     }
 
     @GetMapping("/login")
@@ -35,9 +46,13 @@ public class AuthController {
         System.out.println("Masuk login page");
         model.addAttribute("loginRequest", new LoginRequest());
         if(session.getAttribute(authSessionKey) != null){
-            return "home";
+            return "redirect:/home";
         }
         return "login";
+    }
+    @GetMapping("/doLogin")
+    public String handleGetDoLogin(){
+        return "redirect:/login";
     }
 
     @PostMapping("/doLogin")
@@ -47,23 +62,30 @@ public class AuthController {
             BindingResult bindingResult,
             Model model) {
         System.out.println("Masuk Login");
-        String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
         if(bindingResult.hasErrors()){
-            model.addAttribute("login_status", 200);
+            model.addAttribute("login_status", "200");
             return "redirect:/login";
         }
+        String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
+
         if(token == null){
-            model.addAttribute("login_status", 401);
-            return "redirec:/login";
+            model.addAttribute("login_status", "401");
+            return "redirect:/login";
         }
         httpSession.setAttribute(authSessionKey, token);
+        model.addAttribute("activePage", "dashboard");
         return "redirect:/home";
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session, Model model){
+        //delete token
+        boolean isDeleted = loginTokenService.deleteToken((String) session.getAttribute(authSessionKey));
+        if(!isDeleted){
+            return null;
+        }
         session.invalidate();
-        model.addAttribute("logout_status", 200);
-        return "login";
+        model.addAttribute("login_status", "logout");
+        return "redirect:/login";
     }
 }

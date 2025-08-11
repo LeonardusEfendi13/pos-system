@@ -8,4 +8,8 @@ import java.util.List;
 
 public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEntity, String> {
     PreorderDetailEntity findFirstByOrderByPreorderDetailIdDesc();
+
+    PreorderDetailEntity findFirstByPreorderDetailId(String preorderDetailId);
+
+    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderId(String preorderId);
 }
