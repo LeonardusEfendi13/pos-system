@@ -10,8 +10,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -27,71 +29,114 @@ public class SupplierController {
 
     @GetMapping
     public String displaySupplier(HttpSession session, Model model){
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if(clientId == null){
-            System.out.println("Failed");
+        String clientId;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        }catch (Exception e){
             return "redirect:/login";
         }
+
         List<SupplierEntity> supplierEntityList = supplierService.getSupplierList(clientId);
         model.addAttribute("supplierData", supplierEntityList);
         model.addAttribute("activePage", "supplier");
         return "display_supplier";
     }
 
-    @PostMapping("/add-supplier")
-    public String addSupplier(String supplierName, HttpSession session){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
+    @PostMapping("/add")
+    public String addSupplier(String supplierName, HttpSession session, RedirectAttributes redirectAttributes){
+        AccountEntity accEntity;
+        ClientEntity clientData;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            clientData = accEntity.getClientEntity();
+            if (clientData.getClientId() == null) {
+                System.out.println("No Access to products");
+                return "redirect:/login";
+            }
+        }catch (Exception e){
             return "redirect:/login";
         }
+
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = supplierService.insertSupplier(supplierName, clientData);
             if (isInserted) {
-                return "200";
+                System.out.println("Success cuy");
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data created");
+                return "redirect:/supplier";
             }
-            return "500";
+            System.out.println("failed to create supplier");
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to create data");
+            return "redirect:/supplier";
         }
         return "redirect:/login";
     }
 
-    @PostMapping("/edit-supplier")
-    public String editSupplier(String supplierId, String supplierName, HttpSession session){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
+    @PostMapping("/edit")
+    public String editSupplier(String supplierId, String supplierName, HttpSession session, RedirectAttributes redirectAttributes){
+        AccountEntity accEntity;
+        ClientEntity clientData;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            clientData = accEntity.getClientEntity();
+            if (clientData.getClientId() == null) {
+                System.out.println("No Access to products");
+                return "redirect:/login";
+            }
+        }catch (Exception e){
             return "redirect:/login";
         }
+
+        System.out.println("Req : " + supplierName);
+        System.out.println("Req Id: " + supplierId);
+
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.editSupplier(supplierId, supplierName, clientData);
             if(isEdited){
-                return "200";
+                System.out.println("success edit");
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Edited");
+                return "redirect:/supplier";
             }
-            return "500";
+            System.out.println("Failed edit");
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to edit Data");
+            return "redirect:/supplier";
         }
         return "redirect:/login";
     }
 
-    @PostMapping("/disable-supplier")
-    public String disableSupplier(String supplierId, HttpSession session){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
+    @PostMapping("/delete/{supplierId}")
+    public String disableSupplier(
+            @PathVariable("supplierId") String supplierId, HttpSession session, RedirectAttributes redirectAttributes){
+        AccountEntity accEntity;
+        ClientEntity clientData;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            clientData = accEntity.getClientEntity();
+            if (clientData.getClientId() == null) {
+                System.out.println("No Access to products");
+                return "redirect:/login";
+            }
+        }catch (Exception e){
             return "redirect:/login";
         }
+
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.disableSupplier(supplierId, clientData);
             if(isEdited){
-                return "200";
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Deleted");
+                return "redirect:/supplier";
             }
-            return "500";
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to delete data");
+            return "redirect:/supplier";
         }
         return "redirect:/login";
     }

@@ -25,20 +25,28 @@ public class SupplierService {
     public Boolean insertSupplier(String supplierName, ClientEntity clientData){
         try{
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierNameAndClientEntity_ClientId(supplierName, clientData.getClientId());
-            if(supplierEntity == null){
+            if(supplierEntity != null){
                 System.out.println("Supplier alr exists");
                 return false;
             }
 
-            String lastSupplierId = supplierRepository.findFirstByOrderBySupplierIdDesc().getSupplierId();
-            String newSupplierId = Generator.generateId(lastSupplierId == null ? "SPP0" : lastSupplierId);
+            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierNameDesc();
+            String lastSupplierId = lastSupplierData == null ? "SPP0" : lastSupplierData.getSupplierId();
+            String newSupplierId = Generator.generateId(lastSupplierId);
+
+            System.out.println("Success generated  id");
+
 
             SupplierEntity newSupplierEntity = new SupplierEntity();
             newSupplierEntity.setSupplierId(newSupplierId);
             newSupplierEntity.setSupplierName(supplierName);
             newSupplierEntity.setClientEntity(clientData);
+            supplierRepository.save(newSupplierEntity);
+            System.out.println("Success save data");
+
             return true;
         }catch (Exception e){
+            System.out.println("exception : " + e);
             return false;
         }
     }

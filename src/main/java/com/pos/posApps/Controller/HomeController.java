@@ -20,13 +20,15 @@ public class HomeController {
 
     @GetMapping
     public String home(HttpSession session, Model model){
-        Utils.validateSession(session, null, "home");
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if(clientId == null){
-            System.out.println("Failed");
+//        Utils.validateSession(session, null, "home");
+        String clientId;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        }catch (Exception e){
             return "redirect:/login";
         }
+
         System.out.println("Welcome to home");
         model.addAttribute("activePage", "home");
         return "home";

@@ -30,34 +30,33 @@ public class AccountController {
     @GetMapping
     public String showUser(HttpSession session, Model model) {
         String clientId;
-        try{
+        try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
-//        String token = (String) session.getAttribute(authSessionKey);
-//        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-//        if (clientId == null) {
-//            return "redirect:/login";
-//        }
 
         List<UserDTO> userList = accountService.getUserList(clientId);
-        System.out.println(userList);
         model.addAttribute("userData", userList);
         model.addAttribute("activePage", "user");
         return "display_user";
     }
 
-    @PostMapping("/add-user")
+    @PostMapping("/add")
     public String register(
             HttpSession session,
-            @Valid RegisterRequest registerRequest) {
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        String clientId = accEntity.getClientEntity().getClientId();
-        if (clientId == null) {
-            System.out.println("No Access to register");
+            @Valid RegisterRequest registerRequest,
+            RedirectAttributes redirectAttributes) {
+        String clientId;
+        AccountEntity accEntity;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            clientId = accEntity.getClientEntity().getClientId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Session Expired");
             return "redirect:/login";
         }
 
@@ -65,11 +64,14 @@ public class AccountController {
             boolean isInserted = accountService.doCreateAccount(registerRequest, clientId);
             if (isInserted) {
                 System.out.println("Account Created");
-                return "200";
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Account Created");
+                return "redirect:/user";
             }
         }
-        System.out.println("Account not created");
-        return "500";
+        redirectAttributes.addFlashAttribute("status", "failed");
+        redirectAttributes.addFlashAttribute("message", "Failed to Create Account");
+        return "redirect:/user";
     }
 
     @PostMapping("/edit")
@@ -78,27 +80,32 @@ public class AccountController {
             @Valid EditUserRequest request,
             RedirectAttributes redirectAttributes
     ) {
+        System.out.println("Entering edit endpoint");
         Roles role;
-        try{
+        try {
             String token = (String) session.getAttribute(authSessionKey);
             role = authService.validateToken(token).getRole();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
+
+        System.out.println("Edit user request : " + request);
 
         if (authService.hasAccessToModifyData(role)) {
             boolean isUpdated = accountService.doUpdateAccount(request);
             if (isUpdated) {
-                redirectAttributes.addFlashAttribute("user_status", "success");
+                redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Account Updated");
                 return "redirect:/user";
             }
-            redirectAttributes.addFlashAttribute("user_status", "failed");
+            redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to update Account");
             return "redirect:/user";
         }
-        //todo add redirect attributes
+
         System.out.println("No Access to Update Account Data");
+        redirectAttributes.addFlashAttribute("status", "failed");
+        redirectAttributes.addFlashAttribute("message", "No Access to Edit Account");
         return "redirect:/login";
     }
 
@@ -110,10 +117,10 @@ public class AccountController {
     ) {
         Roles role;
 
-        try{
+        try {
             String token = (String) session.getAttribute(authSessionKey);
             role = authService.validateToken(token).getRole();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -121,12 +128,12 @@ public class AccountController {
             boolean isDeleted = accountService.doDisableAccount(userId);
             if (isDeleted) {
                 System.out.println("success delete");
-                redirectAttributes.addFlashAttribute("user_status", "success");
-                redirectAttributes.addFlashAttribute("message", "Account Created");
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Account Deleted");
                 return "redirect:/user";
             }
             System.out.println("failed delete");
-            redirectAttributes.addFlashAttribute("user_status", "failed");
+            redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to Delete Account");
             return "redirect:/user";
         }
@@ -135,17 +142,4 @@ public class AccountController {
         System.out.println("No Access to Update Account Data");
         return "redirect:/login";
     }
-
-
-    @GetMapping("/detail/{userId}")
-    public String getUserDetail(
-            HttpSession session,
-            @PathVariable("userId") String userId
-    ){
-        //todo
-        return "redirect:/login";
-
-    }
-
-
 }

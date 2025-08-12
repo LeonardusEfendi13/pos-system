@@ -38,11 +38,6 @@ public class AccountService {
             String hashedPassword = passwordEncoder.encode(request.getPassword());
             String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().getAccountId();
             String newAccountId = Generator.generateId(lastAccountId == null ? "ACC0" : lastAccountId);
-//        if(lastAccountId == null) {
-//            newAccountId = Generator.generateId("ACC0");
-//        }else{
-//            newAccountId = Generator.generateId(lastAccountId);
-//        }
 
             ClientEntity clientEntity = clientRepository.findByClientId(clientId);
 

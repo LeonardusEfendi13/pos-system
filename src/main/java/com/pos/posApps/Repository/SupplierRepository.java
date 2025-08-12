@@ -14,7 +14,7 @@ public interface SupplierRepository extends JpaRepository<SupplierEntity, String
 
     SupplierEntity findFirstBySupplierNameAndClientEntity_ClientId(String supplierName, String clientId);
 
-    SupplierEntity findFirstByOrderBySupplierIdDesc();
+    SupplierEntity findFirstByOrderBySupplierNameDesc();
 
     SupplierEntity findFirstBySupplierIdAndClientEntity_ClientId(String supplierId, String clientId);
 }

@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -27,59 +28,86 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping
-    public String showListProducts(HttpSession session, Model model){
-        String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
-        if(clientId == null){
-            System.out.println("Failed");
+    public String showListProducts(HttpSession session, Model model) {
+        String clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
             return "redirect:/login";
         }
+
         List<ProductEntity> productEntity = productService.getProductData(clientId);
+
+        System.out.println("product entity : " + productEntity);
         model.addAttribute("productData", productEntity);
         model.addAttribute("activePage", "masterBarang");
         return "display_products";
     }
 
-    @PostMapping("/add-products")
-    public String addProducts(HttpSession session, CreateProductRequest req) {
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
+    @PostMapping("/add")
+    public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
+        AccountEntity accEntity;
+        ClientEntity clientData;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            clientData = accEntity.getClientEntity();
+            if (clientData.getClientId() == null) {
+                redirectAttributes.addFlashAttribute("status", "failed");
+                redirectAttributes.addFlashAttribute("message", "Session Expired");
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted) {
-                return "200";
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Created");
+                return "redirect:/products";
             }
-            return "500";
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
+            return "redirect:/products";
         }
+        redirectAttributes.addFlashAttribute("status", "failed");
+        redirectAttributes.addFlashAttribute("message", "Session Expired");
         return "redirect:/login";
     }
 
     @PostMapping("edit-products")
-    public String editProducts(HttpSession session, EditProductRequest req){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
+    public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes) {
+        AccountEntity accEntity;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            if(accEntity.getClientEntity().getClientId() == null){
+                redirectAttributes.addFlashAttribute("status", "failed");
+                redirectAttributes.addFlashAttribute("message", "Session Expired");
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
             return "redirect:/login";
         }
+
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.editProducts(req);
-            if(isEdited){
-                return "200";
+            if (isEdited) {
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Edited");
+                return "redirect:/products";
             }
-            return "500";
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to edit data");
+            return "redirect:/products";
         }
         return "redirect:/login";
     }
 
     @PostMapping("delete-products")
-    public String deleteProducts(HttpSession session, String productId){
+    public String deleteProducts(HttpSession session, String productId, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
@@ -89,10 +117,14 @@ public class ProductController {
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.deleteProducts(productId);
-            if(isEdited){
-                return "200";
+            if (isEdited) {
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Deleted");
+                return "redirect:/products";
             }
-            return "500";
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to delete data");
+            return "redirect:/products";
         }
         return "redirect:/login";
     }
