@@ -26,8 +26,8 @@ public class AuthService {
 
     public String doLoginAndGetToken(String username, String password) {
         try {
-            AccountEntity accountData = accountRepository.findByUsername(username);
-            if (accountData == null || accountData.getDeletedAt() != null) {
+            AccountEntity accountData = accountRepository.findByUsernameAndDeletedAtIsNull(username);
+            if (accountData == null) {
                 System.out.println("Account not found");
                 return null;
             }

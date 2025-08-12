@@ -43,7 +43,7 @@ public class ClientService {
     }
 
     public boolean doEditClient(EditClientRequest req){
-        ClientEntity clientEntity = clientRepository.findByClientId(req.getClientId());
+        ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(req.getClientId());
         if(clientEntity == null){
             System.out.println("Client Not Found");
             return false;
@@ -55,8 +55,8 @@ public class ClientService {
     }
 
     public boolean doDisableClient(String clientId){
-        ClientEntity clientEntity = clientRepository.findByClientId(clientId);
-        if(clientEntity == null || clientEntity.getDeletedAt() != null){
+        ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
+        if(clientEntity == null){
             System.out.println("Client Not Found");
             return false;
         }

@@ -6,11 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PreorderRepository extends JpaRepository<PreorderEntity, String> {
-    List<PreorderEntity> findAllByClientEntity_ClientId(String clientId);
-    List<PreorderEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierId(String clientId, String supplierId);
+    List<PreorderEntity> findAllByClientEntity_ClientIdOrderByPreorderIdAsc(String clientId);
+    List<PreorderEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdOrderByPreorderIdAsc(String clientId, String supplierId);
 
     PreorderEntity findFirstByOrderByPreorderIdDesc();
 
-    PreorderEntity findFirstByPreorderId(String preorderId);
-
+    PreorderEntity findFirstByPreorderIdAndDeletedAtIsNull(String preorderId);
 }

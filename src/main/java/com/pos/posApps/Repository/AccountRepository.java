@@ -8,12 +8,12 @@ import java.util.List;
 
 @Repository
 public interface AccountRepository extends JpaRepository<AccountEntity, String> {
-    AccountEntity findByUsername(String username);
+    AccountEntity findByUsernameAndDeletedAtIsNull(String username);
 
     AccountEntity findFirstByOrderByAccountIdDesc();
 
     List<AccountEntity> findAllByClientEntity_ClientId(String clientId);
     List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNull(String clientId);
 
-    AccountEntity findByAccountId(String id);
+    AccountEntity findByAccountIdAndDeletedAtIsNull(String id);
 }

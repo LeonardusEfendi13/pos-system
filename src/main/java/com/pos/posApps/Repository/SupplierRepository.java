@@ -10,11 +10,13 @@ import java.util.List;
 public interface SupplierRepository extends JpaRepository<SupplierEntity, String> {
     SupplierEntity findFirstBySupplierId(String supplierId);
 
-    List<SupplierEntity> findAllByClientEntity_ClientId(String clientId);
+    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdAsc(String clientId);
 
-    SupplierEntity findFirstBySupplierNameAndClientEntity_ClientId(String supplierName, String clientId);
+    SupplierEntity findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierName, String clientId);
 
-    SupplierEntity findFirstByOrderBySupplierNameDesc();
+    SupplierEntity findFirstByOrderBySupplierIdDesc();
 
-    SupplierEntity findFirstBySupplierIdAndClientEntity_ClientId(String supplierId, String clientId);
+    SupplierEntity findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierId, String clientId);
+
+    boolean existsBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNullAndSupplierIdNot(String supplierName, String clientId, String supplierId);
 }

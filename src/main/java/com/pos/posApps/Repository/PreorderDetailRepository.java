@@ -11,5 +11,5 @@ public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEn
 
     PreorderDetailEntity findFirstByPreorderDetailId(String preorderDetailId);
 
-    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderId(String preorderId);
+    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderIdOrderByPreorderDetailIdAsc(String preorderId);
 }

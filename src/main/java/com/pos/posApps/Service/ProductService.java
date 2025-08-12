@@ -31,7 +31,7 @@ public class ProductService {
     ProductPricesRepository productPricesRepository;
 
     public List<ProductEntity> getProductData(String clientId){
-        return productRepository.findAllByClientEntity_ClientId(clientId);
+        return productRepository.findAllByClientEntity_ClientIdOrderByProductIdAsc(clientId);
     }
 
     @Transactional
@@ -84,8 +84,8 @@ public class ProductService {
 
     @Transactional
     public boolean editProducts(EditProductRequest req){
-        ProductEntity productEntity = productRepository.findFirstByProductId(req.getProductId());
-        if(productEntity == null || productEntity.getDeletedAt() != null){
+        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
+        if(productEntity == null){
             System.out.println("Product not found");
             return false;
         }
@@ -114,7 +114,7 @@ public class ProductService {
 
     @Transactional
     public boolean deleteProducts(String productId){
-        ProductEntity productEntity = productRepository.findFirstByProductId(productId);
+        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
         if(productEntity == null){
             System.out.println("Product not found");
             return false;
@@ -122,7 +122,7 @@ public class ProductService {
         productEntity.setDeletedAt(getCurrentTimestamp());
         productRepository.save(productEntity);
 
-        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductId(productId);
+        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(productId);
 
         for(ProductPricesEntity data : productPricesEntity){
             data.setDeletedAt(getCurrentTimestamp());

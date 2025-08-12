@@ -91,9 +91,6 @@ public class SupplierController {
             return "redirect:/login";
         }
 
-        System.out.println("Req : " + supplierName);
-        System.out.println("Req Id: " + supplierId);
-
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.editSupplier(supplierId, supplierName, clientData);
             if(isEdited){
@@ -130,10 +127,13 @@ public class SupplierController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.disableSupplier(supplierId, clientData);
             if(isEdited){
+                System.out.println("success delete");
+
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");
                 return "redirect:/supplier";
             }
+            System.out.println("Failed to delete");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/supplier";

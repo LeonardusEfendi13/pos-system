@@ -12,6 +12,6 @@ public interface ProductPricesRepository extends JpaRepository<ProductPricesEnti
 
     ProductPricesEntity findFirstByProductPricesId(String productPricesId);
 
-    List<ProductPricesEntity> findAllByProductEntity_ProductId(String productId);
+    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(String productId);
 
 }

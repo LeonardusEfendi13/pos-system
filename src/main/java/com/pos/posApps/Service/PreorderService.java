@@ -31,9 +31,9 @@ public class PreorderService {
 
     public List<PreorderEntity> getPreorderData(String clientId, String supplierId){
         if(supplierId == null || supplierId.isBlank()){
-            return preorderRepository.findAllByClientEntity_ClientId(clientId);
+            return preorderRepository.findAllByClientEntity_ClientIdOrderByPreorderIdAsc(clientId);
         }else{
-            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierId(clientId, supplierId);
+            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdOrderByPreorderIdAsc(clientId, supplierId);
         }
     }
 
@@ -62,7 +62,7 @@ public class PreorderService {
             for(PreorderDetailDTO preorderDetailData : req.getPreorderDetailData()){
                 PreorderDetailEntity newData = new PreorderDetailEntity();
 
-                ProductEntity productEntity = productRepository.findFirstByProductId(preorderDetailData.getProductId());
+                ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(preorderDetailData.getProductId());
                 newData.setPreorderDetailId(newPreorderDetailsId);
                 newData.setQuantity(preorderDetailData.getQuantity());
                 newData.setPreorderEntity(newPreorder);
@@ -88,8 +88,8 @@ public class PreorderService {
             }
 
             //Insert Preorder
-            PreorderEntity newPreorder = preorderRepository.findFirstByPreorderId(req.getPreorderId());
-            if(newPreorder == null || newPreorder.getDeletedAt() != null){
+            PreorderEntity newPreorder = preorderRepository.findFirstByPreorderIdAndDeletedAtIsNull(req.getPreorderId());
+            if(newPreorder == null){
                 System.out.println("Preorder data not found");
                 return false;
             }
@@ -100,7 +100,7 @@ public class PreorderService {
             for(PreorderDetailDTO preorderDetailData : req.getPreorderDetailData()){
                 PreorderDetailEntity newData = preorderDetailRepository.findFirstByPreorderDetailId(preorderDetailData.getPreorderDetailId());
 
-                ProductEntity productEntity = productRepository.findFirstByProductId(preorderDetailData.getProductId());
+                ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(preorderDetailData.getProductId());
                 newData.setQuantity(preorderDetailData.getQuantity());
                 newData.setPreorderEntity(newPreorder);
                 newData.setProductEntity(productEntity);
@@ -114,7 +114,7 @@ public class PreorderService {
 
     @Transactional
     public boolean deleteProducts(String preorderId){
-        PreorderEntity preorderEntity = preorderRepository.findFirstByPreorderId(preorderId);
+        PreorderEntity preorderEntity = preorderRepository.findFirstByPreorderIdAndDeletedAtIsNull(preorderId);
         if(preorderEntity == null){
             System.out.println("Preorder not found");
             return false;
@@ -122,7 +122,7 @@ public class PreorderService {
         preorderEntity.setDeletedAt(getCurrentTimestamp());
         preorderRepository.save(preorderEntity);
 
-        List<PreorderDetailEntity> preorderDetailEntities = preorderDetailRepository.findAllByPreorderEntity_PreorderId(preorderId);
+        List<PreorderDetailEntity> preorderDetailEntities = preorderDetailRepository.findAllByPreorderEntity_PreorderIdOrderByPreorderDetailIdAsc(preorderId);
 
         for(PreorderDetailEntity data : preorderDetailEntities){
             data.setDeletedAt(getCurrentTimestamp());

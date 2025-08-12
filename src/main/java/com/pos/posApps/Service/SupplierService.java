@@ -18,19 +18,19 @@ public class SupplierService {
     SupplierRepository supplierRepository;
 
     public List<SupplierEntity> getSupplierList(String clientId){
-        return supplierRepository.findAllByClientEntity_ClientId(clientId);
+        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdAsc(clientId);
     }
 
     @Transactional
     public Boolean insertSupplier(String supplierName, ClientEntity clientData){
         try{
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierNameAndClientEntity_ClientId(supplierName, clientData.getClientId());
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(supplierName, clientData.getClientId());
             if(supplierEntity != null){
                 System.out.println("Supplier alr exists");
                 return false;
             }
 
-            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierNameDesc();
+            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
             String lastSupplierId = lastSupplierData == null ? "SPP0" : lastSupplierData.getSupplierId();
             String newSupplierId = Generator.generateId(lastSupplierId);
 
@@ -54,9 +54,18 @@ public class SupplierService {
     @Transactional
     public Boolean editSupplier(String supplierId, String supplierName, ClientEntity clientData){
         try{
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientId(supplierId, clientData.getClientId());
-            if(supplierEntity == null || supplierEntity.getDeletedAt() != null){
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(supplierId, clientData.getClientId());
+            if(supplierEntity == null){
                 return false;
+            }
+
+            // Check if another supplier with the same name exists (excluding the current one)
+            boolean nameExists = supplierRepository.existsBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNullAndSupplierIdNot(
+                    supplierName, clientData.getClientId(), supplierId
+            );
+
+            if (nameExists) {
+                return false; // Duplicate name exists
             }
 
             supplierEntity.setSupplierName(supplierName);
@@ -69,9 +78,12 @@ public class SupplierService {
 
     @Transactional
     public Boolean disableSupplier(String supplierId, ClientEntity clientData){
+        System.out.println("supp id : " + supplierId);
+        System.out.println("client id : " + clientData.getClientId());
+
         try{
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientId(supplierId, clientData.getClientId());
-            if(supplierEntity == null || supplierEntity.getDeletedAt() != null){
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(supplierId, clientData.getClientId());
+            if(supplierEntity == null){
                 return false;
             }
 

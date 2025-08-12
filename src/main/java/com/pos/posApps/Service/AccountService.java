@@ -31,7 +31,7 @@ public class AccountService {
     @Transactional
     public boolean doCreateAccount(RegisterRequest request, String clientId){
         try{
-            AccountEntity accountEntity = accountRepository.findByUsername(request.getUsername());
+            AccountEntity accountEntity = accountRepository.findByUsernameAndDeletedAtIsNull(request.getUsername());
             if(accountEntity != null){
                 return false;
             }
@@ -39,7 +39,7 @@ public class AccountService {
             String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().getAccountId();
             String newAccountId = Generator.generateId(lastAccountId == null ? "ACC0" : lastAccountId);
 
-            ClientEntity clientEntity = clientRepository.findByClientId(clientId);
+            ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
             AccountEntity newAccountEntity = new AccountEntity();
             newAccountEntity.setAccountId(newAccountId);
@@ -59,8 +59,8 @@ public class AccountService {
     }
 
     public boolean doUpdateAccount(EditUserRequest request){
-        AccountEntity accountEntity = accountRepository.findByAccountId(request.getId());
-        if(accountEntity != null && accountEntity.getDeletedAt() == null){
+        AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(request.getId());
+        if(accountEntity != null){
             System.out.println("Account found");
             accountEntity.setUsername(request.getUsername());
             accountEntity.setPassword(request.getPassword());
@@ -85,8 +85,8 @@ public class AccountService {
     }
 
     public boolean doDisableAccount(String userId){
-        AccountEntity accountEntity = accountRepository.findByAccountId(userId);
-        if(accountEntity == null || accountEntity.getDeletedAt() != null){
+        AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
+        if(accountEntity == null){
             System.out.println("Account Not Found");
             return false;
         }

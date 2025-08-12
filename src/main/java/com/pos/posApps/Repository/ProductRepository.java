@@ -9,11 +9,11 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, String> {
 
-    List<ProductEntity> findAllByClientEntity_ClientId(String clientId);
+    List<ProductEntity> findAllByClientEntity_ClientIdOrderByProductIdAsc(String clientId);
 
     ProductEntity findFirstByFullNameOrShortNameOrProductId(String fullName, String shortName, String productId);
 
     ProductEntity findFirstByOrderByProductIdDesc();
 
-    ProductEntity findFirstByProductId(String productId);
+    ProductEntity findFirstByProductIdAndDeletedAtIsNull(String productId);
 }
