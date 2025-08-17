@@ -43,8 +43,9 @@ public class KasirService {
                 return false;
             }
 
-            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().getProductId();
-            String newProductId = Generator.generateId(lastProductId == null ? "PDT0" : lastProductId);
+            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse("PDT0");
+            String newProductId = Generator.generateId(lastProductId);
+
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
@@ -63,15 +64,15 @@ public class KasirService {
             productRepository.save(newProduct);
 
             //Insert Product Prices
-            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().getProductPricesId();
-            String newProductPricesId = Generator.generateId(lastProductPricesId == null ? "PRS0" : lastProductPricesId);
+            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
+            String newProductPricesId = Generator.generateId(lastProductPricesId);
 
             for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
                 newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(newProduct);
                 newProductPrices.setPrice(productPricesData.getPrice());
-                newProductPrices.setMinimalCount(productPricesData.getMinimalCount());
+                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
                 newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
@@ -106,7 +107,7 @@ public class KasirService {
             ProductPricesEntity productPricesEntity = productPricesRepository.findFirstByProductPricesId(productPrices.getProductId());
             productPricesEntity.setProductEntity(productEntity);
             productPricesEntity.setPrice(productPrices.getPrice());
-            productPricesEntity.setMinimalCount(productPrices.getMinimalCount());
+            productPricesEntity.setMaximalCount(productPrices.getMaximalCount());
             productPricesRepository.save(productPricesEntity);
         }
         return true;

@@ -5,9 +5,10 @@ import com.pos.posApps.Entity.PreorderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEntity, String> {
-    PreorderDetailEntity findFirstByOrderByPreorderDetailIdDesc();
+    Optional<PreorderDetailEntity> findFirstByOrderByPreorderDetailIdDesc();
 
     PreorderDetailEntity findFirstByPreorderDetailId(String preorderDetailId);
 

@@ -18,6 +18,9 @@ public class EditProductRequest {
     private String fullName;
 
     @NotBlank
+    private BigDecimal percentage;
+
+    @NotBlank
     private BigDecimal supplierPrice;
 
     @NotBlank
@@ -26,7 +29,6 @@ public class EditProductRequest {
     @NotBlank
     private Long stock;
 
-    @NotBlank
     private List<ProductPricesDTO> productPricesDTO;
 
 }

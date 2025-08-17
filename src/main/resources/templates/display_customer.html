@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>POS</title>
+    <title>Customer</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
@@ -15,8 +15,8 @@
     <!--    datatable-->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <style>
         body {
@@ -38,45 +38,42 @@
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
     <div class="page-wrapper">
         <div class="container">
-            <h1 style="text-align:center">Welcome to Supplier Menu</h1>
+            <h1 style="text-align:center">Welcome to Customer Menu</h1>
 
-            <!-- Add User Button -->
-            <div style="text-align:end; padding-left:20px">
-                <button class="btn btn-success add-user-btn" data-bs-toggle="modal" data-bs-target="#addSupplierModal">Add Supplier </button>
+            <!-- Add Customer Button -->
+            <div style="text-align:end; padding-right: 20px">
+                <button class="btn btn-success add-user-btn" data-bs-toggle="modal" data-bs-target="#addCustomerModal"> + Add Customer</button>
             </div>
 
-            <table id="supplierTable" class="table table-striped table-bordered">
+            <table id="customerTable" class="table table-striped table-bordered">
                 <thead class="sticky-top">
                 <tr>
                     <th scope="col">No</th>
-                    <th scope="col">Id</th>
                     <th scope="col">Nama</th>
                     <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="supplier, iterStat : ${supplierData}">
+                <tr th:each="customer, iterStat : ${customerData}">
                     <td th:text="${iterStat.index + 1}">1</td>
-                    <td th:text="${supplier.supplierId}">Id</td>
-                    <td th:text="${supplier.supplierName}">Nama</td>
+                    <td th:text="${customer.name}">Name</td>
                     <td>
                         <button
-                                class="btn btn-sm btn-primary me-1 edit-supplier-btn"
+                                class="btn btn-sm btn-primary me-1 edit-customer-btn"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editSupplierModal"
+                                data-bs-target="#editCustomerModal"
                                 th:attr="
-                                    data-supplierid=${supplier.supplierId},
-                                    data-suppliername=${supplier.supplierName}"
-                        >Edit
-                        </button>
+                                    data-customerid=${customer.customerId},
+                                    data-name=${customer.name}"
+                        >Edit</button>
 
-                        <form th:action="@{|/supplier/delete/${supplier.supplierId}|}"
+                        <form th:action="@{|/customer/delete/${customer.customerId}|}"
                               method="post"
                               style="display:inline;">
                             <button type="submit"
                                     class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Are you sure you want to delete this supplier?');"
-                                    title="Delete supplier">
+                                    onclick="return confirm('Are you sure you want to delete this customer?');"
+                                    title="Delete Customer">
                                 <i class="ti ti-trash"></i> Delete
                             </button>
                         </form>
@@ -86,22 +83,20 @@
             </table>
         </div>
 
-        <!-- Edit Supplier Modal -->
-        <div class="modal fade" id="editSupplierModal" tabindex="-1" role="dialog"
-             aria-labelledby="editSupplierModalLabel"
+        <!-- Edit Customer Modal -->
+        <div class="modal fade" id="editCustomerModal" tabindex="-1" role="dialog" aria-labelledby="editCustomerModalLabel"
              aria-hidden="true">
             <div class="modal-dialog" role="document">
-                <form th:action="@{/supplier/edit}" method="post" id="editSupplierForm">
+                <form th:action="@{/customer/edit}" method="post" id="editCustomerForm">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="editSupplierModalLabel">Edit Supplier</h5>
+                            <h5 class="modal-title" id="editCustomerModalLabel">Edit Customer</h5>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" id="editSupplierId" name="supplierId"/>
+                            <input type="hidden" id="editCustomerId" name="customerId"/>
                             <div class="form-group">
-                                <label for="editSupplierName">Name</label>
-                                <input type="text" class="form-control" id="editSupplierName" name="supplierName"
-                                       required/>
+                                <label for="editName">Name</label>
+                                <input type="text" class="form-control" id="editName" name="customerName" required/>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -113,25 +108,23 @@
             </div>
         </div>
 
-        <!-- Add Supplier Modal -->
-        <div class="modal fade" id="addSupplierModal" tabindex="-1" role="dialog"
-             aria-labelledby="addSupplierModalLabel"
+        <!-- Add Customer Modal -->
+        <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel"
              aria-hidden="true">
             <div class="modal-dialog" role="document">
-                <form th:action="@{/supplier/add}" method="post" id="addSupplierForm">
+                <form th:action="@{/customer/add}" method="post" id="addCustomerForm">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="addSupplierModalLabel">Add New Supplier</h5>
+                            <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
                         </div>
                         <div class="modal-body">
                             <div class="form-group">
-                                <label for="addSupplierName">Name</label>
-                                <input type="text" class="form-control" id="addSupplierName" name="supplierName"
-                                       required/>
+                                <label for="addName">Name</label>
+                                <input type="text" class="form-control" id="addName" name="customerName" required/>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-success">Tambah Supplier</button>
+                            <button type="submit" class="btn btn-success">Add Customer</button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         </div>
                     </div>
@@ -144,18 +137,18 @@
 
 <!-- Tabler Core JS -->
 <script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+
 <!-- jQuery DataTables -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(document).ready(function () {
-        // Init DataTable
-        $('#supplierTable').DataTable({
-            paging: true,
-            pageLength: 10,
-            lengthMenu: [5, 10, 25, 50],
-            ordering: true,
-            order: [],
+        $('#customerTable').DataTable({
+            paging: true,         // aktifkan paging
+            pageLength: 10,       // jumlah data per halaman
+            lengthMenu: [5, 10, 25, 50], // opsi pilihan jumlah data
+            ordering: true,       // aktifkan sorting
+            order: [],            // default: tidak ada sort
             language: {
                 search: "Cari: ",
                 lengthMenu: "Tampilkan _MENU_ data per halaman",
@@ -170,14 +163,13 @@
             }
         });
 
-        // Edit button click event
-        $('.edit-supplier-btn').on('click', function () {
-            const supplierId = $(this).data('supplierid');
-            const supplierName = $(this).data('suppliername');
-            console.log("supplier name : " + supplierName);
-            console.log("supplier Id : " + supplierId);
-            $('#editSupplierId').val(supplierId);
-            $('#editSupplierName').val(supplierName);
+        // Event Edit Customer Modal
+        $('.edit-customer-btn').on('click', function () {
+            const customerId = $(this).data('customerid');
+            const name = $(this).data('name');
+
+            $('#editCustomerId').val(customerId);
+            $('#editName').val(name);
         });
     });
 </script>

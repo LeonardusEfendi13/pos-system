@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -27,6 +28,10 @@ public class ProductEntity {
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierEntity;
+
+    @OneToMany
+    @JoinColumn(name = "product_id")
+    private List<ProductPricesEntity> productPricesEntity;
 
     @Column(name = "stock")
     private Long stock;

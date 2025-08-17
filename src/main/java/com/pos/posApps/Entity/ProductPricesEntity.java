@@ -18,14 +18,14 @@ public class ProductPricesEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity productEntity;
 
-//    @Column(name = "discount")
-//    private BigDecimal discount;
+    @Column(name = "percentage")
+    private BigDecimal percentage;
 
     @Column(name = "price")
     private BigDecimal price;
 
-    @Column(name = "minimal_count")
-    private Long minimalCount;
+    @Column(name = "maximal_count")
+    private Long maximalCount;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

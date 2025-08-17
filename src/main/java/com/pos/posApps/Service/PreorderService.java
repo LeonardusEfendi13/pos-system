@@ -40,8 +40,8 @@ public class PreorderService {
     @Transactional
     public boolean insertPreorder(CreatePreorderRequest req, ClientEntity clientData){
         try{
-            String lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().getPreorderId();
-            String newPreorderId = Generator.generateId(lastPreorderId == null ? "POR0" : lastPreorderId);
+            String lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().map(PreorderEntity::getPreorderId).orElse("POR0");
+            String newPreorderId = Generator.generateId(lastPreorderId);
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
@@ -56,8 +56,8 @@ public class PreorderService {
             preorderRepository.save(newPreorder);
 
             //Insert Preorder Details
-            String lastPreorderDetailsId = preorderDetailRepository.findFirstByOrderByPreorderDetailIdDesc().getPreorderDetailId();
-            String newPreorderDetailsId = Generator.generateId(lastPreorderDetailsId == null ? "POL0" : lastPreorderDetailsId);
+            String lastPreorderDetailsId = preorderDetailRepository.findFirstByOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse("POL0");
+            String newPreorderDetailsId = Generator.generateId(lastPreorderDetailsId);
 
             for(PreorderDetailDTO preorderDetailData : req.getPreorderDetailData()){
                 PreorderDetailEntity newData = new PreorderDetailEntity();

@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ProductPricesDTO {
     private String productPricesId;
     private String productId;
-//    private BigDecimal discount;
+    private BigDecimal percentage;
     private BigDecimal price;
-    private Long minimalCount;
+    private Long maximalCount;
 
 }

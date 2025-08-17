@@ -76,6 +76,13 @@
                     </a>
                 </li>
 
+                <!-- Customer -->
+                <li class="nav-item" th:classappend="${activePage} == 'customer' ? 'active' ">
+                    <a th:href="@{/customer}" class="nav-link">
+                        <span class="nav-link-title">Customer</span>
+                    </a>
+                </li>
+
 
                 <!-- User -->
                 <li class="nav-item" th:classappend="${activePage} == 'user' ? 'active' ">
@@ -83,22 +90,6 @@
                         <span class="nav-link-title">User</span>
                     </a>
                 </li>
-                <!--                <li class="nav-item dropdown">-->
-                <!--                    <a class="nav-link dropdown-toggle" href="#sidebar-pembelian" data-bs-toggle="collapse"-->
-                <!--                       role="button" aria-expanded="false" aria-controls="sidebar-pembelian">-->
-                <!--                        <span class="nav-link-title">Pembelian</span>-->
-                <!--                    </a>-->
-                <!--                    <div class="collapse" id="sidebar-pembelian">-->
-                <!--                        <ul class="nav flex-column ms-3">-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link" href="/pembelian/tambah">Tambah Pembelian</a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link" href="/pembelian/daftar">Daftar Pembelian</a>-->
-                <!--                            </li>-->
-                <!--                        </ul>-->
-                <!--                    </div>-->
-                <!--                </li>-->
             </ul>
         </div>
 

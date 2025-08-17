@@ -7,7 +7,6 @@ import lombok.Data;
 public class EditUserRequest {
     String id;
     String name;
-    String password;
     String username;
     Roles role;
 }

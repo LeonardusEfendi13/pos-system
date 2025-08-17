@@ -2,6 +2,7 @@ package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
+import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.DTO.Dtos.ProductPricesDTO;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.ProductEntity;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -30,8 +32,25 @@ public class ProductService {
     @Autowired
     ProductPricesRepository productPricesRepository;
 
-    public List<ProductEntity> getProductData(String clientId){
-        return productRepository.findAllByClientEntity_ClientIdOrderByProductIdAsc(clientId);
+    public List<ProductDTO> getProductData(String clientId) {
+        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByProductIdAsc(clientId);
+        return productData.stream().map(product -> new ProductDTO(
+                product.getProductId(),
+                product.getShortName(),
+                product.getFullName(),
+                product.getSupplierPrice(),
+                product.getStock(),
+                product.getProductPricesEntity().stream()
+                        .map(productPrices -> new ProductPricesDTO(
+                                productPrices.getProductPricesId(),
+                                product.getProductId(),
+                                productPrices.getPercentage(),
+                                productPrices.getPrice(),
+                                productPrices.getMaximalCount()
+                        ))
+                        .collect(Collectors.toList()),  // collect the stream to a list
+                product.getSupplierEntity().getSupplierId()
+        )).collect(Collectors.toList());
     }
 
     @Transactional
@@ -43,8 +62,9 @@ public class ProductService {
                 return false;
             }
 
-            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().getProductId();
-            String newProductId = Generator.generateId(lastProductId == null ? "PDT0" : lastProductId);
+            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse("PDT0");
+            String newProductId = Generator.generateId(lastProductId);
+
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
@@ -62,21 +82,27 @@ public class ProductService {
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
 
+            System.out.println("success save new product");
             //Insert Product Prices
-            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().getProductPricesId();
-            String newProductPricesId = Generator.generateId(lastProductPricesId == null ? "PRS0" : lastProductPricesId);
+            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
+            String newProductPricesId = Generator.generateId(lastProductPricesId);
 
             for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
-                ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                newProductPrices.setProductPricesId(newProductPricesId);
-                newProductPrices.setProductEntity(newProduct);
-                newProductPrices.setPrice(productPricesData.getPrice());
-                newProductPrices.setMinimalCount(productPricesData.getMinimalCount());
-                newProductPricesId = Generator.generateId(newProductPricesId);
-                productPricesRepository.save(newProductPrices);
+                System.out.println("Entering loop product prices ");
+                if(productPricesData != null){
+                        ProductPricesEntity newProductPrices = new ProductPricesEntity();
+                        newProductPrices.setProductPricesId(newProductPricesId);
+                        newProductPrices.setProductEntity(newProduct);
+                        newProductPrices.setPrice(productPricesData.getPrice());
+                        newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
+                        newProductPrices.setPercentage(productPricesData.getPercentage());
+                        newProductPricesId = Generator.generateId(newProductPricesId);
+                        productPricesRepository.save(newProductPrices);
+                }
             }
             return true;
         }catch (Exception e){
+            System.out.println("Exception : " + e);
             return false;
         }
 
@@ -102,13 +128,34 @@ public class ProductService {
         productEntity.setStock(req.getStock());
         productRepository.save(productEntity);
 
-        for(ProductPricesDTO productPrices : req.getProductPricesDTO()){
-            ProductPricesEntity productPricesEntity = productPricesRepository.findFirstByProductPricesId(productPrices.getProductId());
-            productPricesEntity.setProductEntity(productEntity);
-            productPricesEntity.setPrice(productPrices.getPrice());
-            productPricesEntity.setMinimalCount(productPrices.getMinimalCount());
-            productPricesRepository.save(productPricesEntity);
+        //Delete all product prices related to product id
+        productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
+
+        String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
+        String newProductPricesId = Generator.generateId(lastProductPricesId);
+
+        for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
+            System.out.println("Entering loop product prices ");
+            if(productPricesData != null){
+                ProductPricesEntity newProductPrices = new ProductPricesEntity();
+                newProductPrices.setProductPricesId(newProductPricesId);
+                newProductPrices.setProductEntity(productEntity);
+                newProductPrices.setPrice(productPricesData.getPrice());
+                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
+                newProductPrices.setPercentage(productPricesData.getPercentage());
+                newProductPricesId = Generator.generateId(newProductPricesId);
+                productPricesRepository.save(newProductPrices);
+            }
         }
+
+//        for(ProductPricesDTO productPrices : req.getProductPricesDTO()){
+//            ProductPricesEntity productPricesEntity = productPricesRepository.findFirstByProductPricesId(productPrices.getProductPricesId());
+//            productPricesEntity.setProductEntity(productEntity);
+//            productPricesEntity.setPrice(productPrices.getPrice());
+//            productPricesEntity.setPercentage(productPrices.getPercentage());
+//            productPricesEntity.setMaximalCount(productPrices.getMaximalCount());
+//            productPricesRepository.save(productPricesEntity);
+//        }
         return true;
     }
 

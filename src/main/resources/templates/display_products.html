@@ -12,8 +12,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!--    datatable-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <style>
         body {
@@ -37,10 +39,12 @@
         <div class="container">
             <h1 style="text-align:center">Welcome to Product Menu</h1>
 
-            <!-- Add User Button -->
-            <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">Add Product</button>
+            <!-- Add Barang Button -->
+            <div style="text-align:end; padding-right: 20px">
+                <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addBarangModal" id="add-barang-btn">Add Product </button>
+            </div>
 
-            <table class="table">
+            <table id="productTable" class="table table-striped table-bordered">
                 <thead class="sticky-top">
                 <tr>
                     <th scope="col">No</th>
@@ -52,25 +56,40 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="product, iterStat : ${productData}" th:if="${not #lists.isEmpty(productData)}">
+                <tr th:each="product, iterStat : ${productData}">
                     <td th:text="${iterStat.index + 1}">1</td>
-                    <td th:text="${product.name}">Name</td>
-                    <td th:text="${product.username}">Username</td>
-                    <td th:text="${product.role}">Role</td>
+                    <td th:text="${product.shortName}">Kode Part</td>
+                    <td th:text="${product.fullName}">Nama Barang</td>
+                    <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>
+                    <td class="rupiah-price" th:data-price="${product.productPricesDTO[0].price}" th:text="${product.productPricesDTO[0].price}">Harga Jual</td>
                     <td>
                         <button
-                                class="btn btn-sm btn-primary me-1 edit-user-btn"
+                                class="btn btn-sm btn-primary me-1 edit-barang-btn"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editUserModal"
+                                data-bs-target="#addBarangModal"
+                                id="edit-barang-btn"
                                 th:attr="
-                                    data-userid=${user.userId},
-                                    data-name=${user.name},
-                                    data-username=${user.username},
-                                    data-role=${user.role}"
-                        >Edit</button>
+                                    data-productid=${product.productId},
+                                    data-shortname=${product.shortName},
+                                    data-fullname=${product.fullName},
+                                    data-supplierid=${product.supplierId},
+                                    data-stok=${product.stok},
+                                    data-hargabeli=${product.hargaBeli},
+                                    data-hargajual1=${product.productPricesDTO[0].price},
+                                    data-hargajual2=${product.productPricesDTO[1].price},
+                                    data-hargajual3=${product.productPricesDTO[2].price},
+                                    data-maxqty1=${product.productPricesDTO[0].maximalCount},
+                                    data-maxqty2=${product.productPricesDTO[1].maximalCount},
+                                    data-maxqty3=${product.productPricesDTO[2].maximalCount},
+                                    data-percentage1=${product.productPricesDTO[0].percentage},
+                                    data-percentage2=${product.productPricesDTO[1].percentage},
+                                    data-percentage3=${product.productPricesDTO[2].percentage},
 
-                        <form th:if="${!#strings.equals(user.role, 'SUPER_ADMIN')}"
-                              th:action="@{|/user/delete/${user.userId}|}"
+                                "
+                        >Edit
+                        </button>
+
+                        <form th:action="@{|/products/delete/${product.productId}|}"
                               method="post"
                               style="display:inline;">
                             <button type="submit"
@@ -82,87 +101,224 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(productData)}">
-                    <td colspan="6" class="text-center text-muted">No Data found.</td>
-                </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Edit User Modal -->
-        <div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <form th:action="@{/product/edit}" method="post" id="editProductForm">
+        <!-- Edit & Add Barang Modal -->
+        <div
+                class="modal fade"
+                id="barangModal"
+                tabindex="-1"
+                aria-labelledby="editBarangLabel"
+                aria-hidden="true"
+        >
+            <div class="modal-dialog modal-lg">
+                <form th:action="@{/products/add}" method="post" id="barangForm">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                        <div class="modal-header py-2">
+                            <h5 class="modal-title" id="editBarangLabel">
+                                Edit/Tambah Master Barang
+                            </h5>
+                            <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                            ></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" id="editProductId" name="id"/>
-                            <div class="form-group">
-                                <label for="editName">Name</label>
-                                <input type="text" class="form-control" id="editName" name="name" required/>
-                            </div>
-                            <div class="form-group">
-                                <label for="editname">Username</label>
-                                <input type="text" class="form-control" id="editUsername" name="username" required/>
-                            </div>
-                            <div class="form-group">
-                                <label for="editRole">Role</label>
-                                <select class="form-control" id="editRole" name="role" required>
-                                    <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-                                    <option value="ADMIN_1">Admin 1</option>
-                                    <option value="ADMIN_2">Admin 2</option>
-                                    <option value="ADMIN_3">Admin 3</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Add Product Modal -->
-        <div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <form th:action="@{/product/add}" method="post" id="addProductForm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="addShortName">Kode Part</label>
-                                <input type="text" class="form-control" id="addShortName" name="shortName" required/>
-                            </div>
-                            <div class="form-group">
-                                <label for="addFullName">Username</label>
-                                <input type="text" class="form-control" id="addFullName" name="fullName" required/>
+                            <input type="hidden" id="productId" name="productId"/>
+                            <!-- Kode -->
+                            <div class="mb-3 row">
+                                <label class="col-sm-2 col-form-label" for="shortName">Kode Part</label>
+                                <div class="col-sm-4">
+                                    <input type="text" id="shortName" class="form-control" name="shortName"
+                                           oninput="this.value = this.value.toUpperCase();" required/>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="addSupplierPrice">Password</label>
-                                <input type="password" class="form-control" id="addSupplierPrice" name="supplierPrice" required/>
+                            <!-- Nama Barang -->
+                            <div class="mb-3 row">
+                                <label class="col-sm-2 col-form-label" for="fullName">Nama Barang</label>
+                                <div class="col-sm-6">
+                                    <input
+                                            type="text"
+                                            class="form-control"
+                                            id="fullName"
+                                            name="fullName"
+                                            oninput="this.value = this.value.toUpperCase();"
+                                            required
+                                    />
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="addRole">Role</label>
-                                <select class="form-control" id="addRole" name="role" required>
-                                    <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-                                    <option value="ADMIN_1">Admin 1</option>
-                                    <option value="ADMIN_2">Admin 2</option>
-                                    <option value="ADMIN_3">Admin 3</option>
-                                </select>
+
+                            <!-- Supplier (Searchable Dropdown) -->
+                            <div class="mb-3 row">
+                                <label class="col-sm-2 col-form-label">Supplier Utama</label>
+                                <div class="col-sm-4">
+                                    <select class="form-select highlight-field" id="supplierId" name="supplierId"
+                                            required>
+                                        <option value="" disabled selected>Pilih Supplier</option>
+                                        <option th:each="suppliers : ${supplierData}"
+                                                th:value="${suppliers.supplierId}"
+                                                th:text="${suppliers.supplierName}">
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
+
+                            <!-- Nama Barang -->
+                            <div class="mb-3 row">
+                                <label class="col-sm-2 col-form-label" for="stok">Stok</label>
+                                <div class="col-sm-2">
+                                    <input
+                                            type="number"
+                                            class="form-control"
+                                            id="stok"
+                                            name="stock"
+                                            value="0"
+                                            required
+                                    />
+                                </div>
+                            </div>
+
+                            <hr/>
+
+                            <!-- Harga Beli -->
+                            <div class="mb-3">
+                                <h6>Harga Beli</h6>
+                                <div class="row mb-2">
+                                    <label class="col-sm-3 col-form-label" for="supplierPrice">Harga Beli Satuan</label>
+                                    <div class="col-sm-3">
+                                        <input
+                                                type="text"
+                                                class="form-control rupiah-input"
+                                                id="supplierPrice"
+                                                name="supplierPrice"
+                                                required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr/>
+
+                            <!-- Harga Jual -->
+                            <h6>Harga Jual</h6>
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light">
+                                <tr>
+                                    <th></th>
+                                    <th>Maks Qty</th>
+                                    <th>Pct</th>
+                                    <th>Harga Jual Satuan</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td><p>Harga Jual 1</p></td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                name="productPricesDTO[0].maximalCount"
+                                                id="maxqty1"
+                                                value="0"
+                                                required/>
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                id="pct1"
+                                                name="productPricesDTO[0].percentage"
+                                                value="0"
+                                                step="0.01"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="form-control form-control-sm rupiah-input"
+                                                name="productPricesDTO[0].price"
+                                                id="hargaJual1"
+                                                value="0"
+                                                required/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><p>Harga Jual 2</p></td>
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="form-control form-control-sm"
+                                                name="productPricesDTO[1].maximalCount"
+                                                value="0"
+                                                id="maxqty2"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                name="productPricesDTO[1].percentage"
+                                                id="pct2"
+                                                value="0"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="form-control form-control-sm rupiah-input"
+                                                name="productPricesDTO[1].price"
+                                                value="0"
+                                                id="hargaJual2"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><p>Harga Jual 3</p></td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                name="productPricesDTO[2].maximalCount"
+                                                value="0"
+                                                id="maxqty3"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                id="pct3"
+                                                name="productPricesDTO[2].percentage"
+                                                value="0"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="form-control form-control-sm rupiah-input"
+                                                name="productPricesDTO[2].price"
+                                                value="0"
+                                                id="hargaJual3"
+                                        />
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-success">Add User</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <div class="modal-footer py-2">
+                            <button type="button" class="btn btn-primary" id="addProductForm">Simpan</button>
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                            >
+                                Tutup
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -174,20 +330,227 @@
 
 <!-- Tabler Core JS -->
 <script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+<!-- jQuery DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(document).ready(function () {
-        $('.edit-user-btn').on('click', function () {
-            const userId = $(this).data('userid');
-            const name = $(this).data('name');
-            const username = $(this).data('username');
-            const role = $(this).data('role');
+        const barangModal = document.getElementById('barangModal');
+        const barangForm = document.getElementById('barangForm');
+        const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0
+        });
 
-            $('#editUserId').val(userId);
-            $('#editName').val(name);
-            $('#editUsername').val(username);
-            $('#editRole').val(role);
+        const hargaBeliInput = document.getElementById("supplierPrice");
+        const hargaJual1 = document.getElementById("hargaJual1");
+        const hargaJual2 = document.getElementById("hargaJual2");
+        const hargaJual3 = document.getElementById("hargaJual3");
+        const pct1 = document.getElementById("pct1");
+        const pct2 = document.getElementById("pct2");
+        const pct3 = document.getElementById("pct3");
+        const rupiahInputs = document.querySelectorAll(".rupiah-input");
+        const rupiahPrices = document.querySelectorAll(".rupiah-price");
+
+        // --- Helper Functions ---
+        function updatePercentage(hargaJualInput, pctOutput){
+            const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
+            const hargaJual = parseCurrency(hargaJualRaw);
+
+            const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
+            const result = calculatedPct.toFixed(2);
+            pctOutput.value = result;
+        }
+
+        function updateHargaJual(pctInput, jualOutput) {
+            const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const percentage = parseFloat(pctInput.value) || 0;
+            const calculatedHargaJual = hargaBeli + (hargaBeli * (percentage / 100));
+            jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
+        }
+
+        function parseCurrency(input) {
+            if (!input) return 0;
+
+            // Remove currency symbol and spaces
+            let cleaned = input.replace(/[^0-9.,]/g, '');
+
+            // Remove thousands separator
+            cleaned = cleaned.replace(/\./g, '');
+
+            // Replace decimal comma with dot
+            cleaned = cleaned.replace(/,/g, '.');
+
+            return parseFloat(cleaned) || 0;
+        }
+
+        function cleanRupiahToNumber(value) {
+            return value.replace(/[^0-9]/g, '');
+        }
+
+        function clearForm() {
+            barangForm.reset();
+            $('#modalLabel').text('Tambah Master Barang & Jasa');
+            $('#barangForm').attr('action', '/products/add');
+            $('#productId').val(''); // Clear the hidden ID for new products
+            $('#shortName').focus();
+        }
+
+        function populateForm(data) {
+            $('#modalLabel').text('Edit Master Barang & Jasa');
+            $('#barangForm').attr('action', '/products/edit');
+            $('#productId').val(data.productid); // Set the hidden ID for editing
+
+            // Populate other fields
+            $('#shortName').val(data.shortname);
+            $('#fullName').val(data.fullname);
+            $('#supplierId').val(data.supplierid);
+            $('#stok').val(data.stok);
+            $('#supplierPrice').val(rupiahFormatter.format(data.hargabeli));
+
+            // Populate harga jual and pct fields
+            $('#hargaJual1').val(rupiahFormatter.format(data.hargajual1));
+            $('#hargaJual2').val(rupiahFormatter.format(data.hargajual2));
+            $('#hargaJual3').val(rupiahFormatter.format(data.hargajual3));
+            $('#pct1').val(data.percentage1);
+            $('#pct2').val(data.percentage2);
+            $('#pct3').val(data.percentage3);
+            $('#maxqty1').val(data.maxqty1);
+            $('#maxqty2').val(data.maxqty2);
+            $('#maxqty3').val(data.maxqty3);
+        }
+
+        // Listener for the "Add Product" button to open the modal and clear the form.
+        $('#add-barang-btn').on('click', function() {
+            clearForm();
+            $('#barangModal').modal('show');
+        });
+
+        // Listener for the "Edit" buttons to open the modal and populate the form.
+        // The data attributes on these buttons are crucial for this to work.
+        $('.edit-barang-btn').on('click', function() {
+            const data = $(this).data();
+            populateForm(data);
+            $('#barangModal').modal('show');
+        });
+
+        // Event listeners for price and percentage inputs (remains the same)
+        hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
+        hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
+        hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));
+        pct1.addEventListener('input', () => updateHargaJual(pct1, hargaJual1));
+        pct2.addEventListener('input', () => updateHargaJual(pct2, hargaJual2));
+        pct3.addEventListener('input', () => updateHargaJual(pct3, hargaJual3));
+
+        // Event listeners for Rupiah formatting (remains the same)
+        rupiahInputs.forEach(function (input) {
+            input.addEventListener("input", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+            input.addEventListener("blur", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+        });
+
+        document.querySelectorAll('.rupiah-price').forEach(element => {
+            const price = parseFloat(element.getAttribute('data-price'));
+            if (!isNaN(price)) {
+                element.textContent = rupiahFormatter.format(price);
+            }
+        });
+
+        // Form submission listener to clean up Rupiah values before submission.
+        document.getElementById("addProductForm").addEventListener("click", function (e) {
+            const form = document.getElementById("barangForm");
+            const formData = new FormData(form);
+
+            console.log("=== Form Data to be Sent ===");
+            for (const [name, value] of formData.entries()) {
+                console.log(`${name}: ${value}`);
+            }
+            e.preventDefault();
+            rupiahInputs.forEach(input => {
+                // Validate input value before cleaning
+                if (typeof input?.value === "undefined" || input.value === null || input.value.trim() === "") {
+                    return; // skip this input
+                }
+
+                const cleaned = cleanRupiahToNumber(input.value);
+                console.log("cleaned rupiah:", cleaned);
+                input.value = cleaned;
+            });
+
+            document.getElementById("barangForm").submit();
+        });
+
+<!--        Handle maxqty-->
+        const dirtyFlags = {
+          maxqty2: false,
+          maxqty3: false
+        };
+
+        function onInputChange() {
+          dirtyFlags[this.id] = true; // User changed the value, mark dirty
+        }
+
+        function validateOnBlur() {
+          const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
+          const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
+          const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
+
+          if (this.id === 'maxqty2') {
+            if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+
+          if (this.id === 'maxqty3') {
+            if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+        }
+
+        const maxqty2Input = document.getElementById('maxqty2');
+        const maxqty3Input = document.getElementById('maxqty3');
+
+        maxqty2Input.addEventListener('input', onInputChange);
+        maxqty3Input.addEventListener('input', onInputChange);
+
+        maxqty2Input.addEventListener('blur', validateOnBlur);
+        maxqty3Input.addEventListener('blur', validateOnBlur);
+
+<!--        Handle maxqty-->
+
+        $('#productTable').DataTable({
+            paging: true,         // aktifkan paging
+            pageLength: 10,       // jumlah data per halaman
+            lengthMenu: [5, 10, 25, 50], // opsi pilihan jumlah data
+            ordering: true,       // aktifkan sorting
+            order: [],            // default: tidak ada sort
+            language: {
+                search: "Cari: ",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "›",
+                    previous: "‹"
+                }
+            }
         });
     });
 </script>
 </body>
 </html>
+

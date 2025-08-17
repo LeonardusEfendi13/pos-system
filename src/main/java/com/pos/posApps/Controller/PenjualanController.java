@@ -2,6 +2,7 @@ package com.pos.posApps.Controller;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
+import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.ProductEntity;
@@ -44,7 +45,7 @@ public class PenjualanController {
 //            return "redirect:/login";
 //        }
 
-        List<ProductEntity> productEntity = productService.getProductData(clientId);
+        List<ProductDTO> productEntity = productService.getProductData(clientId);
         model.addAttribute("penjualanData", productEntity);
         model.addAttribute("activePage", "penjualan");
         return "display_penjualan";

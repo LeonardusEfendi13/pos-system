@@ -41,15 +41,9 @@ public class AuthService {
             String generatedToken = Generator.generateToken();
 
             //Get last token id
-            LoginTokenEntity tokenData = loginTokenRepository.findFirstByOrderByTokenIdDesc();
-            String newToken;
+            String lastTokenId = loginTokenRepository.findFirstByOrderByTokenIdDesc().map(LoginTokenEntity::getTokenId).orElse("LTN0");
+            String newToken = Generator.generateId(lastTokenId);
 
-            //If no data, then the id is 0, otherwise get last id from db
-            if(tokenData == null) {
-                newToken = Generator.generateId("LTN0");
-            }else{
-                newToken = Generator.generateId(tokenData.getTokenId());
-            }
 
             //Update Account Data
             accountData.setLastLogin(getCurrentTimestamp());

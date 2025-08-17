@@ -36,8 +36,8 @@ public class AccountService {
                 return false;
             }
             String hashedPassword = passwordEncoder.encode(request.getPassword());
-            String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().getAccountId();
-            String newAccountId = Generator.generateId(lastAccountId == null ? "ACC0" : lastAccountId);
+            String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse("ACC0");
+            String newAccountId = Generator.generateId(lastAccountId);
 
             ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
@@ -62,8 +62,8 @@ public class AccountService {
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(request.getId());
         if(accountEntity != null){
             System.out.println("Account found");
+            accountEntity.setName(request.getName());
             accountEntity.setUsername(request.getUsername());
-            accountEntity.setPassword(request.getPassword());
             accountEntity.setUsername(request.getUsername());
             accountEntity.setRole(request.getRole());
             accountRepository.save(accountEntity);
@@ -75,7 +75,7 @@ public class AccountService {
     }
 
     public List<UserDTO> getUserList(String clientId){
-        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNull(clientId);
+        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdAsc(clientId);
         return accountEntities.stream().map(user -> new UserDTO(
                 user.getAccountId(),
                 user.getName(),

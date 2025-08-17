@@ -2,16 +2,20 @@ package com.pos.posApps.Controller;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
+import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.ProductEntity;
+import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ProductService;
+import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -26,6 +30,7 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 public class ProductController {
     private AuthService authService;
     private ProductService productService;
+    private SupplierService supplierService;
 
     @GetMapping
     public String showListProducts(HttpSession session, Model model) {
@@ -37,16 +42,18 @@ public class ProductController {
             return "redirect:/login";
         }
 
-        List<ProductEntity> productEntity = productService.getProductData(clientId);
-
+        List<ProductDTO> productEntity = productService.getProductData(clientId);
+        List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
         System.out.println("product entity : " + productEntity);
         model.addAttribute("productData", productEntity);
+        model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("activePage", "masterBarang");
         return "display_products";
     }
 
     @PostMapping("/add")
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
+        System.out.println("Create product req : " + req);
         AccountEntity accEntity;
         ClientEntity clientData;
         try {
@@ -64,10 +71,13 @@ public class ProductController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted) {
+                System.out.println("success insert");
+
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Created");
                 return "redirect:/products";
             }
+            System.out.println("failed to insert");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
             return "redirect:/products";
@@ -77,9 +87,10 @@ public class ProductController {
         return "redirect:/login";
     }
 
-    @PostMapping("edit-products")
+    @PostMapping("/edit")
     public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
+        System.out.println("Edit Request : " + req);
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -106,8 +117,8 @@ public class ProductController {
         return "redirect:/login";
     }
 
-    @PostMapping("delete-products")
-    public String deleteProducts(HttpSession session, String productId, RedirectAttributes redirectAttributes) {
+    @PostMapping("delete/{productId}")
+    public String deleteProducts(HttpSession session, @PathVariable("productId") String productId, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
