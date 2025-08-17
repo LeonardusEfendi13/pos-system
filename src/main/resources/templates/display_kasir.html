@@ -80,10 +80,13 @@
 <body class="p-3">
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="card p-3 me-auto" style="width: 250px">
+        <div class="card p-3 me-auto" style="width: 450px">
             <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
-            <select id="customerSelect" class="form-select form-select-sm">
-            </select>
+            <div>
+                <select id="customerSelect" class="form-select form-select-sm">
+                </select>
+            </div>
+
         </div>
         <a th:href="@{/home}" class="btn btn-warning d-flex align-items-center"
         >Kembali ke Main Menu</a
@@ -278,6 +281,15 @@
     const returnAmountInput = document.getElementById("returnAmount");
     const saveButton = document.querySelector(".btn-primary");
 
+    paymentAmountInput.addEventListener("keypress", function (e) {
+      const char = String.fromCharCode(e.which);
+
+      // Only allow digits
+      if (!/[0-9]/.test(char)) {
+        e.preventDefault();
+      }
+    });
+
     const transactionNumberDisplay = document.getElementById(
       "transactionNumberDisplay"
     );
@@ -289,8 +301,21 @@
 
     function generateTransactionNumber() {
       const timestamp = Date.now();
+      console.log("timestamp : " + timestamp);
       const random = Math.floor(Math.random() * 10000);
       return `#TRX${timestamp}${random}`;
+    }
+
+    function formatTanggalWaktuIndonesia(date = new Date()) {
+      const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date);
+      const tanggal = new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      }).format(date);
+      const jam = date.getHours().toString().padStart(2, '0');
+      const menit = date.getMinutes().toString().padStart(2, '0');
+      const detik = date.getSeconds().toString().padStart(2, '0');
+
+      return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
     }
 
     function parseRupiah(rupiahString) {
@@ -666,7 +691,8 @@
 
       returnAmountInput.value = formatRupiah(returnAmount);
 
-      saveButton.disabled = returnAmount < 0;
+      saveButton.disabled = returnAmount <= 0;
+      saveButton.disabled = sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0
     }
 
     grandDiscountPercent.addEventListener("input", () => {
@@ -961,18 +987,24 @@
       returnAmountInput.value = "Rp 0";
       document.getElementById("printBill").checked = true;
 
-      transactionNumberDisplay.textContent = generateTransactionNumber();
+      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
       customerSelect.value = masterCustomers[0].id;
 
       addNewRow();
       calculateGrandTotal();
     }
 
+    function updateJam(){
+      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+
+    }
+
     // Init
     loadCustomers();
-    transactionNumberDisplay.textContent = generateTransactionNumber();
+    updateJam();
     addNewRow();
     calculateGrandTotal();
+    setInterval(updateJam, 1000);
 </script>
 </body>
 </html>
