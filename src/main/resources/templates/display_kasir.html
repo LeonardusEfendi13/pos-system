@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Auto-Add Row POS</title>
+    <title>Kasir</title>
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
             rel="stylesheet"
@@ -83,27 +83,31 @@
         <div class="card p-3 me-auto" style="width: 450px">
             <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
             <div>
-                <select id="customerSelect" class="form-select form-select-sm">
-                </select>
+                <select
+                        id="customerSelect"
+                        class="form-select form-select-sm"
+                ></select>
             </div>
-
         </div>
-        <a th:href="@{/home}" class="btn btn-warning d-flex align-items-center"
-        >Kembali ke Main Menu</a
+        <a
+                th:href="${penjualanData.transactionId == null and penjualanData.transactionDetailDTOS == null} ? '/home' : '/penjualan'"
+                class="btn btn-warning d-flex align-items-center"
         >
+            Kembali
+        </a>
     </div>
 
     <div class="table-responsive mb-3 scrollable-table">
         <table class="table table-bordered" id="sellTable">
             <thead class="table-light">
             <tr>
-                <th style="width: 5%;">No.</th>
+                <th style="width: 5%">No.</th>
                 <th style="width: 15%">Code</th>
                 <th style="width: 35%">Name</th>
                 <th style="width: 10%">Price</th>
                 <th style="width: 8%">Qty</th>
-                <th style="width: 8%">Disc %</th>
-                <th style="width: 8%">Disc Amt</th>
+                <th style="width: 8%">Disc (%)</th>
+                <th style="width: 8%">Disc (Rp)</th>
                 <th style="width: 12%">Total</th>
             </tr>
             </thead>
@@ -151,7 +155,10 @@
                     </div>
                     <div class="col-md-6 d-flex flex-column justify-content-center">
                         <div class="mb-2">
-                            <label for="paymentAmount" class="form-label" style="font-weight: bold;"
+                            <label
+                                    for="paymentAmount"
+                                    class="form-label"
+                                    style="font-weight: bold"
                             >Payment Amount</label
                             >
                             <input
@@ -162,7 +169,10 @@
                             />
                         </div>
                         <div class="mb-3">
-                            <label for="returnAmount" class="form-label" style="font-weight: bold;"
+                            <label
+                                    for="returnAmount"
+                                    class="form-label"
+                                    style="font-weight: bold"
                             >Return Amount</label
                             >
                             <input
@@ -199,7 +209,6 @@
                                     Batal
                                 </button>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -254,15 +263,21 @@
             </div>
         </div>
     </div>
+
+    <div id="receiptContent" style="display: none">
+        <!-- Your receipt layout (table, totals, etc.) -->
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     const masterProducts = /*[[${productData}]]*/ [];
-    console.log("master products :", JSON.stringify(masterProducts, null, 2));
-
     const masterCustomers = /*[[${customerData}]]*/ [];
-    console.log("master customer :", JSON.stringify(masterCustomers, null, 2));
+    const masterTransactions = /*[[${penjualanData}]]*/ [];
+    console.log(
+      "master Transaction Saved:",
+      JSON.stringify(masterTransactions, null, 2)
+    );
 </script>
 <script>
     const sellTableBody = document.getElementById("sellTableBody");
@@ -276,7 +291,9 @@
     const grandDiscountPercent = document.getElementById(
       "grandDiscountPercent"
     );
-    const grandDiscountAmount = document.getElementById("grandDiscountAmount");
+    const grandDiscountAmount = document.getElementById(
+      "grandDiscountAmount"
+    );
     const paymentAmountInput = document.getElementById("paymentAmount");
     const returnAmountInput = document.getElementById("returnAmount");
     const saveButton = document.querySelector(".btn-primary");
@@ -307,13 +324,17 @@
     }
 
     function formatTanggalWaktuIndonesia(date = new Date()) {
-      const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date);
-      const tanggal = new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric'
+      const hari = new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
       }).format(date);
-      const jam = date.getHours().toString().padStart(2, '0');
-      const menit = date.getMinutes().toString().padStart(2, '0');
-      const detik = date.getSeconds().toString().padStart(2, '0');
+      const tanggal = new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+      const jam = date.getHours().toString().padStart(2, "0");
+      const menit = date.getMinutes().toString().padStart(2, "0");
+      const detik = date.getSeconds().toString().padStart(2, "0");
 
       return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
     }
@@ -366,9 +387,8 @@
     function addNewRow(focus = true) {
       const rows = sellTableBody.querySelectorAll("tr");
       if (rows.length > 0) {
-        const lastRowCodeInput = rows[rows.length - 1].querySelector(
-          ".code-input"
-        );
+        const lastRowCodeInput =
+          rows[rows.length - 1].querySelector(".code-input");
         if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
           if (focus) {
             lastRowCodeInput.focus();
@@ -380,15 +400,15 @@
       const row = document.createElement("tr");
 
       row.innerHTML = `
-        <td class="row-number">${rowNumber}</td>
-        <td><input type="text" class="form-control form-control-sm code-input" /></td>
-        <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
-        <td><input type="text" class="form-control form-control-sm price-input" /></td>
-        <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
-        <td class="total-cell">Rp 0</td>
-      `;
+    <td class="row-number">${rowNumber}</td>
+    <td><input type="text" class="form-control form-control-sm code-input" /></td>
+    <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
+    <td><input type="text" class="form-control form-control-sm price-input" /></td>
+    <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
+    <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
+    <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
+    <td class="total-cell">Rp 0</td>
+  `;
 
       sellTableBody.appendChild(row);
 
@@ -422,7 +442,9 @@
 
             const currentRows = [...sellTableBody.querySelectorAll("tr")];
             const currentRowIndex = currentRows.indexOf(row);
-            const editableInputs = [...row.querySelectorAll("input:not([readonly])")];
+            const editableInputs = [
+              ...row.querySelectorAll("input:not([readonly])"),
+            ];
             const currentEditableIndex = editableInputs.indexOf(e.target);
 
             let nextRowIndex = currentRowIndex;
@@ -439,12 +461,17 @@
             } else if (e.key === "ArrowLeft") {
               nextEditableIndex = Math.max(0, currentEditableIndex - 1);
             } else if (e.key === "ArrowRight") {
-              nextEditableIndex = Math.min(editableInputs.length - 1, currentEditableIndex + 1);
+              nextEditableIndex = Math.min(
+                editableInputs.length - 1,
+                currentEditableIndex + 1
+              );
             }
 
             const targetRow =
               sellTableBody.querySelectorAll("tr")[nextRowIndex];
-            const targetEditableInputs = [...targetRow.querySelectorAll("input:not([readonly])")];
+            const targetEditableInputs = [
+              ...targetRow.querySelectorAll("input:not([readonly])"),
+            ];
             const targetInput = targetEditableInputs[nextEditableIndex];
 
             if (targetInput) {
@@ -575,7 +602,9 @@
     function fillProductRow(row, product) {
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
-      row.querySelector(".price-input").value = formatRupiah(product.productPricesDTO[0].price);
+      row.querySelector(".price-input").value = formatRupiah(
+        product.productPricesDTO[0].price
+      );
       row.querySelector(".qty-input").value = 1;
       row.querySelector(".discount-percent-input").value = 0;
       row.querySelector(".discount-amount-input").value = 0;
@@ -692,16 +721,47 @@
       returnAmountInput.value = formatRupiah(returnAmount);
 
       saveButton.disabled = returnAmount <= 0;
-      saveButton.disabled = sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0
+      saveButton.disabled =
+        sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
     }
 
     grandDiscountPercent.addEventListener("input", () => {
-      calculateGrandTotal();
+      updateGrandDiscountAmount();
     });
 
     grandDiscountAmount.addEventListener("input", () => {
-      calculateGrandTotal();
+      updateGrandDiscountPercent();
     });
+
+    function updateGrandDiscountAmount() {
+        const subTotal = parseFloat(
+            subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+        ) || 0;
+        const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
+
+        if (subTotal > 0 && discountPercent >= 0) {
+            const discountAmount = subTotal * (discountPercent / 100);
+            grandDiscountAmount.value = discountAmount.toFixed(0);
+        } else {
+            grandDiscountAmount.value = 0;
+        }
+        calculateGrandTotal();
+    }
+
+    function updateGrandDiscountPercent() {
+        const subTotal = parseFloat(
+            subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+        ) || 0;
+        const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
+
+        if (subTotal > 0 && discountAmount >= 0) {
+            const discountPercent = (discountAmount / subTotal) * 100;
+            grandDiscountPercent.value = discountPercent.toFixed(2);
+        } else {
+            grandDiscountPercent.value = 0;
+        }
+        calculateGrandTotal();
+    }
 
     function loadProductTable(filteredProducts = masterProducts) {
       productTableBody.innerHTML = "";
@@ -714,11 +774,11 @@
         row.style.cursor = "pointer";
 
         row.innerHTML = `
-          <td>${product.shortName}</td>
-          <td>${product.fullName}</td>
-          <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-          <td>${product.stok}</td>
-        `;
+      <td>${product.shortName}</td>
+      <td>${product.fullName}</td>
+      <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+      <td>${product.stok}</td>
+    `;
 
         row.addEventListener("dblclick", () => {
           selectProduct(product);
@@ -889,13 +949,13 @@
       masterCustomers.forEach((customer) => {
         const option = document.createElement("option");
         const isGeneral = customer.name === "Umum";
-        const selectedAttribute = isGeneral ? 'selected' : '';
-        const newOption = `<option value="${customer.id}" ${selectedAttribute}>${customer.name}</option>`;
-        customerSelect.insertAdjacentHTML('beforeend', newOption);
+        const selectedAttribute = isGeneral ? "selected" : "";
+        const newOption = `<option value="${customer.customerId}" ${selectedAttribute}>${customer.name}</option>`;
+        customerSelect.insertAdjacentHTML("beforeend", newOption);
       });
     }
 
-    function saveTransaction() {
+    async function saveTransaction() {
       const grandTotal =
         parseFloat(
           grandTotalDisplay.textContent
@@ -920,41 +980,30 @@
 
       const selectedCustomerId = customerSelect.value;
       const selectedCustomer = masterCustomers.find(
-        (c) => c.id === selectedCustomerId
+        (c) => c.customerId === selectedCustomerId
       );
 
       const transactionData = {
-        transactionNumber: transactionNumberDisplay.textContent,
-        customer: {
-          id: selectedCustomer.id,
-          name: selectedCustomer.name,
-        },
-        items: [],
+        customerId: selectedCustomer.customerId,
+        transactionDetailDtos: [],
         subTotal: parseFloat(
           subTotalDisplay.textContent
             .replace("Rp ", "")
             .replace(/\./g, "")
             .replace(",", ".")
         ),
-        grandDiscountPercent: parseFloat(grandDiscountPercent.value) || 0,
-        grandDiscountAmount: parseFloat(grandDiscountAmount.value) || 0,
-        grandTotal: grandTotal,
-        paymentAmount: paymentAmount,
-        returnAmount: parseRupiah(returnAmountInput.value),
-        printBill: document.getElementById("printBill").checked,
+        totalDisc: parseFloat(grandDiscountAmount.value) || 0,
+        totalPrice: grandTotal,
       };
 
       sellTableBody.querySelectorAll("tr").forEach((row) => {
         const code = row.querySelector(".code-input").value;
         if (code) {
-          transactionData.items.push({
+          transactionData.transactionDetailDtos.push({
             code: code,
             name: row.querySelector(".name-input").value,
             price: parseRupiah(row.querySelector(".price-input").value),
             qty: parseInt(row.querySelector(".qty-input").value),
-            discPercent: parseFloat(
-              row.querySelector(".discount-percent-input").value
-            ),
             discAmount: parseFloat(
               row.querySelector(".discount-amount-input").value
             ),
@@ -968,15 +1017,109 @@
           });
         }
       });
+      console.log(
+        "Transaction Saved:",
+        JSON.stringify(transactionData, null, 2)
+      );
 
-      console.log("Transaction Saved:", transactionData);
-      alert("Transaction saved successfully!");
+      const isPrintBill = document.getElementById("printBill");
+      console.log("is print bill : " + isPrintBill.value);
+      console.log("is print bill value : " + !isPrintBill.value);
 
-      if (transactionData.printBill) {
+      if (isPrintBill.value) {
+        console.log("entering is print bill");
+        <!--        function printReceiptContent() {-->
+        const printContents =
+          document.getElementById("receiptContent").innerHTML;
+        const printWindow = window.open();
+        printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print</title>
+            <style>
+              @media print {
+                @page {
+                  size: A5 landscape;
+                  margin: 0;
+                }
+
+                body {
+                  font-family: Arial, sans-serif;
+                  font-size: 12pt;
+                  margin: 10mm;
+                }
+              }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+          </body>
+        </html>
+      `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+
         console.log("Printing bill...");
       }
 
-      cancelTransaction();
+      console.log("is print bill " + transactionData.printBill);
+
+      console.log("start sending to be");
+      try {
+          let response;
+        if (
+          masterTransactions.transactionId !== null &&
+          masterTransactions.transactionDetailDTOS !== null
+        ) {
+          console.log("otw edit");
+          response = await fetch(`api/kasir/edit/${masterTransactions.transactionId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
+        }else{
+          console.log("otw add");
+          response = await fetch("api/kasir/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
+        }
+
+        console.log("response from be : ", !response.ok);
+
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const result = await response.text();
+        console.log("Transaction Saved:", result);
+        alert("Transaction saved successfully!");
+
+        if (transactionData.printBill) {
+          console.log("Printing bill...");
+        }
+
+        if (
+          masterTransactions.transactionId !== null &&
+          masterTransactions.transactionDetailDTOS !== null
+        ) {
+          window.location.href = '/penjualan';
+        }else{
+          window.location.href = '/kasir';
+
+<!--          cancelTransaction();-->
+        }
+
+      } catch (error) {
+        console.error("Failed to save transaction:", error);
+        alert("Failed to save transaction. Please try again.");
+      }
     }
 
     function cancelTransaction() {
@@ -988,18 +1131,132 @@
       document.getElementById("printBill").checked = true;
 
       transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
-      customerSelect.value = masterCustomers[0].id;
+      const customerUmum = masterCustomers.find(
+        (c) => c.customerId === "CST2"
+      ).customerId;
+      customerSelect.value = customerUmum;
+      console.log("master cust 0 : " + customerUmum);
 
       addNewRow();
       calculateGrandTotal();
     }
 
-    function updateJam(){
+    function updateJam() {
       transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+    }
 
+    function loadTransaction(transaction) {
+      // Clear the current sales table
+      sellTableBody.innerHTML = "";
+
+      // Set the grand total discounts and customer
+      if (transaction.subtotal > 0) {
+        const discountPercent =
+          (transaction.totalDisc / transaction.subtotal) * 100;
+        grandDiscountPercent.value = discountPercent.toFixed(2); // e.g. "12.50"
+        console.log(
+          "grand disc percent value:",
+          grandDiscountPercent.value + "%"
+        );
+      } else {
+        grandDiscountPercent.value = "0.00";
+        console.warn(
+          "Subtotal is zero or invalid, cannot compute discount percent."
+        );
+      }
+      grandDiscountAmount.value = transaction.totalDisc;
+
+      // Set customer if you want
+      if (transaction.customerDTO.customerId) {
+        customerSelect.value = transaction.customerDTO.customerId;
+      }
+
+      // Populate the table with transaction details
+      transaction.transactionDetailDTOS.forEach((detail, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+        <td class="row-number">${index + 1}</td>
+        <td><input type="text" class="form-control form-control-sm code-input" value="${
+          detail.code
+        }" /></td>
+        <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
+          detail.name
+        }" /></td>
+        <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
+          detail.price
+        )}" /></td>
+        <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
+          detail.qty
+        }" /></td>
+        <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
+          (detail.discAmount / (detail.total + detail.discAmount)) * 100
+        }" /></td>
+        <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+          detail.discAmount
+        }" /></td>
+        <td class="total-cell">${formatRupiah(detail.total)}</td>
+    `;
+
+        // Re-attach event listeners to the new row's inputs
+        const codeInput = row.querySelector(".code-input");
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+        const discPercentInput = row.querySelector(".discount-percent-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+
+        priceInput.addEventListener("focus", handleFormattedFocus);
+        priceInput.addEventListener("blur", handleFormattedBlur);
+        priceInput.addEventListener("input", () => updateTotalRow(row));
+        qtyInput.addEventListener("input", () => updateTotalRow(row));
+        discPercentInput.addEventListener("input", () => {
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountPercent = parseFloat(discPercentInput.value) || 0;
+          if (price * qty > 0) {
+            const discountAmount = price * qty * (discountPercent / 100);
+            discAmountInput.value = discountAmount.toFixed(0);
+          } else {
+            discAmountInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
+        discAmountInput.addEventListener("input", () => {
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountAmount = parseFloat(discAmountInput.value) || 0;
+          if (price * qty > 0) {
+            const discountPercent = (discountAmount / (price * qty)) * 100;
+            discPercentInput.value = discountPercent.toFixed(2);
+          } else {
+            discPercentInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
+        row.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+          selectedRow = row;
+          showContextMenu(e.pageX, e.pageY);
+        });
+
+        sellTableBody.appendChild(row);
+      });
+
+      // Add a new empty row for a new item
+      addNewRow();
+
+      // Recalculate and display the grand total
+      calculateGrandTotal();
     }
 
     // Init
+    if (
+      masterTransactions.transactionId !== null &&
+      masterTransactions.transactionDetailDTOS !== null
+    ) {
+      console.log("otw init master transactions");
+      loadTransaction(masterTransactions);
+    }
     loadCustomers();
     updateJam();
     addNewRow();

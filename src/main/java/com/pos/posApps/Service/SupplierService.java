@@ -18,7 +18,7 @@ public class SupplierService {
     SupplierRepository supplierRepository;
 
     public List<SupplierEntity> getSupplierList(String clientId){
-        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdAsc(clientId);
+        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientId);
     }
 
     @Transactional
@@ -30,7 +30,7 @@ public class SupplierService {
                 return false;
             }
 
-            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
+            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderByCreatedAtDesc();
             String lastSupplierId = lastSupplierData == null ? "SPP0" : lastSupplierData.getSupplierId();
             String newSupplierId = Generator.generateId(lastSupplierId);
 

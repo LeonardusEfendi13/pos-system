@@ -8,13 +8,13 @@ import java.util.List;
 
 @Repository
 public interface SupplierRepository extends JpaRepository<SupplierEntity, String> {
-    SupplierEntity findFirstBySupplierId(String supplierId);
+    SupplierEntity findFirstBySupplierIdAndDeletedAtIsNull(String supplierId);
 
-    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdAsc(String clientId);
+    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(String clientId);
 
     SupplierEntity findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierName, String clientId);
 
-    SupplierEntity findFirstByOrderBySupplierIdDesc();
+    SupplierEntity findFirstByOrderByCreatedAtDesc();
 
     SupplierEntity findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierId, String clientId);
 

@@ -9,12 +9,10 @@ import java.util.Optional;
 
 @Repository
 public interface ProductPricesRepository extends JpaRepository<ProductPricesEntity, String> {
-    Optional<ProductPricesEntity> findFirstByOrderByProductPricesIdDesc();
-
-    ProductPricesEntity findFirstByProductPricesId(String productPricesId);
+    Optional<ProductPricesEntity> findFirstByOrderByCreatedAtDesc();
 
     void deleteAllByProductEntity_ProductId(String productId);
 
-    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(String productId);
+    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByCreatedAtDesc(String productId);
 
 }

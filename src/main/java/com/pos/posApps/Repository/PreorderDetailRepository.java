@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEntity, String> {
-    Optional<PreorderDetailEntity> findFirstByOrderByPreorderDetailIdDesc();
+    Optional<PreorderDetailEntity> findFirstByOrderByCreatedAtDesc();
 
     PreorderDetailEntity findFirstByPreorderDetailId(String preorderDetailId);
 
-    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderIdOrderByPreorderDetailIdAsc(String preorderId);
+    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderIdOrderByCreatedAtDesc(String preorderId);
 }

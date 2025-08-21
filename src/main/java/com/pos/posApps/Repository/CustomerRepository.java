@@ -11,9 +11,9 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, String> {
     CustomerEntity findByNameAndDeletedAtIsNullAndClientEntity_ClientId(String name, String clientId);
 
-    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdAsc(String clientId);
+    CustomerEntity findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(String customerId, String clientId);
 
-    Optional<CustomerEntity> findFirstByOrderByCustomerIdDesc();
+    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtAsc(String clientId);
 
-    CustomerEntity findByCustomerIdAndDeletedAtIsNull(String customerId);
+    Optional<CustomerEntity> findFirstByOrderByCreatedAtDesc();
 }

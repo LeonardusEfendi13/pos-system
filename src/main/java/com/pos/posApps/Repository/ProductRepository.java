@@ -10,13 +10,13 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, String> {
 
-    List<ProductEntity> findAllByClientEntity_ClientIdOrderByProductIdAsc(String clientId);
+    List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByCreatedAtDesc(String clientId);
 
-    List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByProductIdAsc(String clientId);
+    ProductEntity findFirstByFullNameOrShortNameOrProductIdAndDeletedAtIsNullAndClientEntity_ClientId(String fullName, String shortName, String productId, String clientId);
 
-    ProductEntity findFirstByFullNameOrShortNameOrProductId(String fullName, String shortName, String productId);
+    ProductEntity findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, String clientId);
 
-    Optional<ProductEntity> findFirstByOrderByProductIdDesc();
+    Optional<ProductEntity> findFirstByOrderByCreatedAtDesc();
 
     ProductEntity findFirstByProductIdAndDeletedAtIsNull(String productId);
 }

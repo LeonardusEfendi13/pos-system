@@ -1,4 +1,4 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.CreateClientRequest;
 import com.pos.posApps.DTO.Dtos.EditClientRequest;

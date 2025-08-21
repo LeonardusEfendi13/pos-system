@@ -16,21 +16,23 @@ public class TransactionDetailEntity {
     @Column(name = "transaction_detail_id")
     private String transactionDetailId;
 
-    @Column(name = "total_product")
-    private Long totalProduct;
+    @Column(name = "short_name")
+    private String shortName;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private ProductEntity productEntity;
+    @Column(name = "full_name")
+    private String fullName;
 
-    @Column(name = "discount")
-    private BigDecimal discount;
+    @Column(name = "qty")
+    private Long qty;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "price")
+    private BigDecimal price;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "disc_amount")
+    private BigDecimal discountAmount;
+
+    @Column(name = "total_price")
+    private BigDecimal totalPrice;
 
     @ManyToOne
     @JoinColumn(name = "transaction_id")
@@ -38,4 +40,10 @@ public class TransactionDetailEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

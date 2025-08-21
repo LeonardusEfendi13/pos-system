@@ -1,19 +1,18 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.EditUserRequest;
+import com.pos.posApps.DTO.Dtos.RegisterRequest;
+import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
-import com.pos.posApps.Entity.CustomerEntity;
+import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.CustomerService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -21,15 +20,15 @@ import java.util.List;
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
-@RequestMapping("customer")
+@RequestMapping("user")
 @AllArgsConstructor
-public class CustomerController {
+public class AccountController {
 
-    private CustomerService customerService;
+    private AccountService accountService;
     private AuthService authService;
 
     @GetMapping
-    public String showCustomer(HttpSession session, Model model) {
+    public String showUser(HttpSession session, Model model) {
         String clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -38,21 +37,19 @@ public class CustomerController {
             return "redirect:/login";
         }
 
-        List<CustomerEntity> customerList = customerService.getCustomerList(clientId);
-        model.addAttribute("customerData", customerList);
-        System.out.println("customer data : " + customerList);
-        model.addAttribute("activePage", "customer");
-        return "display_customer";
+        List<UserDTO> userList = accountService.getUserList(clientId);
+        model.addAttribute("userData", userList);
+        model.addAttribute("activePage", "user");
+        return "display_user";
     }
 
     @PostMapping("/add")
-    public String registerCustomer(
+    public String register(
             HttpSession session,
-            @Valid String customerName,
+            @Valid RegisterRequest registerRequest,
             RedirectAttributes redirectAttributes) {
         String clientId;
         AccountEntity accEntity;
-        System.out.println("Entering add customer : " +customerName);
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -64,27 +61,26 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = customerService.doCreateCustomer(customerName, clientId);
+            boolean isInserted = accountService.doCreateAccount(registerRequest, clientId);
             if (isInserted) {
-                System.out.println("Customer Created");
+                System.out.println("Account Created");
                 redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Customer Created");
-                return "redirect:/customer";
+                redirectAttributes.addFlashAttribute("message", "Account Created");
+                return "redirect:/user";
             }
         }
-        System.out.println("Failed create customer");
         redirectAttributes.addFlashAttribute("status", "failed");
-        redirectAttributes.addFlashAttribute("message", "Failed to Create Customer");
-        return "redirect:/customer";
+        redirectAttributes.addFlashAttribute("message", "Failed to Create Account");
+        return "redirect:/user";
     }
 
     @PostMapping("/edit")
-    public String editCustomer(
+    public String editUser(
             HttpSession session,
-            @Valid String customerId,
-            @Valid String customerName,
+            @Valid EditUserRequest request,
             RedirectAttributes redirectAttributes
     ) {
+        System.out.println("Entering edit endpoint");
         Roles role;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -93,19 +89,21 @@ public class CustomerController {
             return "redirect:/login";
         }
 
+        System.out.println("Edit user request : " + request);
+
         if (authService.hasAccessToModifyData(role)) {
-            boolean isUpdated = customerService.doUpdateCustomer(customerId, customerName);
+            boolean isUpdated = accountService.doUpdateAccount(request);
             if (isUpdated) {
-                System.out.println("Customer success");
+                System.out.println("account success");
                 redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Customer Updated");
-                return "redirect:/customer";
+                redirectAttributes.addFlashAttribute("message", "Account Updated");
+                return "redirect:/user";
             }
-            System.out.println("Customer Failed");
+            System.out.println("account Failed");
 
             redirectAttributes.addFlashAttribute("status", "failed");
-            redirectAttributes.addFlashAttribute("message", "Failed to update Customer");
-            return "redirect:/customer";
+            redirectAttributes.addFlashAttribute("message", "Failed to update Account");
+            return "redirect:/user";
         }
 
         System.out.println("No Access to Update Account Data");
@@ -114,13 +112,14 @@ public class CustomerController {
         return "redirect:/login";
     }
 
-    @PostMapping("/delete/{customerId}")
+    @PostMapping("/delete/{userId}")
     public String deleteUser(
             HttpSession session,
-            @PathVariable("customerId") String customerId,
+            @PathVariable("userId") String userId,
             RedirectAttributes redirectAttributes
     ) {
         Roles role;
+
         try {
             String token = (String) session.getAttribute(authSessionKey);
             role = authService.validateToken(token).getRole();
@@ -129,21 +128,21 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(role)) {
-            boolean isDeleted = customerService.deleteCustomer(customerId);
+            boolean isDeleted = accountService.doDisableAccount(userId);
             if (isDeleted) {
                 System.out.println("success delete");
                 redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Customer Deleted");
-                return "redirect:/customer";
+                redirectAttributes.addFlashAttribute("message", "Account Deleted");
+                return "redirect:/user";
             }
             System.out.println("failed delete");
             redirectAttributes.addFlashAttribute("status", "failed");
-            redirectAttributes.addFlashAttribute("message", "Failed to Delete Customer");
-            return "redirect:/customer";
+            redirectAttributes.addFlashAttribute("message", "Failed to Delete Account");
+            return "redirect:/user";
         }
 
-        redirectAttributes.addFlashAttribute("status", "failed");
-        redirectAttributes.addFlashAttribute("message", "No Access to Update Account Data");
+        //todo add redirect attributes
+        System.out.println("No Access to Update Account Data");
         return "redirect:/login";
     }
 }

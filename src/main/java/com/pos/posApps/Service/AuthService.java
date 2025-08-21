@@ -41,7 +41,7 @@ public class AuthService {
             String generatedToken = Generator.generateToken();
 
             //Get last token id
-            String lastTokenId = loginTokenRepository.findFirstByOrderByTokenIdDesc().map(LoginTokenEntity::getTokenId).orElse("LTN0");
+            String lastTokenId = loginTokenRepository.findFirstByOrderByCreatedAtDesc().map(LoginTokenEntity::getTokenId).orElse("LTN0");
             String newToken = Generator.generateId(lastTokenId);
 
 
@@ -66,7 +66,7 @@ public class AuthService {
     }
 
     public AccountEntity validateToken(String token) {
-        LoginTokenEntity loginTokenEntity = loginTokenRepository.findByToken(token);
+        LoginTokenEntity loginTokenEntity = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
         if(loginTokenEntity == null) {
             return null;
         }

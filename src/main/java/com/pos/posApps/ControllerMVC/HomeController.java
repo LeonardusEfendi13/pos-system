@@ -1,7 +1,6 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Util.Utils;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;

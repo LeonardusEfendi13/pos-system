@@ -20,7 +20,7 @@ public class ClientService {
     @Transactional
     public boolean doCreateClient(CreateClientRequest req){
         try{
-            String lastClientId = clientRepository.findFirstByOrderByClientIdDesc().map(ClientEntity::getClientId).orElse("CLN0");
+            String lastClientId = clientRepository.findFirstByOrderByCreatedAtDesc().map(ClientEntity::getClientId).orElse("CLN0");
             String newClientId = Generator.generateId(lastClientId);
             ClientEntity clientEntity = new ClientEntity();
             clientEntity.setClientId(newClientId);

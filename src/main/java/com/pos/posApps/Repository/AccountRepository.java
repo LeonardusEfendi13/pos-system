@@ -11,10 +11,9 @@ import java.util.Optional;
 public interface AccountRepository extends JpaRepository<AccountEntity, String> {
     AccountEntity findByUsernameAndDeletedAtIsNull(String username);
 
-    Optional<AccountEntity> findFirstByOrderByAccountIdDesc();
+    Optional<AccountEntity> findFirstByOrderByCreatedAtDesc();
 
-    List<AccountEntity> findAllByClientEntity_ClientId(String clientId);
-    List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdAsc(String clientId);
+    List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(String clientId);
 
     AccountEntity findByAccountIdAndDeletedAtIsNull(String id);
 }

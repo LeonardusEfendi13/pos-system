@@ -1,8 +1,6 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.LoginRequest;
-import com.pos.posApps.Entity.AccountEntity;
-import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.LoginTokenService;
 import com.pos.posApps.Util.Utils;

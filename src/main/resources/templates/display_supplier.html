@@ -38,14 +38,15 @@
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
     <div class="page-wrapper">
         <div class="container">
-            <h1 style="text-align:center">Welcome to Supplier Menu</h1>
+            <h2 style="text-align:center;padding-top:10px">Daftar Supplier</h2>
 
             <!-- Add User Button -->
             <div style="text-align:end; padding-left:20px">
                 <button class="btn btn-success add-user-btn" data-bs-toggle="modal" data-bs-target="#addSupplierModal">Add Supplier </button>
             </div>
 
-            <table id="supplierTable" class="table table-striped table-bordered">
+            <div style="max-height: 70vh; overflow-y: auto;">
+                <table id="supplierTable" class="table table-striped table-bordered">
                 <thead class="sticky-top">
                 <tr>
                     <th scope="col">No</th>
@@ -84,6 +85,7 @@
                 </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Edit Supplier Modal -->

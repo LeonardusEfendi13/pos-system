@@ -17,7 +17,7 @@ public class LoginTokenService {
     @Transactional
     public boolean deleteToken(String token){
         try{
-            LoginTokenEntity loginTokenEntity = loginTokenRepository.findByToken(token);
+            LoginTokenEntity loginTokenEntity = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
             if(loginTokenEntity == null){
                 return false;
             }

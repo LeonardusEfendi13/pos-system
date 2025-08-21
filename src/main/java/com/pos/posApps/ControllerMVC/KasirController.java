@@ -1,16 +1,18 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
+import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.Entity.CustomerEntity;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.CustomerService;
-import com.pos.posApps.Service.KasirService;
-import com.pos.posApps.Service.ProductService;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -22,12 +24,13 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 @AllArgsConstructor
 public class KasirController {
     private AuthService authService;
-    private KasirService kasirService;
     private CustomerService customerService;
     private ProductService productService;
+    private PenjualanService penjualanService;
 
     @GetMapping
-    public String displayKasir(Model model, HttpSession session){
+    public String displayKasir(Model model, HttpSession session, String transactionId){
+        System.out.println("display called");
         String clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -37,12 +40,28 @@ public class KasirController {
         }
         List<ProductDTO> productEntity = productService.getProductData(clientId);
         List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
-        System.out.println("product entity : " + productEntity);
-        System.out.println("customer entity : " + customerEntities);
 
+        PenjualanDTO penjualanData = new PenjualanDTO();
+        if(transactionId != null){
+            penjualanData = penjualanService.getPenjualanDataById(clientId, transactionId);
+        }
+        model.addAttribute("penjualanData", penjualanData);
         model.addAttribute("activePage", "kasir");
         model.addAttribute("productData", productEntity);
         model.addAttribute("customerData", customerEntities);
+        return "display_kasir";
+    }
+
+    @PostMapping("/add")
+    public String addKasir(@Valid @RequestBody CreateTransactionRequest req, Model model, HttpSession session){
+        String clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+        System.out.println("request received : " + req);
         return "display_kasir";
     }
 }

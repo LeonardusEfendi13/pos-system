@@ -1,4 +1,4 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;

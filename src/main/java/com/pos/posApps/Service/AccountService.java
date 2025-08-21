@@ -36,7 +36,7 @@ public class AccountService {
                 return false;
             }
             String hashedPassword = passwordEncoder.encode(request.getPassword());
-            String lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse("ACC0");
+            String lastAccountId = accountRepository.findFirstByOrderByCreatedAtDesc().map(AccountEntity::getAccountId).orElse("ACC0");
             String newAccountId = Generator.generateId(lastAccountId);
 
             ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
@@ -75,7 +75,7 @@ public class AccountService {
     }
 
     public List<UserDTO> getUserList(String clientId){
-        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdAsc(clientId);
+        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientId);
         return accountEntities.stream().map(user -> new UserDTO(
                 user.getAccountId(),
                 user.getName(),

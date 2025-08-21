@@ -34,7 +34,7 @@ public class CustomerService {
             if(customerEntity != null){
                 return false;
             }
-            String lastCustomerId = customerRepository.findFirstByOrderByCustomerIdDesc().map(CustomerEntity::getCustomerId).orElse("CST0");
+            String lastCustomerId = customerRepository.findFirstByOrderByCreatedAtDesc().map(CustomerEntity::getCustomerId).orElse("CST0");
             String newCustomerId = Generator.generateId(lastCustomerId);
 
             ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
@@ -51,8 +51,8 @@ public class CustomerService {
 
     }
 
-    public boolean doUpdateCustomer(String customerId, String customerName){
-        CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId);
+    public boolean doUpdateCustomer(String customerId, String customerName, String clientId){
+        CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(customerId, clientId);
         if(customerEntity != null){
             System.out.println("Customer found");
             customerEntity.setName(customerName);
@@ -65,11 +65,11 @@ public class CustomerService {
     }
 
     public List<CustomerEntity> getCustomerList(String clientId){
-        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdAsc(clientId);
+        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtAsc(clientId);
     }
 
-    public boolean deleteCustomer(String customerId){
-        CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId);
+    public boolean deleteCustomer(String customerId, String clientId){
+        CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(customerId, clientId);
         if(customerEntity == null){
             System.out.println("Customer Not Found");
             return false;

@@ -1,4 +1,4 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

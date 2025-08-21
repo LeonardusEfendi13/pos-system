@@ -1,22 +1,17 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.CreateProductRequest;
-import com.pos.posApps.DTO.Dtos.EditProductRequest;
-import com.pos.posApps.DTO.Dtos.ProductPricesDTO;
-import com.pos.posApps.Entity.ClientEntity;
-import com.pos.posApps.Entity.ProductEntity;
-import com.pos.posApps.Entity.ProductPricesEntity;
-import com.pos.posApps.Entity.SupplierEntity;
-import com.pos.posApps.Repository.ProductPricesRepository;
-import com.pos.posApps.Repository.ProductRepository;
-import com.pos.posApps.Repository.SupplierRepository;
+import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.Entity.*;
+import com.pos.posApps.Repository.*;
 import com.pos.posApps.Util.Generator;
+import org.hibernate.sql.Insert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.pos.posApps.Util.Generator.generateId;
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -25,111 +20,128 @@ public class KasirService {
     ProductRepository productRepository;
 
     @Autowired
-    SupplierRepository supplierRepository;
+    TransactionRepository transactionRepository;
 
     @Autowired
-    ProductPricesRepository productPricesRepository;
+    TransactionDetailRepository transactionDetailRepository;
 
-    public List<ProductEntity> getProductData(String clientId){
-        return productRepository.findAllByClientEntity_ClientIdOrderByProductIdAsc(clientId);
-    }
+    @Autowired
+    CustomerRepository customerRepository;
 
     @Transactional
-    public boolean insertProducts(CreateProductRequest req, ClientEntity clientData){
+    public boolean createTransaction(CreateTransactionRequest req, ClientEntity clientData){
         try{
-            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductId(req.getFullName(), req.getShortName(), req.getProductId());
-            if(productEntity != null){
-                System.out.println("Product already exists");
+            //Get Supplier Entity
+            CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
+            if (customerEntity == null){
                 return false;
             }
+            //Get last Transaction id
+            String lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse("TSC0");
+            String newTransactionId = Generator.generateId(lastTransactionId);
 
-            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse("PDT0");
-            String newProductId = Generator.generateId(lastProductId);
+            //insert the transaction data
+            TransactionEntity transactionEntity = new TransactionEntity();
+            transactionEntity.setClientEntity(clientData);
+            transactionEntity.setTransactionId(newTransactionId);
+            transactionEntity.setCustomerEntity(customerEntity);
+            transactionEntity.setTotalPrice(req.getTotalPrice());
+            transactionEntity.setTotalDiscount(req.getTotalDisc());
+            transactionEntity.setSubtotal(req.getSubTotal());
+            transactionRepository.save(transactionEntity);
 
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
-            if(supplierEntity == null){
-                System.out.println("Can't find supplier with id : " + req.getSupplierId());
-                return false;
-            }
+            System.out.println("Created transaction : " + newTransactionId);
 
-            //Insert Product
-            ProductEntity newProduct = new ProductEntity();
-            newProduct.setProductId(newProductId);
-            newProduct.setShortName(req.getShortName());
-            newProduct.setFullName(req.getFullName());
-            newProduct.setSupplierPrice(req.getSupplierPrice());
-            newProduct.setSupplierEntity(supplierEntity);
-            newProduct.setStock(req.getStock());
-            newProduct.setClientEntity(clientData);
-            productRepository.save(newProduct);
+            //Insert all the transaction details
+            String lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByCreatedAtDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse("TDL0");
+            String newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
-            //Insert Product Prices
-            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
-            String newProductPricesId = Generator.generateId(lastProductPricesId);
+            for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
+                TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+                transactionDetailEntity.setShortName(dtos.getCode());
+                transactionDetailEntity.setFullName(dtos.getName());
+                transactionDetailEntity.setQty(dtos.getQty());
+                transactionDetailEntity.setPrice(dtos.getPrice());
+                transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
+                transactionDetailEntity.setTotalPrice(dtos.getTotal());
+                transactionDetailEntity.setTransactionEntity(transactionEntity);
+                transactionDetailRepository.save(transactionDetailEntity);
+                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
-            for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
-                ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                newProductPrices.setProductPricesId(newProductPricesId);
-                newProductPrices.setProductEntity(newProduct);
-                newProductPrices.setPrice(productPricesData.getPrice());
-                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
-                newProductPricesId = Generator.generateId(newProductPricesId);
-                productPricesRepository.save(newProductPrices);
+                //Update product stock
+                ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                Long newStock = productEntity.getStock() - dtos.getQty();
+                productEntity.setStock(newStock);
+                productRepository.save(productEntity);
             }
             return true;
         }catch (Exception e){
+            System.out.println("Exception catched : " + e);
             return false;
         }
-
     }
 
     @Transactional
-    public boolean editProducts(EditProductRequest req){
-        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
-        if(productEntity == null){
-            System.out.println("Product not found");
+    public boolean editTransaction(String transactionId, CreateTransactionRequest req, String clientId){
+        try{
+            //Get Supplier Entity
+            CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientId);
+            if (customerEntity == null){
+                System.out.println("customer ga nemu");
+                return false;
+            }
+            //Check if transaction exist
+            TransactionEntity transactionEntity = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
+            if(transactionEntity == null){
+                System.out.println("transaction ga nemu");
+                return false;
+            }
+
+            //insert the transaction data
+            transactionEntity.setCustomerEntity(customerEntity);
+            transactionEntity.setTotalPrice(req.getTotalPrice());
+            transactionEntity.setTotalDiscount(req.getTotalDisc());
+            transactionEntity.setSubtotal(req.getSubTotal());
+            transactionRepository.save(transactionEntity);
+
+            //Restore stock from old transaction
+            List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByCreatedAtDesc(transactionId);
+            for(TransactionDetailEntity old : oldTransactions){
+                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
+                if(product != null){
+                    Long restoredStock = product.getStock() + old.getQty();
+                    product.setStock(restoredStock);
+                    productRepository.save(product);
+                }
+            }
+
+            //Delete all product prices related to product id
+            transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
+
+            //Insert all the transaction details
+            String lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByCreatedAtDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse("TDL0");
+            String newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+
+            for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
+                if(dtos != null) {
+                    TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                    transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+                    transactionDetailEntity.setShortName(dtos.getCode());
+                    transactionDetailEntity.setFullName(dtos.getName());
+                    transactionDetailEntity.setQty(dtos.getQty());
+                    transactionDetailEntity.setPrice(dtos.getPrice());
+                    transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
+                    transactionDetailEntity.setTotalPrice(dtos.getTotal());
+                    transactionDetailEntity.setTransactionEntity(transactionEntity);
+                    transactionDetailRepository.save(transactionDetailEntity);
+                    newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+                }
+            }
+            return true;
+        }catch (Exception e){
+            System.out.println("Exception catched : " + e);
             return false;
         }
-
-        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
-        if(supplierEntity == null){
-            System.out.println("Can't find supplier with id : " + req.getSupplierId());
-            return false;
-        }
-        productEntity.setShortName(req.getShortName());
-        productEntity.setFullName(req.getFullName());
-        productEntity.setSupplierPrice(req.getSupplierPrice());
-        productEntity.setSupplierEntity(supplierEntity);
-        productEntity.setStock(req.getStock());
-        productRepository.save(productEntity);
-
-        for(ProductPricesDTO productPrices : req.getProductPricesDTO()){
-            ProductPricesEntity productPricesEntity = productPricesRepository.findFirstByProductPricesId(productPrices.getProductId());
-            productPricesEntity.setProductEntity(productEntity);
-            productPricesEntity.setPrice(productPrices.getPrice());
-            productPricesEntity.setMaximalCount(productPrices.getMaximalCount());
-            productPricesRepository.save(productPricesEntity);
-        }
-        return true;
-    }
-
-    @Transactional
-    public boolean deleteProducts(String productId){
-        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
-        if(productEntity == null){
-            System.out.println("Product not found");
-            return false;
-        }
-        productEntity.setDeletedAt(getCurrentTimestamp());
-        productRepository.save(productEntity);
-
-        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(productId);
-
-        for(ProductPricesEntity data : productPricesEntity){
-            data.setDeletedAt(getCurrentTimestamp());
-            productPricesRepository.save(data);
-        }
-
-        return true;
     }
 }

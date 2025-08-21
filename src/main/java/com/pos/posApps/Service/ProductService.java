@@ -33,7 +33,7 @@ public class ProductService {
     ProductPricesRepository productPricesRepository;
 
     public List<ProductDTO> getProductData(String clientId) {
-        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByProductIdAsc(clientId);
+        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByCreatedAtDesc(clientId);
         return productData.stream().map(product -> new ProductDTO(
                 product.getProductId(),
                 product.getShortName(),
@@ -56,16 +56,16 @@ public class ProductService {
     @Transactional
     public boolean insertProducts(CreateProductRequest req, ClientEntity clientData){
         try{
-            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductId(req.getFullName(), req.getShortName(), req.getProductId());
+            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
             if(productEntity != null){
                 System.out.println("Product already exists");
                 return false;
             }
 
-            String lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse("PDT0");
+            String lastProductId = productRepository.findFirstByOrderByCreatedAtDesc().map(ProductEntity::getProductId).orElse("PDT0");
             String newProductId = Generator.generateId(lastProductId);
 
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
@@ -84,7 +84,7 @@ public class ProductService {
 
             System.out.println("success save new product");
             //Insert Product Prices
-            String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
+            String lastProductPricesId = productPricesRepository.findFirstByOrderByCreatedAtDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
             String newProductPricesId = Generator.generateId(lastProductPricesId);
 
             for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
@@ -116,7 +116,7 @@ public class ProductService {
             return false;
         }
 
-        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierId(req.getSupplierId());
+        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
         if(supplierEntity == null){
             System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;
@@ -131,7 +131,7 @@ public class ProductService {
         //Delete all product prices related to product id
         productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-        String lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
+        String lastProductPricesId = productPricesRepository.findFirstByOrderByCreatedAtDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
         String newProductPricesId = Generator.generateId(lastProductPricesId);
 
         for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
@@ -147,15 +147,6 @@ public class ProductService {
                 productPricesRepository.save(newProductPrices);
             }
         }
-
-//        for(ProductPricesDTO productPrices : req.getProductPricesDTO()){
-//            ProductPricesEntity productPricesEntity = productPricesRepository.findFirstByProductPricesId(productPrices.getProductPricesId());
-//            productPricesEntity.setProductEntity(productEntity);
-//            productPricesEntity.setPrice(productPrices.getPrice());
-//            productPricesEntity.setPercentage(productPrices.getPercentage());
-//            productPricesEntity.setMaximalCount(productPrices.getMaximalCount());
-//            productPricesRepository.save(productPricesEntity);
-//        }
         return true;
     }
 
@@ -169,7 +160,7 @@ public class ProductService {
         productEntity.setDeletedAt(getCurrentTimestamp());
         productRepository.save(productEntity);
 
-        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(productId);
+        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByCreatedAtDesc(productId);
 
         for(ProductPricesEntity data : productPricesEntity){
             data.setDeletedAt(getCurrentTimestamp());

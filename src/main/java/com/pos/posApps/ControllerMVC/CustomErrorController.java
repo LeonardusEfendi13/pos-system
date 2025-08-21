@@ -1,4 +1,4 @@
-package com.pos.posApps.Controller;
+package com.pos.posApps.ControllerMVC;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
