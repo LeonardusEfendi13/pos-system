@@ -20,7 +20,7 @@ public class HomeController {
     @GetMapping
     public String home(HttpSession session, Model model){
 //        Utils.validateSession(session, null, "home");
-        String clientId;
+        Long clientId;
         try{
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();

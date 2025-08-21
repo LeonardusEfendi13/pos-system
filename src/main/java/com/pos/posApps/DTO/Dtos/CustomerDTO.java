@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomerDTO {
-    private String customerId;
+    private Long customerId;
     private String customerName;
 }

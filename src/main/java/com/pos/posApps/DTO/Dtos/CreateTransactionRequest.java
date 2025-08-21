@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class CreateTransactionRequest {
-    private String customerId;
+    private Long customerId;
     private List<TransactionDetailDTO> transactionDetailDtos;
     private BigDecimal subTotal;
     private BigDecimal totalPrice;

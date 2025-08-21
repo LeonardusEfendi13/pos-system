@@ -29,19 +29,19 @@ public class PreorderService {
     @Autowired
     PreorderDetailRepository preorderDetailRepository;
 
-    public List<PreorderEntity> getPreorderData(String clientId, String supplierId){
-        if(supplierId == null || supplierId.isBlank()){
-            return preorderRepository.findAllByClientEntity_ClientIdOrderByCreatedAtDesc(clientId);
+    public List<PreorderEntity> getPreorderData(Long clientId, Long supplierId){
+        if(supplierId == null){
+            return preorderRepository.findAllByClientEntity_ClientIdOrderByPreorderIdDesc(clientId);
         }else{
-            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdOrderByCreatedAtDesc(clientId, supplierId);
+            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdOrderByPreorderIdDesc(clientId, supplierId);
         }
     }
 
     @Transactional
     public boolean insertPreorder(CreatePreorderRequest req, ClientEntity clientData){
         try{
-            String lastPreorderId = preorderRepository.findFirstByOrderByCreatedAtDesc().map(PreorderEntity::getPreorderId).orElse("POR0");
-            String newPreorderId = Generator.generateId(lastPreorderId);
+            Long lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().map(PreorderEntity::getPreorderId).orElse(0L);
+            Long newPreorderId = Generator.generateId(lastPreorderId);
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
@@ -56,8 +56,8 @@ public class PreorderService {
             preorderRepository.save(newPreorder);
 
             //Insert Preorder Details
-            String lastPreorderDetailsId = preorderDetailRepository.findFirstByOrderByCreatedAtDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse("POL0");
-            String newPreorderDetailsId = Generator.generateId(lastPreorderDetailsId);
+            Long lastPreorderDetailsId = preorderDetailRepository.findFirstByOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
+            Long newPreorderDetailsId = Generator.generateId(lastPreorderDetailsId);
 
             for(PreorderDetailDTO preorderDetailData : req.getPreorderDetailData()){
                 PreorderDetailEntity newData = new PreorderDetailEntity();
@@ -113,7 +113,7 @@ public class PreorderService {
     }
 
     @Transactional
-    public boolean deleteProducts(String preorderId){
+    public boolean deleteProducts(Long preorderId){
         PreorderEntity preorderEntity = preorderRepository.findFirstByPreorderIdAndDeletedAtIsNull(preorderId);
         if(preorderEntity == null){
             System.out.println("Preorder not found");
@@ -122,7 +122,7 @@ public class PreorderService {
         preorderEntity.setDeletedAt(getCurrentTimestamp());
         preorderRepository.save(preorderEntity);
 
-        List<PreorderDetailEntity> preorderDetailEntities = preorderDetailRepository.findAllByPreorderEntity_PreorderIdOrderByCreatedAtDesc(preorderId);
+        List<PreorderDetailEntity> preorderDetailEntities = preorderDetailRepository.findAllByPreorderEntity_PreorderIdOrderByPreorderDetailIdDesc(preorderId);
 
         for(PreorderDetailEntity data : preorderDetailEntities){
             data.setDeletedAt(getCurrentTimestamp());

@@ -29,7 +29,7 @@ public class SupplierController {
 
     @GetMapping
     public String displaySupplier(HttpSession session, Model model){
-        String clientId;
+        Long clientId;
         try{
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -76,7 +76,7 @@ public class SupplierController {
     }
 
     @PostMapping("/edit")
-    public String editSupplier(String supplierId, String supplierName, HttpSession session, RedirectAttributes redirectAttributes){
+    public String editSupplier(Long supplierId, String supplierName, HttpSession session, RedirectAttributes redirectAttributes){
         AccountEntity accEntity;
         ClientEntity clientData;
         try{
@@ -109,7 +109,7 @@ public class SupplierController {
 
     @PostMapping("/delete/{supplierId}")
     public String disableSupplier(
-            @PathVariable("supplierId") String supplierId, HttpSession session, RedirectAttributes redirectAttributes){
+            @PathVariable("supplierId") Long supplierId, HttpSession session, RedirectAttributes redirectAttributes){
         AccountEntity accEntity;
         ClientEntity clientData;
         try{

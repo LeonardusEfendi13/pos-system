@@ -12,7 +12,7 @@ public class AccountEntity {
 
     @Id
     @Column(name = "account_id")
-    private String accountId;
+    private Long accountId;
 
     @Column(name = "name")
     private String name;

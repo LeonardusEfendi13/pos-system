@@ -16,7 +16,7 @@ public class Utils {
     public static String validateSession(HttpSession session, String targetEndpoint, String targetPage ){
         try{
             String token = (String) session.getAttribute(authSessionKey);
-            String clientId = authService.validateToken(token).getClientEntity().getClientId();
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
             if(clientId == null){
                 System.out.println("Masuk sini");
                 return "redirect:/login";

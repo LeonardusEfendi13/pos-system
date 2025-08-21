@@ -7,16 +7,16 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface SupplierRepository extends JpaRepository<SupplierEntity, String> {
-    SupplierEntity findFirstBySupplierIdAndDeletedAtIsNull(String supplierId);
+public interface SupplierRepository extends JpaRepository<SupplierEntity, Long> {
+    SupplierEntity findFirstBySupplierIdAndDeletedAtIsNull(Long supplierId);
 
-    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(String clientId);
+    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(Long clientId);
 
-    SupplierEntity findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierName, String clientId);
+    SupplierEntity findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierName, Long clientId);
 
-    SupplierEntity findFirstByOrderByCreatedAtDesc();
+    SupplierEntity findFirstByOrderBySupplierIdDesc();
 
-    SupplierEntity findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierId, String clientId);
+    SupplierEntity findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(Long supplierId, Long clientId);
 
-    boolean existsBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNullAndSupplierIdNot(String supplierName, String clientId, String supplierId);
+    boolean existsBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNullAndSupplierIdNot(String supplierName, Long clientId, Long supplierId);
 }

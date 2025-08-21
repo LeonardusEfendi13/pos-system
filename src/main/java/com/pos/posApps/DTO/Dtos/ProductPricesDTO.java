@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductPricesDTO {
-    private String productPricesId;
-    private String productId;
+    private Long productPricesId;
+    private Long productId;
     private BigDecimal percentage;
     private BigDecimal price;
     private Long maximalCount;

@@ -3,7 +3,6 @@ package com.pos.posApps.Service;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.LoginTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

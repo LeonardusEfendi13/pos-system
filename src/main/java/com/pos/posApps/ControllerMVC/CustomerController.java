@@ -30,7 +30,7 @@ public class CustomerController {
 
     @GetMapping
     public String showCustomer(HttpSession session, Model model) {
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -50,7 +50,7 @@ public class CustomerController {
             HttpSession session,
             @Valid String customerName,
             RedirectAttributes redirectAttributes) {
-        String clientId;
+        Long clientId;
         AccountEntity accEntity;
         System.out.println("Entering add customer : " +customerName);
         try {
@@ -81,11 +81,11 @@ public class CustomerController {
     @PostMapping("/edit")
     public String editCustomer(
             HttpSession session,
-            @Valid String customerId,
+            @Valid Long customerId,
             @Valid String customerName,
             RedirectAttributes redirectAttributes
     ) {
-        String clientId;
+        Long clientId;
         AccountEntity accEntity;
         Roles role;
         try {
@@ -121,10 +121,10 @@ public class CustomerController {
     @PostMapping("/delete/{customerId}")
     public String deleteUser(
             HttpSession session,
-            @PathVariable("customerId") String customerId,
+            @PathVariable("customerId") Long customerId,
             RedirectAttributes redirectAttributes
     ) {
-        String clientId;
+        Long clientId;
         AccountEntity accEntity;
         Roles role;
         try {

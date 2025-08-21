@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProductPricesRepository extends JpaRepository<ProductPricesEntity, String> {
-    Optional<ProductPricesEntity> findFirstByOrderByCreatedAtDesc();
+public interface ProductPricesRepository extends JpaRepository<ProductPricesEntity, Long> {
+    Optional<ProductPricesEntity> findFirstByOrderByProductPricesIdDesc();
 
-    void deleteAllByProductEntity_ProductId(String productId);
+    void deleteAllByProductEntity_ProductId(Long productId);
 
-    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByCreatedAtDesc(String productId);
+    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByProductPricesIdDesc(Long productId);
 
 }

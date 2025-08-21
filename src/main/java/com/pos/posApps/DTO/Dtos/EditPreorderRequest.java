@@ -8,13 +8,13 @@ import java.util.List;
 @Data
 public class EditPreorderRequest {
     @NotBlank(message = "Preorder id must not null")
-    private String preorderId;
+    private Long preorderId;
 
     @NotBlank(message = "supplier id must not null")
-    private String supplierId;
+    private Long supplierId;
 
     @NotBlank(message = "Client id must not null")
-    private String clientId;
+    private Long clientId;
 
     private List<PreorderDetailDTO> preorderDetailData;
 

@@ -14,7 +14,7 @@ public class TransactionDetailEntity {
 
     @Id
     @Column(name = "transaction_detail_id")
-    private String transactionDetailId;
+    private Long transactionDetailId;
 
     @Column(name = "short_name")
     private String shortName;

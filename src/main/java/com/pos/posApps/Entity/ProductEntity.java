@@ -14,7 +14,7 @@ public class ProductEntity {
 
     @Id
     @Column(name = "product_id")
-    private String productId;
+    private Long productId;
 
     @Column(name = "short_name")
     private String shortName;

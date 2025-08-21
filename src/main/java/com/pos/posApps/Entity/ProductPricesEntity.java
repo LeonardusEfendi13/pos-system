@@ -12,7 +12,7 @@ public class ProductPricesEntity {
 
     @Id
     @Column(name = "product_prices_id")
-    private String productPricesId;
+    private Long productPricesId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")

@@ -28,14 +28,14 @@ public class CustomerService {
     private ClientRepository clientRepository;
 
     @Transactional
-    public boolean doCreateCustomer(String customerName, String clientId){
+    public boolean doCreateCustomer(String customerName, Long clientId){
         try{
             CustomerEntity customerEntity = customerRepository.findByNameAndDeletedAtIsNullAndClientEntity_ClientId(customerName, clientId);
             if(customerEntity != null){
                 return false;
             }
-            String lastCustomerId = customerRepository.findFirstByOrderByCreatedAtDesc().map(CustomerEntity::getCustomerId).orElse("CST0");
-            String newCustomerId = Generator.generateId(lastCustomerId);
+            Long lastCustomerId = customerRepository.findFirstByOrderByCustomerIdDesc().map(CustomerEntity::getCustomerId).orElse(0L);
+            Long newCustomerId = Generator.generateId(lastCustomerId);
 
             ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
@@ -51,7 +51,7 @@ public class CustomerService {
 
     }
 
-    public boolean doUpdateCustomer(String customerId, String customerName, String clientId){
+    public boolean doUpdateCustomer(Long customerId, String customerName, Long clientId){
         CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(customerId, clientId);
         if(customerEntity != null){
             System.out.println("Customer found");
@@ -64,11 +64,11 @@ public class CustomerService {
         }
     }
 
-    public List<CustomerEntity> getCustomerList(String clientId){
-        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtAsc(clientId);
+    public List<CustomerEntity> getCustomerList(Long clientId){
+        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(clientId);
     }
 
-    public boolean deleteCustomer(String customerId, String clientId){
+    public boolean deleteCustomer(Long customerId, Long clientId){
         CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(customerId, clientId);
         if(customerEntity == null){
             System.out.println("Customer Not Found");

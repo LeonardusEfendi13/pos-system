@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class ClientEntity {
     @Id
     @Column(name = "client_id")
-    private String clientId;
+    private Long clientId;
 
     @Column(name = "name")
     private String name;

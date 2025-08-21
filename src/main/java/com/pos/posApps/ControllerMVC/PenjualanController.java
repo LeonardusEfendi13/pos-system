@@ -1,9 +1,12 @@
 package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.CustomerDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -28,12 +31,14 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 public class PenjualanController {
     private AuthService authService;
     private PenjualanService penjualanService;
+    private CustomerService customerService;
 
     @GetMapping
-    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate){
+    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId){
         System.out.println("STart date : " +startDate);
         System.out.println("end date : " +endDate);
-        String clientId;
+        System.out.println("cust id : "+ customerId);
+        Long clientId;
         try{
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -42,17 +47,19 @@ public class PenjualanController {
             return "redirect:/login";
         }
 
-        startDate = (startDate == null || startDate.isEmpty()) ? LocalDate.now().minusDays(7).toString() : startDate;
-        endDate = (endDate == null || endDate.isEmpty())? LocalDate.now().toString() : endDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
 
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
 
-        List<PenjualanDTO> penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate);
+        List<PenjualanDTO> penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId);
+        List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
         System.out.println("penjualan data : " + penjualanData);
         model.addAttribute("penjualanData", penjualanData);
+        model.addAttribute("customerData", customerData);
         model.addAttribute("activePage", "penjualan");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
@@ -60,7 +67,7 @@ public class PenjualanController {
     }
 
     @PostMapping("/delete/{transactionId}")
-    public String deletePenjualan(@PathVariable("transactionId") String transactionId, HttpSession session, RedirectAttributes redirectAttributes){
+    public String deletePenjualan(@PathVariable("transactionId") Long transactionId, HttpSession session, RedirectAttributes redirectAttributes){
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

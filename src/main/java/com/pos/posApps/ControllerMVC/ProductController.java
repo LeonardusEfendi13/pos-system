@@ -33,7 +33,7 @@ public class ProductController {
 
     @GetMapping
     public String showListProducts(HttpSession session, Model model) {
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -117,7 +117,7 @@ public class ProductController {
     }
 
     @PostMapping("delete/{productId}")
-    public String deleteProducts(HttpSession session, @PathVariable("productId") String productId, RedirectAttributes redirectAttributes) {
+    public String deleteProducts(HttpSession session, @PathVariable("productId") Long productId, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

@@ -44,10 +44,10 @@ public class RestControllerCashier {
     }
 
     @PostMapping("/edit/{transactionId}")
-    public ResponseEntity<String> editTransaction(@PathVariable("transactionId") String transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
+    public ResponseEntity<String> editTransaction(@PathVariable("transactionId") Long transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
         System.out.println("transaction Id : " + transactionId);
         System.out.println("Edit Request  received : " + req);
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             System.out.println("token : " + token);

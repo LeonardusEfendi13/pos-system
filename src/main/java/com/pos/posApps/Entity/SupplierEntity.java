@@ -11,7 +11,7 @@ public class SupplierEntity {
 
     @Id
     @Column(name = "supplier_id")
-    private String supplierId;
+    private Long supplierId;
 
     @Column(name = "supplier_name")
     private String supplierName;

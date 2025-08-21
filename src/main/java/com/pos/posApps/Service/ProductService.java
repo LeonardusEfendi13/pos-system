@@ -32,8 +32,8 @@ public class ProductService {
     @Autowired
     ProductPricesRepository productPricesRepository;
 
-    public List<ProductDTO> getProductData(String clientId) {
-        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByCreatedAtDesc(clientId);
+    public List<ProductDTO> getProductData(Long clientId) {
+        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
         return productData.stream().map(product -> new ProductDTO(
                 product.getProductId(),
                 product.getShortName(),
@@ -54,19 +54,21 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean insertProducts(CreateProductRequest req, ClientEntity clientData){
-        try{
-            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
-            if(productEntity != null){
-                System.out.println("Product already exists");
-                return false;
+    public boolean insertProducts(CreateProductRequest req, ClientEntity clientData) {
+        try {
+            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientId(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
+            if (productEntity != null) {
+                if(productEntity.getDeletedAt() == null){
+                    System.out.println("Product already exists");
+                    return false;
+                }
             }
 
-            String lastProductId = productRepository.findFirstByOrderByCreatedAtDesc().map(ProductEntity::getProductId).orElse("PDT0");
-            String newProductId = Generator.generateId(lastProductId);
+            Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
+            Long newProductId = Generator.generateId(lastProductId);
 
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
-            if(supplierEntity == null){
+            if (supplierEntity == null) {
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
             }
@@ -84,24 +86,22 @@ public class ProductService {
 
             System.out.println("success save new product");
             //Insert Product Prices
-            String lastProductPricesId = productPricesRepository.findFirstByOrderByCreatedAtDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
-            String newProductPricesId = Generator.generateId(lastProductPricesId);
+            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
+            Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
-            for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
+            for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 System.out.println("Entering loop product prices ");
-                if(productPricesData != null){
-                        ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                        newProductPrices.setProductPricesId(newProductPricesId);
-                        newProductPrices.setProductEntity(newProduct);
-                        newProductPrices.setPrice(productPricesData.getPrice());
-                        newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
-                        newProductPrices.setPercentage(productPricesData.getPercentage());
-                        newProductPricesId = Generator.generateId(newProductPricesId);
-                        productPricesRepository.save(newProductPrices);
-                }
+                ProductPricesEntity newProductPrices = new ProductPricesEntity();
+                newProductPrices.setProductPricesId(newProductPricesId);
+                newProductPrices.setProductEntity(newProduct);
+                newProductPrices.setPrice(productPricesData.getPrice());
+                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
+                newProductPrices.setPercentage(productPricesData.getPercentage());
+                newProductPricesId = Generator.generateId(newProductPricesId);
+                productPricesRepository.save(newProductPrices);
             }
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Exception : " + e);
             return false;
         }
@@ -109,15 +109,15 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean editProducts(EditProductRequest req){
+    public boolean editProducts(EditProductRequest req) {
         ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
-        if(productEntity == null){
+        if (productEntity == null) {
             System.out.println("Product not found");
             return false;
         }
 
         SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
-        if(supplierEntity == null){
+        if (supplierEntity == null) {
             System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;
         }
@@ -131,38 +131,36 @@ public class ProductService {
         //Delete all product prices related to product id
         productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-        String lastProductPricesId = productPricesRepository.findFirstByOrderByCreatedAtDesc().map(ProductPricesEntity::getProductPricesId).orElse("PRS0");
-        String newProductPricesId = Generator.generateId(lastProductPricesId);
+        Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
+        Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
-        for(ProductPricesDTO productPricesData : req.getProductPricesDTO()){
+        for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
             System.out.println("Entering loop product prices ");
-            if(productPricesData != null){
-                ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                newProductPrices.setProductPricesId(newProductPricesId);
-                newProductPrices.setProductEntity(productEntity);
-                newProductPrices.setPrice(productPricesData.getPrice());
-                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
-                newProductPrices.setPercentage(productPricesData.getPercentage());
-                newProductPricesId = Generator.generateId(newProductPricesId);
-                productPricesRepository.save(newProductPrices);
-            }
+            ProductPricesEntity newProductPrices = new ProductPricesEntity();
+            newProductPrices.setProductPricesId(newProductPricesId);
+            newProductPrices.setProductEntity(productEntity);
+            newProductPrices.setPrice(productPricesData.getPrice());
+            newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
+            newProductPrices.setPercentage(productPricesData.getPercentage());
+            newProductPricesId = Generator.generateId(newProductPricesId);
+            productPricesRepository.save(newProductPrices);
         }
         return true;
     }
 
     @Transactional
-    public boolean deleteProducts(String productId){
+    public boolean deleteProducts(Long productId) {
         ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
-        if(productEntity == null){
+        if (productEntity == null) {
             System.out.println("Product not found");
             return false;
         }
         productEntity.setDeletedAt(getCurrentTimestamp());
         productRepository.save(productEntity);
 
-        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByCreatedAtDesc(productId);
+        List<ProductPricesEntity> productPricesEntity = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdDesc(productId);
 
-        for(ProductPricesEntity data : productPricesEntity){
+        for (ProductPricesEntity data : productPricesEntity) {
             data.setDeletedAt(getCurrentTimestamp());
             productPricesRepository.save(data);
         }

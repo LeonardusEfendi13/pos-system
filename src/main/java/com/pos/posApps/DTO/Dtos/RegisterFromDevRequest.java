@@ -9,5 +9,5 @@ public class RegisterFromDevRequest {
     private RegisterRequest registerRequest;
 
     @NotBlank(message = "Client Id cannot be empty")
-    String clientId;
+    Long clientId;
 }

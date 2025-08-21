@@ -8,15 +8,15 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProductRepository extends JpaRepository<ProductEntity, String> {
+public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
-    List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullOrderByCreatedAtDesc(String clientId);
+    List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId);
 
-    ProductEntity findFirstByFullNameOrShortNameOrProductIdAndDeletedAtIsNullAndClientEntity_ClientId(String fullName, String shortName, String productId, String clientId);
+    ProductEntity findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientId(String fullName, String shortName, Long productId, Long clientId);
 
-    ProductEntity findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, String clientId);
+    ProductEntity findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
-    Optional<ProductEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<ProductEntity> findFirstByOrderByProductIdDesc();
 
-    ProductEntity findFirstByProductIdAndDeletedAtIsNull(String productId);
+    ProductEntity findFirstByProductIdAndDeletedAtIsNull(Long productId);
 }

@@ -13,11 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductDTO {
-    private String productId;
+    private Long productId;
     private String shortName;
     private String fullName;
     private BigDecimal hargaBeli;
     private Long stok;
     private List<ProductPricesDTO> productPricesDTO;
-    private String supplierId;
+    private Long supplierId;
 }

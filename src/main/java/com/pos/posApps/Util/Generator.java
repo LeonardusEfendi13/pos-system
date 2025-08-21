@@ -20,14 +20,8 @@ public class Generator {
     //Transaction Detail = TDL
     //Transaction = TSC
     //Client = CLN
-    public static String generateId(String lastId){
-        String code = lastId.substring(0,3);
-        long id = Long.parseLong(lastId.substring(3));
-
-        //+1 from last id
-        long finalId = id + 1;
-
-        return code + finalId;
+    public static Long generateId(Long lastId){
+        return lastId + 1;
     }
 
     public static String generateToken(){

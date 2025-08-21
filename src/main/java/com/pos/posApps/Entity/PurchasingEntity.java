@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -12,7 +13,7 @@ public class PurchasingEntity {
 
     @Id
     @Column(name = "purchasing_id")
-    private String purchasingId;
+    private Long purchasingId;
 
     @Column(name = "purchasing_number")
     private String purchasingNumber;
@@ -35,4 +36,23 @@ public class PurchasingEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "po_date")
+    private LocalDateTime poDate;
+
+    @Column(name = "po_due_date")
+    private LocalDateTime poDueDate;
+
+    @Column(name = "is_cash")
+    private boolean isCash;
+
+    @Column(name = "is_paid")
+    private boolean isPaid;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private ClientEntity clientEntity;
+
+    @OneToMany(mappedBy = "purchasingEntity")
+    private List<PurchasingDetailEntity> purchasingDetailEntities;
 }

@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CustomerRepository extends JpaRepository<CustomerEntity, String> {
-    CustomerEntity findByNameAndDeletedAtIsNullAndClientEntity_ClientId(String name, String clientId);
+public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> {
+    CustomerEntity findByNameAndDeletedAtIsNullAndClientEntity_ClientId(String name, Long clientId);
 
-    CustomerEntity findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(String customerId, String clientId);
+    CustomerEntity findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(Long customerId, Long clientId);
 
-    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtAsc(String clientId);
+    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(Long clientId);
 
-    Optional<CustomerEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<CustomerEntity> findFirstByOrderByCustomerIdDesc();
 }

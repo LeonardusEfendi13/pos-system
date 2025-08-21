@@ -11,7 +11,7 @@
             <ul class="navbar-nav pt-lg-3">
                 <!-- Kasir -->
                 <li class="nav-item" th:classappend="${activePage} == 'home' ? 'active' ">
-                    <a th:href="@{/home}" class="nav-link" >
+                    <a th:href="@{/home}" class="nav-link">
                         <span class="nav-link-title">Dashboard</span>
                     </a>
                 </li>
@@ -52,29 +52,48 @@
                     </a>
                 </li>
 
-                <!--                <li class="nav-item dropdown">-->
-                <!--                    <a class="nav-link dropdown-toggle" href="#sidebar-penjualan" data-bs-toggle="collapse"-->
-                <!--                       role="button" aria-expanded="false" aria-controls="sidebar-penjualan">-->
-                <!--                        <span class="nav-link-title">Penjualan</span>-->
-                <!--                    </a>-->
-                <!--                    <div class="collapse" id="sidebar-penjualan">-->
-                <!--                        <ul class="nav flex-column ms-3">-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link" href="/penjualan/tambah">Tambah Penjualan</a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link" href="/penjualan/daftar">Daftar Penjualan</a>-->
-                <!--                            </li>-->
-                <!--                        </ul>-->
-                <!--                    </div>-->
-                <!--                </li>-->
-
-                <!-- Pembelian -->
-                <li class="nav-item" th:classappend="${activePage} == 'pembelian' ? 'active' ">
-                    <a class="nav-link" th:href="@{/pembelian}">
+                <li class="nav-item dropdown" th:classappend="${activePage} == 'pembelian' ? 'active' ">
+                    <a class="nav-link dropdown-toggle" href="#sidebar-pembelian" data-bs-toggle="collapse"
+                       role="button" aria-expanded="false" aria-controls="sidebar-pembelian">
                         <span class="nav-link-title">Pembelian</span>
                     </a>
+                    <div class="collapse" id="sidebar-pembelian">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/pembelian/tambah">Tambah Pembelian</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/pembelian">Riwayat Pembelian</a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
+
+<!--                &lt;!&ndash; Pembelian Dropdown &ndash;&gt;-->
+<!--                <li class="nav-item dropdown"-->
+<!--                    th:classappend="${activePage} == 'pembelian' or ${activePage} == 'supplier' ? 'active show'">-->
+
+<!--                    <a class="nav-link dropdown-toggle"-->
+<!--                       id="pembelianDropdown"-->
+<!--                       data-bs-toggle="dropdown"-->
+<!--                       aria-expanded="false">-->
+<!--                        <span class="nav-link-title">Pembelian</span>-->
+<!--                    </a>-->
+
+<!--                    <ul class="dropdown-menu" aria-labelledby="pembelianDropdown">-->
+<!--                        <li>-->
+<!--                            <a class="dropdown-item"-->
+<!--                               th:href="@{/kasir/pembelian}"-->
+<!--                               th:classappend="${activePage} == 'supplier' ? 'active'">Tambah Pembelian</a>-->
+<!--                        </li>-->
+<!--                        <li>-->
+<!--                            <a class="dropdown-item"-->
+<!--                               th:href="@{/pembelian}"-->
+<!--                               th:classappend="${activePage} == 'pembelian' ? 'active'">Riwayat Pembelian</a>-->
+<!--                        </li>-->
+
+<!--                    </ul>-->
+<!--                </li>-->
 
                 <!-- Customer -->
                 <li class="nav-item" th:classappend="${activePage} == 'customer' ? 'active' ">

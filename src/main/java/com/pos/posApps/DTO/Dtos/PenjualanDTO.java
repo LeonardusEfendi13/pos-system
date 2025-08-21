@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PenjualanDTO {
-    private String transactionId;
+    private Long transactionId;
     private CustomerDTO customerDTO;
     private BigDecimal subTotal;
     private BigDecimal totalPrice;

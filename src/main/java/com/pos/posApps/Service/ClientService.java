@@ -20,8 +20,8 @@ public class ClientService {
     @Transactional
     public boolean doCreateClient(CreateClientRequest req){
         try{
-            String lastClientId = clientRepository.findFirstByOrderByCreatedAtDesc().map(ClientEntity::getClientId).orElse("CLN0");
-            String newClientId = Generator.generateId(lastClientId);
+            Long lastClientId = clientRepository.findFirstByOrderByClientIdDesc().map(ClientEntity::getClientId).orElse(0L);
+            Long newClientId = Generator.generateId(lastClientId);
             ClientEntity clientEntity = new ClientEntity();
             clientEntity.setClientId(newClientId);
             clientEntity.setName(req.getName());
@@ -48,7 +48,7 @@ public class ClientService {
         return true;
     }
 
-    public boolean doDisableClient(String clientId){
+    public boolean doDisableClient(Long clientId){
         ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
         if(clientEntity == null){
             System.out.println("Client Not Found");

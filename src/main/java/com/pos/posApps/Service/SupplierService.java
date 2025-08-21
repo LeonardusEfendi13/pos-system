@@ -17,8 +17,8 @@ public class SupplierService {
     @Autowired
     SupplierRepository supplierRepository;
 
-    public List<SupplierEntity> getSupplierList(String clientId){
-        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientId);
+    public List<SupplierEntity> getSupplierList(Long clientId){
+        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(clientId);
     }
 
     @Transactional
@@ -30,9 +30,9 @@ public class SupplierService {
                 return false;
             }
 
-            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderByCreatedAtDesc();
-            String lastSupplierId = lastSupplierData == null ? "SPP0" : lastSupplierData.getSupplierId();
-            String newSupplierId = Generator.generateId(lastSupplierId);
+            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
+            Long lastSupplierId = lastSupplierData == null ? 0L : lastSupplierData.getSupplierId();
+            Long newSupplierId = Generator.generateId(lastSupplierId);
 
             System.out.println("Success generated  id");
 
@@ -52,7 +52,7 @@ public class SupplierService {
     }
 
     @Transactional
-    public Boolean editSupplier(String supplierId, String supplierName, ClientEntity clientData){
+    public Boolean editSupplier(Long supplierId, String supplierName, ClientEntity clientData){
         try{
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(supplierId, clientData.getClientId());
             if(supplierEntity == null){
@@ -77,7 +77,7 @@ public class SupplierService {
     }
 
     @Transactional
-    public Boolean disableSupplier(String supplierId, ClientEntity clientData){
+    public Boolean disableSupplier(Long supplierId, ClientEntity clientData){
         System.out.println("supp id : " + supplierId);
         System.out.println("client id : " + clientData.getClientId());
 

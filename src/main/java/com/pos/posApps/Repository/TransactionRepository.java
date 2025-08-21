@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TransactionRepository extends JpaRepository<TransactionEntity, Integer> {
-    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(String clientId);
+public interface TransactionRepository extends JpaRepository<TransactionEntity, Long> {
+    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(Long clientId);
 
-    List<TransactionEntity> findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(String clientId, LocalDateTime StartDate, LocalDateTime endDate);
+    List<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, Long customerId, LocalDateTime StartDate, LocalDateTime endDate);
 
-    TransactionEntity findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(String clientId, String transactionId);
+    List<TransactionEntity> findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate);
+
+    TransactionEntity findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(Long clientId, Long transactionId);
 }

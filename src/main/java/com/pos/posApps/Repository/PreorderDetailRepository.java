@@ -7,10 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEntity, String> {
-    Optional<PreorderDetailEntity> findFirstByOrderByCreatedAtDesc();
+public interface PreorderDetailRepository extends JpaRepository<PreorderDetailEntity, Long> {
+    Optional<PreorderDetailEntity> findFirstByOrderByPreorderDetailIdDesc();
 
-    PreorderDetailEntity findFirstByPreorderDetailId(String preorderDetailId);
+    PreorderDetailEntity findFirstByPreorderDetailId(Long preorderDetailId);
 
-    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderIdOrderByCreatedAtDesc(String preorderId);
+    List<PreorderDetailEntity> findAllByPreorderEntity_PreorderIdOrderByPreorderDetailIdDesc(Long preorderId);
 }

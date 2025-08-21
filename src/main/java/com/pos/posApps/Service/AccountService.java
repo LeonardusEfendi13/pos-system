@@ -29,15 +29,15 @@ public class AccountService {
     private ClientRepository clientRepository;
 
     @Transactional
-    public boolean doCreateAccount(RegisterRequest request, String clientId){
+    public boolean doCreateAccount(RegisterRequest request, Long clientId){
         try{
             AccountEntity accountEntity = accountRepository.findByUsernameAndDeletedAtIsNull(request.getUsername());
             if(accountEntity != null){
                 return false;
             }
             String hashedPassword = passwordEncoder.encode(request.getPassword());
-            String lastAccountId = accountRepository.findFirstByOrderByCreatedAtDesc().map(AccountEntity::getAccountId).orElse("ACC0");
-            String newAccountId = Generator.generateId(lastAccountId);
+            Long lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse(0L);
+            Long newAccountId = Generator.generateId(lastAccountId);
 
             ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
@@ -74,8 +74,8 @@ public class AccountService {
         }
     }
 
-    public List<UserDTO> getUserList(String clientId){
-        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientId);
+    public List<UserDTO> getUserList(Long clientId){
+        List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdDesc(clientId);
         return accountEntities.stream().map(user -> new UserDTO(
                 user.getAccountId(),
                 user.getName(),
@@ -84,7 +84,7 @@ public class AccountService {
         )).toList();
     }
 
-    public boolean doDisableAccount(String userId){
+    public boolean doDisableAccount(Long userId){
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
         if(accountEntity == null){
             System.out.println("Account Not Found");

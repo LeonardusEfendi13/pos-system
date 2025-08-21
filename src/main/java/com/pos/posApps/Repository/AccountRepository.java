@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AccountRepository extends JpaRepository<AccountEntity, String> {
+public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     AccountEntity findByUsernameAndDeletedAtIsNull(String username);
 
-    Optional<AccountEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<AccountEntity> findFirstByOrderByAccountIdDesc();
 
-    List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(String clientId);
+    List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdDesc(Long clientId);
 
-    AccountEntity findByAccountIdAndDeletedAtIsNull(String id);
+    AccountEntity findByAccountIdAndDeletedAtIsNull(Long id);
 }

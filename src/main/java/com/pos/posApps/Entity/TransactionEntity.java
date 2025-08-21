@@ -15,7 +15,7 @@ public class TransactionEntity {
 
     @Id
     @Column(name = "transaction_id")
-    private String transactionId;
+    private Long transactionId;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

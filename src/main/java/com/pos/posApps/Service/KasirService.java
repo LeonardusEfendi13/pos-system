@@ -37,8 +37,8 @@ public class KasirService {
                 return false;
             }
             //Get last Transaction id
-            String lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByCreatedAtDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse("TSC0");
-            String newTransactionId = Generator.generateId(lastTransactionId);
+            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
+            Long newTransactionId = Generator.generateId(lastTransactionId);
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
@@ -53,8 +53,8 @@ public class KasirService {
             System.out.println("Created transaction : " + newTransactionId);
 
             //Insert all the transaction details
-            String lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByCreatedAtDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse("TDL0");
-            String newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
@@ -83,7 +83,7 @@ public class KasirService {
     }
 
     @Transactional
-    public boolean editTransaction(String transactionId, CreateTransactionRequest req, String clientId){
+    public boolean editTransaction(Long transactionId, CreateTransactionRequest req, Long clientId){
         try{
             //Get Supplier Entity
             CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientId);
@@ -106,7 +106,7 @@ public class KasirService {
             transactionRepository.save(transactionEntity);
 
             //Restore stock from old transaction
-            List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByCreatedAtDesc(transactionId);
+            List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
             for(TransactionDetailEntity old : oldTransactions){
                 ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
                 if(product != null){
@@ -120,8 +120,8 @@ public class KasirService {
             transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
 
             //Insert all the transaction details
-            String lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByCreatedAtDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse("TDL0");
-            String newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
                 if(dtos != null) {

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class EditUserRequest {
-    String id;
+    Long id;
     String name;
     String username;
     Roles role;

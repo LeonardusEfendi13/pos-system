@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TransactionDetailRepository extends JpaRepository<TransactionDetailEntity, String> {
-    Optional<TransactionDetailEntity> findFirstByOrderByCreatedAtDesc();
+public interface TransactionDetailRepository extends JpaRepository<TransactionDetailEntity, Long> {
+    Optional<TransactionDetailEntity> findFirstByOrderByTransactionDetailIdDesc();
 
-    List<TransactionDetailEntity> findAllByTransactionEntity_TransactionIdOrderByCreatedAtDesc(String transactionId);
+    List<TransactionDetailEntity> findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(Long transactionId);
 
-    void deleteAllByTransactionEntity_TransactionId(String transactionId);
+    void deleteAllByTransactionEntity_TransactionId(Long transactionId);
 }

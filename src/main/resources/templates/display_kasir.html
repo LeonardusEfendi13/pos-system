@@ -273,6 +273,10 @@
 <script th:inline="javascript">
     const masterProducts = /*[[${productData}]]*/ [];
     const masterCustomers = /*[[${customerData}]]*/ [];
+    console.log(
+      "master Customer Saved:",
+      JSON.stringify(masterCustomers, null, 2)
+    );
     const masterTransactions = /*[[${penjualanData}]]*/ [];
     console.log(
       "master Transaction Saved:",
@@ -321,6 +325,11 @@
       console.log("timestamp : " + timestamp);
       const random = Math.floor(Math.random() * 10000);
       return `#TRX${timestamp}${random}`;
+    }
+
+    function isRowEmpty(row) {
+        const code = row.querySelector(".code-input").value.trim();
+        return code === "";
     }
 
     function formatTanggalWaktuIndonesia(date = new Date()) {
@@ -400,15 +409,15 @@
       const row = document.createElement("tr");
 
       row.innerHTML = `
-    <td class="row-number">${rowNumber}</td>
-    <td><input type="text" class="form-control form-control-sm code-input" /></td>
-    <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
-    <td><input type="text" class="form-control form-control-sm price-input" /></td>
-    <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
-    <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
-    <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
-    <td class="total-cell">Rp 0</td>
-  `;
+  <td class="row-number">${rowNumber}</td>
+  <td><input type="text" class="form-control form-control-sm code-input" /></td>
+  <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
+  <td><input type="text" class="form-control form-control-sm price-input" /></td>
+  <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
+  <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
+  <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
+  <td class="total-cell">Rp 0</td>
+`;
 
       sellTableBody.appendChild(row);
 
@@ -431,7 +440,20 @@
         input.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            maybeAddNewRow();
+            const currentRow = e.target.closest("tr");
+            const lastRow = sellTableBody.lastElementChild;
+
+            // pastikan ada baris kosong berikutnya
+            if (currentRow === lastRow && !isRowEmpty(currentRow)) {
+                // panggil function yang sudah ada untuk tambah baris
+                maybeAddNewRow();
+            }
+
+            // fokuskan ke baris berikutnya (pasti kosong karena maybeAddNewRow)
+            const nextRow = currentRow.nextElementSibling;
+            if (nextRow) {
+                nextRow.querySelector(".code-input").focus();
+            }
           } else if (
             e.key === "ArrowUp" ||
             e.key === "ArrowDown" ||
@@ -551,7 +573,16 @@
       });
 
       qtyInput.addEventListener("input", () => {
-        updateTotalRow(row);
+          const qty = parseInt(qtyInput.value) || 0;
+          const code = codeInput.value.trim();
+          const product = masterProducts.find((p) => p.shortName === code);
+
+          if (product) {
+            const newPrice = getPriceByQty(product, qty);
+            priceInput.value = formatRupiah(newPrice);
+          }
+
+          updateTotalRow(row);
       });
 
       discPercentInput.addEventListener("input", () => {
@@ -598,14 +629,35 @@
         addNewRow();
       }
     }
+    function getPriceByQty(product, qty) {
+      let chosenPrice = product.productPricesDTO[0].price; // default first tier
+
+      for (let i = 0; i < product.productPricesDTO.length; i++) {
+        const tier = product.productPricesDTO[i];
+
+        // if qty fits inside this tier, use it and stop
+        if (qty <= tier.maximalCount && tier.price > 0) {
+          chosenPrice = tier.price;
+          return chosenPrice;
+        }
+
+        // if qty is bigger, keep moving, but always carry forward the latest valid price
+        if (tier.price > 0) {
+          chosenPrice = tier.price;
+        }
+      }
+
+      return chosenPrice; // at the end, it's the last tier
+    }
 
     function fillProductRow(row, product) {
+      const qty = 1; // default qty
+      const price = getPriceByQty(product, qty);
+
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
-      row.querySelector(".price-input").value = formatRupiah(
-        product.productPricesDTO[0].price
-      );
-      row.querySelector(".qty-input").value = 1;
+      row.querySelector(".price-input").value = formatRupiah(price);
+      row.querySelector(".qty-input").value = qty;
       row.querySelector(".discount-percent-input").value = 0;
       row.querySelector(".discount-amount-input").value = 0;
       updateTotalRow(row);
@@ -734,33 +786,35 @@
     });
 
     function updateGrandDiscountAmount() {
-        const subTotal = parseFloat(
-            subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+      const subTotal =
+        parseFloat(
+          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
         ) || 0;
-        const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
+      const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
 
-        if (subTotal > 0 && discountPercent >= 0) {
-            const discountAmount = subTotal * (discountPercent / 100);
-            grandDiscountAmount.value = discountAmount.toFixed(0);
-        } else {
-            grandDiscountAmount.value = 0;
-        }
-        calculateGrandTotal();
+      if (subTotal > 0 && discountPercent >= 0) {
+        const discountAmount = subTotal * (discountPercent / 100);
+        grandDiscountAmount.value = discountAmount.toFixed(0);
+      } else {
+        grandDiscountAmount.value = 0;
+      }
+      calculateGrandTotal();
     }
 
     function updateGrandDiscountPercent() {
-        const subTotal = parseFloat(
-            subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+      const subTotal =
+        parseFloat(
+          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
         ) || 0;
-        const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
+      const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
 
-        if (subTotal > 0 && discountAmount >= 0) {
-            const discountPercent = (discountAmount / subTotal) * 100;
-            grandDiscountPercent.value = discountPercent.toFixed(2);
-        } else {
-            grandDiscountPercent.value = 0;
-        }
-        calculateGrandTotal();
+      if (subTotal > 0 && discountAmount >= 0) {
+        const discountPercent = (discountAmount / subTotal) * 100;
+        grandDiscountPercent.value = discountPercent.toFixed(2);
+      } else {
+        grandDiscountPercent.value = 0;
+      }
+      calculateGrandTotal();
     }
 
     function loadProductTable(filteredProducts = masterProducts) {
@@ -774,11 +828,11 @@
         row.style.cursor = "pointer";
 
         row.innerHTML = `
-      <td>${product.shortName}</td>
-      <td>${product.fullName}</td>
-      <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-      <td>${product.stok}</td>
-    `;
+    <td>${product.shortName}</td>
+    <td>${product.fullName}</td>
+    <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+    <td>${product.stok}</td>
+  `;
 
         row.addEventListener("dblclick", () => {
           selectProduct(product);
@@ -979,9 +1033,13 @@
       }
 
       const selectedCustomerId = customerSelect.value;
+      console.log("selected customer : " + selectedCustomerId);
+      console.log("master customer : " + masterCustomers);
       const selectedCustomer = masterCustomers.find(
-        (c) => c.customerId === selectedCustomerId
+        (c) => c.customerId == selectedCustomerId
       );
+
+      console.log("selected customer v2: " + selectedCustomer);
 
       const transactionData = {
         customerId: selectedCustomer.customerId,
@@ -1033,28 +1091,28 @@
           document.getElementById("receiptContent").innerHTML;
         const printWindow = window.open();
         printWindow.document.write(`
-        <html>
-          <head>
-            <title>Print</title>
-            <style>
-              @media print {
-                @page {
-                  size: A5 landscape;
-                  margin: 0;
-                }
-
-                body {
-                  font-family: Arial, sans-serif;
-                  font-size: 12pt;
-                  margin: 10mm;
-                }
+      <html>
+        <head>
+          <title>Print</title>
+          <style>
+            @media print {
+              @page {
+                size: A5 landscape;
+                margin: 0;
               }
-            </style>
-          </head>
-          <body onload="window.print(); window.close();">
-          </body>
-        </html>
-      `);
+
+              body {
+                font-family: Arial, sans-serif;
+                font-size: 12pt;
+                margin: 10mm;
+              }
+            }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+        </body>
+      </html>
+    `);
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -1067,20 +1125,23 @@
 
       console.log("start sending to be");
       try {
-          let response;
+        let response;
         if (
           masterTransactions.transactionId !== null &&
           masterTransactions.transactionDetailDTOS !== null
         ) {
           console.log("otw edit");
-          response = await fetch(`api/kasir/edit/${masterTransactions.transactionId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(transactionData),
-          });
-        }else{
+          response = await fetch(
+            `api/kasir/edit/${masterTransactions.transactionId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(transactionData),
+            }
+          );
+        } else {
           console.log("otw add");
           response = await fetch("api/kasir/add", {
             method: "POST",
@@ -1109,13 +1170,12 @@
           masterTransactions.transactionId !== null &&
           masterTransactions.transactionDetailDTOS !== null
         ) {
-          window.location.href = '/penjualan';
-        }else{
-          window.location.href = '/kasir';
+          window.location.href = "/penjualan";
+        } else {
+          window.location.href = "/kasir";
 
-<!--          cancelTransaction();-->
+          <!--          cancelTransaction();-->
         }
-
       } catch (error) {
         console.error("Failed to save transaction:", error);
         alert("Failed to save transaction. Please try again.");
@@ -1132,7 +1192,7 @@
 
       transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
       const customerUmum = masterCustomers.find(
-        (c) => c.customerId === "CST2"
+        (c) => c.customerId == 2
       ).customerId;
       customerSelect.value = customerUmum;
       console.log("master cust 0 : " + customerUmum);
@@ -1176,27 +1236,27 @@
         const row = document.createElement("tr");
 
         row.innerHTML = `
-        <td class="row-number">${index + 1}</td>
-        <td><input type="text" class="form-control form-control-sm code-input" value="${
-          detail.code
-        }" /></td>
-        <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
-          detail.name
-        }" /></td>
-        <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
-          detail.price
-        )}" /></td>
-        <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
-          detail.qty
-        }" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-          (detail.discAmount / (detail.total + detail.discAmount)) * 100
-        }" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
-          detail.discAmount
-        }" /></td>
-        <td class="total-cell">${formatRupiah(detail.total)}</td>
-    `;
+      <td class="row-number">${index + 1}</td>
+      <td><input type="text" class="form-control form-control-sm code-input" value="${
+        detail.code
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
+        detail.name
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
+        detail.price
+      )}" /></td>
+      <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
+        detail.qty
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
+        (detail.discAmount / (detail.total + detail.discAmount)) * 100
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+        detail.discAmount
+      }" /></td>
+      <td class="total-cell">${formatRupiah(detail.total)}</td>
+  `;
 
         // Re-attach event listeners to the new row's inputs
         const codeInput = row.querySelector(".code-input");

@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class EditClientRequest {
     private String name;
-    private String clientId;
+    private Long clientId;
 }

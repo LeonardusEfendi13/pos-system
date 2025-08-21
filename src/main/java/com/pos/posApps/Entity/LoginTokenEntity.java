@@ -11,7 +11,7 @@ public class LoginTokenEntity {
 
     @Id
     @Column(name = "token_id")
-    private String tokenId;
+    private Long tokenId;
 
     @Column(name = "token")
     private String token;
@@ -21,7 +21,6 @@ public class LoginTokenEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
 
     @ManyToOne
     @JoinColumn(name = "account_id")

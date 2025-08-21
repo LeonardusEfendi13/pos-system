@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class PreorderEntity {
     @Id
     @Column(name = "preorder_id")
-    private String preorderId;
+    private Long preorderId;
 
 //    @Column(name = "preorder_detail_id")
 //    private String preorderDetailId;

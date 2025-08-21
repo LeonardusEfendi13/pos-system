@@ -33,7 +33,7 @@ public class DeveloperController {
             HttpSession session
     ) {
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
@@ -53,7 +53,7 @@ public class DeveloperController {
             HttpSession session
     ){
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
             return "redirect:/login";
@@ -69,11 +69,11 @@ public class DeveloperController {
 
     @PostMapping("/disable-client")
     public String disableClient(
-            @Valid String idClient,
+            @Valid Long idClient,
             HttpSession session
     ){
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
@@ -93,7 +93,7 @@ public class DeveloperController {
             @Valid RegisterFromDevRequest req, HttpSession session)
     {
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
@@ -112,7 +112,7 @@ public class DeveloperController {
             HttpSession session
     ){
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
             return "redirect:/login";
@@ -126,11 +126,11 @@ public class DeveloperController {
 
     @PostMapping("/disable-user")
     public String disableUser(
-            @Valid String idUser,
+            @Valid Long idUser,
             HttpSession session
     ){
         String token = (String) session.getAttribute(authSessionKey);
-        String clientId = authService.validateToken(token).getClientEntity().getClientId();
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
         if (isNotDeveloper(clientId)) {
@@ -145,7 +145,7 @@ public class DeveloperController {
         return "500";
     }
 
-    private boolean isNotDeveloper(String clientId){
-        return (clientId == null || !clientId.equalsIgnoreCase("CLN0"));
+    private boolean isNotDeveloper(Long clientId){
+        return (clientId == null || clientId != 0L);
     }
 }

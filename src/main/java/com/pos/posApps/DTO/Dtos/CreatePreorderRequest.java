@@ -8,10 +8,10 @@ import java.util.List;
 @Data
 public class CreatePreorderRequest {
     @NotBlank(message = "supplier id must not null")
-    private String supplierId;
+    private Long supplierId;
 
     @NotBlank(message = "Client id must not null")
-    private String clientId;
+    private Long clientId;
 
     private List<PreorderDetailDTO> preorderDetailData;
 

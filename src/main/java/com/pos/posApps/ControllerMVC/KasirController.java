@@ -29,9 +29,9 @@ public class KasirController {
     private PenjualanService penjualanService;
 
     @GetMapping
-    public String displayKasir(Model model, HttpSession session, String transactionId){
+    public String displayKasir(Model model, HttpSession session, Long transactionId){
         System.out.println("display called");
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -49,12 +49,13 @@ public class KasirController {
         model.addAttribute("activePage", "kasir");
         model.addAttribute("productData", productEntity);
         model.addAttribute("customerData", customerEntities);
+        System.out.println("customer data : " + customerEntities);
         return "display_kasir";
     }
 
     @PostMapping("/add")
     public String addKasir(@Valid @RequestBody CreateTransactionRequest req, Model model, HttpSession session){
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();

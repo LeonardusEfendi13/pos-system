@@ -29,7 +29,7 @@ public class AccountController {
 
     @GetMapping
     public String showUser(HttpSession session, Model model) {
-        String clientId;
+        Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -48,7 +48,7 @@ public class AccountController {
             HttpSession session,
             @Valid RegisterRequest registerRequest,
             RedirectAttributes redirectAttributes) {
-        String clientId;
+        Long clientId;
         AccountEntity accEntity;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -115,7 +115,7 @@ public class AccountController {
     @PostMapping("/delete/{userId}")
     public String deleteUser(
             HttpSession session,
-            @PathVariable("userId") String userId,
+            @PathVariable("userId") Long userId,
             RedirectAttributes redirectAttributes
     ) {
         Roles role;

@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 public class CustomerEntity {
 
     @Id
-    private String customerId;
+    @Column(name = "customer_id")
+    private Long customerId;
 
     @Column(name = "name")
     private String name;

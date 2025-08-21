@@ -5,10 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface ClientRepository extends JpaRepository<ClientEntity, String> {
-    ClientEntity findByClientIdAndDeletedAtIsNull(String clientId);
+public interface ClientRepository extends JpaRepository<ClientEntity, Long> {
+    ClientEntity findByClientIdAndDeletedAtIsNull(Long clientId);
 
-    Optional<ClientEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<ClientEntity> findFirstByOrderByClientIdDesc();
 
 
 }

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PreorderDetailDTO {
-    private String preorderDetailId;
+    private Long preorderDetailId;
     private Long quantity;
-    private String productId;
+    private Long productId;
 }

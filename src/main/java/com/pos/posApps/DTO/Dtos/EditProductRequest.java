@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class EditProductRequest {
     @NotBlank
-    private String productId;
+    private Long productId;
 
     @NotBlank
     private String shortName;
@@ -24,7 +24,7 @@ public class EditProductRequest {
     private BigDecimal supplierPrice;
 
     @NotBlank
-    private String supplierId;
+    private Long supplierId;
 
     @NotBlank
     private Long stock;

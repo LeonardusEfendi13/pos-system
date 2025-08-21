@@ -27,8 +27,8 @@ public class PreorderController {
     private PreorderService preorderService;
 
     @GetMapping
-    public String showListPreorder(String supplierId, HttpSession session, Model model){
-        String clientId;
+    public String showListPreorder(Long supplierId, HttpSession session, Model model){
+        Long clientId;
         try{
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
@@ -83,7 +83,7 @@ public class PreorderController {
     }
 
     @PostMapping("/delete-preorder")
-    public String deletePreorder(HttpSession session, String preorderId){
+    public String deletePreorder(HttpSession session, Long preorderId){
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

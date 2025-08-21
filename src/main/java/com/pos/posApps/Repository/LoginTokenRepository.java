@@ -7,9 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface LoginTokenRepository extends JpaRepository<LoginTokenEntity, String> {
+public interface LoginTokenRepository extends JpaRepository<LoginTokenEntity, Long> {
 
-    Optional<LoginTokenEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<LoginTokenEntity> findFirstByOrderByTokenIdDesc();
 
     LoginTokenEntity findByTokenAndDeletedAtIsNull(String token);
 }
