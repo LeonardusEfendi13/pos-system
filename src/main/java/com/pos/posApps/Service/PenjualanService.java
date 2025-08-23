@@ -40,6 +40,7 @@ public class PenjualanService {
                         transactions.getCustomerEntity().getCustomerId(),
                         transactions.getCustomerEntity().getName()
                 ),
+                transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
                 transactions.getTotalPrice(),
                 transactions.getTotalDiscount(),
@@ -65,6 +66,7 @@ public class PenjualanService {
                         transactions.getCustomerEntity().getCustomerId(),
                         transactions.getCustomerEntity().getName()
                 ),
+                transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
                 transactions.getTotalPrice(),
                 transactions.getTotalDiscount(),

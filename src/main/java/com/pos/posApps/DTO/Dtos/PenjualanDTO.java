@@ -15,6 +15,7 @@ import java.util.List;
 public class PenjualanDTO {
     private Long transactionId;
     private CustomerDTO customerDTO;
+    private String transactionNumber;
     private BigDecimal subTotal;
     private BigDecimal totalPrice;
     private BigDecimal totalDisc;

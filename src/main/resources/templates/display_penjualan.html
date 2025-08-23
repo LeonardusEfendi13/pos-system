@@ -82,7 +82,7 @@
                     <tbody>
                     <tr th:each="penjualan, iterStat : ${penjualanData}">
                         <td th:text="${iterStat.index + 1}">1</td>
-                        <td th:text="${penjualan.transactionId}">No Faktur</td>
+                        <td th:text="${penjualan.transactionNumber}">No Faktur</td>
                         <td th:text="${#temporals.format(penjualan.tanggalJual, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
                         <td><span th:text="${penjualan.totalPrice}">Rp0</span></td>
                         <td th:text="${penjualan.customerDTO.customerName}">Pelanggan</td>

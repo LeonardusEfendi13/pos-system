@@ -11,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.pos.posApps.Util.Generator.generateId;
-import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+import static com.pos.posApps.Util.Generator.*;
 
 @Service
 public class KasirService {
@@ -43,6 +42,7 @@ public class KasirService {
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
             transactionEntity.setClientEntity(clientData);
+            transactionEntity.setTransactionNumber(generateNotaNumber(newTransactionId));
             transactionEntity.setTransactionId(newTransactionId);
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());

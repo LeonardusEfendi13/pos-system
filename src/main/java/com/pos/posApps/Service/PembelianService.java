@@ -66,6 +66,7 @@ public class PembelianService {
                         transactions.getCustomerEntity().getCustomerId(),
                         transactions.getCustomerEntity().getName()
                 ),
+                transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
                 transactions.getTotalPrice(),
                 transactions.getTotalDiscount(),

@@ -21,6 +21,9 @@ public class TransactionEntity {
     @JoinColumn(name = "client_id")
     private ClientEntity clientEntity;
 
+    @Column(name = "transaction_number")
+    private String transactionNumber;
+
 //    @ManyToOne
 //    @JoinColumn(name = "account_id")
 //    private AccountEntity accountEntity;

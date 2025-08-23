@@ -1,9 +1,11 @@
 package com.pos.posApps.Util;
 
 import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
+import java.util.Date;
 
 public class Generator {
     //Account = ACC
@@ -34,5 +36,17 @@ public class Generator {
 
     public static LocalDateTime getCurrentTimestamp(){
         return LocalDateTime.now(ZoneId.of("Asia/Jakarta"));
+    }
+
+    public static String generateNotaNumber(Long counter) {
+        // Format tanggal saat ini ke YYYYMMDD
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        String datePart = sdf.format(new Date());
+
+        // Format nomor urut (3 digit minimal, lebih jika counter > 999)
+        String counterPart = String.format("%03d", counter);
+
+        // Gabungkan
+        return datePart + counterPart;
     }
 }
