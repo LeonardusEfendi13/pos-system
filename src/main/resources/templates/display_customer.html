@@ -165,6 +165,10 @@
             }
         });
 
+        $('#addName, #editName').on('input', function() {
+          this.value = this.value.toUpperCase();
+        });
+
         // Event Edit Customer Modal
         $('.edit-customer-btn').on('click', function () {
             const customerId = $(this).data('customerid');

@@ -47,7 +47,7 @@ public class PembelianController {
         List<PembelianDTO> pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate);
         System.out.println("pembelian data : " + pembelianData);
         model.addAttribute("pembelianData", pembelianData);
-        model.addAttribute("activePage", "pembelian");
+        model.addAttribute("activePage", "pembelianRiwayat");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         return "display_pembelian";

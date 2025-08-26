@@ -50,19 +50,6 @@ public class KasirController {
         model.addAttribute("productData", productEntity);
         model.addAttribute("customerData", customerEntities);
         System.out.println("customer data : " + customerEntities);
-        return "display_kasir";
-    }
-
-    @PostMapping("/add")
-    public String addKasir(@Valid @RequestBody CreateTransactionRequest req, Model model, HttpSession session){
-        Long clientId;
-        try {
-            String token = (String) session.getAttribute(authSessionKey);
-            clientId = authService.validateToken(token).getClientEntity().getClientId();
-        } catch (Exception e) {
-            return "redirect:/login";
-        }
-        System.out.println("request received : " + req);
-        return "display_kasir";
+        return "display_kasir_penjualan";
     }
 }

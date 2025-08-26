@@ -90,8 +90,9 @@ public class DeveloperController {
 
     @PostMapping("/add-user")
     public String createAccount(
-            @Valid RegisterFromDevRequest req, HttpSession session)
+            @RequestBody RegisterFromDevRequest req, HttpSession session)
     {
+        System.out.println("req : " + req);
         String token = (String) session.getAttribute(authSessionKey);
         Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 

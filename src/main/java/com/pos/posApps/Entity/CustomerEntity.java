@@ -18,8 +18,12 @@ public class CustomerEntity {
     private String name;
 
     //todo make sure gonna use this or not
-    @Column(name = "customer_level_id")
-    private String customerLevelid;
+//    @Column(name = "customer_level_id")
+//    private String customerLevelid;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private ClientEntity clientEntity;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -30,7 +34,4 @@ public class CustomerEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private ClientEntity clientEntity;
 }

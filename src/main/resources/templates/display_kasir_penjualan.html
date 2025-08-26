@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Kasir</title>
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    />
+    <style>
+        body {
+          background-color: #f8f9fa;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+        }
+        .card {
+          border: none;
+          box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .table-responsive {
+          border-radius: 0.3rem;
+        }
+        .table {
+          margin-bottom: 0;
+        }
+        .table thead {
+          background-color: #e9ecef;
+        }
+        .table td,
+        .table th {
+          vertical-align: middle;
+          padding: 0.5rem 0.75rem;
+        }
+        .form-control-sm,
+        .form-select-sm {
+          padding: 0.25rem 0.5rem;
+          font-size: 0.875rem;
+        }
+        .btn {
+          font-size: 0.875rem;
+        }
+
+        #contextMenu {
+          position: absolute;
+          display: none;
+          background-color: white;
+          border: 1px solid #ccc;
+          z-index: 1000;
+          min-width: 150px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          border-radius: 0.25rem;
+        }
+        #contextMenu ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        #contextMenu li {
+          padding: 8px 12px;
+          cursor: pointer;
+          font-size: 0.875rem;
+        }
+        #contextMenu li:hover {
+          background-color: #f0f0f0;
+        }
+
+        /* Custom styles for the scrollable table */
+        .scrollable-table {
+          max-height: 40vh;
+          overflow-y: auto;
+        }
+
+        /* Payment section styling */
+        .payment-section-card {
+          background-color: #e9ecef;
+          padding: 1.5rem;
+        }
+    </style>
+</head>
+<body class="p-3">
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="card p-3 me-auto" style="width: 450px">
+            <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
+            <div>
+                <select
+                        id="customerSelect"
+                        class="form-select form-select-sm"
+                ></select>
+            </div>
+        </div>
+        <a
+                th:href="${penjualanData.transactionId == null and penjualanData.transactionDetailDTOS == null} ? '/home' : '/penjualan'"
+                class="btn btn-warning d-flex align-items-center"
+                onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
+        >
+            Kembali
+        </a>
+    </div>
+
+    <div class="table-responsive mb-3 scrollable-table">
+        <table class="table table-bordered" id="sellTable">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 5%">No.</th>
+                <th style="width: 15%">Code</th>
+                <th style="width: 35%">Name</th>
+                <th style="width: 10%">Price</th>
+                <th style="width: 8%">Qty</th>
+                <th style="width: 8%">Disc (%)</th>
+                <th style="width: 8%">Disc (Rp)</th>
+                <th style="width: 12%">Total</th>
+            </tr>
+            </thead>
+            <tbody id="sellTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="row justify-content-end">
+        <div class="col-md-6">
+            <div class="card p-3 payment-section-card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Subtotal:</strong>
+                            <span id="subTotalDisplay">Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Discount (%):</strong>
+                            <input
+                                    type="number"
+                                    id="grandDiscountPercent"
+                                    class="form-control form-control-sm w-50 text-end"
+                                    value="0"
+                                    min="0"
+                                    max="100"
+                            />
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Discount (Rp):</strong>
+                            <input
+                                    type="number"
+                                    id="grandDiscountAmount"
+                                    class="form-control form-control-sm w-50 text-end"
+                                    value="0"
+                                    min="0"
+                            />
+                        </div>
+                        <hr class="my-2" />
+                        <div
+                                class="d-flex justify-content-between align-items-center mb-2"
+                        >
+                            <h5 class="m-0">Grand Total:</h5>
+                            <h5 class="m-0 text-end" id="grandTotalDisplay">Rp 0</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex flex-column justify-content-center">
+                        <div class="mb-2">
+                            <label
+                                    for="paymentAmount"
+                                    class="form-label"
+                                    style="font-weight: bold"
+                            >Payment Amount</label
+                            >
+                            <input
+                                    type="text"
+                                    id="paymentAmount"
+                                    class="form-control form-control-sm"
+                                    min="Rp 0"
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label
+                                    for="returnAmount"
+                                    class="form-label"
+                                    style="font-weight: bold"
+                            >Return Amount</label
+                            >
+                            <input
+                                    type="text"
+                                    id="returnAmount"
+                                    class="form-control form-control-sm"
+                                    readonly
+                            />
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <div class="form-check d-flex align-items-center m-0">
+                                <input
+                                        class="form-check-input me-1"
+                                        type="checkbox"
+                                        id="printBill"
+                                        checked
+                                />
+                                <label class="form-check-label" for="printBill"
+                                >Print Bill</label
+                                >
+                            </div>
+
+                            <div>
+                                <button
+                                        class="btn btn-primary btn-sm me-2"
+                                        onclick="saveTransaction()"
+                                >
+                                    Simpan
+                                </button>
+                                <button
+                                        class="btn btn-secondary btn-sm"
+                                        onclick="cancelTransaction()"
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="contextMenu">
+    <ul>
+        <li onclick="deleteRow()">🗑️ Delete Row</li>
+    </ul>
+</div>
+
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Product</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="height: 400px; overflow-y: auto">
+                <div class="row mb-3">
+                    <div class="col">
+                        <input
+                                type="text"
+                                id="searchCode"
+                                class="form-control form-control-sm"
+                                placeholder="Search by Code"
+                        />
+                    </div>
+                    <div class="col">
+                        <input
+                                type="text"
+                                id="searchName"
+                                class="form-control form-control-sm"
+                                placeholder="Search by Name"
+                        />
+                    </div>
+                </div>
+                <table class="table table-sm table-hover" id="productTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stok</th>
+                    </tr>
+                    </thead>
+                    <tbody id="productTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="receiptContent" style="display: none">
+        <!-- Your receipt layout (table, totals, etc.) -->
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const masterProducts = /*[[${productData}]]*/ [];
+    const masterCustomers = /*[[${customerData}]]*/ [];
+    console.log(
+      "master Customer Saved:",
+      JSON.stringify(masterCustomers, null, 2)
+    );
+    const masterTransactions = /*[[${penjualanData}]]*/ [];
+    console.log(
+      "master Transaction Saved:",
+      JSON.stringify(masterTransactions, null, 2)
+    );
+</script>
+<script>
+    const sellTableBody = document.getElementById("sellTableBody");
+    const productTableBody = document.getElementById("productTableBody");
+    const searchCode = document.getElementById("searchCode");
+    const searchName = document.getElementById("searchName");
+    const productModalEl = document.getElementById("productModal");
+    const productModal = new bootstrap.Modal(productModalEl);
+    const subTotalDisplay = document.getElementById("subTotalDisplay");
+    const grandTotalDisplay = document.getElementById("grandTotalDisplay");
+    const grandDiscountPercent = document.getElementById(
+      "grandDiscountPercent"
+    );
+    const grandDiscountAmount = document.getElementById(
+      "grandDiscountAmount"
+    );
+    const paymentAmountInput = document.getElementById("paymentAmount");
+    const returnAmountInput = document.getElementById("returnAmount");
+    const saveButton = document.querySelector(".btn-primary");
+
+    paymentAmountInput.addEventListener("keypress", function (e) {
+      const char = String.fromCharCode(e.which);
+
+      // Only allow digits
+      if (!/[0-9]/.test(char)) {
+        e.preventDefault();
+      }
+    });
+
+    const transactionNumberDisplay = document.getElementById(
+      "transactionNumberDisplay"
+    );
+    const customerSelect = document.getElementById("customerSelect");
+
+    let selectedRow = null;
+    let currentKeyboardIndex = -1;
+    let activeSearchField = "shortName";
+
+    function generateTransactionNumber() {
+      const timestamp = Date.now();
+      console.log("timestamp : " + timestamp);
+      const random = Math.floor(Math.random() * 10000);
+      return `#TRX${timestamp}${random}`;
+    }
+
+    function isRowEmpty(row) {
+        const code = row.querySelector(".code-input").value.trim();
+        return code === "";
+    }
+
+    function formatTanggalWaktuIndonesia(date = new Date()) {
+      const hari = new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
+      }).format(date);
+      const tanggal = new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+      const jam = date.getHours().toString().padStart(2, "0");
+      const menit = date.getMinutes().toString().padStart(2, "0");
+      const detik = date.getSeconds().toString().padStart(2, "0");
+
+      return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
+    }
+
+    function parseRupiah(rupiahString) {
+      if (!rupiahString) return 0;
+      return parseFloat(
+        rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
+      );
+    }
+
+    function formatRupiah(number) {
+      return (
+        "Rp " +
+        number.toLocaleString("id-ID", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })
+      );
+    }
+
+    function handleFormattedFocus(event) {
+      let value = parseRupiah(event.target.value);
+      if (value === 0) {
+        event.target.value = "";
+      } else {
+        event.target.value = value;
+      }
+    }
+
+    function handleFormattedBlur(event) {
+      const value = event.target.value.replace(/[^0-9]/g, "");
+      if (value === "" || isNaN(value)) {
+        event.target.value = formatRupiah(0);
+      } else {
+        event.target.value = formatRupiah(parseInt(value));
+      }
+    }
+
+    function clearZeroOnFocus(event) {
+      if (event.target.value === "0") {
+        event.target.value = "";
+      }
+    }
+
+    paymentAmountInput.addEventListener("focus", handleFormattedFocus);
+    paymentAmountInput.addEventListener("blur", handleFormattedBlur);
+    paymentAmountInput.addEventListener("input", calculateReturnAmount);
+
+    function addNewRow(focus = true) {
+      const rows = sellTableBody.querySelectorAll("tr");
+      if (rows.length > 0) {
+        const lastRowCodeInput =
+          rows[rows.length - 1].querySelector(".code-input");
+        if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
+          if (focus) {
+            lastRowCodeInput.focus();
+          }
+          return;
+        }
+      }
+      const rowNumber = rows.length + 1;
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+  <td class="row-number">${rowNumber}</td>
+  <td><input type="text" class="form-control form-control-sm code-input" /></td>
+  <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
+  <td><input type="text" class="form-control form-control-sm price-input" /></td>
+  <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
+  <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
+  <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
+  <td class="total-cell">Rp 0</td>
+`;
+
+      sellTableBody.appendChild(row);
+
+      const codeInput = row.querySelector(".code-input");
+      const nameInput = row.querySelector(".name-input");
+      const priceInput = row.querySelector(".price-input");
+      const qtyInput = row.querySelector(".qty-input");
+      const discPercentInput = row.querySelector(".discount-percent-input");
+      const discAmountInput = row.querySelector(".discount-amount-input");
+      const inputs = [
+        codeInput,
+        nameInput,
+        priceInput,
+        qtyInput,
+        discPercentInput,
+        discAmountInput,
+      ];
+
+      inputs.forEach((input, index) => {
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const currentRow = e.target.closest("tr");
+            const lastRow = sellTableBody.lastElementChild;
+
+            // pastikan ada baris kosong berikutnya
+            if (currentRow === lastRow && !isRowEmpty(currentRow)) {
+                // panggil function yang sudah ada untuk tambah baris
+                maybeAddNewRow();
+            }
+
+            // fokuskan ke baris berikutnya (pasti kosong karena maybeAddNewRow)
+            const nextRow = currentRow.nextElementSibling;
+            if (nextRow) {
+                nextRow.querySelector(".code-input").focus();
+            }
+          } else if (
+            e.key === "ArrowUp" ||
+            e.key === "ArrowDown" ||
+            e.key === "ArrowLeft" ||
+            e.key === "ArrowRight"
+          ) {
+            e.preventDefault();
+
+            const currentRows = [...sellTableBody.querySelectorAll("tr")];
+            const currentRowIndex = currentRows.indexOf(row);
+            const editableInputs = [
+              ...row.querySelectorAll("input:not([readonly])"),
+            ];
+            const currentEditableIndex = editableInputs.indexOf(e.target);
+
+            let nextRowIndex = currentRowIndex;
+            let nextEditableIndex = currentEditableIndex;
+
+            if (e.key === "ArrowUp") {
+              nextRowIndex = Math.max(0, currentRowIndex - 1);
+            } else if (e.key === "ArrowDown") {
+              nextRowIndex = currentRowIndex + 1;
+              if (nextRowIndex >= currentRows.length) {
+                addNewRow();
+                nextRowIndex = currentRows.length;
+              }
+            } else if (e.key === "ArrowLeft") {
+              nextEditableIndex = Math.max(0, currentEditableIndex - 1);
+            } else if (e.key === "ArrowRight") {
+              nextEditableIndex = Math.min(
+                editableInputs.length - 1,
+                currentEditableIndex + 1
+              );
+            }
+
+            const targetRow =
+              sellTableBody.querySelectorAll("tr")[nextRowIndex];
+            const targetEditableInputs = [
+              ...targetRow.querySelectorAll("input:not([readonly])"),
+            ];
+            const targetInput = targetEditableInputs[nextEditableIndex];
+
+            if (targetInput) {
+              targetInput.focus();
+              if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                targetInput.select();
+              }
+            }
+          }
+        });
+      });
+
+      priceInput.addEventListener("focus", handleFormattedFocus);
+      priceInput.addEventListener("blur", handleFormattedBlur);
+      priceInput.addEventListener("input", () => {
+        updateTotalRow(row);
+      });
+
+      qtyInput.addEventListener("focus", clearZeroOnFocus);
+      discPercentInput.addEventListener("focus", clearZeroOnFocus);
+      discAmountInput.addEventListener("focus", clearZeroOnFocus);
+
+      grandDiscountPercent.addEventListener("focus", clearZeroOnFocus);
+      grandDiscountAmount.addEventListener("focus", clearZeroOnFocus);
+
+      if (focus) codeInput.focus();
+
+      codeInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const code = codeInput.value.trim().toUpperCase();
+
+          if (!code) {
+            selectedRow = row;
+            productModal.show();
+            loadProductTable();
+            return;
+          }
+
+          const product = masterProducts.find((p) => p.shortName === code);
+          if (product) {
+            const rows = [...sellTableBody.querySelectorAll("tr")];
+            let existingRow = null;
+            for (const r of rows) {
+              if (r === row) continue;
+              const cInput = r.querySelector(".code-input");
+              if (cInput.value.trim().toUpperCase() === code) {
+                existingRow = r;
+                break;
+              }
+            }
+
+            if (existingRow) {
+              const qInput = existingRow.querySelector(".qty-input");
+              qInput.value = parseInt(qInput.value || "0") + 1;
+              updateTotalRow(existingRow);
+
+              // Clear the current row and focus
+              codeInput.value = "";
+              row.querySelector(".name-input").value = "";
+              row.querySelector(".price-input").value = "Rp 0";
+              row.querySelector(".qty-input").value = "1";
+              row.querySelector(".discount-percent-input").value = "0";
+              row.querySelector(".discount-amount-input").value = "0";
+              row.querySelector(".total-cell").textContent = "Rp 0";
+              codeInput.focus();
+            } else {
+              fillProductRow(row, product);
+              maybeAddNewRow();
+            }
+          } else {
+            alert("Product not found");
+            codeInput.value = ""; // Clear the input field
+            codeInput.focus();
+          }
+        }
+      });
+
+      qtyInput.addEventListener("input", () => {
+          const qty = parseInt(qtyInput.value) || 0;
+          const code = codeInput.value.trim();
+          const product = masterProducts.find((p) => p.shortName === code);
+
+          if (product) {
+            const newPrice = getPriceByQty(product, qty);
+            priceInput.value = formatRupiah(newPrice);
+          }
+
+          updateTotalRow(row);
+      });
+
+      discPercentInput.addEventListener("input", () => {
+        const price = parseRupiah(row.querySelector(".price-input").value);
+        const qty = parseInt(qtyInput.value) || 0;
+        const discountPercent = parseFloat(discPercentInput.value) || 0;
+
+        if (price * qty > 0) {
+          const discountAmount = price * qty * (discountPercent / 100);
+          discAmountInput.value = discountAmount.toFixed(0);
+        } else {
+          discAmountInput.value = "0";
+        }
+        updateTotalRow(row);
+      });
+
+      discAmountInput.addEventListener("input", () => {
+        const price = parseRupiah(row.querySelector(".price-input").value);
+        const qty = parseInt(qtyInput.value) || 0;
+        const discountAmount = parseFloat(discAmountInput.value) || 0;
+
+        if (price * qty > 0) {
+          const discountPercent = (discountAmount / (price * qty)) * 100;
+          discPercentInput.value = discountPercent.toFixed(2);
+        } else {
+          discPercentInput.value = "0";
+        }
+        updateTotalRow(row);
+      });
+
+      row.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        selectedRow = row;
+        showContextMenu(e.pageX, e.pageY);
+      });
+      calculateGrandTotal();
+    }
+
+    function maybeAddNewRow() {
+      const rows = [...sellTableBody.querySelectorAll("tr")];
+      const lastRow = rows[rows.length - 1];
+      const codeVal = lastRow.querySelector(".code-input").value.trim();
+      if (codeVal) {
+        addNewRow();
+      }
+    }
+    function getPriceByQty(product, qty) {
+      let chosenPrice = product.productPricesDTO[0].price; // default first tier
+
+      for (let i = 0; i < product.productPricesDTO.length; i++) {
+        const tier = product.productPricesDTO[i];
+
+        // if qty fits inside this tier, use it and stop
+        if (qty <= tier.maximalCount && tier.price > 0) {
+          chosenPrice = tier.price;
+          return chosenPrice;
+        }
+
+        // if qty is bigger, keep moving, but always carry forward the latest valid price
+        if (tier.price > 0) {
+          chosenPrice = tier.price;
+        }
+      }
+
+      return chosenPrice; // at the end, it's the last tier
+    }
+
+    function fillProductRow(row, product) {
+      const qty = 1; // default qty
+      const price = getPriceByQty(product, qty);
+
+      row.querySelector(".code-input").value = product.shortName;
+      row.querySelector(".name-input").value = product.fullName;
+      row.querySelector(".price-input").value = formatRupiah(price);
+      row.querySelector(".qty-input").value = qty;
+      row.querySelector(".discount-percent-input").value = 0;
+      row.querySelector(".discount-amount-input").value = 0;
+      updateTotalRow(row);
+    }
+
+    function updateTotalRow(r) {
+      const price = parseRupiah(r.querySelector(".price-input").value);
+      const qty = parseInt(r.querySelector(".qty-input").value) || 0;
+      const discAmount =
+        parseFloat(r.querySelector(".discount-amount-input").value) || 0;
+      const subTotal = price * qty;
+      const total = subTotal - discAmount;
+      r.querySelector(".total-cell").textContent =
+        "Rp " + total.toLocaleString("id-ID");
+      calculateGrandTotal();
+    }
+
+    function selectProduct(product) {
+      const rows = [...sellTableBody.querySelectorAll("tr")];
+      let targetRow = rows.find((r) => {
+        const code = r.querySelector(".code-input").value.trim();
+        return code === "";
+      });
+      if (!targetRow) {
+        addNewRow(false);
+        targetRow = sellTableBody.lastElementChild;
+      }
+
+      let existingRow = null;
+      for (const r of rows) {
+        const code = r
+          .querySelector(".code-input")
+          .value.trim()
+          .toUpperCase();
+        if (code === product.shortName) {
+          existingRow = r;
+          break;
+        }
+      }
+
+      if (existingRow) {
+        const qtyInput = existingRow.querySelector(".qty-input");
+        qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+        updateTotalRow(existingRow);
+
+        if (targetRow) {
+          targetRow.querySelector(".code-input").value = "";
+          targetRow.querySelector(".name-input").value = "";
+          targetRow.querySelector(".price-input").value = "Rp 0";
+          targetRow.querySelector(".qty-input").value = "1";
+          targetRow.querySelector(".discount-percent-input").value = "0";
+          targetRow.querySelector(".discount-amount-input").value = "0";
+          targetRow.querySelector(".total-cell").textContent = "Rp 0";
+        }
+      } else {
+        fillProductRow(targetRow, product);
+        maybeAddNewRow();
+      }
+
+      productModal.hide();
+
+      setTimeout(() => {
+        focusNextEmptyRow();
+      }, 200);
+    }
+
+    function calculateGrandTotal() {
+      let subTotal = 0;
+      let totalDiscount = 0;
+      const rows = sellTableBody.querySelectorAll("tr");
+      rows.forEach((row) => {
+        const price = parseRupiah(row.querySelector(".price-input").value);
+        const qty = parseInt(row.querySelector(".qty-input").value) || 0;
+        const discAmt =
+          parseFloat(row.querySelector(".discount-amount-input").value) || 0;
+
+        if (price && qty) {
+          subTotal += price * qty;
+          totalDiscount += discAmt;
+        }
+      });
+
+      const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
+      const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+
+      let finalDiscount = totalDiscount;
+      if (grandDiscPercent > 0) {
+        finalDiscount += subTotal * (grandDiscPercent / 100);
+      } else {
+        finalDiscount += grandDiscAmount;
+      }
+
+      const grandTotal = subTotal - finalDiscount;
+
+      subTotalDisplay.textContent = "Rp " + subTotal.toLocaleString("id-ID");
+      grandTotalDisplay.textContent =
+        "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
+
+      calculateReturnAmount();
+    }
+
+    function calculateReturnAmount() {
+      const grandTotal =
+        parseFloat(
+          grandTotalDisplay.textContent
+            .replace("Rp ", "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+        ) || 0;
+      const paymentAmount = parseRupiah(paymentAmountInput.value);
+      const returnAmount = paymentAmount - grandTotal;
+
+      returnAmountInput.value = formatRupiah(returnAmount);
+
+      saveButton.disabled = returnAmount <= 0;
+      saveButton.disabled =
+        sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
+    }
+
+    grandDiscountPercent.addEventListener("input", () => {
+      updateGrandDiscountAmount();
+    });
+
+    grandDiscountAmount.addEventListener("input", () => {
+      updateGrandDiscountPercent();
+    });
+
+    function updateGrandDiscountAmount() {
+      const subTotal =
+        parseFloat(
+          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+        ) || 0;
+      const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
+
+      if (subTotal > 0 && discountPercent >= 0) {
+        const discountAmount = subTotal * (discountPercent / 100);
+        grandDiscountAmount.value = discountAmount.toFixed(0);
+      } else {
+        grandDiscountAmount.value = 0;
+      }
+      calculateGrandTotal();
+    }
+
+    function updateGrandDiscountPercent() {
+      const subTotal =
+        parseFloat(
+          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+        ) || 0;
+      const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
+
+      if (subTotal > 0 && discountAmount >= 0) {
+        const discountPercent = (discountAmount / subTotal) * 100;
+        grandDiscountPercent.value = discountPercent.toFixed(2);
+      } else {
+        grandDiscountPercent.value = 0;
+      }
+      calculateGrandTotal();
+    }
+
+    function loadProductTable(filteredProducts = masterProducts) {
+      productTableBody.innerHTML = "";
+      let rows = [];
+
+      filteredProducts.forEach((product, index) => {
+        const row = document.createElement("tr");
+        row.setAttribute("data-index", index);
+        row.tabIndex = 0;
+        row.style.cursor = "pointer";
+
+        row.innerHTML = `
+    <td>${product.shortName}</td>
+    <td>${product.fullName}</td>
+    <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+    <td>${product.stok}</td>
+  `;
+
+        row.addEventListener("dblclick", () => {
+          selectProduct(product);
+        });
+
+        productTableBody.appendChild(row);
+        rows.push(row);
+      });
+
+      currentKeyboardIndex = -1;
+      highlightRow(null);
+
+      document.onkeydown = null;
+
+      document.onkeydown = function (e) {
+        if (!productModalEl.classList.contains("show")) return;
+
+        const activeElement = document.activeElement;
+        const isInSearch =
+          activeElement === searchCode || activeElement === searchName;
+
+        switch (e.key) {
+          case "ArrowDown":
+            e.preventDefault();
+            if (rows.length === 0) return;
+
+            if (isInSearch) {
+              currentKeyboardIndex = 0;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            } else {
+              if (currentKeyboardIndex < rows.length - 1)
+                currentKeyboardIndex++;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            }
+            break;
+
+          case "ArrowUp":
+            e.preventDefault();
+            if (rows.length === 0) return;
+
+            if (!isInSearch) {
+              if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            }
+            break;
+
+          case "ArrowLeft":
+            e.preventDefault();
+            searchCode.focus();
+            break;
+
+          case "ArrowRight":
+            e.preventDefault();
+            searchName.focus();
+            break;
+
+          case "Enter":
+            e.preventDefault();
+
+            if (isInSearch) {
+              doFilter();
+            } else {
+              if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                const selectedCode = rows[currentKeyboardIndex]
+                  .querySelector("td")
+                  .textContent.trim();
+                const selected = masterProducts.find(
+                  (p) => p.shortName === selectedCode
+                );
+                if (selected) selectProduct(selected);
+              }
+            }
+            break;
+        }
+      };
+
+      function highlightRow(row) {
+        rows.forEach((r) => r.classList.remove("table-active"));
+        if (row) {
+          row.classList.add("table-active");
+          row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+    }
+
+    searchCode.addEventListener("focus", () => {
+      activeSearchField = "shortName";
+    });
+
+    searchName.addEventListener("focus", () => {
+      activeSearchField = "fullName";
+    });
+
+    function doFilter() {
+      if (activeSearchField === "shortName") {
+        const val = searchCode.value.trim().toLowerCase();
+        const filtered = masterProducts.filter((p) =>
+          p.shortName.toLowerCase().includes(val)
+        );
+        loadProductTable(filtered);
+      } else if (activeSearchField === "fullName") {
+        const val = searchName.value.trim().toLowerCase();
+        const filtered = masterProducts.filter((p) =>
+          p.fullName.toLowerCase().includes(val)
+        );
+        loadProductTable(filtered);
+      }
+    }
+
+    [searchCode, searchName].forEach((input) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doFilter();
+        }
+      });
+    });
+
+    function showContextMenu(x, y) {
+      const menu = document.getElementById("contextMenu");
+      menu.style.top = `${y}px`;
+      menu.style.left = `${x}px`;
+      menu.style.display = "block";
+    }
+
+    function deleteRow() {
+      if (selectedRow) {
+        selectedRow.remove();
+        selectedRow = null;
+        document.getElementById("contextMenu").style.display = "none";
+
+        if (sellTableBody.querySelectorAll("tr").length === 0) {
+          addNewRow();
+        }
+        calculateGrandTotal();
+      }
+    }
+
+    document.addEventListener("click", () => {
+      document.getElementById("contextMenu").style.display = "none";
+    });
+
+    productModalEl.addEventListener("hidden.bs.modal", () => {
+      searchCode.value = "";
+      searchName.value = "";
+      loadProductTable();
+      focusNextEmptyRow();
+    });
+
+    function focusNextEmptyRow() {
+      const rows = [...sellTableBody.querySelectorAll("tr")];
+      for (const row of rows) {
+        const codeInput = row.querySelector(".code-input");
+        const nameInput = row.querySelector(".name-input");
+        if (codeInput.value.trim() === "" && nameInput.value.trim() === "") {
+          codeInput.focus();
+          return;
+        }
+      }
+      addNewRow(true);
+    }
+
+    function loadCustomers() {
+      customerSelect.innerHTML = "";
+      masterCustomers.forEach((customer) => {
+        const option = document.createElement("option");
+        const isGeneral = customer.name === "UMUM";
+        const selectedAttribute = isGeneral ? "selected" : "";
+        const newOption = `<option value="${customer.customerId}" ${selectedAttribute}>${customer.name}</option>`;
+        customerSelect.insertAdjacentHTML("beforeend", newOption);
+      });
+    }
+
+    async function saveTransaction() {
+      const grandTotal =
+        parseFloat(
+          grandTotalDisplay.textContent
+            .replace("Rp ", "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+        ) || 0;
+      const paymentAmount = parseRupiah(paymentAmountInput.value);
+
+      if (
+        sellTableBody.querySelectorAll("tr").length === 0 ||
+        grandTotal === 0
+      ) {
+        alert("Transaction cannot be saved with no items.");
+        return;
+      }
+
+      if (paymentAmount < grandTotal) {
+        alert("Payment amount is less than the grand total.");
+        return;
+      }
+
+      const selectedCustomerId = customerSelect.value;
+      console.log("selected customer : " + selectedCustomerId);
+      console.log("master customer : " + masterCustomers);
+      const selectedCustomer = masterCustomers.find(
+        (c) => c.customerId == selectedCustomerId
+      );
+
+      console.log("selected customer v2: " + selectedCustomer);
+
+      const transactionData = {
+        customerId: selectedCustomer.customerId,
+        transactionDetailDtos: [],
+        subTotal: parseFloat(
+          subTotalDisplay.textContent
+            .replace("Rp ", "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+        ),
+        totalDisc: parseFloat(grandDiscountAmount.value) || 0,
+        totalPrice: grandTotal,
+      };
+
+      sellTableBody.querySelectorAll("tr").forEach((row) => {
+        const code = row.querySelector(".code-input").value;
+        if (code) {
+          transactionData.transactionDetailDtos.push({
+            code: code,
+            name: row.querySelector(".name-input").value,
+            price: parseRupiah(row.querySelector(".price-input").value),
+            qty: parseInt(row.querySelector(".qty-input").value),
+            discAmount: parseFloat(
+              row.querySelector(".discount-amount-input").value
+            ),
+            total: parseFloat(
+              row
+                .querySelector(".total-cell")
+                .textContent.replace("Rp ", "")
+                .replace(/\./g, "")
+                .replace(",", ".")
+            ),
+          });
+        }
+      });
+      console.log(
+        "Transaction Saved:",
+        JSON.stringify(transactionData, null, 2)
+      );
+
+      const isPrintBill = document.getElementById("printBill");
+      console.log("is print bill : " + isPrintBill.checked);
+      console.log("is print bill value : " + !isPrintBill.checked);
+
+      if (isPrintBill.checked) {
+        console.log("entering is print bill");
+        <!--        function printReceiptContent() {-->
+        const printContents = document.getElementById("receiptContent").innerHTML;
+        console.log(printContents);
+
+        const printWindow = window.open();
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print</title>
+               <link
+                    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+                    rel="stylesheet"
+                  />
+              <style>
+                  @page {
+                    size: A5 landscape;
+                    margin: 10px;
+                  }
+
+                  @media print {
+                    body {
+                      margin: 0;
+                      padding: 0;
+                    }
+
+                    .print-page {
+                      page-break-after: always;
+                    }
+
+                    .print-page:last-child {
+                      page-break-after: auto;
+                    }
+                  }
+
+                  body {
+                    font-family: Arial, sans-serif;
+                    font-size: 11px;
+                    margin: 10px;
+                  }
+
+                  table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed; /* Ensures columns are sized by their width */
+                    border: 1px solid black;
+                    border-top: none;
+                  }
+
+                  th,
+                  td {
+                    border: 1px solid black;
+                    padding: 2px;
+                    font-size: 10px;
+                    height: 18px; /* Fixed height for each row/cell */
+                    vertical-align: top; /* Align content to the top of the cell */
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: clip;
+                  }
+
+                  th {
+                    font-weight: bold;
+                    text-align: center;
+                    vertical-align: middle;
+                  }
+        </style>
+        </head>
+        <body onload="window.print(); window.close();">
+             ${printContents}
+        </body>
+      </html>
+    `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+
+        console.log("Printing bill...");
+      }
+
+      console.log("is print bill " + transactionData.printBill);
+
+      console.log("start sending to be");
+      try {
+        let response;
+        if (
+          masterTransactions.transactionId !== null &&
+          masterTransactions.transactionDetailDTOS !== null
+        ) {
+          console.log("otw edit");
+          response = await fetch(
+            `api/kasir/edit/${masterTransactions.transactionId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(transactionData),
+            }
+          );
+        } else {
+          console.log("otw add");
+          response = await fetch("api/kasir/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
+        }
+
+        console.log("response from be : ", !response.ok);
+
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const result = await response.text();
+        console.log("Transaction Saved:", result);
+        alert("Transaction saved successfully!");
+
+        if (transactionData.printBill) {
+          console.log("Printing bill...");
+        }
+
+        if (
+          masterTransactions.transactionId !== null &&
+          masterTransactions.transactionDetailDTOS !== null
+        ) {
+          window.location.href = "/penjualan";
+        } else {
+          window.location.href = "/kasir";
+
+          <!--          cancelTransaction();-->
+        }
+      } catch (error) {
+        console.error("Failed to save transaction:", error);
+        alert("Failed to save transaction. Please try again.");
+      }
+    }
+
+    function cancelTransaction() {
+      sellTableBody.innerHTML = "";
+      grandDiscountPercent.value = 0;
+      grandDiscountAmount.value = 0;
+      paymentAmountInput.value = "Rp 0";
+      returnAmountInput.value = "Rp 0";
+      document.getElementById("printBill").checked = true;
+
+      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+      const customerUmum = masterCustomers.find(
+        (c) => c.customerId == 2
+      ).customerId;
+      customerSelect.value = customerUmum;
+      console.log("master cust 0 : " + customerUmum);
+
+      addNewRow();
+      calculateGrandTotal();
+    }
+
+    function updateJam() {
+      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+    }
+
+    function loadTransaction(transaction) {
+      // Clear the current sales table
+      sellTableBody.innerHTML = "";
+
+      // Set the grand total discounts and customer
+      if (transaction.subtotal > 0) {
+        const discountPercent =
+          (transaction.totalDisc / transaction.subtotal) * 100;
+        grandDiscountPercent.value = discountPercent.toFixed(2); // e.g. "12.50"
+        console.log(
+          "grand disc percent value:",
+          grandDiscountPercent.value + "%"
+        );
+      } else {
+        grandDiscountPercent.value = "0.00";
+        console.warn(
+          "Subtotal is zero or invalid, cannot compute discount percent."
+        );
+      }
+      grandDiscountAmount.value = transaction.totalDisc;
+
+      // Set customer if you want
+      if (transaction.customerDTO.customerId) {
+        customerSelect.value = transaction.customerDTO.customerId;
+      }
+
+      // Populate the table with transaction details
+      transaction.transactionDetailDTOS.forEach((detail, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+      <td class="row-number">${index + 1}</td>
+      <td><input type="text" class="form-control form-control-sm code-input" value="${
+        detail.code
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
+        detail.name
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
+        detail.price
+      )}" /></td>
+      <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
+        detail.qty
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
+        (detail.discAmount / (detail.total + detail.discAmount)) * 100
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+        detail.discAmount
+      }" /></td>
+      <td class="total-cell">${formatRupiah(detail.total)}</td>
+  `;
+
+        // Re-attach event listeners to the new row's inputs
+        const codeInput = row.querySelector(".code-input");
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+        const discPercentInput = row.querySelector(".discount-percent-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+
+        priceInput.addEventListener("focus", handleFormattedFocus);
+        priceInput.addEventListener("blur", handleFormattedBlur);
+        priceInput.addEventListener("input", () => updateTotalRow(row));
+        qtyInput.addEventListener("input", () => updateTotalRow(row));
+        discPercentInput.addEventListener("input", () => {
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountPercent = parseFloat(discPercentInput.value) || 0;
+          if (price * qty > 0) {
+            const discountAmount = price * qty * (discountPercent / 100);
+            discAmountInput.value = discountAmount.toFixed(0);
+          } else {
+            discAmountInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
+        discAmountInput.addEventListener("input", () => {
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountAmount = parseFloat(discAmountInput.value) || 0;
+          if (price * qty > 0) {
+            const discountPercent = (discountAmount / (price * qty)) * 100;
+            discPercentInput.value = discountPercent.toFixed(2);
+          } else {
+            discPercentInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
+        row.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+          selectedRow = row;
+          showContextMenu(e.pageX, e.pageY);
+        });
+
+        sellTableBody.appendChild(row);
+      });
+
+      // Add a new empty row for a new item
+      addNewRow();
+
+      // Recalculate and display the grand total
+      calculateGrandTotal();
+    }
+
+    // Init
+    if (
+      masterTransactions.transactionId !== null &&
+      masterTransactions.transactionDetailDTOS !== null
+    ) {
+      console.log("otw init master transactions");
+      loadTransaction(masterTransactions);
+    }
+    loadCustomers();
+    updateJam();
+    addNewRow();
+    calculateGrandTotal();
+    setInterval(updateJam, 1000);
+</script>
+<script>
+    const data = Array.from({ length: 25 }, (_, i) => ({
+      no: i + 1,
+      code: "31700-KVB-900",
+      name: "SUPER MATIC SUPER MATIC SUPER MATIC",
+      qty: 555,
+      price1: "6.444.000",
+      price2: "3.220.000",
+      discount: "25.550",
+      total: "3.220.000",
+    }));
+
+    const totalRowsPerPage = 15;
+
+    const columns = [
+      { width: "30px", align: "center", field: "no", label: "No" },
+      { width: "120px", align: "left", field: "code", label: "Kode" },
+      { width: "220px", align: "left", field: "name", label: "Nama Barang" },
+      { width: "40px", align: "right", field: "qty", label: "Qty" },
+      { width: "80px", align: "right", field: "price1", label: "Satuan" },
+      { width: "80px", align: "right", field: "price2", label: "Harga" },
+      { width: "60px", align: "center", field: "discount", label: "Disc Rp" },
+      { width: "auto", align: "right", field: "total", label: "Total" },
+    ];
+
+    const chunkArray = (arr, size) => {
+      const result = [];
+      for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+      }
+      return result;
+    };
+
+    const pages = chunkArray(data, totalRowsPerPage);
+    const root = document.getElementById("receiptContent");
+
+    pages.forEach((pageData) => {
+      const pageDiv = document.createElement("div");
+      pageDiv.className = "print-page container-fluid";
+
+      // Header and transaction info remain the same
+      pageDiv.innerHTML = `
+        <div class="row" style="align-items: flex-start">
+          <div class="col">
+            <span style="font-weight: bold">Anugrah Jaya Motor</span> <br />
+            <span>Jl. Baturaja No. 105</span> <br />
+            <span>Tanjung Enim</span> <br />
+            <span>0895-3838-40099</span>
+          </div>
+          <div class="col text-center">
+            <span style="font-weight: bold; font-size: 14px; font-style: italic">FAKTUR JUAL</span>
+          </div>
+          <div class="col" style="border: 1px solid black; padding: 5px;">
+            <div class="row">
+              <div class="col-4"><span>Pelanggan</span></div>
+              <div class="col"><span>: TIA MOTOR</span></div>
+            </div>
+            <div class="row">
+              <div class="col-4"><span>Alamat</span></div>
+              <div class="col"><span>: SELEMAN</span></div>
+            </div>
+          </div>
+        </div>
+        <table>
+          <colgroup>
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="width:150px; text-align:left"><strong>INV : 20250821004</strong></th>
+              <th style="width:220px; text-align:left">Tanggal : 18 Agustus 2025 14:30</th>
+              <th></th>
+            </tr>
+          </thead>
+        </table>
+      `;
+
+      // Create the table
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+
+      // Create table header row
+      const headerRow = document.createElement("tr");
+      columns.forEach((col) => {
+        const th = document.createElement("th");
+        th.textContent = col.label;
+        if (col.width) {
+          th.style.width = col.width;
+        }
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      // Populate table with data
+      pageData.forEach((rowData) => {
+        const tr = document.createElement("tr");
+        columns.forEach((col) => {
+          const td = document.createElement("td");
+          td.textContent = rowData[col.field] || "";
+          td.style.textAlign = col.align;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      // Add empty rows to fill the page
+      const emptyRowsToAdd = totalRowsPerPage - pageData.length;
+      for (let i = 0; i < emptyRowsToAdd; i++) {
+        const tr = document.createElement("tr");
+        columns.forEach((col) => {
+          const td = document.createElement("td");
+          td.textContent = "";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      }
+
+      table.appendChild(tbody);
+      pageDiv.appendChild(table);
+
+      // Grand Total section remains the same
+      const grandTotal = document.createElement("div");
+      grandTotal.className = "row";
+      grandTotal.innerHTML = `
+        <!-- Left side: text and signatures -->
+        <div class="col-8">
+          <div class="row">
+            <span>Dua Ratus Sembilan Puluh Tiga Juta Dua Ratus Tiga Puluh Sembilan Ribu Rupiah</span>
+          </div>
+          <div class="row mt-3">
+            <div class="col"><span>Yang Menerima</span></div>
+            <div class="col"><span>Yang Menyerahkan</span></div>
+          </div>
+          <div class="row mt-4">
+            <div class="col"><span>___________________</span></div>
+            <div class="col"><span>___________________</span></div>
+          </div>
+        </div>
+
+        <!-- Right side: totals box -->
+        <div class="col-3" style="width:240px !important;border: 1px solid black; border-top: none; font-size: 14px; padding: 5px;">
+          <div class="row"><div class="col-6">Total</div><div class="col-6 text-end">293.000</div></div>
+          <div class="row"><div class="col-6">Discount</div><div class="col-6 text-end">0</div></div>
+          <div class="row"><div class="col-6">Grand Total</div><div class="col-6 text-end">293.000</div></div>
+          <div class="row"><div class="col-6">Bayar</div><div class="col-6 text-end">293.239.000</div></div>
+          <div class="row"><div class="col-6">Kembali</div><div class="col-6 text-end">0</div></div>
+        </div>
+      `;
+
+      pageDiv.appendChild(grandTotal);
+      root.appendChild(pageDiv);
+    });
+</script>
+</body>
+</html>

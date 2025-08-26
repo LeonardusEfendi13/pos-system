@@ -3,6 +3,7 @@ package com.pos.posApps.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,6 +21,19 @@ public class PreorderEntity {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierEntity;
 
+    @Column(name = "subtotal")
+    private BigDecimal subtotal;
+
+    @Column(name = "total_price")
+    private BigDecimal totalPrice;
+
+    @Column(name = "total_discount")
+    private BigDecimal totalDiscount;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private ClientEntity clientEntity;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -29,7 +43,4 @@ public class PreorderEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private ClientEntity clientEntity;
 }

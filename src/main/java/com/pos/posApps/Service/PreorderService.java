@@ -66,7 +66,8 @@ public class PreorderService {
                 newData.setPreorderDetailId(newPreorderDetailsId);
                 newData.setQuantity(preorderDetailData.getQuantity());
                 newData.setPreorderEntity(newPreorder);
-                newData.setProductEntity(productEntity);
+                //todo
+//                newData.setProductEntity(productEntity);
 
                 //Generate for next loop
                 newPreorderDetailsId = Generator.generateId(newPreorderDetailsId);
@@ -103,7 +104,8 @@ public class PreorderService {
                 ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(preorderDetailData.getProductId());
                 newData.setQuantity(preorderDetailData.getQuantity());
                 newData.setPreorderEntity(newPreorder);
-                newData.setProductEntity(productEntity);
+                //todo
+//                newData.setProductEntity(productEntity);
                 preorderDetailRepository.save(newData);
             }
             return true;

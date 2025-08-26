@@ -61,12 +61,14 @@ public class AuthController {
             Model model) {
         System.out.println("Masuk Login");
         if(bindingResult.hasErrors()){
+            System.out.println("binding error");
             model.addAttribute("login_status", "200");
             return "redirect:/login";
         }
         String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
 
         if(token == null){
+            System.out.println("token null");
             model.addAttribute("login_status", "401");
             return "redirect:/login";
         }

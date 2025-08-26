@@ -34,6 +34,7 @@ public class AuthService {
 
             boolean isPasswordEqual = passwordEncoder.matches(password, accountData.getPassword());
             if(!isPasswordEqual) {
+                System.out.println("pass not equal");
                 return null;
             }
 
