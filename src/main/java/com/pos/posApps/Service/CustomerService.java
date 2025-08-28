@@ -28,7 +28,7 @@ public class CustomerService {
     private ClientRepository clientRepository;
 
     @Transactional
-    public boolean doCreateCustomer(String customerName, Long clientId){
+    public boolean doCreateCustomer(String customerName, String alamat, Long clientId){
         try{
             CustomerEntity customerEntity = customerRepository.findByNameAndDeletedAtIsNullAndClientEntity_ClientId(customerName, clientId);
             if(customerEntity != null){
@@ -42,6 +42,7 @@ public class CustomerService {
             CustomerEntity newCustomerEntity = new CustomerEntity();
             newCustomerEntity.setCustomerId(newCustomerId);
             newCustomerEntity.setName(customerName);
+            newCustomerEntity.setAlamat(alamat);
             newCustomerEntity.setClientEntity(clientEntity);
             customerRepository.save(newCustomerEntity);
             return true;

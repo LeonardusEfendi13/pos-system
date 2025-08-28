@@ -21,6 +21,9 @@ public class CustomerEntity {
 //    @Column(name = "customer_level_id")
 //    private String customerLevelid;
 
+    @Column(name = "alamat")
+    private String alamat;
+
     @ManyToOne
     @JoinColumn(name = "client_id")
     private ClientEntity clientEntity;

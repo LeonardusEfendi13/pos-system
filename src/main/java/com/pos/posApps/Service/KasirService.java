@@ -28,21 +28,23 @@ public class KasirService {
     CustomerRepository customerRepository;
 
     @Transactional
-    public boolean createTransaction(CreateTransactionRequest req, ClientEntity clientData){
+    public String createTransaction(CreateTransactionRequest req, ClientEntity clientData){
         try{
             //Get Supplier Entity
             CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
             if (customerEntity == null){
-                return false;
+                return null;
             }
             //Get last Transaction id
             Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
             Long newTransactionId = Generator.generateId(lastTransactionId);
+            String generatedNotaNumber = generateNotaNumber(newTransactionId);
+
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
             transactionEntity.setClientEntity(clientData);
-            transactionEntity.setTransactionNumber(generateNotaNumber(newTransactionId));
+            transactionEntity.setTransactionNumber(generatedNotaNumber);
             transactionEntity.setTransactionId(newTransactionId);
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
@@ -75,10 +77,10 @@ public class KasirService {
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
             }
-            return true;
+            return generatedNotaNumber;
         }catch (Exception e){
             System.out.println("Exception catched : " + e);
-            return false;
+            return null;
         }
     }
 

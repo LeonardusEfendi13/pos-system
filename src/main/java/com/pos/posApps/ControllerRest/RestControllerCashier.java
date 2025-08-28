@@ -34,10 +34,10 @@ public class RestControllerCashier {
         }
 
         System.out.println("otw save");
-        boolean isCreated = kasirService.createTransaction(req, clientData);
-        if(isCreated){
+        String isCreated = kasirService.createTransaction(req, clientData);
+        if(isCreated != null){
             System.out.println("sukses");
-            return ResponseEntity.ok("Transaction Saved");
+            return ResponseEntity.ok(isCreated);
         }
         System.out.println("gagal");
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");

@@ -49,6 +49,7 @@ public class CustomerController {
     public String registerCustomer(
             HttpSession session,
             @Valid String customerName,
+            @Valid String alamat,
             RedirectAttributes redirectAttributes) {
         Long clientId;
         AccountEntity accEntity;
@@ -64,7 +65,7 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = customerService.doCreateCustomer(customerName, clientId);
+            boolean isInserted = customerService.doCreateCustomer(customerName, alamat, clientId);
             if (isInserted) {
                 System.out.println("Customer Created");
                 redirectAttributes.addFlashAttribute("status", "success");
