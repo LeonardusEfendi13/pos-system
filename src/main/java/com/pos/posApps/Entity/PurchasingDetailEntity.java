@@ -33,6 +33,24 @@ public class PurchasingDetailEntity {
     @Column(name ="total_price")
     private BigDecimal totalPrice;
 
+    @Column(name = "mark_up_1")
+    private BigDecimal markup1;
+
+    @Column(name = "harga_jual_1")
+    private BigDecimal hargaJual1;
+
+    @Column(name = "mark_up_2")
+    private BigDecimal markup2;
+
+    @Column(name = "harga_jual_2")
+    private BigDecimal hargaJual2;
+
+    @Column(name = "mark_up_3")
+    private BigDecimal markup3;
+
+    @Column(name = "harga_jual_3")
+    private BigDecimal hargaJual3;
+
     @ManyToOne
     @JoinColumn(name = "purchasing_id")
     private PurchasingEntity purchasingEntity;

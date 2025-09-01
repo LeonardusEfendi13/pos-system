@@ -19,7 +19,7 @@ public class PembelianDTO {
     private boolean isCash;
     private LocalDateTime tanggalTempo;
     private BigDecimal totalPrice;
-    private String supplierName;
+    private SupplierDTO supplierDTO;
     private boolean isPaid;
     private List<PembelianDetailDTO> pembelianDetailDTOS;
 }

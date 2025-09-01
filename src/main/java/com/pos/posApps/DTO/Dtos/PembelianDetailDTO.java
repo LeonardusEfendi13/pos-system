@@ -17,4 +17,11 @@ public class PembelianDetailDTO {
     private BigDecimal price;
     private BigDecimal discAmount;
     private BigDecimal total;
+    private BigDecimal markup1;
+    private BigDecimal markup2;
+    private BigDecimal markup3;
+    private BigDecimal hargaJual1;
+    private BigDecimal hargaJual2;
+    private BigDecimal hargaJual3;
+
 }

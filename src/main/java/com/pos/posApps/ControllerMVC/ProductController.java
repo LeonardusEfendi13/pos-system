@@ -103,7 +103,7 @@ public class ProductController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isEdited = productService.editProducts(req);
+            boolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
             if (isEdited) {
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Edited");

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface SupplierRepository extends JpaRepository<SupplierEntity, Long> {
-    SupplierEntity findFirstBySupplierIdAndDeletedAtIsNull(Long supplierId);
+    SupplierEntity findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(Long supplierId, Long clientId);
 
     List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(Long clientId);
 

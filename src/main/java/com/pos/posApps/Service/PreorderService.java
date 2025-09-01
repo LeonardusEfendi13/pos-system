@@ -42,7 +42,7 @@ public class PreorderService {
         try{
             Long lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().map(PreorderEntity::getPreorderId).orElse(0L);
             Long newPreorderId = Generator.generateId(lastPreorderId);
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
@@ -82,7 +82,7 @@ public class PreorderService {
     @Transactional
     public boolean editPreorder(EditPreorderRequest req, ClientEntity clientData){
         try{
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if(supplierEntity == null){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;

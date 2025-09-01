@@ -67,7 +67,7 @@ public class ProductService {
             Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
             Long newProductId = Generator.generateId(lastProductId);
 
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
+            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntity == null) {
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
@@ -109,14 +109,14 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean editProducts(EditProductRequest req) {
+    public boolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
         ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
         if (productEntity == null) {
             System.out.println("Product not found");
             return false;
         }
 
-        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNull(req.getSupplierId());
+        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
         if (supplierEntity == null) {
             System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;
