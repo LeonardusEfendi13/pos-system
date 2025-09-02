@@ -51,6 +51,17 @@
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
                 </div>
+                <div class="col-md-3">
+                    <label for="supplierId" class="form-label">Supplier</label>
+                    <select id="supplierId" name="supplierId" class="form-select">
+                        <option value="">-- Semua Supplier --</option>
+                        <option th:each="supplier : ${supplierData}"
+                                th:value="${supplier.supplierId}"
+                                th:text="${supplier.supplierName}"
+                                th:selected="${supplier.supplierId == supplierId}">
+                        </option>
+                    </select>
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">Cari</button>
                 </div>

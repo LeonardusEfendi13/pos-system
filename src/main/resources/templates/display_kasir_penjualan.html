@@ -714,6 +714,14 @@
       grandDiscountPercent.addEventListener("focus", clearZeroOnFocus);
       grandDiscountAmount.addEventListener("focus", clearZeroOnFocus);
 
+      [discPercentInput, discAmountInput].forEach((inp) => {
+          inp.addEventListener("blur", () => {
+            if (inp.value.trim() === "" || isNaN(parseFloat(inp.value))) {
+              inp.value = "0";
+            }
+          });
+        });
+
       if (focus) codeInput.focus();
 
       codeInput.addEventListener("keydown", (e) => {
@@ -785,7 +793,7 @@
         const qty = parseInt(qtyInput.value) || 0;
         const discountPercent = parseFloat(discPercentInput.value) || 0;
 
-        if (price * qty > 0) {
+        if (price * qty > 0 && !isNaN(discountPercent)) {
           const discountAmount = price * qty * (discountPercent / 100);
           discAmountInput.value = discountAmount.toFixed(0);
         } else {
@@ -801,7 +809,7 @@
 
         if (price * qty > 0) {
           const discountPercent = (discountAmount / (price * qty)) * 100;
-          discPercentInput.value = discountPercent.toFixed(2);
+          discPercentInput.value = isFinite(discountPercent) ? discountPercent.toFixed(2) : "0";
         } else {
           discPercentInput.value = "0";
         }
@@ -1562,7 +1570,7 @@
           const price = parseRupiah(row.querySelector(".price-input").value);
           const qty = parseInt(qtyInput.value) || 0;
           const discountPercent = parseFloat(discPercentInput.value) || 0;
-          if (price * qty > 0) {
+          if (price * qty > 0 && !isNaN(discountPercent)) {
             const discountAmount = price * qty * (discountPercent / 100);
             discAmountInput.value = discountAmount.toFixed(0);
           } else {
@@ -1577,7 +1585,7 @@
           const discountAmount = parseFloat(discAmountInput.value) || 0;
           if (price * qty > 0) {
             const discountPercent = (discountAmount / (price * qty)) * 100;
-            discPercentInput.value = discountPercent.toFixed(2);
+            discPercentInput.value = isFinite(discountPercent) ? discountPercent.toFixed(2) : "0";
           } else {
             discPercentInput.value = "0";
           }
