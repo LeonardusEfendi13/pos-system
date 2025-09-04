@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>Kasir</title>
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -99,6 +99,13 @@
         #sellTable td {
           white-space: nowrap; /* Jangan wrap konten */
         }
+
+        .bottom-right-fixed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+          }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -116,6 +123,12 @@
                             id="customerSelect"
                             class="form-select form-select-sm w-100"
                     ></select>
+                    <br>
+
+                    <button class="btn btn-success add-product-btn" data-bs-toggle="modal"
+                            data-bs-target="#addBarangModal" id="add-barang-btn">Add Product
+                    </button>
+
                 </div>
 
                 <!-- Tengah: Faktur + PO Date -->
@@ -198,110 +211,64 @@
         </table>
     </div>
 
-    <div class="row justify-content-end">
-        <div class="col-md-3">
-            <div class="card p-3 payment-section-card">
-                <div class="row">
-                    <div class="col">
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Subtotal:</strong>
-                            <span id="subTotalDisplay">Rp 0</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Discount (%):</strong>
-                            <input
-                                    type="number"
-                                    id="grandDiscountPercent"
-                                    class="form-control form-control-sm w-50 text-end"
-                                    value="0"
-                                    min="0"
-                                    max="100"
-                            />
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Discount (Rp):</strong>
-                            <input
-                                    type="number"
-                                    id="grandDiscountAmount"
-                                    class="form-control form-control-sm w-50 text-end"
-                                    value="0"
-                                    min="0"
-                            />
-                        </div>
-                        <hr class="my-2" />
-                        <div
-                                class="d-flex justify-content-between align-items-center mb-2"
-                        >
-                            <h5 class="m-0">Grand Total:</h5>
-                            <h5 class="m-0 text-end" id="grandTotalDisplay">Rp 0</h5>
-                        </div>
-                        <div class="d-flex justify-content-end" style="margin-top:20px">
-                            <div>
-                                <button
-                                        class="btn btn-primary btn-sm me-2"
-                                        onclick="saveTransaction()"
-                                >
-                                    Simpan
-                                </button>
-                                <button
-                                        class="btn btn-secondary btn-sm"
-                                        onclick="cancelTransaction()"
-                                >
-                                    Batal
-                                </button>
-                            </div>
+    <!--    <div class="row justify-content-end" style="background-color: red; position:fixed; bottom:0">-->
+    <div class="bottom-right-fixed">
+        <div class="card p-3 payment-section-card">
+            <div class="row">
+                <div class="col">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Subtotal:</strong>
+                        <span id="subTotalDisplay">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Discount (%):</strong>
+                        <input
+                                type="number"
+                                id="grandDiscountPercent"
+                                class="form-control form-control-sm w-50 text-end"
+                                value="0"
+                                min="0"
+                                max="100"
+                        />
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Discount (Rp):</strong>
+                        <input
+                                type="number"
+                                id="grandDiscountAmount"
+                                class="form-control form-control-sm w-50 text-end"
+                                value="0"
+                                min="0"
+                        />
+                    </div>
+                    <hr class="my-2"/>
+                    <div
+                            class="d-flex justify-content-between align-items-center mb-2"
+                    >
+                        <h5 class="m-0">Grand Total:</h5>
+                        <h5 class="m-0 text-end" id="grandTotalDisplay">Rp 0</h5>
+                    </div>
+                    <div class="d-flex justify-content-end" style="margin-top:20px">
+                        <div>
+                            <button
+                                    class="btn btn-primary btn-sm me-2"
+                                    onclick="saveTransaction()"
+                            >
+                                Simpan
+                            </button>
+                            <button
+                                    class="btn btn-secondary btn-sm"
+                                    onclick="cancelTransaction()"
+                            >
+                                Batal
+                            </button>
                         </div>
                     </div>
-<!--                    <div class="col-md-6 d-flex flex-column justify-content-center">-->
-<!--                        <div class="mb-2">-->
-<!--                            <label-->
-<!--                                    for="paymentAmount"-->
-<!--                                    class="form-label"-->
-<!--                                    style="font-weight: bold"-->
-<!--                            >Payment Amount</label-->
-<!--                            >-->
-<!--                            <input-->
-<!--                                    type="text"-->
-<!--                                    id="paymentAmount"-->
-<!--                                    class="form-control form-control-sm"-->
-<!--                                    min="Rp 0"-->
-<!--                            />-->
-<!--                        </div>-->
-<!--                        <div class="mb-3">-->
-<!--                            <label-->
-<!--                                    for="returnAmount"-->
-<!--                                    class="form-label"-->
-<!--                                    style="font-weight: bold"-->
-<!--                            >Return Amount</label-->
-<!--                            >-->
-<!--                            <input-->
-<!--                                    type="text"-->
-<!--                                    id="returnAmount"-->
-<!--                                    class="form-control form-control-sm"-->
-<!--                                    readonly-->
-<!--                            />-->
-<!--                        </div>-->
-<!--                        <div class="d-flex justify-content-between">-->
-<!--                            <div>-->
-<!--                                <button-->
-<!--                                        class="btn btn-primary btn-sm me-2"-->
-<!--                                        onclick="saveTransaction()"-->
-<!--                                >-->
-<!--                                    Simpan-->
-<!--                                </button>-->
-<!--                                <button-->
-<!--                                        class="btn btn-secondary btn-sm"-->
-<!--                                        onclick="cancelTransaction()"-->
-<!--                                >-->
-<!--                                    Batal-->
-<!--                                </button>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
                 </div>
             </div>
         </div>
     </div>
+    <!--    </div>-->
 </div>
 
 <div id="contextMenu">
@@ -544,11 +511,11 @@
      const qtyInput = row.querySelector(".qty-input");
      const discPercentInput = row.querySelector(".discount-percent-input");
      const discAmountInput = row.querySelector(".discount-amount-input");
-     const markup1Input = row.querySelector(".markup-1-input");
+     const markUp1Input = row.querySelector(".markup-1-input");
      const hargaJual1Input = row.querySelector(".harga-jual-1-input");
-     const markup2Input = row.querySelector(".markup-2-input");
+     const markUp2Input = row.querySelector(".markup-2-input");
      const hargaJual2Input = row.querySelector(".harga-jual-2-input");
-     const markup3Input = row.querySelector(".markup-3-input");
+     const markUp3Input = row.querySelector(".markup-3-input");
      const hargaJual3Input = row.querySelector(".harga-jual-3-input");
      const inputs = [
        codeInput,
@@ -557,11 +524,11 @@
        qtyInput,
        discPercentInput,
        discAmountInput,
-       markup1Input,
+       markUp1Input,
        hargaJual1Input,
-       markup2Input,
+       markUp2Input,
        hargaJual2Input,
-       markup3Input,
+       markUp3Input,
        hargaJual3Input
      ];
 
@@ -722,18 +689,102 @@
        updateTotalRow(row);
      });
 
-     discPercentInput.addEventListener("input", () => {
-       const price = parseRupiah(row.querySelector(".price-input").value);
-       const qty = parseInt(qtyInput.value) || 0;
-       const discountPercent = parseFloat(discPercentInput.value) || 0;
+      markUp1Input.addEventListener("input", () => {
+          let val = markUp1Input.value;
+          console.log("value markup1 is : " + val);
 
-       if (price * qty > 0 & !isNaN(discountPercent)) {
-         const discountAmount = price * qty * (discountPercent / 100);
-         discAmountInput.value = discountAmount.toFixed(0);
-       } else {
-         discAmountInput.value = "0";
-       }
-       updateTotalRow(row);
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            markUp1Input.value = intPart + "." + decPart.slice(0, 2);
+          }
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const markUp1Percent = parseFloat(markUp1Input.value) || 0;
+          const markUp1Amount = price + ((markUp1Percent * price) / 100)
+          hargaJual1Input.value = Math.round(markUp1Amount)
+          updateTotalRow(row);
+        });
+
+      hargaJual1Input.addEventListener("input", () => {
+           const price = parseRupiah(row.querySelector(".price-input").value);
+           const qty = parseInt(qtyInput.value) || 0;
+           const hargaJual1 = parseFloat(hargaJual1Input.value) || 0;
+           const markUp1 = ((hargaJual1 - price) / price) * 100;
+           markUp1Input.value = isFinite(markUp1) ? markUp1.toFixed(2) : "0" ;
+           updateTotalRow(row);
+      });
+
+      markUp2Input.addEventListener("input", () => {
+          let val = markUp2Input.value;
+          console.log("value markup2 is : " + val);
+
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            markUp2Input.value = intPart + "." + decPart.slice(0, 2);
+          }
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const markUp2Percent = parseFloat(markUp2Input.value) || 0;
+          const markUp2Amount = price + ((markUp2Percent * price) / 100)
+          hargaJual2Input.value = Math.round(markUp2Amount)
+          updateTotalRow(row);
+        });
+
+      hargaJual2Input.addEventListener("input", () => {
+           const price = parseRupiah(row.querySelector(".price-input").value);
+           const qty = parseInt(qtyInput.value) || 0;
+           const hargaJual2 = parseFloat(hargaJual2Input.value) || 0;
+           const markUp2 = ((hargaJual2 - price) / price) * 100;
+           markUp2Input.value = isFinite(markUp2) ? markUp2.toFixed(2) : "0" ;
+           updateTotalRow(row);
+      });
+
+      markUp3Input.addEventListener("input", () => {
+          let val = markUp3Input.value;
+          console.log("value markup3 is : " + val);
+
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            markUp3Input.value = intPart + "." + decPart.slice(0, 2);
+          }
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const markUp3Percent = parseFloat(markUp3Input.value) || 0;
+          const markUp3Amount = price + ((markUp3Percent * price) / 100)
+          hargaJual3Input.value = Math.round(markUp3Amount)
+          updateTotalRow(row);
+        });
+
+      hargaJual3Input.addEventListener("input", () => {
+           hargaJual3Input.value = hargaJual3Input.value.replace(/[^0-9.]/g, '');
+           const price = parseRupiah(row.querySelector(".price-input").value);
+           const qty = parseInt(qtyInput.value) || 0;
+           const hargaJual3 = parseFloat(hargaJual3Input.value) || 0;
+           const markUp3 = ((hargaJual3 - price) / price) * 100;
+           markUp3Input.value = isFinite(markUp3) ? markUp3.toFixed(2) : "0" ;
+           updateTotalRow(row);
+      });
+
+     discPercentInput.addEventListener("input", () => {
+          let val = discPercentInput.value;
+
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            discPercentInput.value = intPart + "." + decPart.slice(0, 2);
+          }
+
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountPercent = parseFloat(discPercentInput.value) || 0;
+
+          if (price * qty > 0) {
+            const discountAmount = price * qty * (discountPercent / 100);
+            discAmountInput.value = Math.round(discountAmount);
+          } else {
+            discAmountInput.value = "0";
+          }
+          updateTotalRow(row);
      });
 
      discAmountInput.addEventListener("input", () => {
@@ -741,7 +792,7 @@
        const qty = parseInt(qtyInput.value) || 0;
        const discountAmount = parseFloat(discAmountInput.value) || 0;
 
-       if (price * qty > 0 & !isNaN(discountPercent)) {
+       if (price * qty > 0 ) {
          const discountPercent = (discountAmount / (price * qty)) * 100;
          discPercentInput.value = isFinite(discountPercent) ? discountPercent.toFixed(2) : "0" ;
        } else {
@@ -809,12 +860,36 @@
      row.querySelector(".discount-amount-input").value = 0;
      row.querySelector(".stok-input").value = product.stok;
      row.querySelector(".harga-jual-lama").value = formatRupiah(price);
-     row.querySelector(".markup-1-input").value = ((price1 - product.hargaBeli) / price1) * 100;
-     row.querySelector(".harga-jual-1-input").value = formatRupiah(product.productPricesDTO[0].price);
-     row.querySelector(".markup-2-input").value = ((price2 - product.hargaBeli) / price2) * 100;
-     row.querySelector(".harga-jual-2-input").value = formatRupiah(product.productPricesDTO[1].price);
-     row.querySelector(".markup-3-input").value = ((price3 - product.hargaBeli) / price3) * 100;
-     row.querySelector(".harga-jual-3-input").value = formatRupiah(product.productPricesDTO[2].price);
+     // Use price1 if > 0, else fallback (or leave blank)
+        if (price1 > 0) {
+            row.querySelector(".markup-1-input").value = parseFloat(((price1 - product.hargaBeli) / price1) * 100).toFixed(2);
+            row.querySelector(".harga-jual-1-input").value = formatRupiah(price1);
+        } else {
+            row.querySelector(".markup-1-input").value = 0;
+            row.querySelector(".harga-jual-1-input").value = formatRupiah(0);
+        }
+
+        if (price2 > 0) {
+            row.querySelector(".markup-2-input").value = parseFloat(((price2 - product.hargaBeli) / price2) * 100).toFixed(2);
+            row.querySelector(".harga-jual-2-input").value = formatRupiah(price2);
+        } else {
+            row.querySelector(".markup-2-input").value = 0;
+            row.querySelector(".harga-jual-2-input").value = formatRupiah(0);
+        }
+
+        if (price3 > 0) {
+            row.querySelector(".markup-3-input").value = parseFloat(((price3 - product.hargaBeli) / price3) * 100).toFixed(2);
+            row.querySelector(".harga-jual-3-input").value = formatRupiah(price3);
+        } else {
+            row.querySelector(".markup-3-input").value = 0;
+            row.querySelector(".harga-jual-3-input").value = formatRupiah(0);
+        }
+<!--     row.querySelector(".markup-1-input").value = ((price1 - product.hargaBeli) / price1) * 100;-->
+<!--     row.querySelector(".harga-jual-1-input").value = formatRupiah(product.productPricesDTO[0].price);-->
+<!--     row.querySelector(".markup-2-input").value = ((price2 - product.hargaBeli) / price2) * 100;-->
+<!--     row.querySelector(".harga-jual-2-input").value = formatRupiah(product.productPricesDTO[1].price);-->
+<!--     row.querySelector(".markup-3-input").value = ((price3 - product.hargaBeli) / price3) * 100;-->
+<!--     row.querySelector(".harga-jual-3-input").value = formatRupiah(product.productPricesDTO[2].price);-->
 
      updateTotalRow(row);
    }
@@ -887,8 +962,7 @@
      rows.forEach((row) => {
        const price = parseRupiah(row.querySelector(".price-input").value);
        const qty = parseInt(row.querySelector(".qty-input").value) || 0;
-       const discAmt =
-         parseFloat(row.querySelector(".discount-amount-input").value) || 0;
+       const discAmt = parseFloat(row.querySelector(".discount-amount-input").value) || 0;
 
        if (price && qty) {
          subTotal += price * qty;
@@ -1353,23 +1427,67 @@
        const qtyInput = row.querySelector(".qty-input");
        const discPercentInput = row.querySelector(".discount-percent-input");
        const discAmountInput = row.querySelector(".discount-amount-input");
+       const markUp1Input = row.querySelector(".markup-1-input");
+       const markUp2Input = row.querySelector(".markup-2-input");
+       const markUp3Input = row.querySelector(".markup-3-input");
+       const hargaJual1Input = row.querySelector(".harga-jual-1-input");
+       const hargaJual2Input = row.querySelector(".harga-jual-2-input");
+       const hargaJual3Input = row.querySelector(".harga-jual-3-input");
 
        priceInput.addEventListener("focus", handleFormattedFocus);
        priceInput.addEventListener("blur", handleFormattedBlur);
        priceInput.addEventListener("input", () => updateTotalRow(row));
        qtyInput.addEventListener("input", () => updateTotalRow(row));
+
+       markUp1Input.addEventListener("input", () => {
+          let val = markUp1Input.value;
+          console.log("value markup1 is : " + val);
+
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            markUp1Input.value = intPart + "." + decPart.slice(0, 2);
+          }
+
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountPercent = parseFloat(discPercentInput.value) || 0;
+
+          const markUp1Amount = priceInput.value + ((discountPercent * priceInput.value) / 100)
+          hargaJual1Input.value = Math.round(markUp1Amount)
+
+<!--          if (price * qty > 0) {-->
+<!--            const discountAmount = price * qty * (discountPercent / 100);-->
+<!--            discAmountInput.value = Math.round(discountAmount);-->
+<!--          } else {-->
+<!--            discAmountInput.value = "0";-->
+<!--          }-->
+          updateTotalRow(row);
+        });
+
        discPercentInput.addEventListener("input", () => {
-         const price = parseRupiah(row.querySelector(".price-input").value);
-         const qty = parseInt(qtyInput.value) || 0;
-         const discountPercent = parseFloat(discPercentInput.value) || 0;
-         if (price * qty > 0 && !isNaN(discountPercent)) {
-           const discountAmount = price * qty * (discountPercent / 100);
-           discAmountInput.value = discountAmount.toFixed(0);
-         } else {
-           discAmountInput.value = "0";
-         }
-         updateTotalRow(row);
-       });
+          let val = discPercentInput.value;
+          console.log("value is : " + val);
+
+          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+          if (val.includes(".")) {
+            const [intPart, decPart] = val.split(".");
+            discPercentInput.value = intPart + "." + decPart.slice(0, 2);
+          }
+
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountPercent = parseFloat(discPercentInput.value) || 0;
+
+          if (price * qty > 0) {
+            const discountAmount = price * qty * (discountPercent / 100);
+            discAmountInput.value = Math.round(discountAmount);
+          } else {
+            discAmountInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
+
        discAmountInput.addEventListener("input", () => {
          const price = parseRupiah(row.querySelector(".price-input").value);
          const qty = parseInt(qtyInput.value) || 0;
@@ -1382,6 +1500,7 @@
          }
          updateTotalRow(row);
        });
+
        row.addEventListener("contextmenu", function (e) {
          e.preventDefault();
          selectedRow = row;
