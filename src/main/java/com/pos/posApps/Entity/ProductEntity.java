@@ -29,8 +29,8 @@ public class ProductEntity {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierEntity;
 
-    @OneToMany
-    @JoinColumn(name = "product_id")
+    @OneToMany(mappedBy = "productEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("productPricesId ASC")
     private List<ProductPricesEntity> productPricesEntity;
 
     @Column(name = "stock")

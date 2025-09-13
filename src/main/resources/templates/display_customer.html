@@ -51,6 +51,7 @@
                 <tr>
                     <th scope="col">No</th>
                     <th scope="col">Nama</th>
+                    <th scope="col">Alamat</th>
                     <th scope="col">Action</th>
                 </tr>
                 </thead>
@@ -58,6 +59,7 @@
                 <tr th:each="customer, iterStat : ${customerData}">
                     <td th:text="${iterStat.index + 1}">1</td>
                     <td th:text="${customer.name}">Name</td>
+                    <td th:text="${customer.alamat} ?: '-'">Alamat</td>
                     <td>
                         <button
                                 class="btn btn-sm btn-primary me-1 edit-customer-btn"
@@ -65,7 +67,8 @@
                                 data-bs-target="#editCustomerModal"
                                 th:attr="
                                     data-customerid=${customer.customerId},
-                                    data-name=${customer.name}"
+                                    data-name=${customer.name},
+                                    data-alamat=${customer.alamat}"
                         >Edit</button>
 
                         <form th:action="@{|/customer/delete/${customer.customerId}|}"
@@ -100,6 +103,11 @@
                                 <label for="editName">Name</label>
                                 <input type="text" class="form-control" id="editName" name="customerName" required/>
                             </div>
+                            <br>
+                            <div class="form-group">
+                                <label for="editAlamat">Alamat</label>
+                                <input type="text" class="form-control" id="editAlamat" name="customerAlamat" required/>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -123,6 +131,11 @@
                             <div class="form-group">
                                 <label for="addName">Name</label>
                                 <input type="text" class="form-control" id="addName" name="customerName" required/>
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <label for="addAlamat">Alamat</label>
+                                <input type="text" class="form-control" id="addAlamat" name="customerAlamat" required/>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -165,7 +178,7 @@
             }
         });
 
-        $('#addName, #editName').on('input', function() {
+        $('#addName, #editName, #addAlamat, #editAlamat').on('input', function() {
           this.value = this.value.toUpperCase();
         });
 
@@ -173,9 +186,11 @@
         $('.edit-customer-btn').on('click', function () {
             const customerId = $(this).data('customerid');
             const name = $(this).data('name');
+            const alamat = $(this).data('alamat');
 
             $('#editCustomerId').val(customerId);
             $('#editName').val(name);
+            $('#editAlamat').val(alamat);
         });
     });
 </script>

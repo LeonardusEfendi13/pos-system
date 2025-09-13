@@ -116,7 +116,46 @@
             bottom: 20px;
             right: 20px;
             z-index: 1000;
-          }
+        }
+
+        #productTable th,
+        #productTable td {
+          border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+        }
+
+        #productTable th:last-child,
+        #productTable td:last-child {
+          border-right: none; /* Remove border on the last column */
+        }
+
+        #productTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-right: 1px solid #dee2e6;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            height: 40px; /* fixed height */
+        }
+
+        #productTable thead th:last-child {
+            border-right: none;
+        }
+
+        #productTable tbody td {
+            border-right: 1px solid #dee2e6;
+        }
+
+        #productTable tbody td:last-child {
+            border-right: none;
+        }
+
+        /* Push the first row down by header height */
+        #productTable tbody tr:first-child {
+            padding-top: 40px;
+            display: table-row;
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -335,10 +374,10 @@
                                 <select class="form-select highlight-field" id="supplierId" name="supplierId"
                                         required>
                                     <option value="" disabled selected>Pilih Supplier</option>
-                                    <option th:each="suppliers : ${supplierData}"
-                                            th:value="${suppliers.supplierId}"
-                                            th:text="${suppliers.supplierName}">
-                                    </option>
+<!--                                    <option th:each="suppliers : ${supplierData}"-->
+<!--                                            th:value="${suppliers.supplierId}"-->
+<!--                                            th:text="${suppliers.supplierName}">-->
+<!--                                    </option>-->
                                 </select>
                             </div>
                         </div>
@@ -514,53 +553,327 @@
                 <h5 class="modal-title">Select Product</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="height: 400px; overflow-y: auto">
-                <div class="row mb-3">
-                    <div class="col">
-                        <input
-                                type="text"
-                                id="searchCode"
-                                class="form-control form-control-sm"
-                                placeholder="Search by Code"
-                        />
-                    </div>
-                    <div class="col">
-                        <input
-                                type="text"
-                                id="searchName"
-                                class="form-control form-control-sm"
-                                placeholder="Search by Name"
-                        />
+            <div class="modal-body" style="height: 400px; padding: 5px;">
+
+                <!-- Sticky Search Inputs -->
+                <div class="sticky-top bg-white pb-2">
+                    <div class="row mb-2">
+                        <div class="col">
+                            <input
+                                    type="text"
+                                    id="searchCode"
+                                    class="form-control form-control-sm"
+                                    placeholder="Search by Code"
+                            />
+                        </div>
+                        <div class="col">
+                            <input
+                                    type="text"
+                                    id="searchName"
+                                    class="form-control form-control-sm"
+                                    placeholder="Search by Name"
+                            />
+                        </div>
                     </div>
                 </div>
-                <table class="table table-sm table-hover" id="productTable">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Price</th>
-                        <th>Stok</th>
-                    </tr>
-                    </thead>
-                    <tbody id="productTableBody"></tbody>
-                </table>
+
+                <!-- Scrollable Table Body -->
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0" id="productTable">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stok</th>
+                        </tr>
+                        </thead>
+                        <tbody id="productTableBody"></tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
-    </div>
-
-    <div id="receiptContent" style="display: none">
-        <!-- Your receipt layout (table, totals, etc.) -->
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    const masterProducts = /*[[${productData}]]*/ [];
+    let masterProducts = /*[[${productData}]]*/ [];
     const masterSuppliers = /*[[${supplierData}]]*/ [];
     const masterTransactions = /*[[${pembelianData}]]*/ [];
     console.log(
       "master Transaction Saved:",
       JSON.stringify(masterTransactions, null, 2)
     );
+  function populateSupplierOptions() {
+    const select = document.getElementById("supplierId");
+    // Clear all options except the first placeholder
+    select.length = 1;
+
+    masterSuppliers.forEach((supplier) => {
+      const option = document.createElement("option");
+      option.value = supplier.supplierId;
+      option.textContent = supplier.supplierName;
+      select.appendChild(option);
+    });
+  }
+
+  // Run after DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    populateSupplierOptions();
+  });
+</script>
+<script th:inline="none">
+    //Send new product to backend
+    document.getElementById("addProductForm").addEventListener("click", async function () {
+      const form = document.getElementById("barangForm");
+      const formData = new FormData(form);
+      const jsonData = {};
+
+      // Convert FormData to JSON with array handling
+      formData.forEach((value, key) => {
+          const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+          if (match) {
+            const [, arrName, index, field] = match;
+            jsonData[arrName] = jsonData[arrName] || [];
+            jsonData[arrName][index] = jsonData[arrName][index] || {};
+            jsonData[arrName][index][field] = field === 'price' ? parseRupiah(value) : value;
+          } else {
+            jsonData[key] = key.toLowerCase().includes('price') ? parseRupiah(value) : value;
+          }
+        });
+        console.log("JSON data to send:", JSON.stringify(jsonData, null, 2));
+
+      try {
+        // 1. Send add product request
+        const response = await fetch("/api/product/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jsonData),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Failed to save product");
+        }
+
+        // 2. If add succeeded, fetch updated product list
+        const fetchResponse = await fetch("/api/product/list"); // your GET endpoint for full list
+        if (!fetchResponse.ok) {
+          throw new Error("Failed to fetch updated product list");
+        }
+
+        const updatedProductList = await fetchResponse.json();
+
+        // 3. Replace masterProducts with new list
+        masterProducts = updatedProductList;
+        console.log("Updated masterProducts:", masterProducts);
+
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
+        modal.hide();
+        form.reset();
+
+        alert("Produk berhasil disimpan dan daftar produk diperbarui.");
+
+      } catch (err) {
+        console.error("Error:", err);
+        alert(err.message);
+      }
+    });
+    $(document).ready(function () {
+        const barangModal = document.getElementById('barangModal');
+        const barangForm = document.getElementById('barangForm');
+        const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0
+        });
+
+        const hargaBeliInput = document.getElementById("supplierPrice");
+        const hargaJual1 = document.getElementById("hargaJual1");
+        const hargaJual2 = document.getElementById("hargaJual2");
+        const hargaJual3 = document.getElementById("hargaJual3");
+        const pct1 = document.getElementById("pct1");
+        const pct2 = document.getElementById("pct2");
+        const pct3 = document.getElementById("pct3");
+        const rupiahInputs = document.querySelectorAll(".rupiah-input");
+        const rupiahPrices = document.querySelectorAll(".rupiah-price");
+
+        // --- Helper Functions ---
+        function updatePercentage(hargaJualInput, pctOutput){
+            const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
+            const hargaJual = parseCurrency(hargaJualRaw);
+
+            const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
+            const result = calculatedPct.toFixed(2);
+            pctOutput.value = result;
+        }
+
+        function updateHargaJual(pctInput, jualOutput) {
+            const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const percentage = parseFloat(pctInput.value) || 0;
+            const calculatedHargaJual = hargaBeli + (hargaBeli * (percentage / 100));
+            jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
+        }
+
+        function parseCurrency(input) {
+            if (!input) return 0;
+
+            // Remove currency symbol and spaces
+            let cleaned = input.replace(/[^0-9.,]/g, '');
+
+            // Remove thousands separator
+            cleaned = cleaned.replace(/\./g, '');
+
+            // Replace decimal comma with dot
+            cleaned = cleaned.replace(/,/g, '.');
+
+            return parseFloat(cleaned) || 0;
+        }
+
+        function cleanRupiahToNumber(value) {
+            return value.replace(/[^0-9]/g, '');
+        }
+
+        function clearForm() {
+            barangForm.reset();
+            $('#modalLabel').text('Tambah Master Barang & Jasa');
+            $('#barangForm').attr('action', '/api/product/add');
+            $('#productId').val(''); // Clear the hidden ID for new products
+            $('#shortName').focus();
+        }
+
+        // Listener for the "Add Product" button to open the modal and clear the form.
+        $('#add-barang-btn').on('click', function() {
+            clearForm();
+            $('#barangModal').modal('show');
+        });
+
+
+        // Event listeners for price and percentage inputs (remains the same)
+        hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
+        hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
+        hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));
+        pct1.addEventListener('input', () => updateHargaJual(pct1, hargaJual1));
+        pct2.addEventListener('input', () => updateHargaJual(pct2, hargaJual2));
+        pct3.addEventListener('input', () => updateHargaJual(pct3, hargaJual3));
+
+        // Event listeners for Rupiah formatting (remains the same)
+        rupiahInputs.forEach(function (input) {
+            input.addEventListener("input", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+            input.addEventListener("blur", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+        });
+
+        document.querySelectorAll('.rupiah-price').forEach(element => {
+            const price = parseFloat(element.getAttribute('data-price'));
+            if (!isNaN(price)) {
+                element.textContent = rupiahFormatter.format(price);
+            }
+        });
+
+        // Form submission listener to clean up Rupiah values before submission.
+        document.getElementById("barangForm").addEventListener("submit", function (e) {
+            console.log("Masuk logic yg ini kan");
+            e.preventDefault(); // Stop the default form submission temporarily
+
+            // Clean Rupiah inputs by removing formatting
+            rupiahInputs.forEach(input => {
+                if (input.value && input.value.trim() !== '') {
+                    input.value = cleanRupiahToNumber(input.value);
+                }
+            });
+
+            this.submit();
+        });
+
+<!--        document.getElementById("addProductForm").addEventListener("submit", function (e) {-->
+<!--            const form = document.getElementById("barangForm");-->
+<!--            const formData = new FormData(form);-->
+
+<!--            e.preventDefault();-->
+<!--            rupiahInputs.forEach(input => {-->
+<!--                // Validate input value before cleaning-->
+<!--                if (typeof input?.value === "undefined" || input.value === null || input.value.trim() === "") {-->
+<!--                    return; // skip this input-->
+<!--                }-->
+
+<!--                const cleaned = cleanRupiahToNumber(input.value);-->
+<!--                console.log("cleaned rupiah:", cleaned);-->
+<!--                input.value = cleaned;-->
+<!--            });-->
+
+<!--            document.getElementById("barangForm").submit();-->
+<!--        });-->
+
+<!--        Handle maxqty-->
+        const dirtyFlags = {
+          maxqty2: false,
+          maxqty3: false
+        };
+
+        function onInputChange() {
+          dirtyFlags[this.id] = true; // User changed the value, mark dirty
+        }
+
+        function validateOnBlur() {
+          const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
+          const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
+          const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
+
+          if (this.id === 'maxqty2') {
+            if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+
+          if (this.id === 'maxqty3') {
+            if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+        }
+
+        const maxqty2Input = document.getElementById('maxqty2');
+        const maxqty3Input = document.getElementById('maxqty3');
+
+        maxqty2Input.addEventListener('input', onInputChange);
+        maxqty3Input.addEventListener('input', onInputChange);
+
+        maxqty2Input.addEventListener('blur', validateOnBlur);
+        maxqty3Input.addEventListener('blur', validateOnBlur);
+
+        $('#productTable').DataTable({
+            paging: true,         // aktifkan paging
+            pageLength: 10,       // jumlah data per halaman
+            lengthMenu: [5, 10, 25, 50], // opsi pilihan jumlah data
+            ordering: true,       // aktifkan sorting
+            order: [],            // default: tidak ada sort
+            language: {
+                search: "Cari: ",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "›",
+                    previous: "‹"
+                }
+            }
+        });
+    });
 </script>
 <script>
     //Cek no faktur

@@ -39,8 +39,7 @@ public class RestControllerProduct {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
-        System.out.println("Create product req : " + req);
+    public ResponseEntity<String> addProducts(HttpSession session, @RequestBody CreateProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
         ClientEntity clientData;
         try {
@@ -53,6 +52,7 @@ public class RestControllerProduct {
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
         }
+        System.out.println("Entering add product from pembelian");
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted) {

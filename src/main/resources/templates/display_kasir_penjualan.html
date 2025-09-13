@@ -75,6 +75,52 @@
           background-color: #e9ecef;
           padding: 1.5rem;
         }
+
+        .bottom-right-fixed {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          z-index: 1000;
+        }
+
+        #productTable th,
+        #productTable td {
+          border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+        }
+
+        #productTable th:last-child,
+        #productTable td:last-child {
+          border-right: none; /* Remove border on the last column */
+        }
+
+        #productTable thead th {
+          position: sticky;
+          top: 0;
+          background-color: #f8f9fa;
+          z-index: 10;
+          border-right: 1px solid #dee2e6;
+          padding-top: 0.3rem;
+          padding-bottom: 0.3rem;
+          height: 40px; /* fixed height */
+        }
+
+        #productTable thead th:last-child {
+          border-right: none;
+        }
+
+        #productTable tbody td {
+          border-right: 1px solid #dee2e6;
+        }
+
+        #productTable tbody td:last-child {
+          border-right: none;
+        }
+
+        /* Push the first row down by header height */
+        #productTable tbody tr:first-child {
+          padding-top: 40px;
+          display: table-row;
+        }
     </style>
 </head>
 <body class="p-3">
@@ -196,100 +242,98 @@
         </table>
     </div>
 
-    <div class="row justify-content-end">
-        <div class="col-md-6">
-            <div class="card p-3 payment-section-card">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Subtotal:</strong>
-                            <span id="subTotalDisplay">Rp 0</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Discount (%):</strong>
-                            <input
-                                    type="number"
-                                    id="grandDiscountPercent"
-                                    class="form-control form-control-sm w-50 text-end"
-                                    value="0"
-                                    min="0"
-                                    max="100"
-                            />
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>Discount (Rp):</strong>
-                            <input
-                                    type="number"
-                                    id="grandDiscountAmount"
-                                    class="form-control form-control-sm w-50 text-end"
-                                    value="0"
-                                    min="0"
-                            />
-                        </div>
-                        <hr class="my-2" />
-                        <div
-                                class="d-flex justify-content-between align-items-center mb-2"
-                        >
-                            <h5 class="m-0">Grand Total:</h5>
-                            <h5 class="m-0 text-end" id="grandTotalDisplay">Rp 0</h5>
-                        </div>
+    <div class="bottom-right-fixed" style="">
+        <div class="card p-3 payment-section-card">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Subtotal:</strong>
+                        <span id="subTotalDisplay">Rp 0</span>
                     </div>
-                    <div class="col-md-6 d-flex flex-column justify-content-center">
-                        <div class="mb-2">
-                            <label
-                                    for="paymentAmount"
-                                    class="form-label"
-                                    style="font-weight: bold"
-                            >Payment Amount</label
-                            >
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Discount (%):</strong>
+                        <input
+                                type="number"
+                                id="grandDiscountPercent"
+                                class="form-control form-control-sm w-50 text-end"
+                                value="0"
+                                min="0"
+                                max="100"
+                        />
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Discount (Rp):</strong>
+                        <input
+                                type="number"
+                                id="grandDiscountAmount"
+                                class="form-control form-control-sm w-50 text-end"
+                                value="0"
+                                min="0"
+                        />
+                    </div>
+                    <hr class="my-2" />
+                    <div
+                            class="d-flex justify-content-between align-items-center mb-2"
+                    >
+                        <h5 class="m-0">Grand Total:</h5>
+                        <h5 class="m-0 text-end" id="grandTotalDisplay">Rp 0</h5>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex flex-column justify-content-center">
+                    <div class="mb-2">
+                        <label
+                                for="paymentAmount"
+                                class="form-label"
+                                style="font-weight: bold"
+                        >Payment Amount</label
+                        >
+                        <input
+                                type="text"
+                                id="paymentAmount"
+                                class="form-control form-control-sm"
+                                min="Rp 0"
+                        />
+                    </div>
+                    <div class="mb-3">
+                        <label
+                                for="returnAmount"
+                                class="form-label"
+                                style="font-weight: bold"
+                        >Return Amount</label
+                        >
+                        <input
+                                type="text"
+                                id="returnAmount"
+                                class="form-control form-control-sm"
+                                readonly
+                        />
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="form-check d-flex align-items-center m-0">
                             <input
-                                    type="text"
-                                    id="paymentAmount"
-                                    class="form-control form-control-sm"
-                                    min="Rp 0"
+                                    class="form-check-input me-1"
+                                    type="checkbox"
+                                    id="printBill"
+                                    checked
                             />
-                        </div>
-                        <div class="mb-3">
-                            <label
-                                    for="returnAmount"
-                                    class="form-label"
-                                    style="font-weight: bold"
-                            >Return Amount</label
+                            <label class="form-check-label" for="printBill"
+                            >Print Bill</label
                             >
-                            <input
-                                    type="text"
-                                    id="returnAmount"
-                                    class="form-control form-control-sm"
-                                    readonly
-                            />
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <div class="form-check d-flex align-items-center m-0">
-                                <input
-                                        class="form-check-input me-1"
-                                        type="checkbox"
-                                        id="printBill"
-                                        checked
-                                />
-                                <label class="form-check-label" for="printBill"
-                                >Print Bill</label
-                                >
-                            </div>
 
-                            <div>
-                                <button
-                                        class="btn btn-primary btn-sm me-2"
-                                        onclick="saveTransaction()"
-                                >
-                                    Simpan
-                                </button>
-                                <button
-                                        class="btn btn-secondary btn-sm"
-                                        onclick="cancelTransaction()"
-                                >
-                                    Batal
-                                </button>
-                            </div>
+                        <div>
+                            <button
+                                    class="btn btn-primary btn-sm me-2"
+                                    onclick="saveTransaction()"
+                            >
+                                Simpan
+                            </button>
+                            <button
+                                    class="btn btn-secondary btn-sm"
+                                    onclick="cancelTransaction()"
+                            >
+                                Batal
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -304,43 +348,50 @@
     </ul>
 </div>
 
-<div class="modal fade" id="productModal" tabindex="-1">
+<div class="modal" id="productModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Select Product</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="height: 400px; overflow-y: auto">
-                <div class="row mb-3">
-                    <div class="col">
-                        <input
-                                type="text"
-                                id="searchCode"
-                                class="form-control form-control-sm"
-                                placeholder="Search by Code"
-                        />
-                    </div>
-                    <div class="col">
-                        <input
-                                type="text"
-                                id="searchName"
-                                class="form-control form-control-sm"
-                                placeholder="Search by Name"
-                        />
+            <div class="modal-body" style="height: 400px; padding: 5px">
+                <!-- Sticky Search Inputs -->
+                <div class="sticky-top bg-white pb-2">
+                    <div class="row mb-2">
+                        <div class="col">
+                            <input
+                                    type="text"
+                                    id="searchCode"
+                                    class="form-control form-control-sm"
+                                    placeholder="Search by Code"
+                            />
+                        </div>
+                        <div class="col">
+                            <input
+                                    type="text"
+                                    id="searchName"
+                                    class="form-control form-control-sm"
+                                    placeholder="Search by Name"
+                            />
+                        </div>
                     </div>
                 </div>
-                <table class="table table-sm table-hover" id="productTable">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Price</th>
-                        <th>Stok</th>
-                    </tr>
-                    </thead>
-                    <tbody id="productTableBody"></tbody>
-                </table>
+
+                <!-- Scrollable Table Body -->
+                <div style="max-height: 300px; overflow-y: auto">
+                    <table class="table table-sm table-hover mb-0" id="productTable">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stok</th>
+                        </tr>
+                        </thead>
+                        <tbody id="productTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -353,10 +404,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     const masterProducts = /*[[${productData}]]*/ [];
-     console.log(
-      "Product Datas:",
-      JSON.stringify(masterProducts, null, 2)
-    );
+    console.log("Product Datas:", JSON.stringify(masterProducts, null, 2));
     const masterCustomers = /*[[${customerData}]]*/ [];
     console.log(
       "master Customer Saved:",
@@ -421,7 +469,9 @@
         const currentRow = activeElement.closest("tr");
         const currentRows = [...sellTableBody.querySelectorAll("tr")];
         const currentRowIndex = currentRows.indexOf(currentRow);
-        const editableInputs = [...currentRow.querySelectorAll("input:not([readonly])")];
+        const editableInputs = [
+          ...currentRow.querySelectorAll("input:not([readonly])"),
+        ];
         const currentEditableIndex = editableInputs.indexOf(activeElement);
 
         let nextRowIndex = currentRowIndex;
@@ -447,7 +497,10 @@
             break;
           case "ArrowRight":
             e.preventDefault();
-            nextEditableIndex = Math.min(editableInputs.length - 1, currentEditableIndex + 1);
+            nextEditableIndex = Math.min(
+              editableInputs.length - 1,
+              currentEditableIndex + 1
+            );
             break;
           default:
             return;
@@ -456,14 +509,14 @@
         // Fokuskan ke elemen berikutnya
         const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
         const targetEditableInputs = [
-             ...targetRow.querySelectorAll("input:not([readonly])"),
-           ];
+          ...targetRow.querySelectorAll("input:not([readonly])"),
+        ];
         const targetInput = targetEditableInputs[nextEditableIndex];
         if (targetInput) {
-             targetInput.focus();
-             if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-               targetInput.select();
-             }
+          targetInput.focus();
+          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            targetInput.select();
+          }
         }
       }
     });
@@ -560,20 +613,25 @@
       const codeInput = row.querySelector(".code-input");
 
       // Ambil produk yang sesuai dari masterProducts
-      const product = masterProducts.find((p) => p.shortName === codeInput.value.trim());
+      const product = masterProducts.find(
+        (p) => p.shortName === codeInput.value.trim()
+      );
 
       // Pastikan ada produk sebelum melakukan validasi
       if (product) {
-          const hargaBeli = product.hargaBeli;
-          const parsedValue = parseRupiah(input.value);
+        const hargaBeli = product.hargaBeli;
+        const parsedValue = parseRupiah(input.value);
 
-          // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
-          if (parsedValue < hargaBeli && parsedValue > 0) {
-              alert("Harga tidak boleh lebih rendah dari harga beli: " + formatRupiah(hargaBeli));
-              input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
-              updateTotalRow(row);
-              return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
-          }
+        // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
+        if (parsedValue < hargaBeli && parsedValue > 0) {
+          alert(
+            "Harga tidak boleh lebih rendah dari harga beli: " +
+              formatRupiah(hargaBeli)
+          );
+          input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
+          updateTotalRow(row);
+          return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
+        }
       }
       const value = event.target.value.replace(/[^0-9]/g, "");
       if (value === "" || isNaN(value)) {
@@ -593,13 +651,13 @@
     paymentAmountInput.addEventListener("blur", handleFormattedBlur);
     paymentAmountInput.addEventListener("input", calculateReturnAmount);
 
-    function ensureZeroOnBlur(input, decimals = 0,row = null) {
+    function ensureZeroOnBlur(input, decimals = 0, row = null) {
       input.addEventListener("blur", () => {
         let val = input.value.trim();
 
         if (val === "" || isNaN(val)) {
           if (decimals > 0) {
-            input.value = (0).toFixed(decimals);  // misal 0.00
+            input.value = (0).toFixed(decimals); // misal 0.00
           } else {
             input.value = "0";
           }
@@ -613,13 +671,13 @@
         }
       });
     }
-    function ensureOneOnBlur(input, decimals = 0, row = null)  {
+    function ensureOneOnBlur(input, decimals = 0, row = null) {
       input.addEventListener("blur", () => {
         let val = input.value.trim();
 
         if (val === "" || isNaN(val)) {
           if (decimals > 0) {
-            input.value = (0).toFixed(decimals);  // misal 0.00
+            input.value = (0).toFixed(decimals); // misal 0.00
           } else {
             input.value = "1";
           }
@@ -650,7 +708,9 @@
           e.preventDefault();
 
           const returnAmountEl = document.getElementById("returnAmount");
-          const returnVal = parseRupiah(returnAmountEl?.value || returnAmountEl?.textContent || "0");
+          const returnVal = parseRupiah(
+            returnAmountEl?.value || returnAmountEl?.textContent || "0"
+          );
           let paymentVal = parseRupiah(paymentInput.value);
 
           if (!paymentVal || paymentVal === 0) {
@@ -718,11 +778,12 @@
       ];
 
       // tambahkan auto-set 0 on blur
-    [discPercentInput, discAmountInput]
-      .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
+      [discPercentInput, discAmountInput].forEach((inp) =>
+        ensureZeroOnBlur(inp, 2, row)
+      ); // 0.00 untuk disc/markup
 
-    [priceInput].forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
-    [qtyInput].forEach(inp => ensureOneOnBlur(inp, 0, row));
+      [priceInput].forEach((inp) => ensureZeroOnBlur(inp, 0, row)); // integer → 0
+      [qtyInput].forEach((inp) => ensureOneOnBlur(inp, 0, row));
 
       priceInput.addEventListener("focus", handleFormattedFocus);
       priceInput.addEventListener("blur", handleFormattedBlur);
@@ -738,12 +799,12 @@
       grandDiscountAmount.addEventListener("focus", clearZeroOnFocus);
 
       [discPercentInput, discAmountInput].forEach((inp) => {
-          inp.addEventListener("blur", () => {
-            if (inp.value.trim() === "" || isNaN(parseFloat(inp.value))) {
-              inp.value = "0";
-            }
-          });
+        inp.addEventListener("blur", () => {
+          if (inp.value.trim() === "" || isNaN(parseFloat(inp.value))) {
+            inp.value = "0";
+          }
         });
+      });
 
       if (focus) codeInput.focus();
 
@@ -812,26 +873,26 @@
       });
 
       discPercentInput.addEventListener("input", () => {
-          let val = discPercentInput.value;
+        let val = discPercentInput.value;
 
-          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
-          if (val.includes(".")) {
-            const [intPart, decPart] = val.split(".");
-            discPercentInput.value = intPart + "." + decPart.slice(0, 2);
-          }
+        // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+        if (val.includes(".")) {
+          const [intPart, decPart] = val.split(".");
+          discPercentInput.value = intPart + "." + decPart.slice(0, 2);
+        }
 
-          const price = parseRupiah(row.querySelector(".price-input").value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountPercent = parseFloat(discPercentInput.value) || 0;
+        const price = parseRupiah(row.querySelector(".price-input").value);
+        const qty = parseInt(qtyInput.value) || 0;
+        const discountPercent = parseFloat(discPercentInput.value) || 0;
 
-          if (price * qty > 0) {
-            const discountAmount = price * qty * (discountPercent / 100);
-            discAmountInput.value = Math.round(discountAmount);
-          } else {
-            discAmountInput.value = "0";
-          }
-          updateTotalRow(row);
-        });
+        if (price * qty > 0) {
+          const discountAmount = price * qty * (discountPercent / 100);
+          discAmountInput.value = Math.round(discountAmount);
+        } else {
+          discAmountInput.value = "0";
+        }
+        updateTotalRow(row);
+      });
 
       discAmountInput.addEventListener("input", () => {
         const price = parseRupiah(row.querySelector(".price-input").value);
@@ -840,7 +901,9 @@
 
         if (price * qty > 0) {
           const discountPercent = (discountAmount / (price * qty)) * 100;
-          discPercentInput.value = isFinite(discountPercent) ? discountPercent.toFixed(2) : "0";
+          discPercentInput.value = isFinite(discountPercent)
+            ? discountPercent.toFixed(2)
+            : "0";
         } else {
           discPercentInput.value = "0";
         }
@@ -1353,12 +1416,11 @@
           });
         }
 
-
-      const result = await response.text();
-      if (!response.ok) {
-        console.log("response : " + result);
-        throw new Error(`${result}`);
-      }
+        const result = await response.text();
+        if (!response.ok) {
+          console.log("response : " + result);
+          throw new Error(`${result}`);
+        }
         console.log("Result from DB:", result);
         const data = {
           inv_number: result,
@@ -1406,78 +1468,83 @@
 
             // Replace the entire body with the receipt
             document.body.innerHTML = `
-  <html>
-    <head>
-      <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-      />
-      <style>
-  @page {
-    size: A5 landscape;
-    margin: 10px;
+<html>
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+@page {
+  size: A5 landscape;
+  margin: 10px;
+}
+
+@media print {
+  *{
+      font-size:13px !important;
   }
-
-  @media print {
-    *{
-        font-size:13px !important;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    .print-page {
-      page-break-after: always;
-    }
-
-    .print-page:last-child {
-      page-break-after: auto;
-    }
-  }
-
   body {
-    font-family: Arial, sans-serif;
-    font-size: 11px !important;
-    margin: 10px !important;
+    margin: 0;
+    padding: 0;
   }
 
-  table {
-    width: 100% !important;
-    border-collapse: collapse;
-    table-layout: fixed; /* Ensures columns are sized by their width */
-    border: 1px solid black;
-    border-top: none;
+  .print-page {
+    page-break-after: always;
   }
 
-  th,
-  td {
-    border-top: none;
-    border-bottom:none;
-    border-left:1px solid black;
-    border-right:1px solid black;
-    padding: 2px;
-    font-size: 10px;
-    height: 18px !important; /* Fixed height for each row/cell */
-    vertical-align: top; /* Align content to the top of the cell */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: clip;
+  .print-page:last-child {
+    page-break-after: auto;
   }
+}
 
-  table thead tr {
-    border-bottom: 1px solid #000; /* Optional: keep header row line */
-  }
+body {
+  font-family: Arial, sans-serif;
+  font-size: 11px !important;
+  margin: 10px !important;
+}
 
-  th {
-    font-weight: bold;
-    text-align: center;
-    vertical-align: middle;
-  }
+table {
+  width: 100% !important;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures columns are sized by their width */
+  border: 1px solid black;
+  border-top: none;
+}
+
+th,
+td {
+  border-top: none;
+  border-bottom: none;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 4px;
+  padding-right: 4px;
+  font-size: 10px;
+  height: 18px !important;
+  line-height: 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  margin: 0;
+}
+
+table thead tr {
+  border-bottom: 1px solid #000; /* Optional: keep header row line */
+}
+
+th {
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+}
 </style>
-    </head>
-    <body>${receiptHtml}</body>
-  </html>
+  </head>
+  <body>${receiptHtml}</body>
+</html>
 `;
 
             // Print
@@ -1523,7 +1590,7 @@
 
       transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
       const customerUmum = masterCustomers.find(
-        (c) => c.customerId == 2
+        (c) => c.customerId == 1
       ).customerId;
       customerSelect.value = customerUmum;
       console.log("master cust 0 : " + customerUmum);
@@ -1545,7 +1612,10 @@
         const discountPercent =
           (transaction.totalDisc / transaction.subtotal) * 100;
         grandDiscountPercent.value = discountPercent.toFixed(2);
-        console.log("grand disc percent value:", grandDiscountPercent.value + "%");
+        console.log(
+          "grand disc percent value:",
+          grandDiscountPercent.value + "%"
+        );
       } else {
         grandDiscountPercent.value = "0.00";
         console.warn(
@@ -1561,7 +1631,9 @@
       // Populate the table with transaction details
       transaction.transactionDetailDTOS.forEach((detail, index) => {
         // Cari produk dari masterProducts
-        const product = masterProducts.find((p) => p.shortName === detail.code);
+        const product = masterProducts.find(
+          (p) => p.shortName === detail.code
+        );
 
         // Hitung harga tiering yang benar berdasarkan qty
         let correctPrice = detail.price;
@@ -1572,15 +1644,27 @@
         const row = document.createElement("tr");
 
         row.innerHTML = `
-        <td class="row-number">${index + 1}</td>
-        <td><input type="text" class="form-control form-control-sm code-input" value="${detail.code}" /></td>
-        <td><input type="text" class="form-control form-control-sm name-input" readonly value="${detail.name}" /></td>
-        <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${detail.qty}" /></td>
-        <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(detail.price)}" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${(detail.discAmount / (detail.total + detail.discAmount)) * 100}" /></td>
-        <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${detail.discAmount}" /></td>
-        <td class="total-cell">${formatRupiah(detail.total)}</td>
-        `;
+      <td class="row-number">${index + 1}</td>
+      <td><input type="text" class="form-control form-control-sm code-input" value="${
+        detail.code
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
+        detail.name
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
+        detail.qty
+      }" /></td>
+      <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
+        detail.price
+      )}" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
+        (detail.discAmount / (detail.total + detail.discAmount)) * 100
+      }" /></td>
+      <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+        detail.discAmount
+      }" /></td>
+      <td class="total-cell">${formatRupiah(detail.total)}</td>
+      `;
 
         // Re-attach event listeners to the new row's inputs
         const codeInput = row.querySelector(".code-input");
@@ -1588,11 +1672,14 @@
         const qtyInput = row.querySelector(".qty-input");
         const discPercentInput = row.querySelector(".discount-percent-input");
         const discAmountInput = row.querySelector(".discount-amount-input");
-      // tambahkan auto-set 0 on blur
-        [discPercentInput, discAmountInput]
-          .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
+        // tambahkan auto-set 0 on blur
+        [discPercentInput, discAmountInput].forEach((inp) =>
+          ensureZeroOnBlur(inp, 2, row)
+        ); // 0.00 untuk disc/markup
 
-        [priceInput, qtyInput].forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
+        [priceInput, qtyInput].forEach((inp) =>
+          ensureZeroOnBlur(inp, 0, row)
+        ); // integer → 0
 
         priceInput.addEventListener("focus", handleFormattedFocus);
         priceInput.addEventListener("blur", handleFormattedBlur);
@@ -1640,7 +1727,9 @@
           const discountAmount = parseFloat(discAmountInput.value) || 0;
           if (price * qty > 0) {
             const discountPercent = (discountAmount / (price * qty)) * 100;
-            discPercentInput.value = isFinite(discountPercent) ? discountPercent.toFixed(2) : "0";
+            discPercentInput.value = isFinite(discountPercent)
+              ? discountPercent.toFixed(2)
+              : "0";
           } else {
             discPercentInput.value = "0";
           }
@@ -1662,7 +1751,6 @@
       // Recalculate and display the grand total
       calculateGrandTotal();
     }
-
 
     // Init
     loadCustomers();
@@ -1778,38 +1866,38 @@
         pageDiv.innerHTML = `
 <div class="row" style="align-items: flex-start">
 <div class="col">
-  <span style="font-weight: bold">Anugrah Jaya Motor</span> <br />
-  <span>Jl. Baturaja No. 105</span> <br />
-  <span>Tanjung Enim</span> <br />
-  <span>0895-3838-40099</span>
+<span style="font-weight: bold">Anugrah Jaya Motor</span> <br />
+<span>Jl. Baturaja No. 105</span> <br />
+<span>Tanjung Enim</span> <br />
+<span>0895-3838-40099</span>
 </div>
 <div class="col text-center">
-  <span style="font-weight: bold; font-size: 14px; font-style: italic">FAKTUR JUAL</span>
+<span style="font-weight: bold; font-size: 14px; font-style: italic">FAKTUR JUAL</span>
 </div>
 <div class="col" style="margin-right:14px;border: 1px solid black; padding: 5px;">
-  <div class="row">
-    <div class="col-4"><span>Pelanggan</span></div>
-    <div class="col"><span>: ${data.customer_name}</span></div>
-  </div>
-  <div class="row">
-    <div class="col-4"><span>Alamat</span></div>
-    <div class="col"><span>: ${data.customer_alamat ?? "-"}</span></div>
-  </div>
+<div class="row">
+  <div class="col-4"><span>Pelanggan</span></div>
+  <div class="col"><span>: ${data.customer_name}</span></div>
+</div>
+<div class="row">
+  <div class="col-4"><span>Alamat</span></div>
+  <div class="col"><span>: ${data.customer_alamat ?? "-"}</span></div>
+</div>
 </div>
 </div>
 <table>
 <colgroup>
 </colgroup>
 <thead>
-  <tr>
-    <th style="width:145px; text-align:left;border-top:1px solid black;"><span style="font-size:13px !important">INV : ${
-      data.inv_number
-    }</span></th>
-    <th style="width:300px; text-align:left;border-top:1px solid black">Tanggal : ${
-      data.tanggal
-    }</th>
-    <th style="border-top:1px solid black"></th>
-  </tr>
+<tr>
+  <th style="width:145px; text-align:left;border-top:1px solid black;"><span style="font-size:13px !important">INV : ${
+    data.inv_number
+  }</span></th>
+  <th style="width:300px; text-align:left;border-top:1px solid black">Tanggal : ${
+    data.tanggal
+  }</th>
+  <th style="border-top:1px solid black"></th>
+</tr>
 </thead>
 </table>
 `;
@@ -1863,29 +1951,39 @@
         const grandTotal = document.createElement("div");
         grandTotal.className = "row";
         grandTotal.innerHTML = `
-      <!-- Left side: text and signatures -->
-      <div class="col-7">
-          <div class="row">
-            <span>${toTerbilang(data.grandTotal)}</span>
-          </div>
-          <div class="row mt-3">
-            <div class="col-1"></div>
-            <div class="col-4"><span>Yang Menerima</span></div>
-            <div class="col-4"><span>Yang Menyerahkan</span></div>
-          </div>
-          <div class="row mt-5">
-            <div class="col-4" style="text-align:end"><span>___________________</span></div>
-            <div class="col-4" style="text-align:end;margin-left:10px"><span>___________________</span></div>
-          </div>
-      </div>
+    <!-- Left side: text and signatures -->
+    <div class="col-7">
+        <div class="row">
+          <span>${toTerbilang(data.grandTotal)}</span>
+        </div>
+        <div class="row mt-3">
+          <div class="col-1"></div>
+          <div class="col-4"><span>Yang Menerima</span></div>
+          <div class="col-4"><span>Yang Menyerahkan</span></div>
+        </div>
+        <div class="row mt-5">
+          <div class="col-4" style="text-align:end"><span>___________________</span></div>
+          <div class="col-4" style="text-align:end;margin-left:10px"><span>___________________</span></div>
+        </div>
+    </div>
 
 <!-- Right side: totals box -->
 <div class="col-3" style="width:283px !important;border: 1px solid black; border-top: none; font-size: 13px; padding: 5px;margin-left:19px">
-<div class="row"><div class="col-6">Total</div><div class="col-6 text-end">${data.subtotal.toLocaleString('id-ID')}</div></div>
-<div class="row"><div class="col-6">Discount</div><div class="col-6 text-end">${data.totalDisc.toLocaleString('id-ID')}</div></div>
-<div class="row"><div class="col-6">Grand Total</div><div class="col-6 text-end">${data.grandTotal.toLocaleString('id-ID')}</div></div>
-<div class="row"><div class="col-6">Bayar</div><div class="col-6 text-end">${parseRupiah(data.paymentAmount).toLocaleString('id-ID')}</div></div>
-<div class="row"><div class="col-6">Kembali</div><div class="col-6 text-end">${data.returnAmount.toLocaleString('id-ID')}</div></div>
+<div class="row"><div class="col-6">Total</div><div class="col-6 text-end">${data.subtotal.toLocaleString(
+          "id-ID"
+        )}</div></div>
+<div class="row"><div class="col-6">Discount</div><div class="col-6 text-end">${data.totalDisc.toLocaleString(
+          "id-ID"
+        )}</div></div>
+<div class="row"><div class="col-6">Grand Total</div><div class="col-6 text-end">${data.grandTotal.toLocaleString(
+          "id-ID"
+        )}</div></div>
+<div class="row"><div class="col-6">Bayar</div><div class="col-6 text-end">${parseRupiah(
+          data.paymentAmount
+        ).toLocaleString("id-ID")}</div></div>
+<div class="row"><div class="col-6">Kembali</div><div class="col-6 text-end">${data.returnAmount.toLocaleString(
+          "id-ID"
+        )}</div></div>
 </div>
 `;
 

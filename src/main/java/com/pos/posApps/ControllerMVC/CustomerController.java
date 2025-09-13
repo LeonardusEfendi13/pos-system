@@ -49,7 +49,7 @@ public class CustomerController {
     public String registerCustomer(
             HttpSession session,
             @Valid String customerName,
-            @Valid String alamat,
+            @Valid String customerAlamat,
             RedirectAttributes redirectAttributes) {
         Long clientId;
         AccountEntity accEntity;
@@ -65,7 +65,7 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = customerService.doCreateCustomer(customerName, alamat, clientId);
+            boolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientId);
             if (isInserted) {
                 System.out.println("Customer Created");
                 redirectAttributes.addFlashAttribute("status", "success");
@@ -84,6 +84,7 @@ public class CustomerController {
             HttpSession session,
             @Valid Long customerId,
             @Valid String customerName,
+            @Valid String customerAlamat,
             RedirectAttributes redirectAttributes
     ) {
         Long clientId;
@@ -99,7 +100,7 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(role)) {
-            boolean isUpdated = customerService.doUpdateCustomer(customerId, customerName, clientId);
+            boolean isUpdated = customerService.doUpdateCustomer(customerId, customerName, clientId, customerAlamat);
             if (isUpdated) {
                 System.out.println("Customer success");
                 redirectAttributes.addFlashAttribute("status", "success");

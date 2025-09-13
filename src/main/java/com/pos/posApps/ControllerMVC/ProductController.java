@@ -52,7 +52,6 @@ public class ProductController {
 
     @PostMapping("/add")
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
-        System.out.println("Create product req : " + req);
         AccountEntity accEntity;
         ClientEntity clientData;
         try {

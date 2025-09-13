@@ -52,11 +52,12 @@ public class CustomerService {
 
     }
 
-    public boolean doUpdateCustomer(Long customerId, String customerName, Long clientId){
+    public boolean doUpdateCustomer(Long customerId, String customerName, Long clientId, String customerAlamat){
         CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(customerId, clientId);
         if(customerEntity != null){
             System.out.println("Customer found");
             customerEntity.setName(customerName);
+            customerEntity.setAlamat(customerAlamat);
             customerRepository.save(customerEntity);
             return true;
         }else{
