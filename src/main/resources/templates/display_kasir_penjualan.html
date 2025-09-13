@@ -593,6 +593,86 @@
     paymentAmountInput.addEventListener("blur", handleFormattedBlur);
     paymentAmountInput.addEventListener("input", calculateReturnAmount);
 
+    function ensureZeroOnBlur(input, decimals = 0,row = null) {
+      input.addEventListener("blur", () => {
+        let val = input.value.trim();
+
+        if (val === "" || isNaN(val)) {
+          if (decimals > 0) {
+            input.value = (0).toFixed(decimals);  // misal 0.00
+          } else {
+            input.value = "0";
+          }
+        }
+
+        // ✅ kalau ada row, update subtotal row & grand total
+        if (row) {
+          updateTotalRow(row);
+        } else {
+          calculateGrandTotal();
+        }
+      });
+    }
+    function ensureOneOnBlur(input, decimals = 0, row = null)  {
+      input.addEventListener("blur", () => {
+        let val = input.value.trim();
+
+        if (val === "" || isNaN(val)) {
+          if (decimals > 0) {
+            input.value = (0).toFixed(decimals);  // misal 0.00
+          } else {
+            input.value = "1";
+          }
+        }
+        // ✅ kalau ada row, update subtotal row & grand total
+        if (row) {
+          updateTotalRow(row);
+        } else {
+          calculateGrandTotal();
+        }
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "+") {
+        e.preventDefault();
+        const paymentInput = document.getElementById("paymentAmount");
+        if (paymentInput) {
+          paymentInput.focus();
+          paymentInput.select(); // auto select isi lama kalau ada
+        }
+      }
+    });
+
+    const paymentInput = document.getElementById("paymentAmount");
+    if (paymentInput) {
+      paymentInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+
+          const returnAmountEl = document.getElementById("returnAmount");
+          const returnVal = parseRupiah(returnAmountEl?.value || returnAmountEl?.textContent || "0");
+          let paymentVal = parseRupiah(paymentInput.value);
+
+          if (!paymentVal || paymentVal === 0) {
+            // ✅ skenario 1: kosong → ambil dari returnAmount (tapi positif)
+            if (returnVal < 0) {
+              paymentVal = Math.abs(returnVal); // balik ke positif
+              paymentInput.value = formatRupiah(paymentVal);
+
+              // karena bayar pas, maka return jadi 0
+              if (returnAmountEl) {
+                returnAmountEl.value = formatRupiah(0);
+                returnAmountEl.textContent = formatRupiah(0);
+              }
+            }
+          } else {
+            // ✅ skenario 2: ada value → langsung simpan
+            saveTransaction();
+          }
+        }
+      });
+    }
+
     function addNewRow(focus = true) {
       const rows = sellTableBody.querySelectorAll("tr");
       if (rows.length > 0) {
@@ -636,6 +716,13 @@
         discPercentInput,
         discAmountInput,
       ];
+
+      // tambahkan auto-set 0 on blur
+    [discPercentInput, discAmountInput]
+      .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
+
+    [priceInput].forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
+    [qtyInput].forEach(inp => ensureOneOnBlur(inp, 0, row));
 
       priceInput.addEventListener("focus", handleFormattedFocus);
       priceInput.addEventListener("blur", handleFormattedBlur);
@@ -1113,11 +1200,21 @@
         selectedRow = null;
         document.getElementById("contextMenu").style.display = "none";
 
+        reindexRows();
+
         if (sellTableBody.querySelectorAll("tr").length === 0) {
           addNewRow();
         }
         calculateGrandTotal();
       }
+    }
+
+    function reindexRows() {
+      const rows = sellTableBody.querySelectorAll("tr");
+      rows.forEach((row, index) => {
+        // Assuming the first cell (td) contains the row number
+        row.cells[0].textContent = index + 1;
+      });
     }
 
     document.addEventListener("click", () => {
@@ -1256,11 +1353,12 @@
           });
         }
 
-        if (!response.ok) {
-          throw new Error(`Server responded with ${response.status}`);
-        }
 
-        const result = await response.text();
+      const result = await response.text();
+      if (!response.ok) {
+        console.log("response : " + result);
+        throw new Error(`${result}`);
+      }
         console.log("Result from DB:", result);
         const data = {
           inv_number: result,
@@ -1410,8 +1508,8 @@
               : "/kasir";
         }
       } catch (error) {
-        console.error("Failed to save transaction:", error);
-        alert("Failed to save transaction. Please try again.");
+        console.error("Failed to save transaction:", error.message);
+        alert(`Gagal menyimpan data, ${error.message}.`);
       }
     }
 
@@ -1490,6 +1588,11 @@
         const qtyInput = row.querySelector(".qty-input");
         const discPercentInput = row.querySelector(".discount-percent-input");
         const discAmountInput = row.querySelector(".discount-amount-input");
+      // tambahkan auto-set 0 on blur
+        [discPercentInput, discAmountInput]
+          .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
+
+        [priceInput, qtyInput].forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
 
         priceInput.addEventListener("focus", handleFormattedFocus);
         priceInput.addEventListener("blur", handleFormattedBlur);

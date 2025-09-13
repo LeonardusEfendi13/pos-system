@@ -4,7 +4,6 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import com.pos.posApps.Util.Generator;
-import org.hibernate.sql.Insert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,18 +28,17 @@ public class KasirService {
     CustomerRepository customerRepository;
 
     @Transactional
-    public String createTransaction(CreateTransactionRequest req, ClientEntity clientData){
+    public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData){
         try{
             //Get Supplier Entity
             CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
             if (customerEntity == null){
-                return null;
+                return new ResponseInBoolean(true, "Customer tidak ada");
             }
             //Get last Transaction id
             Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
             Long newTransactionId = Generator.generateId(lastTransactionId);
             String generatedNotaNumber = generateNotaNumber(newTransactionId);
-
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
@@ -78,27 +76,27 @@ public class KasirService {
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
             }
-            return generatedNotaNumber;
+            return new ResponseInBoolean(true, generatedNotaNumber);
         }catch (Exception e){
             System.out.println("Exception catched : " + e);
-            return null;
+            return new ResponseInBoolean(false, e.getMessage());
         }
     }
 
     @Transactional
-    public boolean editTransaction(Long transactionId, CreateTransactionRequest req, Long clientId){
+    public ResponseInBoolean editTransaction(Long transactionId, CreateTransactionRequest req, Long clientId){
         try{
             //Get Supplier Entity
             CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientId);
             if (customerEntity == null){
                 System.out.println("customer ga nemu");
-                return false;
+                return new ResponseInBoolean(false, "Customer tidak ada");
             }
             //Check if transaction exist
             Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
             if(transactionEntityOpt.isEmpty()){
                 System.out.println("transaction ga nemu");
-                return false;
+                return new ResponseInBoolean(false, "Data transaksi tidak ditemukan");
             }
             TransactionEntity transactionEntity = transactionEntityOpt.get();
 
@@ -148,10 +146,10 @@ public class KasirService {
                     productRepository.save(productEntity);
                 }
             }
-            return true;
+            return new ResponseInBoolean(true, "Data berhasil disimpan");
         }catch (Exception e){
             System.out.println("Exception catched : " + e);
-            return false;
+            return new ResponseInBoolean(false, e.getMessage());
         }
     }
 }

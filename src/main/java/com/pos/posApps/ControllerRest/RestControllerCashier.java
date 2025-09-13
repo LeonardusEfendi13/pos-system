@@ -1,6 +1,7 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.KasirService;
@@ -34,13 +35,14 @@ public class RestControllerCashier {
         }
 
         System.out.println("otw save");
-        String isCreated = kasirService.createTransaction(req, clientData);
-        if(isCreated != null){
+        ResponseInBoolean response = kasirService.createTransaction(req, clientData);
+        System.out.println("response : " + response);
+        if(response.isStatus()){
             System.out.println("sukses");
-            return ResponseEntity.ok(isCreated);
+            return ResponseEntity.ok(response.getMessage());
         }
         System.out.println("gagal");
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
     }
 
     @PostMapping("/edit/{transactionId}")
@@ -58,12 +60,12 @@ public class RestControllerCashier {
         }
 
         System.out.println("otw edit");
-        boolean isCreated = kasirService.editTransaction(transactionId, req, clientId);
-        if(isCreated){
+        ResponseInBoolean response = kasirService.editTransaction(transactionId, req, clientId);
+        if(response.isStatus()){
             System.out.println("sukses");
-            return ResponseEntity.ok("Transaction Edited");
+            return ResponseEntity.ok(response.getMessage());
         }
         System.out.println("gagal");
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
     }
 }

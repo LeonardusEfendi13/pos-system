@@ -1,15 +1,13 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreatePurchasingRequest;
-import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PembelianService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -64,13 +62,13 @@ public class RestControllerPembelian {
 
         System.out.println("otw save");
         System.out.println(req.isCash());
-        boolean isCreated = pembelianService.createTransaction(req, clientData);
-        if(isCreated){
+        ResponseInBoolean response = pembelianService.createTransaction(req, clientData);
+        if(response.isStatus()){
             System.out.println("sukses");
-            return ResponseEntity.ok("Data created");
+            return ResponseEntity.ok(response.getMessage());
         }
         System.out.println("gagal");
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
     }
 
     @PostMapping("/edit/{purchasingId}")
@@ -88,17 +86,17 @@ public class RestControllerPembelian {
         }
 
         System.out.println("otw edit");
-        boolean isCreated = pembelianService.editTransaction(purchasingId, req, clientId);
-        if(isCreated){
+        ResponseInBoolean response = pembelianService.editTransaction(purchasingId, req, clientId);
+        if(response.isStatus()){
             System.out.println("sukses");
-            return ResponseEntity.ok("Transaction Edited");
+            return ResponseEntity.ok(response.getMessage());
         }
         System.out.println("gagal");
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
     }
 
     @PostMapping("/lunaskan/{selectedPembelianId}")
-    public ResponseEntity<String> lunaskanPembelian(@PathVariable("selectedPembelianId") Long pembelianId, Model model, HttpSession session){
+    public ResponseEntity<String> lunaskanPembelian(@PathVariable("selectedPembelianId") Long pembelianId, HttpSession session){
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -116,6 +114,7 @@ public class RestControllerPembelian {
             return ResponseEntity.ok("Gagal Bayar Faktur");
         }
     }
+
 
 
 }

@@ -137,7 +137,7 @@
                     <br>
 
                     <button class="btn btn-success add-product-btn" data-bs-toggle="modal"
-                            data-bs-target="#addBarangModal" id="add-barang-btn">Add Product
+                            data-bs-target="#addBarangModal" id="add-barang-btn">Tambah Product
                     </button>
 
                 </div>
@@ -202,22 +202,22 @@
         <table class="table table-bordered" id="sellTable">
             <thead class="table-light">
             <tr>
-                <th style="width: 30px;">No.</th>
-                <th style="width: 200px;">Kode</th>
-                <th style="width: 550px;">Nama</th>
-                <th style="width: 150px;">Harga Beli</th>
-                <th style="width: 80px;">Qty</th>
-                <th style="width: 150px;">Disc (%)</th>
-                <th style="width: 150px;">Disc (Rp)</th>
-                <th style="width: 150px;">Total Harga</th>
-                <th style="width: 80px;">Stok Lama</th>
-                <th style="width: 150px;">Harga Jual Lama</th>
-                <th style="width: 150px;">Markup 1 (%)</th>
-                <th style="width: 150px;">Harga Jual Baru 1</th>
-                <th style="width: 150px;">Markup 2 (%)</th>
-                <th style="width: 150px;">Harga Jual Baru 2</th>
-                <th style="width: 150px;">Markup 3 (%)</th>
-                <th style="width: 150px;">Harga Jual Baru 3</th>
+                <th style="width: 30px;font-weight:bold;background-color:white;color:black">No.</th>
+                <th style="width: 200px;font-weight:bold;background-color:white;color:black">Kode</th>
+                <th style="width: 550px;font-weight:bold;background-color:white;color:black">Nama</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Beli</th>
+                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Qty</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Disc (%)</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Total Harga</th>
+                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Stok Lama</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Lama</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 1 (%)</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 1</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 2 (%)</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 2</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 3 (%)</th>
+                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 3</th>
             </tr>
             </thead>
             <tbody id="sellTableBody"></tbody>
@@ -289,7 +289,7 @@
             aria-hidden="true"
     >
         <div class="modal-dialog modal-lg">
-            <form th:action="@{/products/add}" method="post" id="barangForm">
+            <form th:action="@{/api/product/add}" method="post" id="barangForm">
                 <div class="modal-content">
                     <div class="modal-header py-2">
                         <h5 class="modal-title" id="editBarangLabel">
@@ -739,9 +739,46 @@
      }
    }
 
-<!--   paymentAmountInput.addEventListener("focus", handleFormattedFocus);-->
-<!--   paymentAmountInput.addEventListener("blur", handleFormattedBlur);-->
-<!--   paymentAmountInput.addEventListener("input", calculateReturnAmount);-->
+
+    function ensureZeroOnBlur(input, decimals = 0, row = null) {
+      input.addEventListener("blur", () => {
+        let val = input.value.trim();
+
+        if (val === "" || isNaN(val)) {
+          if (decimals > 0) {
+            input.value = (0).toFixed(decimals);  // misal 0.00
+          } else {
+            input.value = "0";
+          }
+        }
+
+        // ✅ kalau ada row, update subtotal row & grand total
+        if (row) {
+          updateTotalRow(row);
+        } else {
+          calculateGrandTotal();
+        }
+      });
+    }
+    function ensureOneOnBlur(input, decimals = 0, row = null) {
+      input.addEventListener("blur", () => {
+        let val = input.value.trim();
+
+        if (val === "" || isNaN(val)) {
+          if (decimals > 0) {
+            input.value = (0).toFixed(decimals);  // misal 0.00
+          } else {
+            input.value = "1";
+          }
+        }
+        // ✅ kalau ada row, update subtotal row & grand total
+        if (row) {
+          updateTotalRow(row);
+        } else {
+          calculateGrandTotal();
+        }
+      });
+    }
 
    function addNewRow(focus = true) {
      const rows = sellTableBody.querySelectorAll("tr");
@@ -791,7 +828,14 @@
      const hargaJual2Input = row.querySelector(".harga-jual-2-input");
      const markUp3Input = row.querySelector(".markup-3-input");
      const hargaJual3Input = row.querySelector(".harga-jual-3-input");
+     // tambahkan auto-set 0 on blur
+    [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
+      .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
 
+    [priceInput, hargaJual1Input, hargaJual2Input, hargaJual3Input]
+      .forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
+
+    [qtyInput].forEach(inp => ensureOneOnBlur(inp, 0, row));
     hargaJual1Input.addEventListener("focus", handleFormattedFocus);
     hargaJual1Input.addEventListener("blur", handleFormattedBlur);
     hargaJual2Input.addEventListener("focus", handleFormattedFocus);
@@ -1122,11 +1166,6 @@
    function fillProductRow(row, product) {
       const qty = 1; // default qty
       const price = getPriceByQty(product, qty);
-      console.log("price : ", price);
-
-      const price1 = product.productPricesDTO[0].price;
-      const price2 = product.productPricesDTO[1].price;
-      const price3 = product.productPricesDTO[2].price;
 
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
@@ -1137,35 +1176,30 @@
       row.querySelector(".stok-input").value = product.stok;
       row.querySelector(".harga-jual-lama").value = formatRupiah(price);
 
-      // Harga Jual 1
-      if (price1 > 0) {
-        row.querySelector(".markup-1-input").value =
-          ((price1 - product.hargaBeli) / product.hargaBeli * 100).toFixed(2);
-        row.querySelector(".harga-jual-1-input").value = formatRupiah(price1);
-      } else {
-        row.querySelector(".markup-1-input").value = 0;
-        row.querySelector(".harga-jual-1-input").value = formatRupiah(0);
-      }
+      const tiers = product.productPricesDTO;
 
-      // Harga Jual 2
-      if (price2 > 0) {
-        row.querySelector(".markup-2-input").value =
-          ((price2 - product.hargaBeli) / product.hargaBeli * 100).toFixed(2);
-        row.querySelector(".harga-jual-2-input").value = formatRupiah(price2);
-      } else {
-        row.querySelector(".markup-2-input").value = 0;
-        row.querySelector(".harga-jual-2-input").value = formatRupiah(0);
-      }
+      // loop harga jual 1, 2, 3
+      tiers.forEach((tier, i) => {
+        const markupInput = row.querySelector(`.markup-${i+1}-input`);
+        const hargaInput = row.querySelector(`.harga-jual-${i+1}-input`);
 
-      // Harga Jual 3
-      if (price3 > 0) {
-        row.querySelector(".markup-3-input").value =
-          ((price3 - product.hargaBeli) / product.hargaBeli * 100).toFixed(2);
-        row.querySelector(".harga-jual-3-input").value = formatRupiah(price3);
-      } else {
-        row.querySelector(".markup-3-input").value = 0;
-        row.querySelector(".harga-jual-3-input").value = formatRupiah(0);
-      }
+        if (tier && tier.price > 0) {
+          // ✅ ada harga jual dari backend → isi & enabled
+          console.log("harusnya tier nya ada");
+          markupInput.value = ((tier.price - product.hargaBeli) / product.hargaBeli * 100).toFixed(2);
+          markupInput.disabled = false;
+          hargaInput.value = formatRupiah(tier.price);
+          hargaInput.disabled = false;
+        } else {
+          console.log("harusnya tier nya ga ada");
+
+          // ❌ tidak ada harga jual → disable
+          markupInput.value = 0;
+          markupInput.disabled = true;
+          hargaInput.value = formatRupiah(0);
+          hargaInput.disabled = true;
+        }
+      });
 
       updateTotalRow(row);
     }
@@ -1590,6 +1624,10 @@
 
      sellTableBody.querySelectorAll("tr").forEach((row) => {
        const code = row.querySelector(".code-input").value;
+       const product = masterProducts.find(p => p.shortName === code);
+       if (!code || !product) {
+         return;
+       }
        if (code) {
          transactionData.pembelianDetailDTOS.push({
            code: code,
@@ -1620,56 +1658,54 @@
        JSON.stringify(transactionData, null, 2)
      );
      try {
-       let response;
-       console.log("otw save nih, transaction data : " + JSON.stringify(transactionData,null,2));
-       if (
-         masterTransactions.pembelianId !== null &&
-         masterTransactions.pembelianDetailDTOS !== null
-       ) {
-         console.log("otw edit");
-         response = await fetch(
-           `/api/pembelian/edit/${masterTransactions.pembelianId}`,
-           {
-             method: "POST",
-             headers: {
-               "Content-Type": "application/json",
-             },
-             body: JSON.stringify(transactionData),
-           }
-         );
-       } else {
-         console.log("otw add");
-         response = await fetch("/api/pembelian/add", {
-           method: "POST",
-           headers: {
-             "Content-Type": "application/json",
-           },
-           body: JSON.stringify(transactionData),
-         });
-       }
+      let response;
+      console.log("otw save nih, transaction data : " + JSON.stringify(transactionData, null, 2));
 
-       console.log("response from be : ", !response.ok);
+      if (
+        masterTransactions.pembelianId !== null &&
+        masterTransactions.pembelianDetailDTOS !== null
+      ) {
+        console.log("otw edit");
+        response = await fetch(`/api/pembelian/edit/${masterTransactions.pembelianId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transactionData),
+        });
+      } else {
+        console.log("otw add");
+        response = await fetch("/api/pembelian/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transactionData),
+        });
+      }
 
-       if (!response.ok) {
-         throw new Error(`Server responded with ${response.status}`);
-       }
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(`${errorMessage}`);
+      }
 
-       const result = await response.text();
-       console.log("Transaction Saved:", result);
-       alert("Transaction saved successfully!");
+      const result = await response.text();
+      console.log("Transaction Saved:", result);
+      alert("Transaction saved successfully!");
 
-       if (
-         masterTransactions.transactionId !== null &&
-         masterTransactions.pembelianDetailDTOS !== null
-       ) {
-         window.location.href = "/pembelian";
-       } else {
-         window.location.href = "/pembelian/tambah";
-       }
-     } catch (error) {
-       console.error("Failed to save transaction:", error);
-       alert("Failed to save transaction. Please try again.");
-     }
+      if (
+        masterTransactions.transactionId !== null &&
+        masterTransactions.pembelianDetailDTOS !== null
+      ) {
+        window.location.href = "/pembelian";
+      } else {
+        window.location.href = "/pembelian/tambah";
+      }
+
+    } catch (error) {
+      console.error("Failed to save transaction:", error.message);
+      alert(`Gagal menyimpan data, ${error.message}`);
+    }
    }
 
    function cancelTransaction() {
@@ -1777,134 +1813,127 @@
 
 
    function loadTransaction(transaction) {
-     // Clear the current sales table
-     sellTableBody.innerHTML = "";
+      // Clear the current sales table
+      sellTableBody.innerHTML = "";
 
-     // Set the grand total discounts and customer
-     if (transaction.subtotal > 0) {
-       const discountPercent =
-         (transaction.totalDisc / transaction.subtotal) * 100;
-       grandDiscountPercent.value = discountPercent.toFixed(2); // e.g. "12.50"
-       console.log(
-         "grand disc percent value:",
-         grandDiscountPercent.value + "%"
-       );
-     } else {
-       grandDiscountPercent.value = "0.00";
-       console.warn(
-         "Subtotal is zero or invalid, cannot compute discount percent."
-       );
-     }
-     grandDiscountAmount.value = transaction.totalDisc;
+      // Set the grand total discounts and customer
+      if (transaction.subtotal > 0) {
+        const discountPercent =
+          (transaction.totalDisc / transaction.subtotal) * 100;
+        grandDiscountPercent.value = discountPercent.toFixed(2);
+      } else {
+        grandDiscountPercent.value = "0.00";
+      }
+      grandDiscountAmount.value = transaction.totalDisc;
 
-     // Set customer if you want
-     if (transaction.supplierDTO.supplierId) {
-      console.log("transaction.supplierDTO.supplierId : " +  transaction.supplierDTO.supplierId);
-       customerSelect.value = transaction.supplierDTO.supplierId;
-       console.log("customerSelect.value : " + customerSelect.value);
-     }
+      // Set customer if you want
+      if (transaction.supplierDTO.supplierId) {
+        customerSelect.value = transaction.supplierDTO.supplierId;
+      }
 
-      //Insert no faktur, poDate, jenis pembayaran, poDueDate
-      if(transaction.noFaktur) {
+      // Insert no faktur, poDate, jenis pembayaran, poDueDate
+      if (transaction.noFaktur) {
         document.getElementById("invoiceNumber").value = transaction.noFaktur;
       }
 
       window.addEventListener("load", function () {
-          const poDateInput = document.getElementById("poDate");
-          if (poDateInput && transaction.tanggalBeli) {
-            poDateInput.value = transaction.tanggalBeli.split("T")[0];
-          }
+        const poDateInput = document.getElementById("poDate");
+        if (poDateInput && transaction.tanggalBeli) {
+          poDateInput.value = transaction.tanggalBeli.split("T")[0];
+        }
 
-          if(transaction.cash == true){
-            document.getElementById("paymentType").value = 'tunai';
-          }else{
-            document.getElementById("paymentType").value = 'kredit';
-            document.getElementById("dueDateContainer").style.display = "block";
-            if(transaction.tanggalTempo){
-                document.getElementById("poDueDate").value = transaction.tanggalTempo.split("T")[0];
-            }
+        if (transaction.cash === true) {
+          document.getElementById("paymentType").value = "tunai";
+        } else {
+          document.getElementById("paymentType").value = "kredit";
+          document.getElementById("dueDateContainer").style.display = "block";
+          if (transaction.tanggalTempo) {
+            document.getElementById("poDueDate").value =
+              transaction.tanggalTempo.split("T")[0];
           }
+        }
 
-          if(transaction.isCash === false){
-              document.getElementById("poDueDate").value = transaction.tanggalTempo.split("T")[0];
-          }
+        if (transaction.isCash === false) {
+          document.getElementById("poDueDate").value =
+            transaction.tanggalTempo.split("T")[0];
+        }
       });
 
+      // Populate the table with transaction details
+      transaction.pembelianDetailDTOS.forEach((detail, index) => {
+        const row = document.createElement("tr");
 
-     // Populate the table with transaction details
-     transaction.pembelianDetailDTOS.forEach((detail, index) => {
-       const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="row-number">${index + 1}</td>
+          <td><input type="text" class="form-control form-control-sm code-input" value="${detail.code}" /></td>
+          <td><input type="text" class="form-control form-control-sm name-input" readonly value="${detail.name}" /></td>
+          <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(detail.price)}" /></td>
+          <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${detail.qty}" /></td>
+          <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${(detail.discAmount / (detail.total + detail.discAmount)) * 100}" /></td>
+          <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${detail.discAmount}" /></td>
+          <td class="total-cell">${formatRupiah(detail.total)}</td>
+          <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
+          <td><input type="number" class="form-control form-control-sm harga-jual-lama" value="${detail.hargaJual1}" readonly/></td>
+          <td><input type="number" class="form-control form-control-sm markup-1-input" value="${detail.markup1 ?? 0}" /></td>
+          <td><input type="text" class="form-control form-control-sm harga-jual-1-input" value="${formatRupiah(detail.hargaJual1 ?? 0)}"/></td>
+          <td><input type="number" class="form-control form-control-sm markup-2-input" value="${detail.markup2 ?? 0}" /></td>
+          <td><input type="text" class="form-control form-control-sm harga-jual-2-input" value="${formatRupiah(detail.hargaJual2 ?? 0)}" /></td>
+          <td><input type="number" class="form-control form-control-sm markup-3-input" value="${detail.markup3 ?? 0}" /></td>
+          <td><input type="text" class="form-control form-control-sm harga-jual-3-input" value="${formatRupiah(detail.hargaJual3 ?? 0)}"/></td>
+        `;
 
-       row.innerHTML = `
-   <td class="row-number">${index + 1}</td>
-   <td><input type="text" class="form-control form-control-sm code-input" value="${
-     detail.code
-   }" /></td>
-   <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
-     detail.name
-   }" /></td>
-   <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
-     detail.price
-   )}" /></td>
-   <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
-     detail.qty
-   }" /></td>
-   <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-     (detail.discAmount / (detail.total + detail.discAmount)) * 100
-   }" /></td>
-   <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
-     detail.discAmount
-   }" /></td>
-   <td class="total-cell">${formatRupiah(detail.total)}</td>
-    <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
-    <td><input type="number" class="form-control form-control-sm harga-jual-lama" value="${detail.hargaJual1}" readonly/></td>
-      <!-- ✅ make harga jual 1/2/3 text inputs + formatted -->
-      <td><input type="number" class="form-control form-control-sm markup-1-input" value="${detail.markup1}" /></td>
-      <td><input type="text" class="form-control form-control-sm harga-jual-1-input" value="${formatRupiah(detail.hargaJual1)}"/></td>
-      <td><input type="number" class="form-control form-control-sm markup-2-input" value="${detail.markup2}" /></td>
-      <td><input type="text" class="form-control form-control-sm harga-jual-2-input" value="${formatRupiah(detail.hargaJual2)}" /></td>
-      <td><input type="number" class="form-control form-control-sm markup-3-input" value="${detail.markup3}" /></td>
-      <td><input type="text" class="form-control form-control-sm harga-jual-3-input" value="${formatRupiah(detail.hargaJual3)}"/></td>
-    `;
+        // ✅ Disable field sesuai productPricesDTO dari masterProducts
+        const product = masterProducts.find(p => p.shortName === detail.code);
+        if (product) {
+          const tiers = product.productPricesDTO;
+          tiers.forEach((tier, i) => {
+            const markupInput = row.querySelector(`.markup-${i+1}-input`);
+            const hargaInput = row.querySelector(`.harga-jual-${i+1}-input`);
+            if (tier && tier.price > 0) {
+              markupInput.disabled = false;
+              hargaInput.disabled = false;
+            } else {
+              markupInput.disabled = true;
+              hargaInput.disabled = true;
+            }
+          });
+        }
 
-    // Attach events (reuse same logic as addNewRow)
+        // Reuse handler binding
         attachNavigationHandlers(row);
         attachMarkupHandlers(row);
 
+        // Other event bindings (price, qty, discount)
+        const priceInput = row.querySelector(".price-input");
+        const discPercentInput = row.querySelector(".discount-percent-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+        const markUp1Input = row.querySelector(".markup-1-input");
+        const markUp2Input = row.querySelector(".markup-2-input");
+        const markUp3Input = row.querySelector(".markup-3-input");
+        const hargaJual1Input = row.querySelector(".harga-jual-1-input");
+        const hargaJual2Input = row.querySelector(".harga-jual-2-input");
+        const hargaJual3Input = row.querySelector(".harga-jual-3-input");
+        // tambahkan auto-set 0 on blur
+        [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
+          .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
 
-       // Re-attach event listeners to the new row's inputs
-       const codeInput = row.querySelector(".code-input");
-       const priceInput = row.querySelector(".price-input");
-       const qtyInput = row.querySelector(".qty-input");
-       const discPercentInput = row.querySelector(".discount-percent-input");
-       const discAmountInput = row.querySelector(".discount-amount-input");
-       const markUp1Input = row.querySelector(".markup-1-input");
-       const markUp2Input = row.querySelector(".markup-2-input");
-       const markUp3Input = row.querySelector(".markup-3-input");
-       const hargaJual1Input = row.querySelector(".harga-jual-1-input");
-       const hargaJual2Input = row.querySelector(".harga-jual-2-input");
-       const hargaJual3Input = row.querySelector(".harga-jual-3-input");
+        [priceInput, hargaJual1Input, hargaJual2Input, hargaJual3Input, qtyInput]
+          .forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
 
-       priceInput.addEventListener("focus", handleFormattedFocus);
-       priceInput.addEventListener("blur", handleFormattedBlur);
-       priceInput.addEventListener("input", () => updateTotalRow(row));
-       qtyInput.addEventListener("input", () => updateTotalRow(row));
+        priceInput.addEventListener("focus", handleFormattedFocus);
+        priceInput.addEventListener("blur", handleFormattedBlur);
+        priceInput.addEventListener("input", () => updateTotalRow(row));
+        qtyInput.addEventListener("input", () => updateTotalRow(row));
 
-
-       discPercentInput.addEventListener("input", () => {
+        discPercentInput.addEventListener("input", () => {
           let val = discPercentInput.value;
-          console.log("value is : " + val);
-
-          // Jika ada titik desimal, batasi hanya 2 digit setelah koma
           if (val.includes(".")) {
             const [intPart, decPart] = val.split(".");
             discPercentInput.value = intPart + "." + decPart.slice(0, 2);
           }
-
           const price = parseRupiah(row.querySelector(".price-input").value);
           const qty = parseInt(qtyInput.value) || 0;
           const discountPercent = parseFloat(discPercentInput.value) || 0;
-
           if (price * qty > 0) {
             const discountAmount = price * qty * (discountPercent / 100);
             discAmountInput.value = Math.round(discountAmount);
@@ -1914,34 +1943,34 @@
           updateTotalRow(row);
         });
 
-       discAmountInput.addEventListener("input", () => {
-         const price = parseRupiah(row.querySelector(".price-input").value);
-         const qty = parseInt(qtyInput.value) || 0;
-         const discountAmount = parseFloat(discAmountInput.value) || 0;
-         if (price * qty > 0 && !isNaN(discountPercent)) {
-           const discountPercent = (discountAmount / (price * qty)) * 100;
-           discPercentInput.value = discountPercent.toFixed(2);
-         } else {
-           discPercentInput.value = "0";
-         }
-         updateTotalRow(row);
-       });
+        discAmountInput.addEventListener("input", () => {
+          const price = parseRupiah(row.querySelector(".price-input").value);
+          const qty = parseInt(qtyInput.value) || 0;
+          const discountAmount = parseFloat(discAmountInput.value) || 0;
+          if (price * qty > 0) {
+            const discountPercent = (discountAmount / (price * qty)) * 100;
+            discPercentInput.value = discountPercent.toFixed(2);
+          } else {
+            discPercentInput.value = "0";
+          }
+          updateTotalRow(row);
+        });
 
-       row.addEventListener("contextmenu", function (e) {
-         e.preventDefault();
-         selectedRow = row;
-         showContextMenu(e.pageX, e.pageY);
-       });
+        row.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+          selectedRow = row;
+          showContextMenu(e.pageX, e.pageY);
+        });
 
-       sellTableBody.appendChild(row);
-     });
+        sellTableBody.appendChild(row);
+      });
 
-     // Add a new empty row for a new item
-     addNewRow();
+      // Add a new empty row for a new item
+      addNewRow();
 
-     // Recalculate and display the grand total
-     calculateGrandTotal();
-   }
+      // Recalculate and display the grand total
+      calculateGrandTotal();
+    }
 
    // Init
    loadCustomers();

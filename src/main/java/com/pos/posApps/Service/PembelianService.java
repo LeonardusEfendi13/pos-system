@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -146,18 +146,18 @@ public class PembelianService {
     }
 
     @Transactional
-    public boolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData){
+    public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData){
         System.out.println("req : " + req);
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
         if(pembelian.isPresent()){
-            return false;
+            return new ResponseInBoolean(false, "Nomor Faktur Sudah Ada");
         }
         try{
             //Get Supplier Entity
             Optional<SupplierEntity> supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntity.isEmpty()){
-                return false;
+                return new ResponseInBoolean(false, "Supplier Tidak ada");
             }
             //Get last Transaction id
             Long lastPurchasingId = purchasingRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPurchasingIdDesc(clientData.getClientId()).map(PurchasingEntity::getPurchasingId).orElse(0L);
@@ -188,6 +188,8 @@ public class PembelianService {
             Long newPurchasingDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
+                ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+
                 PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
                 purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
                 purchasingDetailEntity.setShortName(dtos.getCode());
@@ -197,38 +199,59 @@ public class PembelianService {
                 purchasingDetailEntity.setDiscAmount(dtos.getDiscAmount());
                 purchasingDetailEntity.setTotalPrice(dtos.getTotal());
                 purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
-                purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
-                purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
-                purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
-                purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
-                purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
-                purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+
+                int counter = 0;
+                for(ProductPricesEntity productPriceData : productEntity.getProductPricesEntity()){
+                    counter++;
+                    if(productPriceData.getPrice() != null && productPriceData.getPrice().compareTo(BigDecimal.ZERO) > 0){
+                        if(counter == 1){
+                            purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
+                            purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
+                        }else if(counter == 2){
+                            purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
+                            purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
+                        }else if(counter == 3){
+                            purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
+                            purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+                        }
+                    }
+                }
+//                purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
+//                purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
+//                purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
+//                purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
+//                purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
                 purchasingDetailRepository.save(purchasingDetailEntity);
                 newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
 
                 //Update product stock
-                ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 Long newStock = productEntity.getStock() + dtos.getQty();
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
             }
-            return true;
+            return new ResponseInBoolean(true, "Berhasil simpan data");
         }catch (Exception e){
             System.out.println("Exception catched : " + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return new ResponseInBoolean(false, e.getMessage());
         }
     }
 
     @Transactional
-    public boolean editTransaction(Long purchasingId, CreatePurchasingRequest req, Long clientId){
+    public ResponseInBoolean editTransaction(Long purchasingId, CreatePurchasingRequest req, Long clientId){
+        //Check duplication
+        boolean pembelianDuplicate = purchasingRepository.existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(req.getPurchasingNumber(), clientId, purchasingId);
+        System.out.println("Pembelian duplikat ?  : " + pembelianDuplicate);
+        if(pembelianDuplicate){
+            return new ResponseInBoolean(false, "Nomor faktur sudah ada");
+        }
         try{
             //Get Supplier Entity
             System.out.println("otw get supplier");
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientId);
             if (supplierEntityOpt.isEmpty()){
                 System.out.println("supplier ga nemu");
-                return false;
+                return new ResponseInBoolean(false, "Supplier tidak ada");
             }
             SupplierEntity supplierEntity = supplierEntityOpt.get();
 
@@ -238,7 +261,7 @@ public class PembelianService {
             Optional<PurchasingEntity> purchasingEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, purchasingId);
             if(purchasingEntityOpt.isEmpty()){
                 System.out.println("purchasing ga nemu");
-                return false;
+                return new ResponseInBoolean(false, "Data Pembelian tidak ada");
             }
             PurchasingEntity purchasingEntity = purchasingEntityOpt.get();
 
@@ -286,6 +309,7 @@ public class PembelianService {
 
             for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
                 if(dtos != null) {
+                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientId);
                     PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
                     purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
                     purchasingDetailEntity.setShortName(dtos.getCode());
@@ -295,28 +319,36 @@ public class PembelianService {
                     purchasingDetailEntity.setDiscAmount(dtos.getDiscAmount());
                     purchasingDetailEntity.setTotalPrice(dtos.getTotal());
                     purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
-                    purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
-                    purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
-                    purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
-                    purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
-                    purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
-                    purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+
+                    int counter = 0;
+                    for(ProductPricesEntity productPriceData : productEntity.getProductPricesEntity()){
+                        counter++;
+                        if(productPriceData.getPrice() != null && productPriceData.getPrice().compareTo(BigDecimal.ZERO) > 0){
+                            if(counter == 1){
+                                purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
+                                purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
+                            }else if(counter == 2){
+                                purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
+                                purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
+                            }else if(counter == 3){
+                                purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
+                                purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+                            }
+                        }
+                    }
                     purchasingDetailRepository.save(purchasingDetailEntity);
                     newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
 
                     //Update product stock
-                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientId);
-                    if(productEntity != null){
-                        Long newStock = productEntity.getStock() + dtos.getQty();
-                        productEntity.setStock(newStock);
-                        productRepository.save(productEntity);
-                    }
+                    Long newStock = productEntity.getStock() + dtos.getQty();
+                    productEntity.setStock(newStock);
+                    productRepository.save(productEntity);
                 }
             }
-            return true;
+            return new ResponseInBoolean(true, "Data berhasil disimpan");
         }catch (Exception e){
             System.out.println("Exception catched : " + e);
-            return false;
+            return new ResponseInBoolean(false, e.getMessage());
         }
     }
 
