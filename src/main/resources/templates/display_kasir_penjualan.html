@@ -375,6 +375,10 @@
     const searchName = document.getElementById("searchName");
     const productModalEl = document.getElementById("productModal");
     const productModal = new bootstrap.Modal(productModalEl);
+
+    productModalEl.addEventListener("shown.bs.modal", () => {
+      searchName.focus();
+    });
     const subTotalDisplay = document.getElementById("subTotalDisplay");
     const grandTotalDisplay = document.getElementById("grandTotalDisplay");
     const grandDiscountPercent = document.getElementById(
@@ -386,6 +390,8 @@
     const paymentAmountInput = document.getElementById("paymentAmount");
     const returnAmountInput = document.getElementById("returnAmount");
     const saveButton = document.querySelector(".btn-primary");
+
+    let replaceOnNextInput = null; // NEW FLAG
 
     document.addEventListener("keydown", (e) => {
       // Hanya jalankan jika modal produk tidak terlihat
@@ -415,7 +421,7 @@
         const currentRow = activeElement.closest("tr");
         const currentRows = [...sellTableBody.querySelectorAll("tr")];
         const currentRowIndex = currentRows.indexOf(currentRow);
-        const editableInputs = [...currentRow.querySelectorAll("input:not([readonly])"),];
+        const editableInputs = [...currentRow.querySelectorAll("input:not([readonly])")];
         const currentEditableIndex = editableInputs.indexOf(activeElement);
 
         let nextRowIndex = currentRowIndex;
@@ -424,11 +430,11 @@
         // Logika Navigasi
         switch (e.key) {
           case "ArrowUp":
-            e.preventDefault(); // Panggil preventDefault di sini
+            e.preventDefault();
             nextRowIndex = Math.max(0, currentRowIndex - 1);
             break;
           case "ArrowDown":
-            e.preventDefault(); // Panggil preventDefault di sini
+            e.preventDefault();
             nextRowIndex = currentRowIndex + 1;
             if (nextRowIndex >= currentRows.length) {
               addNewRow();
@@ -436,46 +442,46 @@
             }
             break;
           case "ArrowLeft":
-            e.preventDefault(); // Panggil preventDefault di sini
+            e.preventDefault();
             nextEditableIndex = Math.max(0, currentEditableIndex - 1);
             break;
           case "ArrowRight":
-            e.preventDefault(); // Panggil preventDefault di sini
+            e.preventDefault();
             nextEditableIndex = Math.min(editableInputs.length - 1, currentEditableIndex + 1);
             break;
-<!--          case "Enter":-->
-<!--            e.preventDefault(); // Panggil preventDefault di sini-->
-<!--            // Pindah ke baris berikutnya-->
-<!--            if (currentEditableIndex === editableInputs.length - 1) {-->
-<!--              const lastRow = sellTableBody.lastElementChild;-->
-<!--              if (currentRow === lastRow && !isRowEmpty(currentRow)) {-->
-<!--                maybeAddNewRow();-->
-<!--              }-->
-<!--              const nextRow = currentRow.nextElementSibling;-->
-<!--              if (nextRow) {-->
-<!--                nextRow.querySelector(".code-input").focus();-->
-<!--              }-->
-<!--            } else {-->
-<!--              // Pindah ke kolom berikutnya-->
-<!--              nextEditableIndex = currentEditableIndex + 1;-->
-<!--            }-->
-<!--            break;-->
           default:
-            // Jika bukan tombol navigasi, jangan lakukan apa-apa
             return;
         }
 
         // Fokuskan ke elemen berikutnya
         const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
-        if (targetRow) {
-          const targetEditableInputs = [...targetRow.querySelectorAll("input:not([readonly])"),];
-          const targetInput = targetEditableInputs[nextEditableIndex];
-          if (targetInput) {
-            targetInput.focus();
-          }
+        const targetEditableInputs = [
+             ...targetRow.querySelectorAll("input:not([readonly])"),
+           ];
+        const targetInput = targetEditableInputs[nextEditableIndex];
+        if (targetInput) {
+             targetInput.focus();
+             if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+               targetInput.select();
+             }
         }
       }
     });
+
+    // Listener global untuk mengganti isi saat pertama kali ketik
+    document.addEventListener("keydown", (ev) => {
+      if (
+        replaceOnNextInput &&
+        ev.key.length === 1 && // hanya karakter yang bisa diketik
+        !ev.ctrlKey &&
+        !ev.metaKey
+      ) {
+        replaceOnNextInput.value = ev.key; // replace entire value
+        ev.preventDefault();
+        replaceOnNextInput = null; // reset setelah dipakai
+      }
+    });
+
     paymentAmountInput.addEventListener("keypress", function (e) {
       const char = String.fromCharCode(e.which);
 
@@ -630,76 +636,6 @@
         discPercentInput,
         discAmountInput,
       ];
-
-<!--      inputs.forEach((input, index) => {-->
-<!--        input.addEventListener("keydown", (e) => {-->
-<!--          if (e.key === "Enter") {-->
-<!--            e.preventDefault();-->
-<!--            const currentRow = e.target.closest("tr");-->
-<!--            const lastRow = sellTableBody.lastElementChild;-->
-
-<!--            // pastikan ada baris kosong berikutnya-->
-<!--            if (currentRow === lastRow && !isRowEmpty(currentRow)) {-->
-<!--              // panggil function yang sudah ada untuk tambah baris-->
-<!--              maybeAddNewRow();-->
-<!--            }-->
-
-<!--            // fokuskan ke baris berikutnya (pasti kosong karena maybeAddNewRow)-->
-<!--            const nextRow = currentRow.nextElementSibling;-->
-<!--            if (nextRow) {-->
-<!--              nextRow.querySelector(".code-input").focus();-->
-<!--            }-->
-<!--          } else if (-->
-<!--            e.key === "ArrowUp" ||-->
-<!--            e.key === "ArrowDown" ||-->
-<!--            e.key === "ArrowLeft" ||-->
-<!--            e.key === "ArrowRight"-->
-<!--          ) {-->
-<!--            e.preventDefault();-->
-
-<!--            const currentRows = [...sellTableBody.querySelectorAll("tr")];-->
-<!--            const currentRowIndex = currentRows.indexOf(row);-->
-<!--            const editableInputs = [-->
-<!--              ...row.querySelectorAll("input:not([readonly])"),-->
-<!--            ];-->
-<!--            const currentEditableIndex = editableInputs.indexOf(e.target);-->
-
-<!--            let nextRowIndex = currentRowIndex;-->
-<!--            let nextEditableIndex = currentEditableIndex;-->
-
-<!--            if (e.key === "ArrowUp") {-->
-<!--              nextRowIndex = Math.max(0, currentRowIndex - 1);-->
-<!--            } else if (e.key === "ArrowDown") {-->
-<!--              nextRowIndex = currentRowIndex + 1;-->
-<!--              if (nextRowIndex >= currentRows.length) {-->
-<!--                addNewRow();-->
-<!--                nextRowIndex = currentRows.length;-->
-<!--              }-->
-<!--            } else if (e.key === "ArrowLeft") {-->
-<!--              nextEditableIndex = Math.max(0, currentEditableIndex - 1);-->
-<!--            } else if (e.key === "ArrowRight") {-->
-<!--              nextEditableIndex = Math.min(-->
-<!--                editableInputs.length - 1,-->
-<!--                currentEditableIndex + 1-->
-<!--              );-->
-<!--            }-->
-
-<!--            const targetRow =-->
-<!--              sellTableBody.querySelectorAll("tr")[nextRowIndex];-->
-<!--            const targetEditableInputs = [-->
-<!--              ...targetRow.querySelectorAll("input:not([readonly])"),-->
-<!--            ];-->
-<!--            const targetInput = targetEditableInputs[nextEditableIndex];-->
-
-<!--            if (targetInput) {-->
-<!--              targetInput.focus();-->
-<!--              if (e.key === "ArrowLeft" || e.key === "ArrowRight") {-->
-<!--                targetInput.select();-->
-<!--              }-->
-<!--            }-->
-<!--          }-->
-<!--        });-->
-<!--      });-->
 
       priceInput.addEventListener("focus", handleFormattedFocus);
       priceInput.addEventListener("blur", handleFormattedBlur);
@@ -1626,6 +1562,7 @@
 
 
     // Init
+    loadCustomers();
     if (
       masterTransactions.transactionId !== null &&
       masterTransactions.transactionDetailDTOS !== null
@@ -1633,7 +1570,6 @@
       console.log("otw init master transactions");
       loadTransaction(masterTransactions);
     }
-    loadCustomers();
     updateJam();
     addNewRow();
     calculateGrandTotal();

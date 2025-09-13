@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.pos.posApps.Util.Generator.*;
 
@@ -55,7 +56,7 @@ public class KasirService {
             System.out.println("Created transaction : " + newTransactionId);
 
             //Insert all the transaction details
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
@@ -94,11 +95,12 @@ public class KasirService {
                 return false;
             }
             //Check if transaction exist
-            TransactionEntity transactionEntity = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
-            if(transactionEntity == null){
+            Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
+            if(transactionEntityOpt.isEmpty()){
                 System.out.println("transaction ga nemu");
                 return false;
             }
+            TransactionEntity transactionEntity = transactionEntityOpt.get();
 
             //insert the transaction data
             transactionEntity.setCustomerEntity(customerEntity);
@@ -108,7 +110,7 @@ public class KasirService {
             transactionRepository.save(transactionEntity);
 
             //Restore stock from old transaction
-            List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
+            List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
             for(TransactionDetailEntity old : oldTransactions){
                 ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
                 if(product != null){
@@ -122,7 +124,7 @@ public class KasirService {
             transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
 
             //Insert all the transaction details
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
@@ -138,6 +140,12 @@ public class KasirService {
                     transactionDetailEntity.setTransactionEntity(transactionEntity);
                     transactionDetailRepository.save(transactionDetailEntity);
                     newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+
+                    //Update product stock
+                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientId);
+                    Long newStock = productEntity.getStock() - dtos.getQty();
+                    productEntity.setStock(newStock);
+                    productRepository.save(productEntity);
                 }
             }
             return true;

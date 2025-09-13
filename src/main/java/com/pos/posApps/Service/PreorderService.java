@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -42,11 +43,13 @@ public class PreorderService {
         try{
             Long lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().map(PreorderEntity::getPreorderId).orElse(0L);
             Long newPreorderId = Generator.generateId(lastPreorderId);
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
-            if(supplierEntity == null){
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
+            if(supplierEntityOpt.isEmpty()){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
             }
+
+            SupplierEntity supplierEntity = supplierEntityOpt.get();
 
             //Insert Preorder
             PreorderEntity newPreorder = new PreorderEntity();
@@ -82,11 +85,12 @@ public class PreorderService {
     @Transactional
     public boolean editPreorder(EditPreorderRequest req, ClientEntity clientData){
         try{
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
-            if(supplierEntity == null){
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
+            if(supplierEntityOpt.isEmpty()){
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
             }
+            SupplierEntity supplierEntity = supplierEntityOpt.get();
 
             //Insert Preorder
             PreorderEntity newPreorder = preorderRepository.findFirstByPreorderIdAndDeletedAtIsNull(req.getPreorderId());

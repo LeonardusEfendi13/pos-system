@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -67,11 +68,13 @@ public class ProductService {
             Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
             Long newProductId = Generator.generateId(lastProductId);
 
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
-            if (supplierEntity == null) {
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
+            if (supplierEntityOpt.isEmpty()) {
                 System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
             }
+
+            SupplierEntity supplierEntity = supplierEntityOpt.get();
 
             //Insert Product
             ProductEntity newProduct = new ProductEntity();
@@ -116,11 +119,13 @@ public class ProductService {
             return false;
         }
 
-        SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
-        if (supplierEntity == null) {
+        Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
+        if (supplierEntityOpt.isEmpty()) {
             System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;
         }
+        SupplierEntity supplierEntity = supplierEntityOpt.get();
+
         productEntity.setShortName(req.getShortName());
         productEntity.setFullName(req.getFullName());
         productEntity.setSupplierPrice(req.getSupplierPrice());

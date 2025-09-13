@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -59,7 +60,11 @@ public class PenjualanService {
     }
 
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
-        TransactionEntity transactions = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, penjualanId);
+        Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, penjualanId);
+        if(transactionsOpt.isEmpty()){
+            return null;
+        }
+        TransactionEntity transactions = transactionsOpt.get();
         return new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
@@ -87,7 +92,7 @@ public class PenjualanService {
     @Transactional
     public boolean deletePenjualan(Long transactionId, Long clientId){
         //Restore stock from old transaction
-        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
+        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
         for(TransactionDetailEntity old : oldTransactions){
             ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
             if(product != null){
@@ -95,22 +100,25 @@ public class PenjualanService {
                 product.setStock(restoredStock);
                 productRepository.save(product);
             }
+            old.setDeletedAt(getCurrentTimestamp());
+            transactionDetailRepository.save(old);
         }
 
-        TransactionEntity transactionEntity = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
-        if(transactionEntity == null){
+        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
+        if(transactionEntityOpt.isEmpty()){
             System.out.println("Transaction not found");
             return false;
         }
+        TransactionEntity transactionEntity = transactionEntityOpt.get();
         transactionEntity.setDeletedAt(getCurrentTimestamp());
         transactionRepository.save(transactionEntity);
 
-        List<TransactionDetailEntity> transactionDetailEntities = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
-
-        for(TransactionDetailEntity data : transactionDetailEntities){
-            data.setDeletedAt(getCurrentTimestamp());
-            transactionDetailRepository.save(data);
-        }
+//        List<TransactionDetailEntity> transactionDetailEntities = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
+//
+//        for(TransactionDetailEntity data : transactionDetailEntities){
+//            data.setDeletedAt(getCurrentTimestamp());
+//            transactionDetailRepository.save(data);
+//        }
 
         return true;
     }

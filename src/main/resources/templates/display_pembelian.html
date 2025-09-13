@@ -32,6 +32,15 @@
         .filter-container {
             margin: 20px 0;
         }
+        .dropdown-item.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        input[type="checkbox"]:disabled {
+          opacity: 1;               /* Keep full opacity */
+          pointer-events: none;     /* Prevent interaction */
+          accent-color: #007bff;    /* Custom bright color (blue in this case) */
+        }
     </style>
 </head>
 <body>
@@ -74,24 +83,32 @@
                         <th scope="col">No</th>
                         <th scope="col">No. Faktur</th>
                         <th scope="col">Tanggal Jual</th>
-                        <th scope="col">Total Jual</th>
-                        <th scope="col">Pelanggan</th>
+                        <th scope="col">Tanggal Jatuh Tempo</th>
+                        <th scope="col">Total Beli</th>
+                        <th scope="col">Supplier</th>
+                        <th scope="col">Tipe Pembayaran</th>
+                        <th scope="col">Lunas</th>
                         <th scope="col">Action</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="pembelian, iterStat : ${pembelianData}">
+                    <tr th:each="pembelian, iterStat : ${pembelianData}" th:attr="data-id=${pembelian.pembelianId}, data-iskredit=${!pembelian.isCash}, data-islunas=${pembelian.isPaid}">
                         <td th:text="${iterStat.index + 1}">1</td>
-                        <td th:text="${pembelian.transactionId}">No Faktur</td>
-                        <td th:text="${#temporals.format(pembelian.tanggalJual, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
+                        <td th:text="${pembelian.noFaktur}">No Faktur</td>
+                        <td th:text="${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
+                        <td th:text="${pembelian.isCash} ? ${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))} : ${#temporals.format(pembelian.tanggalTempo, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
                         <td><span th:text="${pembelian.totalPrice}">Rp0</span></td>
-                        <td th:text="${pembelian.customerDTO.customerName}">Pelanggan</td>
+                        <td th:text="${pembelian.supplierDTO.supplierName}">Supplier</td>
+                        <td th:text="${pembelian.isCash} ? 'Tunai' : 'Kredit'"></td>
+                        <td style="text-align:center">
+                            <input type="checkbox" th:checked="${pembelian.isPaid}" style="transform:scale(1.5);pointer-events: none;"/>
+                        </td>
                         <td>
-                            <form th:action="@{/kasir}" method="get" style="display:inline;">
-                                <input type="hidden" name="transactionId" th:value="${pembelian.transactionId}">
+                            <form th:action="@{/pembelian/tambah}" method="get" style="display:inline;">
+                                <input type="hidden" name="pembelianId" th:value="${pembelian.pembelianId}">
                                 <button class="btn btn-sm btn-primary me-1">Edit</button>
                             </form>
-                            <form th:action="@{|/pembelian/delete/${pembelian.transactionId}|}" method="post" style="display:inline;">
+                            <form th:action="@{|/pembelian/delete/${pembelian.pembelianId}|}" method="post" style="display:inline;">
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this data?');">
                                     <i class="ti ti-trash"></i> Delete
                                 </button>
@@ -103,6 +120,9 @@
             </div>
         </div>
     </div>
+    <div id="contextMenu" class="dropdown-menu" style="position:absolute; display:none; z-index:10000;">
+        <a class="dropdown-item" href="#" id="contextLunaskan">Lunaskan Kredit</a>
+    </div>
 </div>
 
 <!-- Scripts -->
@@ -112,55 +132,120 @@
 
 <script>
     $(document).ready(function () {
-        // Format currency
-        document.querySelectorAll('td span').forEach(el => {
-            const number = parseFloat(el.textContent);
-            el.textContent = new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(number);
-        });
+       const $contextMenu = $('#contextMenu');
+       const $menuItem = $('#contextLunaskan');
+       let selectedPembelianId = null;
 
-        // Register custom sort type
-        jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
-            "tsc-pre": function (data) {
-                return parseInt(data.replace(/\D/g, ''), 10);
-            },
-            "tsc-asc": function (a, b) {
-                return a - b;
-            },
-            "tsc-desc": function (a, b) {
-                return b - a;
-            }
-        });
+       $('#userTable tbody').on('contextmenu', 'tr', function (e) {
+           e.preventDefault();
 
-        const table = $('#userTable').DataTable({
-            columnDefs: [{
-                targets: 1, // No. Faktur
-                type: 'tsc'
-            }],
-            paging: true,
-            pageLength: 10,
-            lengthMenu: [5, 10, 25, 50],
-            ordering: true,
-            order: [],
-            language: {
-                search: "Cari: ",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "›",
-                    previous: "‹"
-                }
-            },
-            scrollCollapse: true,
-        });
-    });
+           const isKredit = $(this).data('iskredit');
+           const isLunas = $(this).data('islunas');
+           selectedPembelianId = $(this).data('id');
+
+           // Update menu item state
+           if (isKredit && !isLunas) {
+               $menuItem.removeClass('disabled');
+           } else {
+               $menuItem.addClass('disabled');
+           }
+
+           // Show menu at cursor position
+           $contextMenu.css({
+               display: 'block',
+               left: e.pageX,
+               top: e.pageY
+           });
+       });
+
+       // Hide context menu on click anywhere else
+       $(document).on('click', function () {
+           $contextMenu.hide();
+       });
+
+       // Handle "Lunaskan Kredit" click
+       $('#contextLunaskan').on('click', function (e) {
+           e.preventDefault();
+           $contextMenu.hide();
+
+           if ($(this).hasClass('disabled')) return;
+
+           if (confirm("Yakin ingin melunaskan kredit ini?")) {
+               const token = $('input[name="_csrf"]').val();
+                fetch(`/api/pembelian/lunaskan/${selectedPembelianId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { 'X-CSRF-TOKEN': token }) // Spring Security reads this header
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Terjadi kesalahan saat memproses permintaan.");
+                    return response.text();
+                })
+                .then(data => {
+                    alert(data.message || "Kredit berhasil dilunaskan.");
+
+                    // Reload current page with existing parameters
+                    const currentParams = new URLSearchParams(window.location.search);
+                    window.location.href = window.location.pathname + '?' + currentParams.toString();
+                })
+                .catch(error => {
+                    alert("Gagal: " + error.message);
+                });
+           }
+       });
+   });
+   $(document).ready(function () {
+       // Format currency
+       document.querySelectorAll('td span').forEach(el => {
+           const number = parseFloat(el.textContent);
+           el.textContent = new Intl.NumberFormat('id-ID', {
+               style: 'currency',
+               currency: 'IDR',
+               minimumFractionDigits: 0,
+               maximumFractionDigits: 0
+           }).format(number);
+       });
+
+       // Register custom sort type
+       jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
+           "tsc-pre": function (data) {
+               return parseInt(data.replace(/\D/g, ''), 10);
+           },
+           "tsc-asc": function (a, b) {
+               return a - b;
+           },
+           "tsc-desc": function (a, b) {
+               return b - a;
+           }
+       });
+
+       const table = $('#userTable').DataTable({
+           columnDefs: [{
+               targets: 1, // No. Faktur
+               type: 'tsc'
+           }],
+           paging: true,
+           pageLength: 10,
+           lengthMenu: [5, 10, 25, 50],
+           ordering: true,
+           order: [],
+           language: {
+               search: "Cari: ",
+               lengthMenu: "Tampilkan _MENU_ data per halaman",
+               zeroRecords: "Data tidak ditemukan",
+               info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+               paginate: {
+                   first: "Awal",
+                   last: "Akhir",
+                   next: "›",
+                   previous: "‹"
+               }
+           },
+           scrollCollapse: true,
+       });
+   });
 </script>
 </body>
 </html>

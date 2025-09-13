@@ -59,6 +59,7 @@ public class PenjualanController {
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
         System.out.println("penjualan data : " + penjualanData);
         model.addAttribute("penjualanData", penjualanData);
+        model.addAttribute("customerId", customerId);
         model.addAttribute("customerData", customerData);
         model.addAttribute("activePage", "penjualan");
         model.addAttribute("startDate", startDate);

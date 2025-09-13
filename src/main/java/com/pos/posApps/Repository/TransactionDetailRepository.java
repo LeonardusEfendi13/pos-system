@@ -9,9 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionDetailRepository extends JpaRepository<TransactionDetailEntity, Long> {
-    Optional<TransactionDetailEntity> findFirstByOrderByTransactionDetailIdDesc();
+    Optional<TransactionDetailEntity> findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc();
 
-    List<TransactionDetailEntity> findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(Long transactionId);
+    List<TransactionDetailEntity> findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(Long transactionId);
 
     void deleteAllByTransactionEntity_TransactionId(Long transactionId);
 }

@@ -28,6 +28,9 @@ public class PurchasingEntity {
     @Column(name = "total_discount")
     private BigDecimal totalDiscount;
 
+    @Column(name = "subtotal")
+    private BigDecimal subTotal;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

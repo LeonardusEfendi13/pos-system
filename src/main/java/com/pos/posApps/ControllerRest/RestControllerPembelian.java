@@ -1,5 +1,6 @@
 package com.pos.posApps.ControllerRest;
 
+import com.pos.posApps.DTO.Dtos.CreatePurchasingRequest;
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
@@ -8,6 +9,7 @@ import com.pos.posApps.Service.PembelianService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -21,8 +23,34 @@ public class RestControllerPembelian {
     private AuthService authService;
     private PembelianService pembelianService;
 
+    @GetMapping("/cek/{params}")
+    public ResponseEntity<String> cekNoFaktur(@PathVariable("params") String params, HttpSession session){
+        System.out.println("Params nya : " + params);
+        String[] parts = params.split("_");
+        String noFaktur = parts[0];
+        Long supplierId = Long.parseLong(parts[1]);
+        ClientEntity clientData;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            System.out.println("token : " + token);
+            clientData = authService.validateToken(token).getClientEntity();
+        } catch (Exception e) {
+            System.out.println("Exception : " + e);
+            return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
+        }
+
+        System.out.println("otw cek");
+        boolean isAvailable = pembelianService.checkNoFaktur(noFaktur, clientData, supplierId);
+        if(isAvailable){
+            System.out.println("Nomor faktur bisa digunakan");
+            return ResponseEntity.ok("Nomor faktur bisa digunakan");
+        }else{
+            return ResponseEntity.ok("Nomor faktur sudah ada");
+        }
+    }
+
     @PostMapping("/add")
-    public ResponseEntity<String> addTransaction(@RequestBody CreateTransactionRequest req, HttpSession session){
+    public ResponseEntity<String> addTransaction(@RequestBody CreatePurchasingRequest req, HttpSession session){
         System.out.println("Transaction received : " + req);
         ClientEntity clientData;
         try {
@@ -35,36 +63,59 @@ public class RestControllerPembelian {
         }
 
         System.out.println("otw save");
-        String isCreated = pembelianService.createTransaction(req, clientData);
-        if(isCreated != null){
+        System.out.println(req.isCash());
+        boolean isCreated = pembelianService.createTransaction(req, clientData);
+        if(isCreated){
             System.out.println("sukses");
-            return ResponseEntity.ok(isCreated);
+            return ResponseEntity.ok("Data created");
         }
         System.out.println("gagal");
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
     }
 
-//    @PostMapping("/edit/{transactionId}")
-//    public ResponseEntity<String> editTransaction(@PathVariable("transactionId") Long transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
-//        System.out.println("transaction Id : " + transactionId);
-//        System.out.println("Edit Request  received : " + req);
-//        Long clientId;
-//        try {
-//            String token = (String) session.getAttribute(authSessionKey);
-//            System.out.println("token : " + token);
-//            clientId = authService.validateToken(token).getClientEntity().getClientId();
-//        } catch (Exception e) {
-//            System.out.println("Exception : " + e);
-//            return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
-//        }
-//
-//        System.out.println("otw edit");
-//        boolean isCreated = kasirService.editTransaction(transactionId, req, clientId);
-//        if(isCreated){
-//            System.out.println("sukses");
-//            return ResponseEntity.ok("Transaction Edited");
-//        }
-//        System.out.println("gagal");
-//        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
-//    }
+    @PostMapping("/edit/{purchasingId}")
+    public ResponseEntity<String> editTransaction(@PathVariable("purchasingId") Long purchasingId, @RequestBody CreatePurchasingRequest req, HttpSession session){
+        System.out.println("purchasing Id : " + purchasingId);
+        System.out.println("Edit Request received : " + req);
+        Long clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            System.out.println("token : " + token);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            System.out.println("Exception : " + e);
+            return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
+        }
+
+        System.out.println("otw edit");
+        boolean isCreated = pembelianService.editTransaction(purchasingId, req, clientId);
+        if(isCreated){
+            System.out.println("sukses");
+            return ResponseEntity.ok("Transaction Edited");
+        }
+        System.out.println("gagal");
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
+    }
+
+    @PostMapping("/lunaskan/{selectedPembelianId}")
+    public ResponseEntity<String> lunaskanPembelian(@PathVariable("selectedPembelianId") Long pembelianId, Model model, HttpSession session){
+        Long clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            System.out.println("token : " + token);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+
+            boolean isPaid = pembelianService.payFaktur(clientId, pembelianId);
+            if(isPaid){
+                System.out.println("Berhasil Lunaskan");
+                return ResponseEntity.ok("Berhasil Bayar Faktur");
+            }
+            return ResponseEntity.ok("Gagal Bayar Faktur");
+        } catch (Exception e) {
+            System.out.println("Exception : " + e);
+            return ResponseEntity.ok("Gagal Bayar Faktur");
+        }
+    }
+
+
 }

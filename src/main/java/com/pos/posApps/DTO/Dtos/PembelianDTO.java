@@ -19,7 +19,9 @@ public class PembelianDTO {
     private boolean isCash;
     private LocalDateTime tanggalTempo;
     private BigDecimal totalPrice;
+    private BigDecimal totalDisc;
     private SupplierDTO supplierDTO;
     private boolean isPaid;
+    private BigDecimal subtotal;
     private List<PembelianDetailDTO> pembelianDetailDTOS;
 }

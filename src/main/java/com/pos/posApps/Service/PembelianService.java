@@ -8,8 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.generateNotaNumber;
@@ -18,16 +21,13 @@ import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 @Service
 public class PembelianService {
     @Autowired
-    TransactionDetailRepository transactionDetailRepository;
-
-    @Autowired
-    TransactionRepository transactionRepository;
-
-    @Autowired
-    ProductRepository productRepository;
+    PurchasingDetailRepository purchasingDetailRepository;
 
     @Autowired
     PurchasingRepository purchasingRepository;
+
+    @Autowired
+    ProductRepository productRepository;
 
     @Autowired
     SupplierRepository supplierRepository;
@@ -46,11 +46,13 @@ public class PembelianService {
                 purchasings.isCash(),
                 purchasings.getPoDueDate(),
                 purchasings.getTotalPrice(),
+                purchasings.getTotalDiscount(),
                 new SupplierDTO(
                         purchasings.getSupplierEntity().getSupplierId(),
                         purchasings.getSupplierEntity().getSupplierName()
                 ),
                 purchasings.isPaid(),
+                purchasings.getSubTotal(),
                 purchasings.getPurchasingDetailEntities().stream()
                         .map(purchasingDetail -> new PembelianDetailDTO(
                                 purchasingDetail.getPurchasingDetailId(),
@@ -71,8 +73,17 @@ public class PembelianService {
         )).collect(Collectors.toList());
     }
 
+    public boolean checkNoFaktur(String noFaktur, ClientEntity clientData, Long supplierId){
+        Optional<PurchasingEntity> purchasingsOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingNumberAndSupplierEntity_SupplierId(clientData.getClientId(), noFaktur, supplierId);
+        return purchasingsOpt.isEmpty();
+    }
+
     public PembelianDTO getPembelianDataById(Long clientId, Long pembelianId) {
-        PurchasingEntity purchasings = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, pembelianId);
+        Optional<PurchasingEntity> purchasingsOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, pembelianId);
+        if(purchasingsOpt.isEmpty()){
+            return null;
+        }
+        PurchasingEntity purchasings = purchasingsOpt.get();
         return new PembelianDTO(
                 purchasings.getPurchasingId(),
                 purchasings.getPurchasingNumber(),
@@ -80,11 +91,13 @@ public class PembelianService {
                 purchasings.isCash(),
                 purchasings.getPoDueDate(),
                 purchasings.getTotalPrice(),
+                purchasings.getTotalDiscount(),
                 new SupplierDTO(
                         purchasings.getSupplierEntity().getSupplierId(),
                         purchasings.getSupplierEntity().getSupplierName()
                 ),
                 purchasings.isPaid(),
+                purchasings.getSubTotal(),
                 purchasings.getPurchasingDetailEntities().stream()
                         .map(purchasingDetail -> new PembelianDetailDTO(
                                 purchasingDetail.getPurchasingDetailId(),
@@ -106,90 +119,222 @@ public class PembelianService {
     }
 
     @Transactional
-    public boolean deletePenjualan(Long transactionId, Long clientId){
+    public boolean deletePurchasing(Long purchasingId, Long clientId){
         //Restore stock from old transaction
-        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
-        for(TransactionDetailEntity old : oldTransactions){
+        List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
+        for(PurchasingDetailEntity old : oldTransactions){
             ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
             if(product != null){
-                Long restoredStock = product.getStock() + old.getQty();
+                Long restoredStock = product.getStock() - old.getQty();
                 product.setStock(restoredStock);
                 productRepository.save(product);
             }
+            old.setDeletedAt(getCurrentTimestamp());
+            purchasingDetailRepository.save(old);
         }
 
-        TransactionEntity transactionEntity = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
-        if(transactionEntity == null){
+        Optional<PurchasingEntity> transactionEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, purchasingId);
+        if(transactionEntityOpt.isEmpty()){
             System.out.println("Transaction not found");
             return false;
         }
+        PurchasingEntity transactionEntity = transactionEntityOpt.get();
         transactionEntity.setDeletedAt(getCurrentTimestamp());
-        transactionRepository.save(transactionEntity);
-
-        List<TransactionDetailEntity> transactionDetailEntities = transactionDetailRepository.findAllByTransactionEntity_TransactionIdOrderByTransactionDetailIdDesc(transactionId);
-
-        for(TransactionDetailEntity data : transactionDetailEntities){
-            data.setDeletedAt(getCurrentTimestamp());
-            transactionDetailRepository.save(data);
-        }
+        purchasingRepository.save(transactionEntity);
 
         return true;
     }
 
     @Transactional
-    public String createTransaction(CreateTransactionRequest req, ClientEntity clientData){
+    public boolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData){
+        System.out.println("req : " + req);
+        //Cek no faktur
+        Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
+        if(pembelian.isPresent()){
+            return false;
+        }
         try{
             //Get Supplier Entity
-            SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
-            if (supplierEntity == null){
-                return null;
+            Optional<SupplierEntity> supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
+            if (supplierEntity.isEmpty()){
+                return false;
             }
             //Get last Transaction id
-            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
-            Long newTransactionId = Generator.generateId(lastTransactionId);
-            String generatedNotaNumber = generateNotaNumber(newTransactionId);
-
+            Long lastPurchasingId = purchasingRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPurchasingIdDesc(clientData.getClientId()).map(PurchasingEntity::getPurchasingId).orElse(0L);
+            Long newPurchasingId = Generator.generateId(lastPurchasingId);
 
             //insert the transaction data
-            TransactionEntity transactionEntity = new TransactionEntity();
-            transactionEntity.setClientEntity(clientData);
-            transactionEntity.setTransactionNumber(generatedNotaNumber);
-            transactionEntity.setTransactionId(newTransactionId);
-//            transactionEntity.setCustomerEntity(customerEntity);
-            transactionEntity.setTotalPrice(req.getTotalPrice());
-            transactionEntity.setTotalDiscount(req.getTotalDisc());
-            transactionEntity.setSubtotal(req.getSubTotal());
-            transactionRepository.save(transactionEntity);
-
-            System.out.println("Created transaction : " + newTransactionId);
+            PurchasingEntity purchasingEntity = new PurchasingEntity();
+            purchasingEntity.setPurchasingId(newPurchasingId);
+            purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
+            purchasingEntity.setSupplierEntity(supplierEntity.get());
+            purchasingEntity.setTotalPrice(req.getTotalPrice());
+            purchasingEntity.setTotalDiscount(req.getTotalDisc());
+            purchasingEntity.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
+            System.out.println("is credit : " + !req.isCash());
+            if(!req.isCash()){
+                purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
+            }
+            purchasingEntity.setCash(req.isCash());
+            //Assign isPaid with isCash
+            purchasingEntity.setPaid(req.isCash());
+            purchasingEntity.setClientEntity(clientData);
+            purchasingEntity.setSubTotal(req.getSubTotal());
+            purchasingRepository.save(purchasingEntity);
+            System.out.println("Created transaction : " + newPurchasingId);
 
             //Insert all the transaction details
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+            Long lastTransactionDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
+            Long newPurchasingDetailId = Generator.generateId(lastTransactionDetailId);
 
-            for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
-                TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
-                transactionDetailEntity.setShortName(dtos.getCode());
-                transactionDetailEntity.setFullName(dtos.getName());
-                transactionDetailEntity.setQty(dtos.getQty());
-                transactionDetailEntity.setPrice(dtos.getPrice());
-                transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
-                transactionDetailEntity.setTotalPrice(dtos.getTotal());
-                transactionDetailEntity.setTransactionEntity(transactionEntity);
-                transactionDetailRepository.save(transactionDetailEntity);
-                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+            for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
+                PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
+                purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
+                purchasingDetailEntity.setShortName(dtos.getCode());
+                purchasingDetailEntity.setFullName(dtos.getName());
+                purchasingDetailEntity.setQty(dtos.getQty());
+                purchasingDetailEntity.setPrice(dtos.getPrice());
+                purchasingDetailEntity.setDiscAmount(dtos.getDiscAmount());
+                purchasingDetailEntity.setTotalPrice(dtos.getTotal());
+                purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
+                purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
+                purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
+                purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
+                purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
+                purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
+                purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+                purchasingDetailRepository.save(purchasingDetailEntity);
+                newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
 
                 //Update product stock
                 ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
-                Long newStock = productEntity.getStock() - dtos.getQty();
+                Long newStock = productEntity.getStock() + dtos.getQty();
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
             }
-            return generatedNotaNumber;
+            return true;
+        }catch (Exception e){
+            System.out.println("Exception catched : " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Transactional
+    public boolean editTransaction(Long purchasingId, CreatePurchasingRequest req, Long clientId){
+        try{
+            //Get Supplier Entity
+            System.out.println("otw get supplier");
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientId);
+            if (supplierEntityOpt.isEmpty()){
+                System.out.println("supplier ga nemu");
+                return false;
+            }
+            SupplierEntity supplierEntity = supplierEntityOpt.get();
+
+            System.out.println("otw get purchasing");
+
+            //Check if transaction exist
+            Optional<PurchasingEntity> purchasingEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, purchasingId);
+            if(purchasingEntityOpt.isEmpty()){
+                System.out.println("purchasing ga nemu");
+                return false;
+            }
+            PurchasingEntity purchasingEntity = purchasingEntityOpt.get();
+
+            System.out.println("otw set purchasing");
+
+            //insert the transaction data
+            purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
+            purchasingEntity.setSupplierEntity(supplierEntity);
+            purchasingEntity.setTotalPrice(req.getTotalPrice());
+            purchasingEntity.setTotalDiscount(req.getTotalDisc());
+            purchasingEntity.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
+            if(!req.isCash()){
+                purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
+            }
+            purchasingEntity.setCash(req.isCash());
+            purchasingEntity.setSubTotal(req.getSubTotal());
+            purchasingRepository.save(purchasingEntity);
+
+            //Restore stock from old transaction
+            System.out.println("otw get old transaction");
+
+            List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
+            System.out.println("Old transaction IDs:");
+            for (PurchasingDetailEntity old : oldTransactions) {
+                System.out.println("→ ID: " + old.getPurchasingDetailId() + ", Name: " + old.getFullName() + ", Qty: " + old.getQty());
+            }
+            for(PurchasingDetailEntity old : oldTransactions){
+                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
+                if(product != null){
+                    System.out.println("otw update product : " + product.getShortName());
+                    Long restoredStock = product.getStock() - old.getQty();
+                    product.setStock(restoredStock);
+                    productRepository.save(product);
+                }
+            }
+
+            System.out.println("otw delete old transaction");
+
+            //Delete all product prices related to product id
+            purchasingDetailRepository.deleteAllByPurchasingEntity_PurchasingId(purchasingId);
+
+            //Insert all the transaction details
+            Long lastPurchasingDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
+            Long newPurchasingDetailId = Generator.generateId(lastPurchasingDetailId);
+
+            for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
+                if(dtos != null) {
+                    PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
+                    purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
+                    purchasingDetailEntity.setShortName(dtos.getCode());
+                    purchasingDetailEntity.setFullName(dtos.getName());
+                    purchasingDetailEntity.setQty(dtos.getQty());
+                    purchasingDetailEntity.setPrice(dtos.getPrice());
+                    purchasingDetailEntity.setDiscAmount(dtos.getDiscAmount());
+                    purchasingDetailEntity.setTotalPrice(dtos.getTotal());
+                    purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
+                    purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
+                    purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
+                    purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
+                    purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
+                    purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
+                    purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
+                    purchasingDetailRepository.save(purchasingDetailEntity);
+                    newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
+
+                    //Update product stock
+                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientId);
+                    if(productEntity != null){
+                        Long newStock = productEntity.getStock() + dtos.getQty();
+                        productEntity.setStock(newStock);
+                        productRepository.save(productEntity);
+                    }
+                }
+            }
+            return true;
         }catch (Exception e){
             System.out.println("Exception catched : " + e);
-            return null;
+            return false;
+        }
+    }
+
+    @Transactional
+    public boolean payFaktur(Long clientId, Long pembelianId){
+        try{
+            Optional<PurchasingEntity> purchasingEntity = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, pembelianId);
+            if(purchasingEntity.isEmpty()){
+                return false;
+            }
+            PurchasingEntity purchasingData = purchasingEntity.get();
+            purchasingData.setPaid(true);
+            purchasingRepository.save(purchasingData);
+            return true;
+        }catch (Exception e){
+            System.out.println("Error : " + e);
+            e.printStackTrace();
+            return false;
         }
     }
 
