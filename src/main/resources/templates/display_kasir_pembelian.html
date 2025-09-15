@@ -853,26 +853,6 @@
 
         maxqty2Input.addEventListener('blur', validateOnBlur);
         maxqty3Input.addEventListener('blur', validateOnBlur);
-
-        $('#productTable').DataTable({
-            paging: true,         // aktifkan paging
-            pageLength: 10,       // jumlah data per halaman
-            lengthMenu: [5, 10, 25, 50], // opsi pilihan jumlah data
-            ordering: true,       // aktifkan sorting
-            order: [],            // default: tidak ada sort
-            language: {
-                search: "Cari: ",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "›",
-                    previous: "‹"
-                }
-            }
-        });
     });
 </script>
 <script>
@@ -1038,13 +1018,123 @@
    }
 
    function handleFormattedBlur(event) {
-     const value = event.target.value.replace(/[^0-9]/g, "");
-     if (value === "" || isNaN(value)) {
-       event.target.value = formatRupiah(0);
-     } else {
-       event.target.value = formatRupiah(parseInt(value));
-     }
-   }
+  const input = event.target;
+  const row = input.closest("tr");
+  const codeInput = row.querySelector(".code-input");
+
+  // cari product di master
+  const product = masterProducts.find(
+    (p) => p.shortName === codeInput.value.trim()
+  );
+
+  if (product) {
+    const hargaBeli = product.hargaBeli;
+    const parsedValue = parseRupiah(input.value);
+
+    // cek apakah input ini harga jual (tier berapa)
+    const hargaJualMatch = [...input.classList].find(cls =>
+      cls.startsWith("harga-jual-")
+    );
+    let tierIndex = null;
+    if (hargaJualMatch) {
+      tierIndex = parseInt(hargaJualMatch.replace("harga-jual-", "").replace("-input", ""));
+    }
+
+    // validasi harga jual < harga beli
+    if (tierIndex && parsedValue < hargaBeli && parsedValue > 0) {
+      alert(
+        "Harga jual tidak boleh lebih rendah dari harga beli: " +
+        formatRupiah(hargaBeli)
+      );
+
+      // koreksi harga jual pakai harga backend sesuai tier
+      const correctedHargaJual = product.productPricesDTO[tierIndex - 1]?.price || hargaBeli;
+
+      // update harga jual yang salah
+      input.value = formatRupiah(correctedHargaJual);
+
+      // ✅ update markup sesuai tier yang sama
+      const markupInput = row.querySelector(`.markup-${tierIndex}-input`);
+      if (markupInput) {
+        const markup = ((correctedHargaJual - hargaBeli) / hargaBeli) * 100;
+        markupInput.value = markup.toFixed(2);
+      }
+
+      updateTotalRow(row);
+      return;
+    }
+  }
+
+  // Default behavior → formatting
+  const value = event.target.value.replace(/[^0-9]/g, "");
+  if (value === "" || isNaN(value)) {
+    event.target.value = formatRupiah(0);
+  } else {
+    event.target.value = formatRupiah(parseInt(value));
+  }
+}
+    function handleFormattedBlur(event) {
+      const input = event.target;
+      const row = input.closest("tr");
+      const codeInput = row.querySelector(".code-input");
+
+      // cari product di master
+      const product = masterProducts.find(
+        (p) => p.shortName === codeInput.value.trim()
+      );
+
+      if (product) {
+        const hargaBeli = product.hargaBeli;
+        const parsedValue = parseRupiah(input.value);
+
+        // cek apakah input ini harga jual (tier berapa)
+        const hargaJualMatch = [...input.classList].find(cls =>
+          cls.startsWith("harga-jual-")
+        );
+        let tierIndex = null;
+        if (hargaJualMatch) {
+          tierIndex = parseInt(hargaJualMatch.replace("harga-jual-", "").replace("-input", ""));
+        }
+
+        // validasi harga jual < harga beli
+        if (tierIndex && parsedValue < hargaBeli && parsedValue > 0) {
+          alert(
+            "Harga jual tidak boleh lebih rendah dari harga beli: " +
+            formatRupiah(hargaBeli)
+          );
+
+          // koreksi harga jual pakai harga backend sesuai tier
+          const correctedHargaJual = product.productPricesDTO[tierIndex - 1]?.price || hargaBeli;
+
+          input.value = formatRupiah(correctedHargaJual);
+
+          // ✅ update markup sesuai tier yang sama
+          const markupInput = row.querySelector(`.markup-${tierIndex}-input`);
+          if (markupInput) {
+            const markup = ((correctedHargaJual - hargaBeli) / hargaBeli) * 100;
+            markupInput.value = markup.toFixed(2);
+          }
+
+          updateTotalRow(row);
+
+          // 👇 penting: balikin fokus ke input ini
+          setTimeout(() => {
+            input.focus();
+            input.select(); // optional: langsung select biar user bisa ganti cepat
+          }, 0);
+
+          return; // stop lanjut format ulang
+        }
+      }
+
+      // Default behavior → formatting
+      const value = event.target.value.replace(/[^0-9]/g, "");
+      if (value === "" || isNaN(value)) {
+        event.target.value = formatRupiah(0);
+      } else {
+        event.target.value = formatRupiah(parseInt(value));
+      }
+    }
 
    function clearZeroOnFocus(event) {
      if (event.target.value === "0") {

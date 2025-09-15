@@ -80,7 +80,7 @@
           position: fixed;
           bottom: 20px;
           right: 20px;
-          z-index: 1000;
+          z-index: 800;
         }
 
         #productTable th,
@@ -121,6 +121,79 @@
           padding-top: 40px;
           display: table-row;
         }
+
+        .table-active {
+          background-color: #cce5ff !important; /* light blue highlight */
+        }
+
+        /* ✅ General table reset */
+            #detailTable {
+              table-layout: fixed;
+              width: 100%;
+            }
+            #detailTable th,
+            #detailTable td {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .table-wrapper {
+              max-height: 250px;
+              overflow-y: scroll;   /* selalu pakai scroll */
+              overflow-x: hidden;   /* kalau mau buang scroll horizontal */
+            }
+          #reprintTable,
+          #detailTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            table-layout: fixed; /* supaya kolom sejajar */
+          }
+
+          /* ✅ Fixed header, scrollable tbody */
+          #reprintTable thead,
+          #detailTable thead {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+          }
+
+          #reprintTable tbody,
+          #detailTable tbody {
+            display: block;
+            height: 250px; /* untuk reprintTable */
+            overflow-y: auto;
+            width: 100%;
+          }
+
+          #detailTable tbody {
+            height: 150px; /* untuk detailTable */
+          }
+
+          #reprintTable tbody tr,
+          #detailTable tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+          }
+
+          /* ✅ Custom cell background */
+          #reprintTable td.bg-custom {
+            color: white !important;
+            white-space: nowrap;
+            background-clip: padding-box; /* penting biar background keliatan di table-bordered */
+          }
+
+          #reprintTable td,
+          #detailTable td {
+            vertical-align: middle;
+            padding: 4px 8px;
+          }
+          .table-divider {
+            border-top: 2px solid #dee2e6; /* lebih tebal biar jelas */
+            margin: 8px 0;
+          }
     </style>
 </head>
 <body class="p-3">
@@ -242,7 +315,7 @@
         </table>
     </div>
 
-    <div class="bottom-right-fixed" style="">
+    <div class="bottom-right-fixed">
         <div class="card p-3 payment-section-card">
             <div class="row">
                 <div class="col-md-6">
@@ -344,7 +417,8 @@
 
 <div id="contextMenu">
     <ul>
-        <li onclick="deleteRow()">🗑️ Delete Row</li>
+        <li onclick="deleteRow()">🗑️ Hapus Baris</li>
+        <li onclick="reprintBill()">🖨️ Cetak Ulang Nota</li>
     </ul>
 </div>
 
@@ -398,6 +472,70 @@
 
     <div id="receiptContent" style="display: none">
         <!-- Your receipt layout (table, totals, etc.) -->
+    </div>
+</div>
+<div
+        id="reprintModalBackdrop"
+        style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+      "
+></div>
+<!-- Modal -->
+<div class="modal fade" id="reprintModal" tabindex="-1" aria-labelledby="reprintModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="width: 800px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reprintModalLabel">Re-Print Bill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" style="padding: 0">
+                <!-- ✅ Top table with fixed header -->
+                <table class="table table-bordered" id="reprintTable">
+                    <thead>
+                    <tr>
+                        <th style="width: 150px;">No Faktur</th>
+                        <th style="text-align: center;">Jumlah Pembayaran</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- JS inserts rows here -->
+                    </tbody>
+                </table>
+
+                <!-- Divider -->
+                <!-- ✅ Divider between tables -->
+                <div class="table-divider"></div>
+<!--                <div style="border-top: 1px solid #dee2e6; margin: 8px 0;"></div>-->
+
+                <!-- ✅ Bottom detail table (static header, scrollable body) -->
+                <div class="table-wrapper">
+                    <table class="table table-bordered" id="detailTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 350px;">Nama Barang</th>
+                            <th style="width: 50px; text-align: center;">Qty</th>
+                            <th style="width: 150px; text-align: end;">Harga Satuan</th>
+                            <th style="width: 150px; text-align: end;">Harga Total</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- JS inserts rows here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -543,6 +681,184 @@
         e.preventDefault();
       }
     });
+
+    async function reprintBill() {
+      try {
+        // ⚡ Fetch 10 transaksi terakhir dari backend
+        const response = await fetch("/api/kasir/transaction/list");
+
+        console.log("data : " + JSON.stringify(response, null, 2));
+        if (!response.ok) throw new Error("Gagal fetch transaksi");
+
+        const transactions = await response.json();
+        showReprintModal(transactions);
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+
+      document.getElementById("contextMenu").style.display = "none";
+    }
+
+    function setupRowSelection() {
+      const tbody = document.querySelector("#reprintTable tbody");
+      const rows = tbody.querySelectorAll("tr");
+
+      rows.forEach((row, index) => {
+        row.tabIndex = 0; // Make row focusable via keyboard
+
+        // Handle click to select
+        row.addEventListener("click", () => {
+          clearSelection();
+          row.classList.add("table-active");
+          row.focus();
+
+          // ✅ Load detail data when row is selected
+          const trx = row._transactionData;
+          if (trx && trx.transactionDetailDTOS) {
+            loadDetailTable(trx.transactionDetailDTOS);
+          } else {
+            loadDetailTable([]); // fallback if no items
+          }
+        });
+
+        // Handle keyboard navigation
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (rows[index + 1]) {
+              rows[index + 1].click(); // click triggers focus + detail load
+            }
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (rows[index - 1]) {
+              rows[index - 1].click(); // click triggers focus + detail load
+            }
+          }
+        });
+      });
+    }
+
+    // Clear previously selected row
+    function clearSelection() {
+      const selected = document.querySelector(
+        "#reprintTable tbody tr.table-active"
+      );
+      if (selected) selected.classList.remove("table-active");
+    }
+
+    function showReprintModal(transactions) {
+      const tbody = document.querySelector("#reprintTable tbody");
+      tbody.innerHTML = "";
+
+      if (transactions && transactions.length !== 0) {
+        transactions.forEach((trx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                <td style="width:150px;line-height:10px">${
+                  trx.transactionNumber
+                }</td>
+                <td style="text-align:end;">${formatRupiah(
+                  trx.totalPrice || 0
+                )}</td>
+              `;
+          tr.style.cursor = "pointer";
+          tr.style.display = "table";
+          tr.style.width = "100%";
+          tr.style.tableLayout = "fixed";
+
+          tr._transactionData = trx;
+
+          tr.addEventListener("dblclick", () => {
+            printTransaction(trx.id);
+          });
+
+          tbody.appendChild(tr);
+        });
+      } else {
+        const tr = document.createElement("tr");
+        tr.style.display = "table";
+        tr.style.width = "100%";
+        tr.style.tableLayout = "fixed";
+
+        tr.innerHTML = `
+            <td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">
+              No data available.
+            </td>
+          `;
+
+        tbody.appendChild(tr);
+      }
+
+      setupRowSelection(); // setup click & keyboard navigation
+
+      const modalElement = document.getElementById("reprintModal");
+      const modal = new bootstrap.Modal(modalElement);
+
+      // Show the modal
+      modal.show();
+
+      // After modal is fully shown, focus first row
+      modalElement.addEventListener('shown.bs.modal', () => {
+          const firstRow = tbody.querySelector("tr");
+          if (firstRow) {
+            clearSelection();
+            firstRow.classList.add("table-active");
+            firstRow.focus();
+
+            // ✅ Load the detail table immediately for the first row
+            const trx = firstRow._transactionData;
+            console.log("trx data di line 771 : " + JSON.stringify(trx, null, 2));
+
+            if (trx && trx.transactionDetailDTOS) {
+              loadDetailTable(trx.transactionDetailDTOS);
+            } else {
+              loadDetailTable([]);
+            }
+          }
+        }, { once: true });
+    }
+
+    function loadDetailTable(items) {
+      const detailBody = document.querySelector("#detailTable tbody");
+      detailBody.innerHTML = "";
+      console.log("items data : " + JSON.stringify(items, null, 2));
+      console.log("items length : " + items.length);
+
+      if (!items || items.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td colspan="4" style="text-align:center; padding: 20px; font-style: italic;">
+              No item data available.
+            </td>
+          `;
+        detailBody.appendChild(tr);
+        return;
+      }
+
+      items.forEach(item => {
+          const tr = document.createElement("tr");
+          tr.style.height = "30px"; // or any fixed value
+
+          tr.innerHTML = `
+            <td style="width: 350px;white-space: nowrap;overflow: hidden;">${item.name}</td>
+            <td style="text-align: center; width: 50px;">${item.qty}</td>
+            <td style="text-align: end;width: 150px; ">${formatRupiah(item.price)}</td>
+            <td style="text-align: end;width: 150px;">${formatRupiah(item.total)}</td>
+          `;
+          document.querySelector("#detailTable tbody").appendChild(tr);
+        });
+    }
+
+    // Hide modal and backdrop
+    function hideReprintModal() {
+      document.getElementById("reprintModal").style.display = "none";
+      document.getElementById("reprintModalBackdrop").style.display = "none";
+    }
+
+    // Button to open modal with transactions
+    function openReprint() {
+      showReprintModal(transactions);
+    }
 
     const transactionNumberDisplay = document.getElementById(
       "transactionNumberDisplay"
@@ -1124,11 +1440,11 @@
         row.style.cursor = "pointer";
 
         row.innerHTML = `
-<td>${product.shortName}</td>
-<td>${product.fullName}</td>
-<td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-<td>${product.stok}</td>
-`;
+            <td>${product.shortName}</td>
+            <td>${product.fullName}</td>
+            <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+            <td>${product.stok}</td>
+            `;
 
         row.addEventListener("dblclick", () => {
           selectProduct(product);
@@ -1469,81 +1785,81 @@
             // Replace the entire body with the receipt
             document.body.innerHTML = `
 <html>
-  <head>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <style>
+<head>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
 @page {
-  size: A5 landscape;
-  margin: 10px;
+size: A5 landscape;
+margin: 10px;
 }
 
 @media print {
-  *{
-      font-size:13px !important;
-  }
-  body {
-    margin: 0;
-    padding: 0;
-  }
+*{
+    font-size:13px !important;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
 
-  .print-page {
-    page-break-after: always;
-  }
+.print-page {
+  page-break-after: always;
+}
 
-  .print-page:last-child {
-    page-break-after: auto;
-  }
+.print-page:last-child {
+  page-break-after: auto;
+}
 }
 
 body {
-  font-family: Arial, sans-serif;
-  font-size: 11px !important;
-  margin: 10px !important;
+font-family: Arial, sans-serif;
+font-size: 11px !important;
+margin: 10px !important;
 }
 
 table {
-  width: 100% !important;
-  border-collapse: collapse;
-  table-layout: fixed; /* Ensures columns are sized by their width */
-  border: 1px solid black;
-  border-top: none;
+width: 100% !important;
+border-collapse: collapse;
+table-layout: fixed; /* Ensures columns are sized by their width */
+border: 1px solid black;
+border-top: none;
 }
 
 th,
 td {
-  border-top: none;
-  border-bottom: none;
-  border-left: 1px solid black;
-  border-right: 1px solid black;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  padding-left: 4px;
-  padding-right: 4px;
-  font-size: 10px;
-  height: 18px !important;
-  line-height: 12px;
-  vertical-align: middle;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: clip;
-  margin: 0;
+border-top: none;
+border-bottom: none;
+border-left: 1px solid black;
+border-right: 1px solid black;
+padding-top: 1px;
+padding-bottom: 1px;
+padding-left: 4px;
+padding-right: 4px;
+font-size: 10px;
+height: 18px !important;
+line-height: 12px;
+vertical-align: middle;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: clip;
+margin: 0;
 }
 
 table thead tr {
-  border-bottom: 1px solid #000; /* Optional: keep header row line */
+border-bottom: 1px solid #000; /* Optional: keep header row line */
 }
 
 th {
-  font-weight: bold;
-  text-align: center;
-  vertical-align: middle;
+font-weight: bold;
+text-align: center;
+vertical-align: middle;
 }
 </style>
-  </head>
-  <body>${receiptHtml}</body>
+</head>
+<body>${receiptHtml}</body>
 </html>
 `;
 
@@ -1644,27 +1960,27 @@ th {
         const row = document.createElement("tr");
 
         row.innerHTML = `
-      <td class="row-number">${index + 1}</td>
-      <td><input type="text" class="form-control form-control-sm code-input" value="${
-        detail.code
-      }" /></td>
-      <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
-        detail.name
-      }" /></td>
-      <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
-        detail.qty
-      }" /></td>
-      <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
-        detail.price
-      )}" /></td>
-      <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-        (detail.discAmount / (detail.total + detail.discAmount)) * 100
-      }" /></td>
-      <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
-        detail.discAmount
-      }" /></td>
-      <td class="total-cell">${formatRupiah(detail.total)}</td>
-      `;
+    <td class="row-number">${index + 1}</td>
+    <td><input type="text" class="form-control form-control-sm code-input" value="${
+      detail.code
+    }" /></td>
+    <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
+      detail.name
+    }" /></td>
+    <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
+      detail.qty
+    }" /></td>
+    <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
+      detail.price
+    )}" /></td>
+    <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
+      (detail.discAmount / (detail.total + detail.discAmount)) * 100
+    }" /></td>
+    <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+      detail.discAmount
+    }" /></td>
+    <td class="total-cell">${formatRupiah(detail.total)}</td>
+    `;
 
         // Re-attach event listeners to the new row's inputs
         const codeInput = row.querySelector(".code-input");
@@ -1678,7 +1994,7 @@ th {
         ); // 0.00 untuk disc/markup
 
         [priceInput, qtyInput].forEach((inp) =>
-          ensureZeroOnBlur(inp, 0, row)
+          ensureOneOnBlur(inp, 0, row)
         ); // integer → 0
 
         priceInput.addEventListener("focus", handleFormattedFocus);
@@ -1876,12 +2192,12 @@ th {
 </div>
 <div class="col" style="margin-right:14px;border: 1px solid black; padding: 5px;">
 <div class="row">
-  <div class="col-4"><span>Pelanggan</span></div>
-  <div class="col"><span>: ${data.customer_name}</span></div>
+<div class="col-4"><span>Pelanggan</span></div>
+<div class="col"><span>: ${data.customer_name}</span></div>
 </div>
 <div class="row">
-  <div class="col-4"><span>Alamat</span></div>
-  <div class="col"><span>: ${data.customer_alamat ?? "-"}</span></div>
+<div class="col-4"><span>Alamat</span></div>
+<div class="col"><span>: ${data.customer_alamat ?? "-"}</span></div>
 </div>
 </div>
 </div>
@@ -1890,13 +2206,13 @@ th {
 </colgroup>
 <thead>
 <tr>
-  <th style="width:145px; text-align:left;border-top:1px solid black;"><span style="font-size:13px !important">INV : ${
-    data.inv_number
-  }</span></th>
-  <th style="width:300px; text-align:left;border-top:1px solid black">Tanggal : ${
-    data.tanggal
-  }</th>
-  <th style="border-top:1px solid black"></th>
+<th style="width:145px; text-align:left;border-top:1px solid black;"><span style="font-size:13px !important">INV : ${
+  data.inv_number
+}</span></th>
+<th style="width:300px; text-align:left;border-top:1px solid black">Tanggal : ${
+  data.tanggal
+}</th>
+<th style="border-top:1px solid black"></th>
 </tr>
 </thead>
 </table>
@@ -1951,21 +2267,21 @@ th {
         const grandTotal = document.createElement("div");
         grandTotal.className = "row";
         grandTotal.innerHTML = `
-    <!-- Left side: text and signatures -->
-    <div class="col-7">
-        <div class="row">
-          <span>${toTerbilang(data.grandTotal)}</span>
-        </div>
-        <div class="row mt-3">
-          <div class="col-1"></div>
-          <div class="col-4"><span>Yang Menerima</span></div>
-          <div class="col-4"><span>Yang Menyerahkan</span></div>
-        </div>
-        <div class="row mt-5">
-          <div class="col-4" style="text-align:end"><span>___________________</span></div>
-          <div class="col-4" style="text-align:end;margin-left:10px"><span>___________________</span></div>
-        </div>
-    </div>
+  <!-- Left side: text and signatures -->
+  <div class="col-7">
+      <div class="row">
+        <span>${toTerbilang(data.grandTotal)}</span>
+      </div>
+      <div class="row mt-3">
+        <div class="col-1"></div>
+        <div class="col-4"><span>Yang Menerima</span></div>
+        <div class="col-4"><span>Yang Menyerahkan</span></div>
+      </div>
+      <div class="row mt-5">
+        <div class="col-4" style="text-align:end"><span>___________________</span></div>
+        <div class="col-4" style="text-align:end;margin-left:10px"><span>___________________</span></div>
+      </div>
+  </div>
 
 <!-- Right side: totals box -->
 <div class="col-3" style="width:283px !important;border: 1px solid black; border-top: none; font-size: 13px; padding: 5px;margin-left:19px">

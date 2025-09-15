@@ -1,6 +1,8 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.Entity.TransactionEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,14 +1,20 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
+import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.KasirService;
+import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -20,6 +26,24 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class RestControllerCashier {
     private AuthService authService;
     private KasirService kasirService;
+    private PenjualanService penjualanService;
+
+    @GetMapping("/transaction/list")
+    public ResponseEntity<List<PenjualanDTO>> getList(HttpSession session){
+        ClientEntity clientData;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            System.out.println("token : " + token);
+            clientData = authService.validateToken(token).getClientEntity();
+            List<PenjualanDTO> data = penjualanService.getLast10Transaction(clientData.getClientId());
+            System.out.println("Data : " + data);
+            return ResponseEntity.ok(data);
+
+        } catch (Exception e) {
+            System.out.println("Exception : " + e);
+            return ResponseEntity.status(UNAUTHORIZED).body(Collections.emptyList());
+        }
+    }
 
     @PostMapping("/add")
     public ResponseEntity<String> addTransaction(@RequestBody CreateTransactionRequest req, HttpSession session){
