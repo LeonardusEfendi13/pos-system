@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,18 +32,18 @@ public class PreorderService {
     @Autowired
     PreorderDetailRepository preorderDetailRepository;
 
-    public List<PreorderEntity> getPreorderData(Long clientId, Long supplierId){
+    public List<PreorderEntity> getPreorderData(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate){
         if(supplierId == null){
-            return preorderRepository.findAllByClientEntity_ClientIdOrderByPreorderIdDesc(clientId);
+            return preorderRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, startDate, endDate);
         }else{
-            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdOrderByPreorderIdDesc(clientId, supplierId);
+            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, supplierId, startDate, endDate);
         }
     }
 
     @Transactional
     public boolean insertPreorder(CreatePreorderRequest req, ClientEntity clientData){
         try{
-            Long lastPreorderId = preorderRepository.findFirstByOrderByPreorderIdDesc().map(PreorderEntity::getPreorderId).orElse(0L);
+            Long lastPreorderId = preorderRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPreorderIdDesc(clientData.getClientId()).map(PreorderEntity::getPreorderId).orElse(0L);
             Long newPreorderId = Generator.generateId(lastPreorderId);
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if(supplierEntityOpt.isEmpty()){
