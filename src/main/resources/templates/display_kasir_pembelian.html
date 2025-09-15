@@ -1612,8 +1612,8 @@
      const qty = parseInt(r.querySelector(".qty-input").value) || 0;
      const discAmount =
        parseFloat(r.querySelector(".discount-amount-input").value) || 0;
-     const subTotal = price * qty;
-     const total = subTotal - discAmount;
+     const subtotal = price * qty;
+     const total = subtotal - discAmount;
      r.querySelector(".total-cell").textContent =
        "Rp " + total.toLocaleString("id-ID");
      calculateGrandTotal();
@@ -1669,7 +1669,7 @@
    }
 
    function calculateGrandTotal() {
-     let subTotal = 0;
+     let subtotal = 0;
      let totalDiscount = 0;
      const rows = sellTableBody.querySelectorAll("tr");
      rows.forEach((row) => {
@@ -1678,7 +1678,7 @@
        const discAmt = parseFloat(row.querySelector(".discount-amount-input").value) || 0;
 
        if (price && qty) {
-         subTotal += price * qty;
+         subtotal += price * qty;
          totalDiscount += discAmt;
        }
      });
@@ -1688,14 +1688,14 @@
 
      let finalDiscount = totalDiscount;
      if (grandDiscPercent > 0) {
-       finalDiscount += subTotal * (grandDiscPercent / 100);
+       finalDiscount += subtotal * (grandDiscPercent / 100);
      } else {
        finalDiscount += grandDiscAmount;
      }
 
-     const grandTotal = subTotal - finalDiscount;
+     const grandTotal = subtotal - finalDiscount;
 
-     subTotalDisplay.textContent = "Rp " + subTotal.toLocaleString("id-ID");
+     subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
      grandTotalDisplay.textContent =
        "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
 
@@ -1723,14 +1723,14 @@
    });
 
    function updateGrandDiscountAmount() {
-     const subTotal =
+     const subtotal =
        parseFloat(
          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
        ) || 0;
      const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
 
-     if (subTotal > 0 && discountPercent >= 0) {
-       const discountAmount = subTotal * (discountPercent / 100);
+     if (subtotal > 0 && discountPercent >= 0) {
+       const discountAmount = subtotal * (discountPercent / 100);
        grandDiscountAmount.value = discountAmount.toFixed(0);
      } else {
        grandDiscountAmount.value = 0;
@@ -1739,14 +1739,14 @@
    }
 
    function updateGrandDiscountPercent() {
-     const subTotal =
+     const subtotal =
        parseFloat(
          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
        ) || 0;
      const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
 
-     if (subTotal > 0 && discountAmount >= 0) {
-       const discountPercent = (discountAmount / subTotal) * 100;
+     if (subtotal > 0 && discountAmount >= 0) {
+       const discountPercent = (discountAmount / subtotal) * 100;
        grandDiscountPercent.value = discountPercent.toFixed(2);
      } else {
        grandDiscountPercent.value = 0;
@@ -2012,7 +2012,7 @@
        supplierId: selectedCustomer.supplierId,
        purchasingNumber: purchasingNumberInput,
        pembelianDetailDTOS: [],
-       subTotal: parseFloat(
+       subtotal: parseFloat(
          subTotalDisplay.textContent
            .replace("Rp ", "")
            .replace(/\./g, "")

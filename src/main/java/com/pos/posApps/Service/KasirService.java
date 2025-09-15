@@ -48,7 +48,7 @@ public class KasirService {
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
-            transactionEntity.setSubtotal(req.getSubTotal());
+            transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
             System.out.println("Created transaction : " + newTransactionId);
@@ -57,7 +57,7 @@ public class KasirService {
             Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
-            for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
+            for(TransactionDetailDTO dtos : req.getTransactionDetailDTOS()){
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                 transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dtos.getCode());
@@ -104,7 +104,7 @@ public class KasirService {
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
-            transactionEntity.setSubtotal(req.getSubTotal());
+            transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
             //Restore stock from old transaction
@@ -125,7 +125,7 @@ public class KasirService {
             Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
-            for(TransactionDetailDTO dtos : req.getTransactionDetailDtos()){
+            for(TransactionDetailDTO dtos : req.getTransactionDetailDTOS()){
                 if(dtos != null) {
                     TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                     transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);

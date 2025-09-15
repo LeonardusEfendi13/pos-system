@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.pos.posApps.Util.Generator.generateNotaNumber;
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -52,7 +51,7 @@ public class PembelianService {
                         purchasings.getSupplierEntity().getSupplierName()
                 ),
                 purchasings.isPaid(),
-                purchasings.getSubTotal(),
+                purchasings.getSubtotal(),
                 purchasings.getPurchasingDetailEntities().stream()
                         .map(purchasingDetail -> new PembelianDetailDTO(
                                 purchasingDetail.getPurchasingDetailId(),
@@ -97,7 +96,7 @@ public class PembelianService {
                         purchasings.getSupplierEntity().getSupplierName()
                 ),
                 purchasings.isPaid(),
-                purchasings.getSubTotal(),
+                purchasings.getSubtotal(),
                 purchasings.getPurchasingDetailEntities().stream()
                         .map(purchasingDetail -> new PembelianDetailDTO(
                                 purchasingDetail.getPurchasingDetailId(),
@@ -179,7 +178,7 @@ public class PembelianService {
             //Assign isPaid with isCash
             purchasingEntity.setPaid(req.isCash());
             purchasingEntity.setClientEntity(clientData);
-            purchasingEntity.setSubTotal(req.getSubTotal());
+            purchasingEntity.setSubtotal(req.getSubtotal());
             purchasingRepository.save(purchasingEntity);
             System.out.println("Created transaction : " + newPurchasingId);
 
@@ -277,7 +276,7 @@ public class PembelianService {
                 purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
             }
             purchasingEntity.setCash(req.isCash());
-            purchasingEntity.setSubTotal(req.getSubTotal());
+            purchasingEntity.setSubtotal(req.getSubtotal());
             purchasingRepository.save(purchasingEntity);
 
             //Restore stock from old transaction

@@ -8,8 +8,8 @@ import java.util.List;
 @Data
 public class CreateTransactionRequest {
     private Long customerId;
-    private List<TransactionDetailDTO> transactionDetailDtos;
-    private BigDecimal subTotal;
+    private List<TransactionDetailDTO> transactionDetailDTOS;
+    private BigDecimal subtotal;
     private BigDecimal totalPrice;
     private BigDecimal totalDisc;
 }

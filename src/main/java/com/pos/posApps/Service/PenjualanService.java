@@ -3,14 +3,12 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,7 +29,7 @@ public class PenjualanService {
     public List<PenjualanDTO> getLast10Transaction(Long clientId){
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
-        //For testing only
+//        For testing only
 //        LocalDateTime startDate = LocalDate.parse("2025-09-13").atStartOfDay();
 //        LocalDateTime endDate = LocalDate.parse("2025-09-13").atTime(23, 59, 59);
         List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(10).toList();
@@ -39,7 +37,8 @@ public class PenjualanService {
                 transactions.getTransactionId(),
                 new CustomerDTO(
                         transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName()
+                        transactions.getCustomerEntity().getName(),
+                        transactions.getCustomerEntity().getAlamat()
                 ),
                 transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
@@ -70,7 +69,8 @@ public class PenjualanService {
                 transactions.getTransactionId(),
                 new CustomerDTO(
                         transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName()
+                        transactions.getCustomerEntity().getName(),
+                        transactions.getCustomerEntity().getAlamat()
                 ),
                 transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
@@ -100,7 +100,8 @@ public class PenjualanService {
                 transactions.getTransactionId(),
                 new CustomerDTO(
                         transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName()
+                        transactions.getCustomerEntity().getName(),
+                        transactions.getCustomerEntity().getAlamat()
                 ),
                 transactions.getTransactionNumber(),
                 transactions.getSubtotal(),

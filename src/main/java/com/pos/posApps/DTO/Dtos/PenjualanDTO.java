@@ -16,7 +16,7 @@ public class PenjualanDTO {
     private Long transactionId;
     private CustomerDTO customerDTO;
     private String transactionNumber;
-    private BigDecimal subTotal;
+    private BigDecimal subtotal;
     private BigDecimal totalPrice;
     private BigDecimal totalDisc;
     private LocalDateTime tanggalJual;

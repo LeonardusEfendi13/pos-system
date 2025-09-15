@@ -29,7 +29,7 @@ public class PurchasingEntity {
     private BigDecimal totalDiscount;
 
     @Column(name = "subtotal")
-    private BigDecimal subTotal;
+    private BigDecimal subtotal;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

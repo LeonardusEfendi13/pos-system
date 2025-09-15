@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 public class CustomerDTO {
     private Long customerId;
     private String customerName;
+    private String customerAlamat;
 }
