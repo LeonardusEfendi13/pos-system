@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -13,9 +14,6 @@ public class PreorderEntity {
     @Id
     @Column(name = "preorder_id")
     private Long preorderId;
-
-//    @Column(name = "preorder_detail_id")
-//    private String preorderDetailId;
 
     @ManyToOne
     @JoinColumn(name = "supplier_id")
@@ -42,5 +40,8 @@ public class PreorderEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "preorderEntity")
+    private List<PreorderDetailEntity> preorderDetailEntities;
 
 }

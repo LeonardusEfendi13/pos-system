@@ -95,7 +95,7 @@
                         <td th:text="${preorder.supplierEntity.supplierName}">Supplier</td>
                         <td>
                             <form th:action="@{/preorder/tambah}" method="get" style="display:inline;">
-                                <input type="hidden" name="pembelianId" th:value="${pembelian.pembelianId}">
+                                <input type="hidden" name="preorderId" th:value="${preorder.preorderId}">
                                 <button class="btn btn-sm btn-primary me-1">Edit</button>
                             </form>
                             <form th:action="@{|/preorder/delete/${preorder.preorderId}|}" method="post" style="display:inline;">

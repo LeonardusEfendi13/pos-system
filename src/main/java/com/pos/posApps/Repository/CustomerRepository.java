@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> {
     CustomerEntity findByNameAndDeletedAtIsNullAndClientEntity_ClientId(String name, Long clientId);
 
-    CustomerEntity findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(Long customerId, Long clientId);
+    Optional<CustomerEntity> findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(Long customerId, Long clientId);
 
     List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(Long clientId);
 

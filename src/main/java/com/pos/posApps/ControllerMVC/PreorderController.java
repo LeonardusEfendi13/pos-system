@@ -1,20 +1,20 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.CreatePreorderRequest;
-import com.pos.posApps.DTO.Dtos.EditPreorderRequest;
+import com.pos.posApps.DTO.Dtos.PreorderDTO;
+import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.PreorderEntity;
 import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.PreorderService;
+import com.pos.posApps.Service.ProductService;
 import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDate;
@@ -30,6 +30,7 @@ public class PreorderController {
     private AuthService authService;
     private PreorderService preorderService;
     private SupplierService supplierService;
+    private ProductService productService;
 
     @GetMapping
     public String showListPreorder(Long supplierId, String startDate, String endDate, HttpSession session, Model model){
@@ -52,14 +53,14 @@ public class PreorderController {
         model.addAttribute("supplierId", supplierId);
         model.addAttribute("supplierData", supplierData);
         model.addAttribute("preorderData", preorderEntity);
-        model.addAttribute("activePage", "preorder");
+        model.addAttribute("activePage", "preorderRiwayat");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         return "display_preorder";
     }
 
-    @PostMapping("/tambah")
-    public String addPreorder(HttpSession session, CreatePreorderRequest req){
+    @GetMapping("/tambah")
+    public String addPreorder(HttpSession session, Long preorderId, Model model){
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
@@ -67,53 +68,57 @@ public class PreorderController {
             System.out.println("No Access to products");
             return "redirect:/login";
         }
+        List<ProductDTO> productEntity = productService.getProductData(clientData.getClientId());
+        List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientData.getClientId());
 
-        if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = preorderService.insertPreorder(req, clientData);
-            if (isInserted) {
-                return "200";
-            }
-            return "500";
+        PreorderDTO preorderData = new PreorderDTO();
+        if(preorderId != null){
+            preorderData = preorderService.getPreorderDataById(clientData.getClientId(), preorderId);
         }
-        return "redirect:/login";
+        System.out.println("preorder data untuk edit : " + preorderData );
+        model.addAttribute("preorderData", preorderData);
+        model.addAttribute("activePage", "preorderTambah");
+        model.addAttribute("productData", productEntity);
+        model.addAttribute("supplierData", supplierEntities);
+        return "display_kasir_preorder";
     }
 
-    @PostMapping("/edit-preorder")
-    public String editPreorder(HttpSession session, EditPreorderRequest req){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
-            return "redirect:/login";
-        }
+//    @PostMapping("/edit-preorder")
+//    public String editPreorder(HttpSession session, EditPreorderRequest req){
+//        String token = (String) session.getAttribute(authSessionKey);
+//        AccountEntity accEntity = authService.validateToken(token);
+//        ClientEntity clientData = accEntity.getClientEntity();
+//        if (clientData.getClientId() == null) {
+//            System.out.println("No Access to products");
+//            return "redirect:/login";
+//        }
+//
+//        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+//            boolean isInserted = preorderService.editPreorder(req, clientData);
+//            if (isInserted) {
+//                return "200";
+//            }
+//            return "500";
+//        }
+//        return "redirect:/login";
+//    }
 
-        if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = preorderService.editPreorder(req, clientData);
-            if (isInserted) {
-                return "200";
-            }
-            return "500";
-        }
-        return "redirect:/login";
-    }
-
-    @PostMapping("/delete-preorder")
-    public String deletePreorder(HttpSession session, Long preorderId){
-        String token = (String) session.getAttribute(authSessionKey);
-        AccountEntity accEntity = authService.validateToken(token);
-        ClientEntity clientData = accEntity.getClientEntity();
-        if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
-            return "redirect:/login";
-        }
-        if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isEdited = preorderService.deleteProducts(preorderId);
-            if(isEdited){
-                return "200";
-            }
-            return "500";
-        }
-        return "redirect:/login";
-    }
+//    @PostMapping("/delete-preorder")
+//    public String deletePreorder(HttpSession session, Long preorderId){
+//        String token = (String) session.getAttribute(authSessionKey);
+//        AccountEntity accEntity = authService.validateToken(token);
+//        ClientEntity clientData = accEntity.getClientEntity();
+//        if (clientData.getClientId() == null) {
+//            System.out.println("No Access to products");
+//            return "redirect:/login";
+//        }
+//        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+//            boolean isEdited = preorderService.deleteProducts(preorderId);
+//            if(isEdited){
+//                return "200";
+//            }
+//            return "500";
+//        }
+//        return "redirect:/login";
+//    }
 }

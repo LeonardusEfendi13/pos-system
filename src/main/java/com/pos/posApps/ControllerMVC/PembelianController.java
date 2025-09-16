@@ -67,7 +67,6 @@ public class PembelianController {
 
     @GetMapping("/tambah")
     public String displayKasir(Model model, HttpSession session, Long pembelianId) {
-        System.out.println("display kasir edit : "+ pembelianId);
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);

@@ -30,11 +30,13 @@ public class KasirService {
     @Transactional
     public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData){
         try{
-            //Get Supplier Entity
-            CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
-            if (customerEntity == null){
+            //Get Customer Entity
+            Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
+            if (customerEntityOpt.isEmpty()){
                 return new ResponseInBoolean(true, "Customer tidak ada");
             }
+
+            CustomerEntity customerEntity = customerEntityOpt.get();
             //Get last Transaction id
             Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
             Long newTransactionId = Generator.generateId(lastTransactionId);
@@ -86,12 +88,13 @@ public class KasirService {
     @Transactional
     public ResponseInBoolean editTransaction(Long transactionId, CreateTransactionRequest req, Long clientId){
         try{
-            //Get Supplier Entity
-            CustomerEntity customerEntity = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientId);
-            if (customerEntity == null){
-                System.out.println("customer ga nemu");
-                return new ResponseInBoolean(false, "Customer tidak ada");
+            //Get Customer Entity
+            Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientId);
+            if (customerEntityOpt.isEmpty()){
+                return new ResponseInBoolean(true, "Customer tidak ada");
             }
+            CustomerEntity customerEntity = customerEntityOpt.get();
+
             //Check if transaction exist
             Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
             if(transactionEntityOpt.isEmpty()){

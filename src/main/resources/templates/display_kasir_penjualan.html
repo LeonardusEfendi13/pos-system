@@ -66,7 +66,7 @@
 
         /* Custom styles for the scrollable table */
         .scrollable-table {
-          max-height: 40vh;
+          max-height: 50vh;
           overflow-y: auto;
         }
 
@@ -652,7 +652,7 @@
         const targetInput = targetEditableInputs[nextEditableIndex];
         if (targetInput) {
           targetInput.focus();
-          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
             targetInput.select();
           }
         }
