@@ -1,6 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class PenjualanService {
 
     @Autowired
     ProductRepository productRepository;
+
+    @Autowired
+    StockMovementService stockMovementService;
 
     public List<PenjualanDTO> getLast10Transaction(Long clientId){
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
@@ -122,35 +126,44 @@ public class PenjualanService {
     }
 
     @Transactional
-    public boolean deletePenjualan(Long transactionId, Long clientId){
-        //Restore stock from old transaction
-        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
-        for(TransactionDetailEntity old : oldTransactions){
-            ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientId);
-            if(product != null){
-                Long restoredStock = product.getStock() + old.getQty();
-                product.setStock(restoredStock);
-                productRepository.save(product);
-            }
-            old.setDeletedAt(getCurrentTimestamp());
-            transactionDetailRepository.save(old);
-        }
-
-        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, transactionId);
+    public boolean deletePenjualan(Long transactionId, ClientEntity clientData){
+        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
         if(transactionEntityOpt.isEmpty()){
             System.out.println("Transaction not found");
             return false;
         }
         TransactionEntity transactionEntity = transactionEntityOpt.get();
+
+
+        //Restore stock from old transaction
+        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
+        for(TransactionDetailEntity old : oldTransactions){
+            ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
+            if(product != null){
+                Long restoredStock = product.getStock() + old.getQty();
+                product.setStock(restoredStock);
+                productRepository.save(product);
+
+                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        product,
+                        transactionEntity.getTransactionNumber(),
+                        TipeKartuStok.KOREKSI_PENJUALAN,
+                        old.getQty(),
+                        0L,
+                        restoredStock,
+                        clientData
+                ));
+                if (!isAdjusted) {
+                    System.out.println("Gagal adjust di delete penjualan");
+                    return false;
+                }
+            }
+            old.setDeletedAt(getCurrentTimestamp());
+            transactionDetailRepository.save(old);
+        }
+
         transactionEntity.setDeletedAt(getCurrentTimestamp());
         transactionRepository.save(transactionEntity);
-
-//        List<TransactionDetailEntity> transactionDetailEntities = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
-//
-//        for(TransactionDetailEntity data : transactionDetailEntities){
-//            data.setDeletedAt(getCurrentTimestamp());
-//            transactionDetailRepository.save(data);
-//        }
 
         return true;
     }

@@ -75,18 +75,18 @@ public class RestControllerPembelian {
     public ResponseEntity<String> editTransaction(@PathVariable("purchasingId") Long purchasingId, @RequestBody CreatePurchasingRequest req, HttpSession session){
         System.out.println("purchasing Id : " + purchasingId);
         System.out.println("Edit Request received : " + req);
-        Long clientId;
+        ClientEntity clientData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             System.out.println("token : " + token);
-            clientId = authService.validateToken(token).getClientEntity().getClientId();
+            clientData = authService.validateToken(token).getClientEntity();
         } catch (Exception e) {
             System.out.println("Exception : " + e);
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
 
         System.out.println("otw edit");
-        ResponseInBoolean response = pembelianService.editTransaction(purchasingId, req, clientId);
+        ResponseInBoolean response = pembelianService.editTransaction(purchasingId, req, clientData);
         if(response.isStatus()){
             System.out.println("sukses");
             return ResponseEntity.ok(response.getMessage());

@@ -199,49 +199,6 @@
                         Tambah Product
                     </button>
                 </div>
-
-                <!-- Tengah: Faktur + PO Date -->
-                <!--                <div class="col-md-4">-->
-                <!--                    <label for="invoiceNumber" class="form-label">No. Faktur</label>-->
-                <!--                    <div class="d-flex mb-2">-->
-                <!--                        <input-->
-                <!--                                type="text"-->
-                <!--                                id="invoiceNumber"-->
-                <!--                                class="form-control form-control-sm me-2"-->
-                <!--                                placeholder="Masukkan No. Faktur"-->
-                <!--                                required-->
-                <!--                        />-->
-                <!--                        <button type="button" class="btn btn-info btn-sm" onclick="cekNoFaktur(document.getElementById('invoiceNumber').value)">Cek</button>-->
-                <!--                    </div>-->
-
-                <!--                    <label for="poDate" class="form-label">PO Date</label>-->
-                <!--                    <input-->
-                <!--                            type="date"-->
-                <!--                            id="poDate"-->
-                <!--                            class="form-control form-control-sm"-->
-                <!--                            required-->
-                <!--                    />-->
-                <!--                </div>-->
-
-                <!-- Kanan: Pembayaran + Due Date -->
-                <!--                <div class="col-md-4">-->
-                <!--                    <label for="paymentType" class="form-label"-->
-                <!--                    >Jenis Pembayaran</label-->
-                <!--                    >-->
-                <!--                    <select id="paymentType" class="form-select form-select-sm w-100">-->
-                <!--                        <option value="tunai">Tunai</option>-->
-                <!--                        <option value="kredit">Kredit</option>-->
-                <!--                    </select>-->
-
-                <!--                    <div class="mt-2" id="dueDateContainer" style="display: none">-->
-                <!--                        <label for="poDueDate" class="form-label">PO Due Date</label>-->
-                <!--                        <input-->
-                <!--                                type="date"-->
-                <!--                                id="poDueDate"-->
-                <!--                                class="form-control form-control-sm"-->
-                <!--                        />-->
-                <!--                    </div>-->
-                <!--                </div>-->
             </div>
         </div>
 
@@ -992,10 +949,6 @@
         productModal.show();
       });
     });
-
-    // Toggle PO Due Date visibility
-    const paymentType = document.getElementById("paymentType");
-    const dueDateContainer = document.getElementById("dueDateContainer");
 
     const sellTableBody = document.getElementById("sellTableBody");
     const productTableBody = document.getElementById("productTableBody");
@@ -2092,29 +2045,6 @@
         document.getElementById("invoiceNumber").value = transaction.noFaktur;
       }
 
-      window.addEventListener("load", function () {
-        const poDateInput = document.getElementById("poDate");
-        if (poDateInput && transaction.tanggalBeli) {
-          poDateInput.value = transaction.tanggalBeli.split("T")[0];
-        }
-
-        if (transaction.cash === true) {
-          document.getElementById("paymentType").value = "tunai";
-        } else {
-          document.getElementById("paymentType").value = "kredit";
-          document.getElementById("dueDateContainer").style.display = "block";
-          if (transaction.tanggalTempo) {
-            document.getElementById("poDueDate").value =
-              transaction.tanggalTempo.split("T")[0];
-          }
-        }
-
-        if (transaction.isCash === false) {
-          document.getElementById("poDueDate").value =
-            transaction.tanggalTempo.split("T")[0];
-        }
-      });
-
       // Populate the table with transaction details
       transaction.preorderDetailDTOS.forEach((detail, index) => {
         const row = document.createElement("tr");
@@ -2147,10 +2077,35 @@
         attachNavigationHandlers(row);
 
         // Other event bindings (price, qty, discount)
+        const codeInput = row.querySelector(".code-input");
         const priceInput = row.querySelector(".price-input");
         const discPercentInput = row.querySelector(".discount-percent-input");
         const discAmountInput = row.querySelector(".discount-amount-input");
         const qtyInput = row.querySelector(".qty-input");
+
+        codeInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const code = codeInput.value.trim().toUpperCase();
+
+            if (!code) {
+              selectedRow = row;
+              productModal.show();
+              loadProductTable();
+              return;
+            }
+
+            const product = masterProducts.find((p) => p.shortName === code);
+            if (product) {
+              fillProductRow(row, product);
+              maybeAddNewRow();
+            } else {
+              alert("Product not found");
+              codeInput.value = "";
+              codeInput.focus();
+            }
+          }
+        });
 
         // tambahkan auto-set 0 on blur
         [discPercentInput, discAmountInput].forEach((inp) =>

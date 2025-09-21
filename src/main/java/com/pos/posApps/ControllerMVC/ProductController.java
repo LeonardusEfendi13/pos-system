@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
+import com.pos.posApps.DTO.Dtos.StockMovementsDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -136,5 +139,41 @@ public class ProductController {
             return "redirect:/products";
         }
         return "redirect:/login";
+    }
+
+    @GetMapping("/kartu_stok")
+    public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId) {
+        Long clientId;
+        boolean isShowDetail = true;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+
+        System.out.println("product id received : " + productId);
+
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
+
+
+        LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
+        LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
+
+        List<ProductDTO> productEntity = productService.getProductData(clientId);
+        List<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
+        Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
+        System.out.println("product entity : " + productEntity);
+        System.out.println("stock movement entity : " + stokData);
+        model.addAttribute("isShowDetail", isShowDetail);
+        model.addAttribute("productData", productEntity);
+        model.addAttribute("activePage", "kartuStok");
+        model.addAttribute("kartuStok", stokData);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("stockAwal", stockAwal);
+        model.addAttribute("selectedItemId", productId);
+        return "display_kartuStok";
     }
 }

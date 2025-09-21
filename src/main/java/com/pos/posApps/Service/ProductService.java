@@ -1,22 +1,21 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.CreateProductRequest;
-import com.pos.posApps.DTO.Dtos.EditProductRequest;
-import com.pos.posApps.DTO.Dtos.ProductDTO;
-import com.pos.posApps.DTO.Dtos.ProductPricesDTO;
-import com.pos.posApps.Entity.ClientEntity;
-import com.pos.posApps.Entity.ProductEntity;
-import com.pos.posApps.Entity.ProductPricesEntity;
-import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
+import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.ProductPricesRepository;
 import com.pos.posApps.Repository.ProductRepository;
+import com.pos.posApps.Repository.StockMovementsRepository;
 import com.pos.posApps.Repository.SupplierRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,6 +31,35 @@ public class ProductService {
 
     @Autowired
     ProductPricesRepository productPricesRepository;
+
+    @Autowired
+    StockMovementsRepository stockMovementsRepository;
+
+    @Autowired
+    StockMovementService stockMovementService;
+
+
+    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate){
+        List<StockMovementsEntity> stockMovementData = stockMovementsRepository.findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(clientId, productId, startDate, endDate);
+        return stockMovementData.stream().map(data -> new StockMovementsDTO(
+                data.getStockMovementsId(),
+                data.getReferenceNo(),
+                data.getTipeKartuStok(),
+                data.getQtyIn(),
+                data.getQtyOut(),
+                data.getSaldo(),
+                data.getCreatedAt()
+        )).collect(Collectors.toList());
+    }
+
+    public Long getStockAwalProduct(Long productId, LocalDateTime startDate){
+        System.out.println("Entering get stock awal");
+        List<StockMovementsEntity> stockData = stockMovementsRepository.findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(productId, startDate);
+        return stockData.stream()
+                .max(Comparator.comparing(StockMovementsEntity::getCreatedAt))
+                .map(StockMovementsEntity::getSaldo)
+                .orElse(0L);
+    }
 
     public List<ProductDTO> getProductData(Long clientId) {
         List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
@@ -57,12 +85,10 @@ public class ProductService {
     @Transactional
     public boolean insertProducts(CreateProductRequest req, ClientEntity clientData) {
         try {
-            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientId(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
+            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
             if (productEntity != null) {
-                if(productEntity.getDeletedAt() == null){
-                    System.out.println("Product already exists");
-                    return false;
-                }
+                System.out.println("Product already exists");
+                return false;
             }
 
             Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
@@ -92,6 +118,21 @@ public class ProductService {
             Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
             Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
+            System.out.println("Otw insert kartu stock karena insert new product");
+            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                    newProduct,
+                    "-",
+                    TipeKartuStok.PENYESUAIAN,
+                    0L,
+                    0L,
+                    req.getStock(),
+                    clientData
+            ));
+            if(!isAdjusted){
+                System.out.println("Gagal adjust di insert product");
+                return false;
+            }
+
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 System.out.println("Entering loop product prices ");
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
@@ -103,6 +144,7 @@ public class ProductService {
                 newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
+
             return true;
         } catch (Exception e) {
             System.out.println("Exception : " + e);
@@ -113,10 +155,38 @@ public class ProductService {
 
     @Transactional
     public boolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
-        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
-        if (productEntity == null) {
+        Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
+        if (productEntityOpt.isEmpty()) {
             System.out.println("Product not found");
             return false;
+        }
+
+        ProductEntity productEntity = productEntityOpt.get();
+
+        boolean isDuplicate =
+                productRepository.existsByFullNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getFullName(), clientEntity.getClientId(), req.getProductId())
+                        || productRepository.existsByShortNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getShortName(), clientEntity.getClientId(), req.getProductId())
+                        || productRepository.existsByProductIdAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getProductId(), clientEntity.getClientId(), req.getProductId());
+        if (isDuplicate) {
+            System.out.println("Product already exists");
+            return false;
+        }
+
+        if(!Objects.equals(req.getStock(), productEntity.getStock())){
+            System.out.println("Stok berubah karena edit product");
+            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                    productEntity,
+                    "-",
+                    TipeKartuStok.PENYESUAIAN,
+                    0L,
+                    0L,
+                    req.getStock(),
+                    clientEntity
+            ));
+            if(!isAdjusted){
+                System.out.println("Gagal adjust di edit product");
+                return false;
+            }
         }
 
         Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
@@ -155,11 +225,12 @@ public class ProductService {
 
     @Transactional
     public boolean deleteProducts(Long productId) {
-        ProductEntity productEntity = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
-        if (productEntity == null) {
+        Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
+        if (productEntityOpt.isEmpty()) {
             System.out.println("Product not found");
             return false;
         }
+        ProductEntity productEntity = productEntityOpt.get();
         productEntity.setDeletedAt(getCurrentTimestamp());
         productRepository.save(productEntity);
 

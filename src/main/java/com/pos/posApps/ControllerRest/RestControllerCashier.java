@@ -4,7 +4,6 @@ import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
-import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PenjualanService;
@@ -73,18 +72,18 @@ public class RestControllerCashier {
     public ResponseEntity<String> editTransaction(@PathVariable("transactionId") Long transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
         System.out.println("transaction Id : " + transactionId);
         System.out.println("Edit Request  received : " + req);
-        Long clientId;
+        ClientEntity clientData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             System.out.println("token : " + token);
-            clientId = authService.validateToken(token).getClientEntity().getClientId();
+            clientData = authService.validateToken(token).getClientEntity();
         } catch (Exception e) {
             System.out.println("Exception : " + e);
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
 
         System.out.println("otw edit");
-        ResponseInBoolean response = kasirService.editTransaction(transactionId, req, clientId);
+        ResponseInBoolean response = kasirService.editTransaction(transactionId, req, clientData);
         if(response.isStatus()){
             System.out.println("sukses");
             return ResponseEntity.ok(response.getMessage());

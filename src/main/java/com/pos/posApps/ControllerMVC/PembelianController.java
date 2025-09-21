@@ -99,7 +99,7 @@ public class PembelianController {
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isDeleted = pembelianService.deletePurchasing(puchasingId, clientData.getClientId());
+            boolean isDeleted = pembelianService.deletePurchasing(puchasingId, clientData);
             if (isDeleted) {
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");

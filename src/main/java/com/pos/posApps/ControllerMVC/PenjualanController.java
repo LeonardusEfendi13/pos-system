@@ -1,6 +1,5 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.CustomerDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
@@ -10,7 +9,6 @@ import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -77,7 +75,7 @@ public class PenjualanController {
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isDeleted = penjualanService.deletePenjualan(transactionId, clientData.getClientId());
+            boolean isDeleted = penjualanService.deletePenjualan(transactionId, clientData);
             if (isDeleted) {
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");

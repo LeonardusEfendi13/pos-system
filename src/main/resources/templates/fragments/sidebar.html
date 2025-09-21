@@ -25,10 +25,33 @@
 
 
                 <!-- Master Barang -->
-                <li class="nav-item" th:classappend="${activePage} == 'masterBarang' ? 'active' ">
-                    <a class="nav-link" th:href="@{/products}">
+                <li class="nav-item dropdown"
+                    th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? 'active' : ''">
+                    <a class="nav-link dropdown-toggle" href="#sidebar-barang" data-bs-toggle="collapse"
+                       role="button" aria-expanded="false" aria-controls="sidebar-barang">
                         <span class="nav-link-title">Master Barang</span>
                     </a>
+
+                    <div class="collapse"
+                         id="sidebar-barang"
+                         th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? ' show' : ''">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/products"
+                                   th:classappend="${activePage} == 'masterBarang' ? 'active' : ''">
+                                    Master Barang
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/products/kartu_stok"
+                                   th:classappend="${activePage} == 'kartuStok' ? 'active' : ''">
+                                    Kartu Stok
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
                 <!-- Supplier Barang -->

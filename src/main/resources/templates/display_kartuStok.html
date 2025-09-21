@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:inline="html">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>POS</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+
+    <!-- Bootstrap 5 (example) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!--    datatable-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .logout-button {
+            margin-top: auto;
+            padding: 1rem;
+        }
+
+        .add-product-btn {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <div class="page-wrapper">
+        <div class="container">
+            <h1 style="text-align:center;padding-top:10px">Kartu Stok</h1>
+
+            <!-- Filter Form with Date Range and Customer Name -->
+            <form method="get" action="/products/kartu_stok" class="row filter-container">
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="itemName" class="form-label">Barang</label>
+                    <div class="input-group">
+                        <input type="text"
+                               id="itemName"
+                               name="itemName"
+                               class="form-control"
+                               placeholder="Pilih Barang"
+                               readonly
+                               th:value="${selectedItemName}"
+                               data-id="">
+                        <input type="hidden" id="productId" name="productId" th:value="${selectedItemId}" />
+                        <button class="btn btn-outline-primary" type="button" id="btnCariBarang">
+                            Pilih Barang
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
+                </div>
+            </form>
+
+            <br>
+
+            <div style="max-height: 70vh; overflow-y: auto;">
+                <table id="kartuStokTable" class="table table-bordered">
+                <thead class="sticky-top">
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">Tanggal</th>
+                    <th scope="col">No. Faktur</th>
+                    <th scope="col">Tipe</th>
+                    <th scope="col">Masuk</th>
+                    <th scope="col">Keluar</th>
+                    <th scope="col">Saldo Akhir</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${!kartuStok.empty}">
+                    <td>1</td>
+                    <td th:text="${T(java.time.LocalDate).parse(startDate).format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id')))}">Tanggal Jual</td>
+                    <td>-</td>
+                    <td>SALDO AWAL</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td th:text="${stockAwal}">-2</td>
+                </tr>
+                <tr th:each="stok, iterStat : ${kartuStok}" th:if="${!kartuStok.empty}">
+                    <td th:text="${iterStat.count + 1}">2</td>
+                    <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
+                    <td th:text="${stok.referenceNo}">000000</td>
+                    <td th:text="${stok.tipeKartuStok}">Tipe Kartu Stok</td>
+                    <td th:text="${stok.qtyIn}">-2</td>
+                    <td th:text="${stok.qtyOut}">-2</td>
+                    <td th:text="${stok.saldo}">-2</td>
+                </tr>
+
+                <tr th:if="${kartuStok.empty}">
+                    <td colspan="8" class="text-center text-muted">
+                        Tidak ada data untuk ditampilkan.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select Product</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="height: 400px; padding: 5px">
+                    <!-- Sticky Search Inputs -->
+                    <div class="sticky-top bg-white pb-2">
+                        <div class="row mb-2">
+                            <div class="col">
+                                <input
+                                        type="text"
+                                        id="searchCode"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search by Code"
+                                />
+                            </div>
+                            <div class="col">
+                                <input
+                                        type="text"
+                                        id="searchName"
+                                        class="form-control form-control-sm"
+                                        placeholder="Search by Name"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Table Body -->
+                    <div style="max-height: 300px; overflow-y: auto">
+                        <table class="table table-sm table-hover mb-0" id="productTable">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Stok</th>
+                            </tr>
+                            </thead>
+                            <tbody id="productTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- Tabler Core JS -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+<!-- jQuery DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script th:inline="javascript">
+    const masterProducts = /*[[${productData}]]*/ [];
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const productIdInput = document.getElementById("productId");
+
+      if (productIdInput && productIdInput.value) {
+        console.log("productId is loaded:", productIdInput.value);
+
+        // Optional: lookup name
+        const selectedProduct = masterProducts.find(p => p.productId == productIdInput.value);
+        if (selectedProduct) {
+          document.getElementById("itemName").value = selectedProduct.fullName;
+        }
+      }
+    });
+    const productTableBody = document.getElementById("productTableBody");
+    const searchCode = document.getElementById("searchCode");
+    const searchName = document.getElementById("searchName");
+    const productModalEl = document.getElementById("productModal");
+    const productModal = new bootstrap.Modal(productModalEl);
+    document.getElementById('btnCariBarang').addEventListener('click', function() {
+        console.log("entering cari barang");
+        productModal.show();
+        loadProductTable();
+    });
+
+    productModalEl.addEventListener("shown.bs.modal", () => {
+      searchName.focus();
+    });
+
+
+    function loadProductTable(filteredProducts = masterProducts) {
+      productTableBody.innerHTML = "";
+      let rows = [];
+
+      filteredProducts.forEach((product, index) => {
+        const row = document.createElement("tr");
+        row.setAttribute("data-index", index);
+        row.tabIndex = 0;
+        row.style.cursor = "pointer";
+
+        row.innerHTML = `
+            <td>${product.shortName}</td>
+            <td>${product.fullName}</td>
+            <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+            <td>${product.stok}</td>
+            `;
+
+        row.addEventListener("dblclick", () => {
+          selectProduct(product);
+        });
+
+        productTableBody.appendChild(row);
+        rows.push(row);
+      });
+
+      currentKeyboardIndex = -1;
+      highlightRow(null);
+
+      document.onkeydown = null;
+
+      document.onkeydown = function (e) {
+        if (!productModalEl.classList.contains("show")) return;
+
+        const activeElement = document.activeElement;
+        const isInSearch =
+          activeElement === searchCode || activeElement === searchName;
+
+        switch (e.key) {
+          case "ArrowDown":
+            e.preventDefault();
+            if (rows.length === 0) return;
+
+            if (isInSearch) {
+              currentKeyboardIndex = 0;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            } else {
+              if (currentKeyboardIndex < rows.length - 1)
+                currentKeyboardIndex++;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            }
+            break;
+
+          case "ArrowUp":
+            e.preventDefault();
+            if (rows.length === 0) return;
+
+            if (!isInSearch) {
+              if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+              highlightRow(rows[currentKeyboardIndex]);
+              rows[currentKeyboardIndex].focus();
+            }
+            break;
+
+          case "ArrowLeft":
+            e.preventDefault();
+            searchCode.focus();
+            break;
+
+          case "ArrowRight":
+            e.preventDefault();
+            searchName.focus();
+            break;
+
+          case "Enter":
+            e.preventDefault();
+
+            if (isInSearch) {
+              doFilter();
+            } else {
+              if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                const selectedCode = rows[currentKeyboardIndex]
+                  .querySelector("td")
+                  .textContent.trim();
+                const selected = masterProducts.find(
+                  (p) => p.shortName === selectedCode
+                );
+                if (selected) selectProduct(selected);
+              }
+            }
+            break;
+        }
+      };
+
+      function highlightRow(row) {
+        rows.forEach((r) => r.classList.remove("table-active"));
+        if (row) {
+          row.classList.add("table-active");
+          row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+    }
+
+    function selectProduct(product) {
+        // Set the product name in the visible input
+        document.getElementById('itemName').value = product.fullName;
+
+        // Set the product ID in the hidden field
+        document.getElementById('productId').value = product.productId;
+
+        // Optional: set the shortName as data attribute (if needed later)
+        document.getElementById('itemName').setAttribute('data-id', product.productId);
+
+        // Close the modal
+        productModal.hide();
+    }
+
+    searchCode.addEventListener("focus", () => {
+      activeSearchField = "shortName";
+    });
+
+    searchName.addEventListener("focus", () => {
+      activeSearchField = "fullName";
+    });
+
+    function doFilter() {
+      if (activeSearchField === "shortName") {
+        const val = searchCode.value.trim().toLowerCase();
+        const filtered = masterProducts.filter((p) =>
+          p.shortName.toLowerCase().includes(val)
+        );
+        loadProductTable(filtered);
+      } else if (activeSearchField === "fullName") {
+        const val = searchName.value.trim().toLowerCase();
+        const filtered = masterProducts.filter((p) =>
+          p.fullName.toLowerCase().includes(val)
+        );
+        loadProductTable(filtered);
+      }
+    }
+
+    [searchCode, searchName].forEach((input) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doFilter();
+        }
+      });
+    });
+
+    productModalEl.addEventListener("hidden.bs.modal", () => {
+      searchCode.value = "";
+      searchName.value = "";
+    });
+</script>
+</body>
+</html>
+
