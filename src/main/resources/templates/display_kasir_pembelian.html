@@ -156,6 +156,27 @@
             padding-top: 40px;
             display: table-row;
         }
+        #sellTable input.form-control {
+          border: none;           /* hilangkan border bootstrap */
+          box-shadow: none;       /* hilangkan shadow fokus */
+          padding: 0 2px;         /* rapat kiri kanan */
+          height: 20px;           /* perkecil tinggi */
+          font-size: 0.8rem;      /* font lebih kecil */
+          line-height: 1.2;
+          margin: 0;
+          border-radius: 0;
+        }
+        #sellTable td,
+        #sellTable th {
+          padding: 2px 4px;  /* default bootstrap 8–12px, ini lebih rapat */
+        }
+        #sellTable input:focus {
+          outline: none; /* supaya pas fokus tidak muncul border biru tebal */
+          background-color: #fff7cc;
+        }
+        #sellTable td:has(input:focus) {
+          background-color: #fff3cd; /* warna highlight cell */
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -549,7 +570,7 @@
                 <h5 class="modal-title">Select Product</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="height: 400px; padding: 5px;">
+            <div class="modal-body" style="padding: 5px;">
 
                 <!-- Sticky Search Inputs -->
                 <div class="sticky-top bg-white pb-2">
@@ -574,7 +595,7 @@
                 </div>
 
                 <!-- Scrollable Table Body -->
-                <div style="max-height: 300px; overflow-y: auto;">
+                <div style="max-height: 400px; overflow-y: auto;padding-bottom:10px">
                     <table class="table table-sm table-hover mb-0" id="productTable">
                         <thead class="table-light">
                         <tr>
@@ -1227,6 +1248,13 @@
      const hargaJual2Input = row.querySelector(".harga-jual-2-input");
      const markUp3Input = row.querySelector(".markup-3-input");
      const hargaJual3Input = row.querySelector(".harga-jual-3-input");
+
+     // Optional: also allow double-click on codeInput itself
+    codeInput.addEventListener("dblclick", () => {
+      selectedRow = row;
+      productModal.show();
+      loadProductTable();
+    });
      // tambahkan auto-set 0 on blur
     [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
       .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
@@ -1616,53 +1644,61 @@
    }
 
    function selectProduct(product) {
-     const rows = [...sellTableBody.querySelectorAll("tr")];
-     let targetRow = rows.find((r) => {
-       const code = r.querySelector(".code-input").value.trim();
-       return code === "";
-     });
-     if (!targetRow) {
-       addNewRow(false);
-       targetRow = sellTableBody.lastElementChild;
-     }
+      const rows = [...sellTableBody.querySelectorAll("tr")];
 
-     let existingRow = null;
-     for (const r of rows) {
-       const code = r
-         .querySelector(".code-input")
-         .value.trim()
-         .toUpperCase();
-       if (code === product.shortName) {
-         existingRow = r;
-         break;
-       }
-     }
+      // ---- First, check if product already exists in any row ----
+      let existingRow = rows.find(r => {
+        const code = r.querySelector(".code-input").value.trim().toUpperCase();
+        return code === product.shortName;
+      });
 
-     if (existingRow) {
-       const qtyInput = existingRow.querySelector(".qty-input");
-       qtyInput.value = parseInt(qtyInput.value || "0") + 1;
-       updateTotalRow(existingRow);
+      if (existingRow) {
+        // ✅ Increase qty if already exists
+        const qtyInput = existingRow.querySelector(".qty-input");
+        qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+        updateTotalRow(existingRow);
 
-       if (targetRow) {
-         targetRow.querySelector(".code-input").value = "";
-         targetRow.querySelector(".name-input").value = "";
-         targetRow.querySelector(".price-input").value = "Rp 0";
-         targetRow.querySelector(".qty-input").value = "1";
-         targetRow.querySelector(".discount-percent-input").value = "0";
-         targetRow.querySelector(".discount-amount-input").value = "0";
-         targetRow.querySelector(".total-cell").textContent = "Rp 0";
-       }
-     } else {
-       fillProductRow(targetRow, product);
-       maybeAddNewRow();
-     }
+        productModal.hide();
+        selectedRow = null;
+        return; // stop here, no duplicates
+      }
 
-     productModal.hide();
+      // ---- If product not already in table ----
+      if (selectedRow) {
+        // ✅ Replace that specific row (from modal click)
+        fillProductRow(selectedRow, product);
+        selectedRow.querySelector(".qty-input").value = 1;
+        selectedRow.querySelector(".discount-percent-input").value = "0";
+        selectedRow.querySelector(".discount-amount-input").value = "0";
+        updateTotalRow(selectedRow);
 
-     setTimeout(() => {
-       focusNextEmptyRow();
-     }, 200);
-   }
+        productModal.hide();
+        selectedRow = null;
+        return; // stop here
+      }
+
+      // ---- Normal flow (manual typing/scan, new row needed) ----
+      let targetRow = rows.find(r => {
+        const code = r.querySelector(".code-input").value.trim();
+        return code === "";
+      });
+
+      if (!targetRow) {
+        addNewRow(false);
+        targetRow = sellTableBody.lastElementChild;
+      }
+
+      fillProductRow(targetRow, product);
+      targetRow.querySelector(".qty-input").value = 1;
+      updateTotalRow(targetRow);
+      maybeAddNewRow();
+
+      productModal.hide();
+
+      setTimeout(() => {
+        focusNextEmptyRow();
+      }, 200);
+    }
 
    function calculateGrandTotal() {
      let subtotal = 0;
@@ -1770,6 +1806,18 @@
        row.addEventListener("dblclick", () => {
          selectProduct(product);
        });
+
+        // ⭐ added: Mouse click = behave like arrow key highlight
+        row.addEventListener("click", () => {
+          // remove highlight from all rows
+          rows.forEach(r => r.classList.remove("table-active"));
+          // highlight clicked row
+          row.classList.add("table-active");
+          // keep index in sync with keyboard navigation
+          currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
+          // focus row (so Enter works naturally)
+          row.focus();
+        });
 
        productTableBody.appendChild(row);
        rows.push(row);
@@ -1949,6 +1997,47 @@
        customerSelect.insertAdjacentHTML("beforeend", newOption);
      });
    }
+   function cleanUpRowsBeforeSave() {
+      const rows = [...sellTableBody.querySelectorAll("tr")];
+
+      rows.forEach(row => {
+        const codeInput = row.querySelector(".code-input");
+        const nameInput = row.querySelector(".name-input");
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+
+        const typedCode = codeInput.value.trim().toUpperCase();
+
+        // if user half-typed something
+        if (typedCode !== "") {
+          const product = masterProducts.find(p => p.shortName === typedCode);
+
+          if (!product) {
+              if (row.dataset.originalCode) {
+                // revert to original data
+                codeInput.value = row.dataset.originalCode;
+                nameInput.value = row.dataset.originalName;
+                priceInput.value = row.dataset.originalPrice;
+                qtyInput.value = row.dataset.originalQty;
+                row.querySelector(".discount-percent-input").value = row.dataset.originalDiscountPercent;
+                row.querySelector(".discount-amount-input").value = row.dataset.originalDiscountAmount;
+                row.querySelector(".total-cell").textContent = row.dataset.originalTotal;
+
+                updateTotalRow(row);
+              } else {
+                // brand new row, clear it
+                codeInput.value = "";
+                nameInput.value = "";
+                priceInput.value = "Rp 0";
+                qtyInput.value = "1";
+                row.querySelector(".discount-percent-input").value = "0";
+                row.querySelector(".discount-amount-input").value = "0";
+                row.querySelector(".total-cell").textContent = "Rp 0";
+              }
+            }
+        }
+      });
+    }
 
    async function saveTransaction() {
      const grandTotal =
@@ -2003,6 +2092,8 @@
         alert("Tanggal Faktur tidak boleh kosong");
         return;
      }
+     // ⭐ Clean up half-typed rows before collecting data
+    cleanUpRowsBeforeSave();
 
      const transactionData = {
        supplierId: selectedCustomer.supplierId,
@@ -2262,6 +2353,15 @@
       transaction.pembelianDetailDTOS.forEach((detail, index) => {
         const row = document.createElement("tr");
 
+        //save original data
+        row.dataset.originalCode = detail.code;
+        row.dataset.originalName = detail.name;
+        row.dataset.originalPrice = detail.price;
+        row.dataset.originalQty = detail.qty;
+        row.dataset.originalDiscountPercent = detail.discountPercent || "0";
+        row.dataset.originalDiscountAmount = detail.discountAmount || "0";
+        row.dataset.originalTotal = detail.total || "Rp 0";
+
         row.innerHTML = `
           <td class="row-number">${index + 1}</td>
           <td><input type="text" class="form-control form-control-sm code-input" value="${detail.code}" /></td>
@@ -2313,6 +2413,13 @@
         const hargaJual1Input = row.querySelector(".harga-jual-1-input");
         const hargaJual2Input = row.querySelector(".harga-jual-2-input");
         const hargaJual3Input = row.querySelector(".harga-jual-3-input");
+
+        // Optional: also allow double-click on codeInput itself
+        codeInput.addEventListener("dblclick", () => {
+          selectedRow = row;
+          productModal.show();
+          loadProductTable();
+        });
 
         codeInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {

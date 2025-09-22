@@ -171,6 +171,28 @@
           padding-top: 40px;
           display: table-row;
         }
+
+        #sellTable input.form-control {
+          border: none;           /* hilangkan border bootstrap */
+          box-shadow: none;       /* hilangkan shadow fokus */
+          padding: 0 2px;         /* rapat kiri kanan */
+          height: 20px;           /* perkecil tinggi */
+          font-size: 0.8rem;      /* font lebih kecil */
+          line-height: 1.2;
+          margin: 0;
+          border-radius: 0;
+        }
+        #sellTable td,
+        #sellTable th {
+          padding: 2px 4px;  /* default bootstrap 8–12px, ini lebih rapat */
+        }
+        #sellTable input:focus {
+          outline: none; /* supaya pas fokus tidak muncul border biru tebal */
+          background-color: #fff7cc;
+        }
+        #sellTable td:has(input:focus) {
+          background-color: #fff3cd; /* warna highlight cell */
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -635,7 +657,7 @@
                 <h5 class="modal-title">Select Product</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="height: 400px; padding: 5px">
+            <div class="modal-body" style="padding: 5px">
                 <!-- Sticky Search Inputs -->
                 <div class="sticky-top bg-white pb-2">
                     <div class="row mb-2">
@@ -659,7 +681,7 @@
                 </div>
 
                 <!-- Scrollable Table Body -->
-                <div style="max-height: 300px; overflow-y: auto">
+                <div style="max-height: 400px; overflow-y: auto;padding-bottom:10px">
                     <table class="table table-sm table-hover mb-0" id="productTable">
                         <thead class="table-light">
                         <tr>
