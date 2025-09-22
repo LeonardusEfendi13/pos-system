@@ -34,7 +34,7 @@ public class PembelianController {
     private ProductService productService;
 
     @GetMapping
-    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId){
+    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai){
         System.out.println("STart date : " +startDate);
         System.out.println("end date : " +endDate);
         Long clientId;
@@ -53,7 +53,7 @@ public class PembelianController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        List<PembelianDTO> pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId);
+        List<PembelianDTO> pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai);
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
         System.out.println("pembelian data : " + pembelianData);
         model.addAttribute("pembelianData", pembelianData);
@@ -62,6 +62,9 @@ public class PembelianController {
         model.addAttribute("activePage", "pembelianRiwayat");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        model.addAttribute("lunas", lunas);
+        model.addAttribute("tunai", tunai);
+
         return "display_pembelian";
     }
 

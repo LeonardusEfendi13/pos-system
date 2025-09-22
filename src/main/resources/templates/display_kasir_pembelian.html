@@ -1573,7 +1573,7 @@
       row.querySelector(".discount-percent-input").value = 0;
       row.querySelector(".discount-amount-input").value = 0;
       row.querySelector(".stok-input").value = product.stok;
-      row.querySelector(".harga-jual-lama").value = formatRupiah(price);
+      row.querySelector(".harga-jual-lama").value = formatRupiah(product.productPricesDTO[0].price);
 
       const tiers = product.productPricesDTO;
 

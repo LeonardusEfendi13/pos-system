@@ -52,15 +52,15 @@
 
             <!-- ADD: Date range filters -->
             <form method="get" action="/pembelian" class="row filter-container">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="startDate" class="form-label">Start Date</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
                 </div>
-                <div class="col-md-3">
+                <div class="col">
                     <label for="supplierId" class="form-label">Supplier</label>
                     <select id="supplierId" name="supplierId" class="form-select">
                         <option value="">-- Semua Supplier --</option>
@@ -71,7 +71,26 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+
+                <div class="col">
+                    <label for="tunai" class="form-label">Tipe Pembayaran</label>
+                    <select id="tunai" name="tunai" class="form-select">
+                        <option value="" th:selected="${tunai == null}">-- Semua --</option>
+                        <option th:value="true" th:selected="${tunai == true}">Tunai</option>
+                        <option th:value="false" th:selected="${tunai == false}">Kredit</option>
+                    </select>
+                </div>
+
+                <div class="col">
+                    <label for="lunas" class="form-label">Status Pembayaran</label>
+                    <select id="lunas" name="lunas" class="form-select">
+                        <option value="" th:selected="${lunas == null}">-- Semua --</option>
+                        <option th:value="true" th:selected="${lunas == true}">Lunas</option>
+                        <option th:value="false" th:selected="${lunas == false}">Belum Lunas</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">Cari</button>
                 </div>
             </form>
@@ -82,7 +101,7 @@
                     <tr>
                         <th scope="col">No</th>
                         <th scope="col">No. Faktur</th>
-                        <th scope="col">Tanggal Jual</th>
+                        <th scope="col">Tanggal Faktur</th>
                         <th scope="col">Tanggal Jatuh Tempo</th>
                         <th scope="col">Total Beli</th>
                         <th scope="col">Supplier</th>

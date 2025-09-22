@@ -36,12 +36,23 @@ public class PembelianService {
     @Autowired
     StockMovementService stockMovementService;
 
-    public List<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId) {
+    public List<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai) {
         List<PurchasingEntity> purchasingData;
         if(supplierId == null){
             purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate);
         }else{
             purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate);
+        }
+        if (tunai != null) {
+            purchasingData = purchasingData.stream()
+                    .filter(p -> p.isCash() == tunai)
+                    .collect(Collectors.toList());
+        }
+
+        if (lunas != null && (tunai == null || !tunai)) {
+            purchasingData = purchasingData.stream()
+                    .filter(p -> !p.isCash() && p.isPaid() == lunas)
+                    .collect(Collectors.toList());
         }
         return purchasingData.stream().map(purchasings -> new PembelianDTO(
                 purchasings.getPurchasingId(),
