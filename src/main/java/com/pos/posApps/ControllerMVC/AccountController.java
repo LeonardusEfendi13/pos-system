@@ -5,6 +5,7 @@ import com.pos.posApps.DTO.Dtos.RegisterRequest;
 import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
+import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import jakarta.servlet.http.HttpSession;
@@ -48,12 +49,12 @@ public class AccountController {
             HttpSession session,
             @Valid RegisterRequest registerRequest,
             RedirectAttributes redirectAttributes) {
-        Long clientId;
+        ClientEntity clientData;
         AccountEntity accEntity;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
-            clientId = accEntity.getClientEntity().getClientId();
+            clientData = accEntity.getClientEntity();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Session Expired");
@@ -61,7 +62,7 @@ public class AccountController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = accountService.doCreateAccount(registerRequest, clientId);
+            boolean isInserted = accountService.doCreateAccount(registerRequest, clientData);
             if (isInserted) {
                 System.out.println("Account Created");
                 redirectAttributes.addFlashAttribute("status", "success");

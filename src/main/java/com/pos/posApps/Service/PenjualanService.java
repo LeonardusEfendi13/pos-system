@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,16 @@ public class PenjualanService {
 
     @Autowired
     StockMovementService stockMovementService;
+
+    public BigDecimal getTotalRevenues(Long clientId){
+        LocalDateTime startDate = LocalDate.now().atStartOfDay();
+        LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
+        return transactionData.stream()
+                .map(TransactionEntity::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
     public List<PenjualanDTO> getLast10Transaction(Long clientId){
         LocalDateTime startDate = LocalDate.now().atStartOfDay();

@@ -2,6 +2,7 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
+import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.CustomerService;
@@ -51,13 +52,13 @@ public class CustomerController {
             @Valid String customerName,
             @Valid String customerAlamat,
             RedirectAttributes redirectAttributes) {
-        Long clientId;
+        ClientEntity clientData;
         AccountEntity accEntity;
         System.out.println("Entering add customer : " +customerName);
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
-            clientId = accEntity.getClientEntity().getClientId();
+            clientData = accEntity.getClientEntity();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Session Expired");
@@ -65,7 +66,7 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientId);
+            boolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientData);
             if (isInserted) {
                 System.out.println("Customer Created");
                 redirectAttributes.addFlashAttribute("status", "success");

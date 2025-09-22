@@ -18,6 +18,15 @@ public class ClientEntity {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "alamat")
+    private String alamat;
+
+    @Column(name = "kota")
+    private String kota;
+
+    @Column(name = "no_telp")
+    private String noTelp;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

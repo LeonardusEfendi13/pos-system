@@ -142,6 +142,13 @@
                         <span class="nav-link-title">User</span>
                     </a>
                 </li>
+
+                <!-- Settings -->
+                <li class="nav-item" th:classappend="${activePage} == 'setting' ? 'active' ">
+                    <a class="nav-link" th:href="@{/setting}">
+                        <span class="nav-link-title">Settings</span>
+                    </a>
+                </li>
             </ul>
         </div>
 

@@ -23,22 +23,20 @@ public class CustomerService {
     private ClientRepository clientRepository;
 
     @Transactional
-    public boolean doCreateCustomer(String customerName, String alamat, Long clientId) {
+    public boolean doCreateCustomer(String customerName, String alamat, ClientEntity clientData) {
         try {
-            CustomerEntity customerEntity = customerRepository.findByNameAndDeletedAtIsNullAndClientEntity_ClientId(customerName, clientId);
+            CustomerEntity customerEntity = customerRepository.findByNameAndDeletedAtIsNullAndClientEntity_ClientId(customerName, clientData.getClientId());
             if (customerEntity != null) {
                 return false;
             }
             Long lastCustomerId = customerRepository.findFirstByOrderByCustomerIdDesc().map(CustomerEntity::getCustomerId).orElse(0L);
             Long newCustomerId = Generator.generateId(lastCustomerId);
 
-            ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
-
             CustomerEntity newCustomerEntity = new CustomerEntity();
             newCustomerEntity.setCustomerId(newCustomerId);
             newCustomerEntity.setName(customerName);
             newCustomerEntity.setAlamat(alamat);
-            newCustomerEntity.setClientEntity(clientEntity);
+            newCustomerEntity.setClientEntity(clientData);
             customerRepository.save(newCustomerEntity);
             return true;
         } catch (Exception e) {

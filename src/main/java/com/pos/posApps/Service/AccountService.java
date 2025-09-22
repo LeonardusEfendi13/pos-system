@@ -29,7 +29,7 @@ public class AccountService {
     private ClientRepository clientRepository;
 
     @Transactional
-    public boolean doCreateAccount(RegisterRequest request, Long clientId){
+    public boolean doCreateAccount(RegisterRequest request, ClientEntity clientData){
         try{
             AccountEntity accountEntity = accountRepository.findByUsernameAndDeletedAtIsNull(request.getUsername());
             if(accountEntity != null){
@@ -39,15 +39,13 @@ public class AccountService {
             Long lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse(0L);
             Long newAccountId = Generator.generateId(lastAccountId);
 
-            ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
-
             AccountEntity newAccountEntity = new AccountEntity();
             newAccountEntity.setAccountId(newAccountId);
             newAccountEntity.setName(request.getName());
             newAccountEntity.setUsername(request.getUsername());
             newAccountEntity.setPassword(hashedPassword);
             newAccountEntity.setRole(request.getRole());
-            newAccountEntity.setClientEntity(clientEntity);
+            newAccountEntity.setClientEntity(clientData);
             newAccountEntity.setCreatedAt(getCurrentTimestamp());
             newAccountEntity.setUpdatedAt(getCurrentTimestamp());
             accountRepository.save(newAccountEntity);

@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.CreateClientRequest;
 import com.pos.posApps.DTO.Dtos.EditClientRequest;
 import com.pos.posApps.DTO.Dtos.EditUserRequest;
 import com.pos.posApps.DTO.Dtos.RegisterFromDevRequest;
+import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ClientService;
@@ -94,13 +95,13 @@ public class DeveloperController {
     {
         System.out.println("req : " + req);
         String token = (String) session.getAttribute(authSessionKey);
-        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+        ClientEntity clientData = authService.validateToken(token).getClientEntity();
 
         // Check if clientId is null or the clientId is not CLNO (Developer)
-        if (isNotDeveloper(clientId)) {
+        if (isNotDeveloper(clientData.getClientId())) {
             return "redirect:/login";
         }
-        boolean isInserted = accountService.doCreateAccount(req.getRegisterRequest(), req.getClientId());
+        boolean isInserted = accountService.doCreateAccount(req.getRegisterRequest(), clientData);
         if(isInserted){
             return "201";
         }

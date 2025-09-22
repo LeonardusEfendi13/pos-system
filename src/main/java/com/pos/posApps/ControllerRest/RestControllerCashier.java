@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +42,23 @@ public class RestControllerCashier {
         } catch (Exception e) {
             System.out.println("Exception : " + e);
             return ResponseEntity.status(UNAUTHORIZED).body(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/transaction/revenue")
+    public ResponseEntity<BigDecimal> getRevenue(HttpSession session){
+        ClientEntity clientData;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            System.out.println("token : " + token);
+            clientData = authService.validateToken(token).getClientEntity();
+            BigDecimal revenue = penjualanService.getTotalRevenues(clientData.getClientId());
+            System.out.println("Revenues : " + revenue);
+            return ResponseEntity.ok(revenue);
+
+        } catch (Exception e) {
+            System.out.println("Exception : " + e);
+            return ResponseEntity.status(UNAUTHORIZED).body(BigDecimal.ZERO);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.pos.posApps.Service;
 
+import com.pos.posApps.DTO.Dtos.ClientDTO;
 import com.pos.posApps.DTO.Dtos.CreateClientRequest;
 import com.pos.posApps.DTO.Dtos.EditClientRequest;
 import com.pos.posApps.Entity.ClientEntity;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -16,6 +19,54 @@ public class ClientService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    public ClientDTO getClientSettings(Long clientId){
+        try{
+            Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
+            if(clientEntityOpt.isEmpty()){
+                System.out.println("Client Not Found");
+                return null;
+            }
+
+            ClientEntity clientEntity = clientEntityOpt.get();
+            return new ClientDTO(
+                    clientEntity.getClientId(),
+                    clientEntity.getName(),
+                    clientEntity.getAlamat(),
+                    clientEntity.getKota(),
+                    clientEntity.getNoTelp()
+            );
+
+        }catch (Exception e){
+            System.out.println("Exception Catched : " + e.getMessage());
+            return null;
+        }
+    }
+
+    public boolean updateClientField(Long clientId, String fieldKey, String fieldValue) {
+        try{
+            Optional<ClientEntity> clientOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
+
+            if (clientOpt.isEmpty()) return false;
+
+            ClientEntity client = clientOpt.get();
+
+            // Update manually based on key (since no reflection)
+            switch (fieldKey) {
+                case "NAMA" -> client.setName(fieldValue);
+                case "ALAMAT" -> client.setAlamat(fieldValue);
+                case "KOTA" -> client.setKota(fieldValue);
+                case "NOMOR HP" -> client.setNoTelp(fieldValue);
+                // You may want to block editing "Created At" and others
+                default -> throw new IllegalArgumentException("Invalid field key: " + fieldKey);
+            }
+            clientRepository.save(client);
+            return true;
+        }catch (Exception e) {
+            System.out.println("Exception catched : " + e.getMessage());
+            return false;
+        }
+    }
 
     @Transactional
     public boolean doCreateClient(CreateClientRequest req){
@@ -37,23 +88,36 @@ public class ClientService {
     }
 
     public boolean doEditClient(EditClientRequest req){
-        ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(req.getClientId());
-        if(clientEntity == null){
-            System.out.println("Client Not Found");
+        try{
+            Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(req.getClientId());
+            if(clientEntityOpt.isEmpty()){
+                System.out.println("Client Not Found");
+                return false;
+            }
+
+            ClientEntity clientEntity = clientEntityOpt.get();
+
+            clientEntity.setName(req.getName());
+            clientEntity.setAlamat(req.getAlamat());
+            clientEntity.setNoTelp(req.getNoTelp());
+            clientEntity.setKota(req.getKota());
+            clientRepository.save(clientEntity);
+            return true;
+        }catch (Exception e){
+            System.out.println("Exception catched : " + e.getMessage());
             return false;
         }
 
-        clientEntity.setName(req.getName());
-        clientRepository.save(clientEntity);
-        return true;
     }
 
     public boolean doDisableClient(Long clientId){
-        ClientEntity clientEntity = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
-        if(clientEntity == null){
+        Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
+        if(clientEntityOpt.isEmpty()){
             System.out.println("Client Not Found");
             return false;
         }
+
+        ClientEntity clientEntity = clientEntityOpt.get();
 
         clientEntity.setDeletedAt(getCurrentTimestamp());
         clientRepository.save(clientEntity);
