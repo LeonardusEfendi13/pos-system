@@ -31,6 +31,13 @@
         .add-user-btn {
             margin-bottom: 15px;
         }
+
+        .modalHeader {
+          cursor: pointer;
+          background-color: #f1f1f1;
+          padding: 10px;
+          font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -95,7 +102,7 @@
             <div class="modal-dialog" role="document">
                 <form th:action="@{/supplier/edit}" method="post" id="editSupplierForm">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="modal-header modalHeader" >
                             <h5 class="modal-title" id="editSupplierModalLabel">Edit Supplier</h5>
                         </div>
                         <div class="modal-body">
@@ -122,7 +129,7 @@
             <div class="modal-dialog" role="document">
                 <form th:action="@{/supplier/add}" method="post" id="addSupplierForm">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="modal-header modalHeader">
                             <h5 class="modal-title" id="addSupplierModalLabel">Add New Supplier</h5>
                         </div>
                         <div class="modal-body">
@@ -149,6 +156,15 @@
 <!-- jQuery DataTables -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!--    For Draggable modals-->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script>
+    $(document).ready(function () {
+      $("#addSupplierModal").draggable();
+      $("#editSupplierModal").draggable();
+    });
+</script>
 <script>
     $('#addSupplierName').on('input', function() {
       this.value = this.value.toUpperCase();
