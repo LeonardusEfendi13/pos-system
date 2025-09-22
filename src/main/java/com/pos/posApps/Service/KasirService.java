@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.pos.posApps.Util.Generator.*;
 
@@ -108,113 +106,137 @@ public class KasirService {
     @Transactional
     public ResponseInBoolean editTransaction(Long transactionId, CreateTransactionRequest req, ClientEntity clientData) {
         try {
-            //Get Customer Entity
+            // Validate customer
             Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
             if (customerEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(true, "Customer tidak ada");
             }
             CustomerEntity customerEntity = customerEntityOpt.get();
 
-            //Check if transaction exist
+            // Validate transaction
             Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
             if (transactionEntityOpt.isEmpty()) {
-                System.out.println("transaction ga nemu");
                 return new ResponseInBoolean(false, "Data transaksi tidak ditemukan");
             }
             TransactionEntity transactionEntity = transactionEntityOpt.get();
 
-            //insert the transaction data
+            // Update transaction summary
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
-            //Restore stock from old transaction
+            // Build map of new transaction detail qty for comparison
+            Map<String, Long> newQtyMap = new HashMap<>();
+            for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+                if (dto != null) {
+                    newQtyMap.put(dto.getCode(), dto.getQty());
+                }
+            }
+
+            // Restore stock from old transaction (with qty comparison)
             List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
+            Map<String, TransactionDetailEntity> oldProductMap = new HashMap<>();
+
             for (TransactionDetailEntity old : oldTransactions) {
                 ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
                 if (product != null) {
-                    Long restoredStock = product.getStock() + old.getQty();
-                    product.setStock(restoredStock);
+                    String key = old.getShortName();
+                    Long newQty = newQtyMap.getOrDefault(key, null);
+
+                    boolean isQtyChanged = (newQty == null || !Objects.equals(newQty, old.getQty()));
+                    if (!isQtyChanged) {
+                        System.out.println("Qty tidak berubah untuk " + key + ", skip kartu stok restore.");
+                        oldProductMap.put(key, old);
+                        continue; // Skip kartu stok restore
+                    }
+
+                    // Restore stock
+                    product.setStock(product.getStock() + old.getQty());
                     productRepository.save(product);
 
-
-                    System.out.println("Otw insert kartu stok di restoring product stock di edit penjualan");
-                    if (!Objects.equals(product.getStock(), old.getQty())) {
-                        boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                                product,
-                                transactionEntity.getTransactionNumber(),
-                                TipeKartuStok.KOREKSI_PENJUALAN,
-                                old.getQty(),
-                                0L,
-                                restoredStock,
-                                clientData
-                        ));
-                        if (!isAdjusted) {
-                            System.out.println("Gagal adjust di edit penjualan (1)");
-                            return new ResponseInBoolean(false, "Gagal adjust di create transaction");
-                        }
-                        System.out.println("Sukses adjust di edit penjualan (1)");
-                    }
-                }
-            }
-
-            //Delete all product prices related to product id
-            transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
-
-            //Insert all the transaction details
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-
-            for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
-                if (dtos != null) {
-                    TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-                    transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
-                    transactionDetailEntity.setShortName(dtos.getCode());
-                    transactionDetailEntity.setFullName(dtos.getName());
-                    transactionDetailEntity.setQty(dtos.getQty());
-                    transactionDetailEntity.setPrice(dtos.getPrice());
-                    transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
-                    transactionDetailEntity.setTotalPrice(dtos.getTotal());
-                    transactionDetailEntity.setTransactionEntity(transactionEntity);
-                    transactionDetailRepository.save(transactionDetailEntity);
-                    newTransactionDetailId = Generator.generateId(newTransactionDetailId);
-
-                    //Update product stock
-                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
-                    Long newStock = productEntity.getStock() - dtos.getQty();
-                    productEntity.setStock(newStock);
-                    productRepository.save(productEntity);
-
-                    // cari di snapshot lama
-                    TransactionDetailEntity oldDetail = oldTransactions.stream()
-                            .filter(o -> o.getShortName().equals(dtos.getCode()) || o.getFullName().equals(dtos.getName()))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (oldDetail != null && Objects.equals(oldDetail.getQty(), dtos.getQty())) {
-                        System.out.println("Qty tidak berubah, skip kartu stok untuk product " + dtos.getName());
-                        continue;
-                    }
+                    // Insert kartu stok restore karena qty berubah
                     boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                            productEntity,
+                            product,
                             transactionEntity.getTransactionNumber(),
                             TipeKartuStok.KOREKSI_PENJUALAN,
+                            old.getQty(),
                             0L,
-                            dtos.getQty(),
-                            newStock,
+                            product.getStock(),
                             clientData
                     ));
                     if (!isAdjusted) {
-                        System.out.println("Gagal adjust di edit product (2)");
-                        return new ResponseInBoolean(false, "Gagal adjust di create transaction (2)");
+                        return new ResponseInBoolean(false, "Gagal adjust saat restore stok");
                     }
+
+                    oldProductMap.put(key, old);
                 }
             }
+
+            // Delete old transaction details
+            transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
+
+            // Track product codes from new transaction
+            Set<String> newProductKeys = new HashSet<>();
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc()
+                    .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+
+            for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+                if (dto == null) continue;
+
+                String key = dto.getCode();
+                newProductKeys.add(key);
+
+                // Save new transaction detail
+                TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+                transactionDetailEntity.setShortName(dto.getCode());
+                transactionDetailEntity.setFullName(dto.getName());
+                transactionDetailEntity.setQty(dto.getQty());
+                transactionDetailEntity.setPrice(dto.getPrice());
+                transactionDetailEntity.setDiscountAmount(dto.getDiscAmount());
+                transactionDetailEntity.setTotalPrice(dto.getTotal());
+                transactionDetailEntity.setTransactionEntity(transactionEntity);
+                transactionDetailRepository.save(transactionDetailEntity);
+                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+
+                // Update stock
+                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
+                if (product == null) continue;
+
+                Long updatedStock = product.getStock() - dto.getQty();
+                product.setStock(updatedStock);
+                productRepository.save(product);
+
+                // Cek apakah qty berubah dibanding transaksi lama
+                TransactionDetailEntity oldDetail = oldProductMap.get(dto.getCode());
+                if (oldDetail != null && Objects.equals(oldDetail.getQty(), dto.getQty())) {
+                    // Qty sama → tidak perlu insert kartu stok
+                    System.out.println("Qty tidak berubah, skip kartu stok untuk " + dto.getName());
+                    continue;
+                }
+
+                // Qty berubah atau produk baru → insert kartu stok
+                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        product,
+                        transactionEntity.getTransactionNumber(),
+                        TipeKartuStok.KOREKSI_PENJUALAN,
+                        0L,
+                        dto.getQty(),
+                        updatedStock,
+                        clientData
+                ));
+                if (!isAdjusted) {
+                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail");
+                }
+            }
+
             return new ResponseInBoolean(true, "Data berhasil disimpan");
+
         } catch (Exception e) {
-            System.out.println("Exception catched : " + e);
+            System.out.println("Exception caught: " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
