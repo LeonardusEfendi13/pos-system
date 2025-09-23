@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -276,158 +274,172 @@ public class PembelianService {
     }
 
     @Transactional
-    public ResponseInBoolean editTransaction(Long purchasingId, CreatePurchasingRequest req, ClientEntity clientData){
-        //Check duplication
-        boolean pembelianDuplicate = purchasingRepository.existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(req.getPurchasingNumber(), clientData.getClientId(), purchasingId);
-        System.out.println("Pembelian duplikat ?  : " + pembelianDuplicate);
-        if(pembelianDuplicate){
+    public ResponseInBoolean editTransaction(Long purchasingId, CreatePurchasingRequest req, ClientEntity clientData) {
+        // Check duplication
+        boolean pembelianDuplicate = purchasingRepository.existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(
+                req.getPurchasingNumber(), clientData.getClientId(), purchasingId
+        );
+        if (pembelianDuplicate) {
             return new ResponseInBoolean(false, "Nomor faktur sudah ada");
         }
-        try{
-            //Get Supplier Entity
-            System.out.println("otw get supplier");
-            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
-            if (supplierEntityOpt.isEmpty()){
-                System.out.println("supplier ga nemu");
+
+        try {
+            // Validate supplier
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(
+                    req.getSupplierId(), clientData.getClientId()
+            );
+            if (supplierEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Supplier tidak ada");
             }
             SupplierEntity supplierEntity = supplierEntityOpt.get();
 
-            System.out.println("otw get purchasing");
-
-            //Check if transaction exist
-            Optional<PurchasingEntity> purchasingEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), purchasingId);
-            if(purchasingEntityOpt.isEmpty()){
-                System.out.println("purchasing ga nemu");
+            // Validate purchasing
+            Optional<PurchasingEntity> purchasingEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
+                    clientData.getClientId(), purchasingId
+            );
+            if (purchasingEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data Pembelian tidak ada");
             }
             PurchasingEntity purchasingEntity = purchasingEntityOpt.get();
 
-            System.out.println("otw set purchasing");
-
-            //insert the transaction data
+            // Update purchasing summary
             purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
             purchasingEntity.setSupplierEntity(supplierEntity);
             purchasingEntity.setTotalPrice(req.getTotalPrice());
             purchasingEntity.setTotalDiscount(req.getTotalDisc());
             purchasingEntity.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
-            if(!req.isCash()){
+            if (!req.isCash()) {
                 purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
             }
             purchasingEntity.setCash(req.isCash());
             purchasingEntity.setSubtotal(req.getSubtotal());
             purchasingRepository.save(purchasingEntity);
 
-            //Restore stock from old transaction
-            System.out.println("otw get old transaction");
-
-            List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
-            System.out.println("Old transaction IDs:");
-            for (PurchasingDetailEntity old : oldTransactions) {
-                System.out.println("→ ID: " + old.getPurchasingDetailId() + ", Name: " + old.getFullName() + ", Qty: " + old.getQty());
-            }
-            for(PurchasingDetailEntity old : oldTransactions){
-                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
-                if(product != null){
-                    System.out.println("otw update product : " + product.getShortName());
-                    Long restoredStock = product.getStock() - old.getQty();
-                    product.setStock(restoredStock);
-                    productRepository.save(product);
-
-                    System.out.println("Otw insert kartu stok di restoring product stock di edit pembelian");
-                    if (!Objects.equals(product.getStock(), old.getQty())) {
-                        boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                                product,
-                                purchasingEntity.getPurchasingNumber(),
-                                TipeKartuStok.KOREKSI_PEMBELIAN,
-                                0L,
-                                old.getQty(),
-                                restoredStock,
-                                clientData
-                        ));
-                        if (!isAdjusted) {
-                            System.out.println("Gagal adjust di edit pembelian (1)");
-                            return new ResponseInBoolean(false, "Gagal adjust di edit pembelian");
-                        }
-                        System.out.println("Sukses adjust di edit pembelian (1)");
-                    }
+            // Build map of new purchasing detail qty for comparison
+            Map<String, Long> newQtyMap = new HashMap<>();
+            for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
+                if (dto != null) {
+                    newQtyMap.put(dto.getCode(), dto.getQty());
                 }
             }
 
-            System.out.println("otw delete old transaction");
+            // Restore stock from old transaction (if qty changed)
+            List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
+            Map<String, PurchasingDetailEntity> oldProductMap = new HashMap<>();
 
-            //Delete all product prices related to product id
-            purchasingDetailRepository.deleteAllByPurchasingEntity_PurchasingId(purchasingId);
+            for (PurchasingDetailEntity old : oldTransactions) {
+                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
+                        old.getFullName(), old.getShortName(), clientData.getClientId()
+                );
+                if (product != null) {
+                    String key = old.getShortName();
+                    Long newQty = newQtyMap.getOrDefault(key, null);
+                    boolean isQtyChanged = (newQty == null || !Objects.equals(newQty, old.getQty()));
 
-            //Insert all the transaction details
-            Long lastPurchasingDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
-            Long newPurchasingDetailId = Generator.generateId(lastPurchasingDetailId);
-
-            for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
-                if(dtos != null) {
-                    ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
-                    PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
-                    purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
-                    purchasingDetailEntity.setShortName(dtos.getCode());
-                    purchasingDetailEntity.setFullName(dtos.getName());
-                    purchasingDetailEntity.setQty(dtos.getQty());
-                    purchasingDetailEntity.setPrice(dtos.getPrice());
-                    purchasingDetailEntity.setDiscAmount(dtos.getDiscAmount());
-                    purchasingDetailEntity.setTotalPrice(dtos.getTotal());
-                    purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
-
-                    int counter = 0;
-                    for(ProductPricesEntity productPriceData : productEntity.getProductPricesEntity()){
-                        counter++;
-                        if(productPriceData.getPrice() != null && productPriceData.getPrice().compareTo(BigDecimal.ZERO) > 0){
-                            if(counter == 1){
-                                purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
-                                purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
-                            }else if(counter == 2){
-                                purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
-                                purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
-                            }else if(counter == 3){
-                                purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
-                                purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
-                            }
-                        }
-                    }
-                    purchasingDetailRepository.save(purchasingDetailEntity);
-                    newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
-
-                    //Update product stock
-                    Long newStock = productEntity.getStock() + dtos.getQty();
-                    productEntity.setStock(newStock);
-                    productRepository.save(productEntity);
-
-                    // cari di snapshot lama
-                    PurchasingDetailEntity oldDetail = oldTransactions.stream()
-                            .filter(o -> o.getShortName().equals(dtos.getCode()) || o.getFullName().equals(dtos.getName()))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (oldDetail != null && Objects.equals(oldDetail.getQty(), dtos.getQty())) {
-                        System.out.println("Qty tidak berubah, skip kartu stok untuk product " + dtos.getName());
+                    if (!isQtyChanged) {
+                        oldProductMap.put(key, old); // Save for reuse
                         continue;
                     }
+
+                    // Restore stock
+                    product.setStock(product.getStock() - old.getQty()); // Undo purchase
+                    productRepository.save(product);
+
+                    // Insert kartu stok (restore)
                     boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                            productEntity,
+                            product,
                             purchasingEntity.getPurchasingNumber(),
                             TipeKartuStok.KOREKSI_PEMBELIAN,
-                            dtos.getQty(),
                             0L,
-                            newStock,
+                            old.getQty(),
+                            product.getStock(),
                             clientData
                     ));
                     if (!isAdjusted) {
-                        System.out.println("Gagal adjust di edit product (2)");
-                        return new ResponseInBoolean(false, "Gagal adjust di create transaction (2)");
+                        return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore)");
                     }
+
+                    oldProductMap.put(key, old); // Save for later comparison
                 }
             }
+
+            // Delete old purchasing details
+            purchasingDetailRepository.deleteAllByPurchasingEntity_PurchasingId(purchasingId);
+
+            // Insert new purchasing details
+            Long lastDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc()
+                    .map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
+            Long newDetailId = Generator.generateId(lastDetailId);
+
+            for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
+                if (dto == null) continue;
+
+                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
+                        dto.getName(), dto.getCode(), clientData.getClientId()
+                );
+                if (product == null) continue;
+
+                // Insert detail
+                PurchasingDetailEntity detail = new PurchasingDetailEntity();
+                detail.setPurchasingDetailId(newDetailId);
+                detail.setShortName(dto.getCode());
+                detail.setFullName(dto.getName());
+                detail.setQty(dto.getQty());
+                detail.setPrice(dto.getPrice());
+                detail.setDiscAmount(dto.getDiscAmount());
+                detail.setTotalPrice(dto.getTotal());
+                detail.setPurchasingEntity(purchasingEntity);
+
+                // Set harga jual/markup
+                int counter = 0;
+                for (ProductPricesEntity price : product.getProductPricesEntity()) {
+                    if (price.getPrice() != null && price.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                        counter++;
+                        if (counter == 1) {
+                            detail.setMarkup1(dto.getMarkup1());
+                            detail.setHargaJual1(dto.getHargaJual1());
+                        } else if (counter == 2) {
+                            detail.setMarkup2(dto.getMarkup2());
+                            detail.setHargaJual2(dto.getHargaJual2());
+                        } else if (counter == 3) {
+                            detail.setMarkup3(dto.getMarkup3());
+                            detail.setHargaJual3(dto.getHargaJual3());
+                        }
+                    }
+                }
+                purchasingDetailRepository.save(detail);
+                newDetailId = Generator.generateId(newDetailId);
+
+                // Update product stock
+                Long updatedStock = product.getStock() + dto.getQty();
+                product.setStock(updatedStock);
+                productRepository.save(product);
+
+                // Check if qty has changed
+                PurchasingDetailEntity oldDetail = oldProductMap.get(dto.getCode());
+                if (oldDetail != null && Objects.equals(oldDetail.getQty(), dto.getQty())) {
+                    continue; // Skip stock adjustment if qty is same
+                }
+
+                // Insert kartu stok (new)
+                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        product,
+                        purchasingEntity.getPurchasingNumber(),
+                        TipeKartuStok.KOREKSI_PEMBELIAN,
+                        dto.getQty(),
+                        0L,
+                        updatedStock,
+                        clientData
+                ));
+                if (!isAdjusted) {
+                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail pembelian");
+                }
+            }
+
             return new ResponseInBoolean(true, "Data berhasil disimpan");
-        }catch (Exception e){
-            System.out.println("Exception catched : " + e);
+
+        } catch (Exception e) {
+            System.out.println("Exception caught: " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
