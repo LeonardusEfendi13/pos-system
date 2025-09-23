@@ -14,5 +14,6 @@ public interface ProductPricesRepository extends JpaRepository<ProductPricesEnti
     void deleteAllByProductEntity_ProductId(Long productId);
 
     List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByProductPricesIdDesc(Long productId);
+    List<ProductPricesEntity> findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(Long productId);
 
 }

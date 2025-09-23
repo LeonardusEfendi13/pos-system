@@ -34,6 +34,9 @@ public class PembelianService {
     @Autowired
     StockMovementService stockMovementService;
 
+    @Autowired
+    ProductPricesRepository productPricesRepository;
+
     public List<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai) {
         List<PurchasingEntity> purchasingData;
         if(supplierId == null){
@@ -248,8 +251,27 @@ public class PembelianService {
 
                 //Update product stock
                 Long newStock = productEntity.getStock() + dtos.getQty();
+                productEntity.setSupplierPrice(dtos.getPrice());
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
+
+                //Update Product Prices
+                List<ProductPricesEntity> productPricesList = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(productEntity.getProductId());
+                int index = 0;
+                for(ProductPricesEntity data : productPricesList){
+                    if(index == 0 && dtos.getHargaJual1() != null){
+                        data.setPrice(dtos.getHargaJual1());
+                        data.setPercentage(dtos.getMarkup1());
+                    } else if(index == 1 && dtos.getHargaJual2() != null){
+                        data.setPrice(dtos.getHargaJual2());
+                        data.setPercentage(dtos.getMarkup2());
+                    }else if (index == 2 && dtos.getHargaJual3() != null){
+                        data.setPrice(dtos.getHargaJual3());
+                        data.setPercentage(dtos.getMarkup3());
+                    }
+                    productPricesRepository.save(data);
+                    index++;
+                }
 
                 //Insert kartu stok
                 boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
@@ -412,8 +434,27 @@ public class PembelianService {
 
                 // Update product stock
                 Long updatedStock = product.getStock() + dto.getQty();
+                product.setSupplierPrice(dto.getPrice());
                 product.setStock(updatedStock);
                 productRepository.save(product);
+
+                //Update Product Prices
+                List<ProductPricesEntity> productPricesList = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(product.getProductId());
+                int index = 0;
+                for(ProductPricesEntity data : productPricesList){
+                    if(index == 0 && dto.getHargaJual1() != null){
+                        data.setPrice(dto.getHargaJual1());
+                        data.setPercentage(dto.getMarkup1());
+                    } else if(index == 1 && dto.getHargaJual2() != null){
+                        data.setPrice(dto.getHargaJual2());
+                        data.setPercentage(dto.getMarkup2());
+                    }else if (index == 2 && dto.getHargaJual3() != null){
+                        data.setPrice(dto.getHargaJual3());
+                        data.setPercentage(dto.getMarkup3());
+                    }
+                    productPricesRepository.save(data);
+                    index++;
+                }
 
                 // Check if qty has changed
                 PurchasingDetailEntity oldDetail = oldProductMap.get(dto.getCode());
