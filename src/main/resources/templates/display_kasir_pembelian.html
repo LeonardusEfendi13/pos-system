@@ -922,10 +922,8 @@
 
        function toggleButtonState() {
         if (noFakturInput.value.trim().length === 0) {
-            console.log("input value kosong : ", noFakturInput.value);
             cekButton.disabled = true;
         } else {
-            console.log("input value ada isi: ", noFakturInput.value);
             cekButton.disabled = false;
         }
        }
@@ -1084,68 +1082,6 @@
         event.target.value = formatRupiah(parseInt(value));
       }
     }
-    function handleFormattedBlur(event) {
-      const input = event.target;
-      const row = input.closest("tr");
-      const codeInput = row.querySelector(".code-input");
-
-      // cari product di master
-      const product = masterProducts.find(
-        (p) => p.shortName === codeInput.value.trim()
-      );
-
-      if (product) {
-        const hargaBeli = product.hargaBeli;
-        const parsedValue = parseRupiah(input.value);
-
-        // cek apakah input ini harga jual (tier berapa)
-        const hargaJualMatch = [...input.classList].find(cls =>
-          cls.startsWith("harga-jual-")
-        );
-        let tierIndex = null;
-        if (hargaJualMatch) {
-          tierIndex = parseInt(hargaJualMatch.replace("harga-jual-", "").replace("-input", ""));
-        }
-
-        // validasi harga jual < harga beli
-        if (tierIndex && parsedValue < hargaBeli && parsedValue > 0) {
-          alert(
-            "Harga jual tidak boleh lebih rendah dari harga beli: " +
-            formatRupiah(hargaBeli)
-          );
-
-          // koreksi harga jual pakai harga backend sesuai tier
-          const correctedHargaJual = product.productPricesDTO[tierIndex - 1]?.price || hargaBeli;
-
-          input.value = formatRupiah(correctedHargaJual);
-
-          // ✅ update markup sesuai tier yang sama
-          const markupInput = row.querySelector(`.markup-${tierIndex}-input`);
-          if (markupInput) {
-            const markup = ((correctedHargaJual - hargaBeli) / hargaBeli) * 100;
-            markupInput.value = markup.toFixed(2);
-          }
-
-          updateTotalRow(row);
-
-          // 👇 penting: balikin fokus ke input ini
-          setTimeout(() => {
-            input.focus();
-            input.select(); // optional: langsung select biar user bisa ganti cepat
-          }, 0);
-
-          return; // stop lanjut format ulang
-        }
-      }
-
-      // Default behavior → formatting
-      const value = event.target.value.replace(/[^0-9]/g, "");
-      if (value === "" || isNaN(value)) {
-        event.target.value = formatRupiah(0);
-      } else {
-        event.target.value = formatRupiah(parseInt(value));
-      }
-    }
 
    function clearZeroOnFocus(event) {
      if (event.target.value === "0") {
@@ -1157,6 +1093,12 @@
     function ensureZeroOnBlur(input, decimals = 0, row = null) {
       input.addEventListener("blur", () => {
         let val = input.value.trim();
+
+        // handle formatted rupiah
+        if (val.startsWith("Rp")) {
+          val = parseRupiah(val);
+          console.log("formatted value : " + val);
+        }
 
         if (val === "" || isNaN(val)) {
           if (decimals > 0) {
@@ -1174,6 +1116,7 @@
         }
       });
     }
+
     function ensureOneOnBlur(input, decimals = 0, row = null) {
       input.addEventListener("blur", () => {
         let val = input.value.trim();
@@ -1195,6 +1138,7 @@
     }
 
    function addNewRow(focus = true) {
+    console.log("Add new row ");
      const rows = sellTableBody.querySelectorAll("tr");
      if (rows.length > 0) {
        const lastRowCodeInput =
@@ -1427,11 +1371,6 @@
        const code = codeInput.value.trim();
        const product = masterProducts.find((p) => p.shortName === code);
 
-<!--       if (product) {-->
-<!--         const newPrice = getPriceByQty(product, qty);-->
-<!--         priceInput.value = formatRupiah(newPrice);-->
-<!--       }-->
-
        updateTotalRow(row);
      });
 
@@ -1563,31 +1502,9 @@
        addNewRow();
      }
    }
-<!--   function getPriceByQty(product, qty) {-->
-<!--     let chosenPrice = product.productPricesDTO[0].price; // default first tier-->
-
-<!--     for (let i = 0; i < product.productPricesDTO.length; i++) {-->
-<!--       const tier = product.productPricesDTO[i];-->
-
-<!--       // if qty fits inside this tier, use it and stop-->
-<!--       if (qty <= tier.maximalCount && tier.price > 0) {-->
-<!--         chosenPrice = tier.price;-->
-<!--         return chosenPrice;-->
-<!--       }-->
-
-<!--       // if qty is bigger, keep moving, but always carry forward the latest valid price-->
-<!--       if (tier.price > 0) {-->
-<!--         chosenPrice = tier.price;-->
-<!--       }-->
-<!--     }-->
-
-<!--     return chosenPrice; // at the end, it's the last tier-->
-<!--   }-->
 
    function fillProductRow(row, product) {
       const qty = 1; // default qty
-<!--      const price = getPriceByQty(product, qty);-->
-
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
       row.querySelector(".price-input").value = formatRupiah(product.hargaBeli);
@@ -2366,12 +2283,12 @@
           <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${detail.discAmount}" /></td>
           <td class="total-cell">${formatRupiah(detail.total)}</td>
           <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
-          <td><input type="number" class="form-control form-control-sm harga-jual-lama" value="${detail.hargaJual1}" readonly/></td>
-          <td><input type="number" class="form-control form-control-sm markup-1-input" value="${detail.markup1 ?? 0}" /></td>
+          <td><input type="text" class="form-control form-control-sm harga-jual-lama" value="${formatRupiah(detail.hargaJual1 ?? 0)}" readonly/></td>
+          <td><input type="number" class="form-control form-control-sm markup-1-input" value="${(detail.markup1 ?? 0).toFixed(2)}" /></td>
           <td><input type="text" class="form-control form-control-sm harga-jual-1-input" value="${formatRupiah(detail.hargaJual1 ?? 0)}"/></td>
-          <td><input type="number" class="form-control form-control-sm markup-2-input" value="${detail.markup2 ?? 0}" /></td>
+          <td><input type="number" class="form-control form-control-sm markup-2-input" value="${(detail.markup2 ?? 0).toFixed(2)}" /></td>
           <td><input type="text" class="form-control form-control-sm harga-jual-2-input" value="${formatRupiah(detail.hargaJual2 ?? 0)}" /></td>
-          <td><input type="number" class="form-control form-control-sm markup-3-input" value="${detail.markup3 ?? 0}" /></td>
+          <td><input type="number" class="form-control form-control-sm markup-3-input" value="${(detail.markup3 ?? 0).toFixed(2)}" /></td>
           <td><input type="text" class="form-control form-control-sm harga-jual-3-input" value="${formatRupiah(detail.hargaJual3 ?? 0)}"/></td>
         `;
 
@@ -2442,13 +2359,21 @@
         [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
           .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
 
+          console.log("===Load Transaction===");
         [priceInput, hargaJual1Input, hargaJual2Input, hargaJual3Input]
-          .forEach(inp => ensureZeroOnBlur(inp, 0, row));  // integer → 0
+          .forEach(inp => {
+            ensureZeroOnBlur(inp, 0, row);
+          });
 
         const qtyInput = row.querySelector(".qty-input");
 
         [qtyInput].forEach(inp => ensureOneOnBlur(inp, 0, row));
-
+        hargaJual1Input.addEventListener("focus", handleFormattedFocus);
+        hargaJual1Input.addEventListener("blur", handleFormattedBlur);
+        hargaJual2Input.addEventListener("focus", handleFormattedFocus);
+        hargaJual2Input.addEventListener("blur", handleFormattedBlur);
+        hargaJual3Input.addEventListener("focus", handleFormattedFocus);
+        hargaJual3Input.addEventListener("blur", handleFormattedBlur);
         priceInput.addEventListener("focus", handleFormattedFocus);
         priceInput.addEventListener("blur", handleFormattedBlur);
         priceInput.addEventListener("input", () => updateTotalRow(row));
@@ -2507,10 +2432,8 @@
      masterTransactions.pembelianId !== null &&
      masterTransactions.pembelianDetailDTOS !== null
    ) {
-     console.log("otw init master transactions");
      loadTransaction(masterTransactions);
    }
-<!--   loadCustomers();-->
    updateJam();
    addNewRow();
    calculateGrandTotal();
