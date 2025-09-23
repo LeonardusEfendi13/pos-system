@@ -1295,6 +1295,7 @@
      priceInput.addEventListener("focus", handleFormattedFocus);
      priceInput.addEventListener("blur", handleFormattedBlur);
      priceInput.addEventListener("input", () => {
+        updateMarkups(row)
        updateTotalRow(row);
      });
 
@@ -1950,7 +1951,35 @@
       });
     }
 
+    function validateMarkups() {
+      const rows = [...sellTableBody.querySelectorAll("tr")];
+      for (const row of rows) {
+        const code = row.querySelector(".code-input")?.value.trim();
+        if (!code) continue; // skip empty rows
+
+        const markups = [
+          row.querySelector(".markup-1-input"),
+          row.querySelector(".markup-2-input"),
+          row.querySelector(".markup-3-input")
+        ];
+
+        for (const markupInput of markups) {
+          if (!markupInput.disabled) { // only check active ones
+            const val = parseFloat(markupInput.value) || 0;
+            if (val <= 0) {
+              alert(`Markup tidak valid pada produk ${code}. Harus lebih dari 0.`);
+              return false; // stop checking
+            }
+          }
+        }
+      }
+      return true; // all good
+    }
+
    async function saveTransaction() {
+     if (!validateMarkups()) {
+        return; // stop save
+      }
      const grandTotal =
        parseFloat(
          grandTotalDisplay.textContent
@@ -2211,6 +2240,25 @@
       bindMarkup(markUp3Input, hargaJual3Input);
     }
 
+    function updateMarkups(row) {
+      const price = parseRupiah(row.querySelector(".price-input").value);
+
+      const hargaJual1 = parseRupiah(row.querySelector(".harga-jual-1-input").value);
+      const hargaJual2 = parseRupiah(row.querySelector(".harga-jual-2-input").value);
+      const hargaJual3 = parseRupiah(row.querySelector(".harga-jual-3-input").value);
+
+      const markUp1Input = row.querySelector(".markup-1-input");
+      const markUp2Input = row.querySelector(".markup-2-input");
+      const markUp3Input = row.querySelector(".markup-3-input");
+
+      const markup1 = ((hargaJual1 - price) / price) * 100;
+      const markup2 = ((hargaJual2 - price) / price) * 100;
+      const markup3 = ((hargaJual3 - price) / price) * 100;
+
+      markUp1Input.value = isFinite(markup1) ? markup1.toFixed(2) : "0";
+      markUp2Input.value = isFinite(markup2) ? markup2.toFixed(2) : "0";
+      markUp3Input.value = isFinite(markup3) ? markup3.toFixed(2) : "0";
+    }
 
 
    function loadTransaction(transaction) {
@@ -2376,7 +2424,10 @@
         hargaJual3Input.addEventListener("blur", handleFormattedBlur);
         priceInput.addEventListener("focus", handleFormattedFocus);
         priceInput.addEventListener("blur", handleFormattedBlur);
-        priceInput.addEventListener("input", () => updateTotalRow(row));
+        priceInput.addEventListener("input", () => {
+            updateMarkups(row)
+            updateTotalRow(row)
+        });
         qtyInput.addEventListener("input", () => updateTotalRow(row));
 
         discPercentInput.addEventListener("input", () => {
