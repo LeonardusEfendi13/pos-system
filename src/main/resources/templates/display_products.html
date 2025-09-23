@@ -30,6 +30,12 @@
         .add-product-btn {
             margin-bottom: 15px;
         }
+       .modalHeader {
+          cursor: pointer;
+          background-color: #f1f1f1;
+          padding: 10px;
+          font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -116,7 +122,7 @@
             <div class="modal-dialog modal-lg">
                 <form th:action="@{/products/add}" method="post" id="barangForm">
                     <div class="modal-content">
-                        <div class="modal-header py-2">
+                        <div class="modal-header py-2 modalHeader">
                             <h5 class="modal-title" id="editBarangLabel">
                                 Edit/Tambah Master Barang
                             </h5>
@@ -333,6 +339,14 @@
 <!-- jQuery DataTables -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!--    For Draggable modals-->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script>
+    $(document).ready(function () {
+      $("#barangModal").draggable();
+    });
+</script>
 <script>
     $(document).ready(function () {
         const barangModal = document.getElementById('barangModal');
