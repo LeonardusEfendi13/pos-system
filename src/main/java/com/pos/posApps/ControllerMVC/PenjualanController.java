@@ -33,9 +33,6 @@ public class PenjualanController {
 
     @GetMapping
     public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId){
-        System.out.println("STart date : " +startDate);
-        System.out.println("end date : " +endDate);
-        System.out.println("cust id : "+ customerId);
         Long clientId;
         try{
             String token = (String) session.getAttribute(authSessionKey);

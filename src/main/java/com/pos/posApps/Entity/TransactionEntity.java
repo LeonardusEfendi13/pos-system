@@ -24,10 +24,6 @@ public class TransactionEntity {
     @Column(name = "transaction_number")
     private String transactionNumber;
 
-//    @ManyToOne
-//    @JoinColumn(name = "account_id")
-//    private AccountEntity accountEntity;
-
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private CustomerEntity customerEntity;

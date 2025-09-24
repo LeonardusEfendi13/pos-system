@@ -11,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -32,7 +34,7 @@ public class PenjualanService {
     @Autowired
     StockMovementService stockMovementService;
 
-    public BigDecimal getTotalRevenues(Long clientId){
+    public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
         List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
@@ -42,7 +44,167 @@ public class PenjualanService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public List<PenjualanDTO> getLast10Transaction(Long clientId){
+    public List<LaporanPerWaktuDTO> getLaporanPenjualanDataByPeriode(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long customerId,
+            String filterOptions
+    ) {
+        List<TransactionEntity> transactionData;
+
+        if (customerId == null) {
+            transactionData = transactionRepository
+                    .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                            clientId, startDate, endDate);
+        } else {
+            transactionData = transactionRepository
+                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
+                            clientId, customerId, startDate, endDate);
+        }
+
+        DateTimeFormatter formatter = switch (filterOptions != null ? filterOptions.toLowerCase() : "") {
+            case "year" -> DateTimeFormatter.ofPattern("yyyy");
+            case "month" -> DateTimeFormatter.ofPattern("yyyy-MM");
+            default -> DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        };
+
+        // Generate all periods between start and end
+        List<String> allPeriods = generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filterOptions);
+
+        // Preload semua produk (asumsikan shortName unik)
+        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
+                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
+
+        // Grouping by actual data
+        Map<String, LaporanPerWaktuDTO> groupedMap = transactionData.stream()
+                .flatMap(trx -> trx.getTransactionDetailEntities().stream()
+                        .filter(detail -> detail.getDeletedAt() == null)
+                        .map(detail -> {
+                            String period = trx.getCreatedAt().format(formatter);
+                            BigDecimal hargaJual = detail.getPrice();
+                            BigDecimal totalPrice = detail.getTotalPrice();
+                            Long qty = detail.getQty();
+
+                            ProductEntity product = productMap.get(detail.getShortName());
+                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
+                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
+
+                            return Map.entry(period, new LaporanPerWaktuDTO(period, totalPrice, laba));
+                        })
+                )
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, incoming) -> new LaporanPerWaktuDTO(
+                                existing.getPeriod(),
+                                existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
+                                existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
+                        )
+                ));
+
+        // Ensure all periods are present in the final map, even if zero
+        Map<String, LaporanPerWaktuDTO> finalMap = new TreeMap<>(); // TreeMap to ensure natural ordering
+        for (String period : allPeriods) {
+            LaporanPerWaktuDTO data = groupedMap.getOrDefault(
+                    period,
+                    new LaporanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO)
+            );
+            finalMap.put(period, data);
+        }
+
+        return new ArrayList<>(finalMap.values());
+    }
+
+    public List<LaporanPerPelangganDTO> getLaporanPenjualanDataByCustomer(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        List<TransactionEntity> transactionData;
+
+        transactionData = transactionRepository
+                .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                        clientId, startDate, endDate);
+
+
+        // Preload all products (assuming shortName is unique)
+        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
+                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
+
+        // Group by customer name
+        Map<String, LaporanPerPelangganDTO> groupedByCustomer = transactionData.stream()
+                .flatMap(trx -> trx.getTransactionDetailEntities().stream()
+                        .filter(detail -> detail.getDeletedAt() == null)
+                        .map(detail -> {
+                            String customerName = trx.getCustomerEntity() != null
+                                    ? trx.getCustomerEntity().getName()
+                                    : "Unknown Customer";
+
+                            BigDecimal hargaJual = detail.getPrice();
+                            BigDecimal totalPrice = detail.getTotalPrice();
+                            Long qty = detail.getQty();
+
+                            ProductEntity product = productMap.get(detail.getShortName());
+                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
+                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
+
+                            return Map.entry(customerName,
+                                    new LaporanPerPelangganDTO(customerName, totalPrice, laba));
+                        })
+                )
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, incoming) -> new LaporanPerPelangganDTO(
+                                existing.getCustomerName(),
+                                existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
+                                existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
+                        )
+                ));
+
+        return groupedByCustomer.values().stream()
+                .sorted(Comparator.comparing(LaporanPerPelangganDTO::getCustomerName))
+                .collect(Collectors.toList());
+    }
+
+
+    private List<String> generateAllPeriods(LocalDate startDate, LocalDate endDate, String filterOptions) {
+        List<String> periods = new ArrayList<>();
+        DateTimeFormatter formatter;
+
+        switch (filterOptions != null ? filterOptions.toLowerCase() : "") {
+            case "year":
+                formatter = DateTimeFormatter.ofPattern("yyyy");
+                Year startYear = Year.from(startDate);
+                Year endYear = Year.from(endDate);
+                for (Year year = startYear; !year.isAfter(endYear); year = year.plusYears(1)) {
+                    periods.add(year.toString());
+                }
+                break;
+
+            case "month":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                YearMonth startMonth = YearMonth.from(startDate);
+                YearMonth endMonth = YearMonth.from(endDate);
+                for (YearMonth ym = startMonth; !ym.isAfter(endMonth); ym = ym.plusMonths(1)) {
+                    periods.add(ym.format(formatter));
+                }
+                break;
+
+            default: // day
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                    periods.add(date.format(formatter));
+                }
+                break;
+        }
+
+        return periods;
+    }
+
+
+    public List<PenjualanDTO> getLast10Transaction(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
 //        For testing only
@@ -76,9 +238,9 @@ public class PenjualanService {
 
     public List<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId) {
         List<TransactionEntity> transactionData;
-        if(customerId == null){
+        if (customerId == null) {
             transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
-        }else{
+        } else {
             transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate);
         }
         return transactionData.stream().map(transactions -> new PenjualanDTO(
@@ -108,7 +270,7 @@ public class PenjualanService {
 
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
         Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, penjualanId);
-        if(transactionsOpt.isEmpty()){
+        if (transactionsOpt.isEmpty()) {
             return null;
         }
         TransactionEntity transactions = transactionsOpt.get();
@@ -138,9 +300,9 @@ public class PenjualanService {
     }
 
     @Transactional
-    public boolean deletePenjualan(Long transactionId, ClientEntity clientData){
+    public boolean deletePenjualan(Long transactionId, ClientEntity clientData) {
         Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
-        if(transactionEntityOpt.isEmpty()){
+        if (transactionEntityOpt.isEmpty()) {
             System.out.println("Transaction not found");
             return false;
         }
@@ -149,9 +311,9 @@ public class PenjualanService {
 
         //Restore stock from old transaction
         List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
-        for(TransactionDetailEntity old : oldTransactions){
+        for (TransactionDetailEntity old : oldTransactions) {
             ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
-            if(product != null){
+            if (product != null) {
                 Long restoredStock = product.getStock() + old.getQty();
                 product.setStock(restoredStock);
                 productRepository.save(product);

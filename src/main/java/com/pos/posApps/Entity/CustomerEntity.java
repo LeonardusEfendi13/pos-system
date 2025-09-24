@@ -17,10 +17,6 @@ public class CustomerEntity {
     @Column(name = "name")
     private String name;
 
-    //todo make sure gonna use this or not
-//    @Column(name = "customer_level_id")
-//    private String customerLevelid;
-
     @Column(name = "alamat")
     private String alamat;
 

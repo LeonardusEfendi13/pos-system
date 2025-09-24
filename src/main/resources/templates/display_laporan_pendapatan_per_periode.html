@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Laporan Pendapatan Per Periode</title>
+
+    <!-- Tabler -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+        .logout-button {
+            margin-top: auto;
+            padding: 1rem;
+        }
+        .add-user-btn {
+            margin-bottom: 15px;
+        }
+        .filter-container {
+            margin: 20px 0;
+        }
+        .dropdown-item.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        input[type="checkbox"]:disabled {
+            opacity: 1;
+            pointer-events: none;
+            accent-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <div class="page-wrapper">
+        <div class="container-fluid">
+            <h2 style="text-align:center; padding-top:10px">Laporan Pendapatan Per Periode</h2>
+
+            <!-- Filter form -->
+            <form method="get" action="/laporan/pendapatan/periode" class="row filter-container align-items-end">
+                <div class="col-md-2">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}">
+                </div>
+                <div class="col-md-2">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
+                </div>
+                <div class="col-md-2">
+                    <label for="customerId" class="form-label">Pelanggan</label>
+                    <select id="customerId" name="customerId" class="form-select">
+                        <option value="">-- Semua Pelanggan --</option>
+                        <option th:each="customer : ${customerData}"
+                                th:value="${customer.customerId}"
+                                th:text="${customer.name}"
+                                th:selected="${customer.customerId == customerId}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filterOptions" class="form-label">Filter Per</label>
+                    <select id="filterOptions" name="filterOptions" class="form-select">
+                        <option th:value="day" th:selected="${filterOptions == 'day'}">Hari</option>
+                        <option th:value="month" th:selected="${filterOptions == 'month'}">Bulan</option>
+                        <option th:value="year" th:selected="${filterOptions == 'year'}">Tahun</option>
+                    </select>
+                </div>
+
+                <!-- Container untuk tombol Cari dan View PDF -->
+                <div class="col-md-4 d-flex justify-content-between">
+                    <div style="width: 30%;">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Cari
+                        </button>
+                    </div>
+                    <div style="width: 30%;">
+                        <button id="viewPdfBtn" type="button" class="btn btn-warning w-100">
+                            <i class="bi bi-eye-fill me-1"></i>
+                            View as PDF
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div style="max-height: 70vh; overflow-y: auto;">
+                <table id="userTable" class="table table-striped table-bordered">
+                    <thead class="sticky-top">
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Periode</th>
+                        <th scope="col">Total Pendapatan Kotor</th>
+                        <th scope="col">Total Pendapatan Bersih</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="laporan, iterStat : ${laporanData}">
+                        <td th:text="${iterStat.index + 1}">1</td>
+                        <td th:text="${laporan.period}">Period</td>
+                        <td><span th:text="${laporan.totalHargaPenjualan}" data-value="${laporan.totalHargaPenjualan}"></span></td>
+                        <td><span th:text="${laporan.labaPenjualan}" data-value="${laporan.labaPenjualan}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- jsPDF & autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script th:inline="none">
+    // Fungsi format range periode sesuai filter
+    function formatRangePeriode(start, end, filter) {
+        if (!start || !end) return '';
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (isNaN(startDate) || isNaN(endDate)) return '';
+
+        if (filter === 'day') {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'month') {
+            const options = { month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'year') {
+            const options = { year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        }
+        return '';
+    }
+
+    $(document).ready(function () {
+        let filterOption = document.getElementById('filterOptions').value;
+
+        // Format currency dan format tanggal di tabel
+        $('#userTable tbody tr').each(function () {
+            // Format currency kolom 3 & 4
+            const hargaKotor = parseFloat($(this).find('td:nth-child(3) span').text());
+            const hargaBersih = parseFloat($(this).find('td:nth-child(4) span').text());
+
+            if (!isNaN(hargaKotor)) {
+                $(this).find('td:nth-child(3) span').text(
+                    new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(hargaKotor)
+                );
+            }
+
+            if (!isNaN(hargaBersih)) {
+                $(this).find('td:nth-child(4) span').text(
+                    new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(hargaBersih)
+                );
+            }
+
+            // Format tanggal di kolom 2 (periode) sesuai filter
+            const periodeText = $(this).find('td:nth-child(2)').text().trim();
+            let formattedPeriode = periodeText; // default fallback
+
+            if (filterOption === 'day') {
+                // Diasumsikan periodeText adalah tanggal / range yg sudah di-format di backend, biar aman
+                // Kalau kamu kirim tanggal raw, bisa parse dan format disini juga
+                // Kalau format backend sudah sesuai, bisa dilewati
+            } else if (filterOption === 'month') {
+                // Misal periodeText = '2023-08' atau 'Agustus 2023' — ini harus sesuai format backend
+                // Kalau backend kirim "2023-08" atau "2023-09", kita format:
+                // Contoh jika data backend format yyyy-MM:
+                if (/^\d{4}-\d{2}$/.test(periodeText)) {
+                    const parts = periodeText.split('-');
+                    const dt = new Date(parts[0], parts[1] - 1);
+                    formattedPeriode = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(dt);
+                    $(this).find('td:nth-child(2)').text(formattedPeriode);
+                }
+            } else if (filterOption === 'year') {
+                // Jika backend kirim "2025", cukup tampilkan saja
+                // Kalau backend kirim format lain bisa diubah juga
+            }
+        });
+
+        // Register custom sort type (currency tanpa simbol)
+        jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
+            "tsc-pre": function (data) {
+                return parseInt(data.replace(/\D/g, ''), 10);
+            },
+            "tsc-asc": function (a, b) {
+                return a - b;
+            },
+            "tsc-desc": function (a, b) {
+                return b - a;
+            }
+        });
+
+        // Inisialisasi DataTables
+        const table = $('#userTable').DataTable({
+            columnDefs: [{
+                targets: 1,
+                type: 'tsc'
+            }],
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            ordering: true,
+            order: [],
+            language: {
+                search: "Cari: ",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "›",
+                    previous: "‹"
+                }
+            },
+            dom: 'lrtip' // Hilangkan default search box dari DataTables
+        });
+
+        // Update periode subtitle
+        function updatePeriodeSubtitle() {
+            const startDateValue = $('#startDate').val();
+            const endDateValue = $('#endDate').val();
+            const subtitle = formatRangePeriode(startDateValue, endDateValue, filterOption);
+            $('#periodeSubtitle').text(`Periode: ${subtitle}`);
+        }
+
+        updatePeriodeSubtitle();
+
+        // Saat filter option berubah
+        $('#filterOptions').on('change', function () {
+            filterOption = this.value;
+            updatePeriodeSubtitle();
+            table.draw();
+        });
+
+        // Update subtitle jika tanggal filter berubah
+        $('#startDate, #endDate').on('change', function () {
+            updatePeriodeSubtitle();
+        });
+
+        // Export PDF button event
+        $('#viewPdfBtn').on('click', function () {
+            // Ambil data filter untuk periode
+            const startDateValue = $('#startDate').val();
+            const endDateValue = $('#endDate').val();
+
+            // Siapkan doc jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'pt', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Judul dan subtitle periode
+            const title = "Laporan Pendapatan Per Periode";
+            const dateRange = `Periode: ${formatRangePeriode(startDateValue, endDateValue, filterOption)}`;
+
+            // Header
+            doc.setFontSize(18);
+            doc.text(title, pageWidth / 2, 40, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text(dateRange, pageWidth / 2, 60, { align: 'center' });
+
+            // Ambil semua data dari datatable tanpa paging
+            const allData = table.rows({ search: 'applied' }).data().toArray();
+
+            // Format data untuk autoTable
+            const bodyData = allData.map((row, index) => {
+                // row[0] = No, row[1] = Periode, row[2] = Total Kotor, row[3] = Total Bersih
+                // Kita ingin format currency dan format periode di PDF juga:
+
+                // Format currency
+                function formatCurrency(str) {
+                    let number = 0;
+                    if (typeof str === 'string') {
+                        number = parseInt(str.replace(/[^0-9]/g, ''), 10);
+                    } else if (typeof str === 'number') {
+                        number = str;
+                    }
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(number);
+                }
+
+                // Format periode (asumsi sudah baik, atau bisa disesuaikan)
+                let periodeText = row[1];
+
+                // Format tanggal bisa dipertimbangkan jika raw date tersedia (kalau backend sudah kirim bagus, skip)
+                // Kalau kamu punya data raw date lain, bisa diproses di sini
+
+                return [
+                    index + 1,
+                    periodeText,
+                    formatCurrency(row[2]),
+                    formatCurrency(row[3])
+                ];
+            });
+
+            doc.autoTable({
+                startY: 80,
+                head: [['No', 'Periode', 'Total Pendapatan Kotor', 'Total Pendapatan Bersih']],
+                body: bodyData,
+                styles: { fontSize: 10, cellPadding: 4 },
+                headStyles: { fillColor: [41, 128, 185] },
+                margin: { top: 80, left: 40, right: 40 },
+                theme: 'grid',
+                didDrawPage: function (data) {
+                    // Optional: bisa menambahkan footer jika mau
+                }
+            });
+
+            window.open(doc.output('bloburl'), '_blank');
+        });
+    });
+</script>
+</body>
+</html>
