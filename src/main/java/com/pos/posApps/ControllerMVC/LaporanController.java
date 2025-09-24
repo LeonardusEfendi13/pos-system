@@ -58,6 +58,7 @@ public class LaporanController {
         model.addAttribute("filterOptions", filterOptions);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pendapatanPeriode");
+        model.addAttribute("activeSubPage", "pendapatanPeriode"); // Add this!
 
         // Add any necessary data
         return "display_laporan_pendapatan_per_periode"; // Thymeleaf template
@@ -89,6 +90,7 @@ public class LaporanController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pendapatanPelanggan");
+        model.addAttribute("activeSubPage", "pendapatanPelanggan"); // Add this!
 
         // Add any necessary data
         return "display_laporan_pendapatan_per_pelanggan"; // Thymeleaf template

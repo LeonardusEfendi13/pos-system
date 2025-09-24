@@ -15,32 +15,37 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <style>
-        body {
-            background-color: #f4f4f4;
-        }
+        .nav-link.active {
+           background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+           color: #e0e7ff;
+           padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+       }
+       body {
+           background-color: #f4f4f4;
+       }
 
-        .logout-button {
-            margin-top: auto;
-            padding: 1rem;
-        }
+       .logout-button {
+           margin-top: auto;
+           padding: 1rem;
+       }
 
-        .add-user-btn {
-            margin-bottom: 15px;
-        }
+       .add-user-btn {
+           margin-bottom: 15px;
+       }
 
-        /* ADD: margin below filter */
-        .filter-container {
-            margin: 20px 0;
-        }
-        .dropdown-item.disabled {
-            pointer-events: none;
-            opacity: 0.5;
-        }
-        input[type="checkbox"]:disabled {
-          opacity: 1;               /* Keep full opacity */
-          pointer-events: none;     /* Prevent interaction */
-          accent-color: #007bff;    /* Custom bright color (blue in this case) */
-        }
+       /* ADD: margin below filter */
+       .filter-container {
+           margin: 20px 0;
+       }
+       .dropdown-item.disabled {
+           pointer-events: none;
+           opacity: 0.5;
+       }
+       input[type="checkbox"]:disabled {
+         opacity: 1;               /* Keep full opacity */
+         pointer-events: none;     /* Prevent interaction */
+         accent-color: #007bff;    /* Custom bright color (blue in this case) */
+       }
     </style>
 </head>
 <body>
