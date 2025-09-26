@@ -44,7 +44,7 @@ public class PenjualanService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public List<LaporanPerWaktuDTO> getLaporanPenjualanDataByPeriode(
+    public List<LaporanPenjualanPerWaktuDTO> getLaporanPenjualanDataByPeriode(
             Long clientId,
             LocalDateTime startDate,
             LocalDateTime endDate,
@@ -77,7 +77,7 @@ public class PenjualanService {
                 .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
 
         // Grouping by actual data
-        Map<String, LaporanPerWaktuDTO> groupedMap = transactionData.stream()
+        Map<String, LaporanPenjualanPerWaktuDTO> groupedMap = transactionData.stream()
                 .flatMap(trx -> trx.getTransactionDetailEntities().stream()
                         .filter(detail -> detail.getDeletedAt() == null)
                         .map(detail -> {
@@ -90,13 +90,13 @@ public class PenjualanService {
                             BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
                             BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
 
-                            return Map.entry(period, new LaporanPerWaktuDTO(period, totalPrice, laba));
+                            return Map.entry(period, new LaporanPenjualanPerWaktuDTO(period, totalPrice, laba));
                         })
                 )
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (existing, incoming) -> new LaporanPerWaktuDTO(
+                        (existing, incoming) -> new LaporanPenjualanPerWaktuDTO(
                                 existing.getPeriod(),
                                 existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
                                 existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
@@ -104,11 +104,11 @@ public class PenjualanService {
                 ));
 
         // Ensure all periods are present in the final map, even if zero
-        Map<String, LaporanPerWaktuDTO> finalMap = new TreeMap<>(); // TreeMap to ensure natural ordering
+        Map<String, LaporanPenjualanPerWaktuDTO> finalMap = new TreeMap<>(); // TreeMap to ensure natural ordering
         for (String period : allPeriods) {
-            LaporanPerWaktuDTO data = groupedMap.getOrDefault(
+            LaporanPenjualanPerWaktuDTO data = groupedMap.getOrDefault(
                     period,
-                    new LaporanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO)
+                    new LaporanPenjualanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO)
             );
             finalMap.put(period, data);
         }
@@ -116,7 +116,7 @@ public class PenjualanService {
         return new ArrayList<>(finalMap.values());
     }
 
-    public List<LaporanPerPelangganDTO> getLaporanPenjualanDataByCustomer(
+    public List<LaporanPenjualanPerPelangganDTO> getLaporanPenjualanDataByCustomer(
             Long clientId,
             LocalDateTime startDate,
             LocalDateTime endDate
@@ -133,7 +133,7 @@ public class PenjualanService {
                 .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
 
         // Group by customer name
-        Map<String, LaporanPerPelangganDTO> groupedByCustomer = transactionData.stream()
+        Map<String, LaporanPenjualanPerPelangganDTO> groupedByCustomer = transactionData.stream()
                 .flatMap(trx -> trx.getTransactionDetailEntities().stream()
                         .filter(detail -> detail.getDeletedAt() == null)
                         .map(detail -> {
@@ -150,13 +150,13 @@ public class PenjualanService {
                             BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
 
                             return Map.entry(customerName,
-                                    new LaporanPerPelangganDTO(customerName, totalPrice, laba));
+                                    new LaporanPenjualanPerPelangganDTO(customerName, totalPrice, laba));
                         })
                 )
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (existing, incoming) -> new LaporanPerPelangganDTO(
+                        (existing, incoming) -> new LaporanPenjualanPerPelangganDTO(
                                 existing.getCustomerName(),
                                 existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
                                 existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
@@ -164,7 +164,7 @@ public class PenjualanService {
                 ));
 
         return groupedByCustomer.values().stream()
-                .sorted(Comparator.comparing(LaporanPerPelangganDTO::getCustomerName))
+                .sorted(Comparator.comparing(LaporanPenjualanPerPelangganDTO::getCustomerName))
                 .collect(Collectors.toList());
     }
 

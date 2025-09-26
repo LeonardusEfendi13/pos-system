@@ -145,7 +145,7 @@
 
                 <!-- Laporan -->
                 <li class="nav-item dropdown"
-                    th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'laporanPengeluaran') ? ' active' : ''">
+                    th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' active' : ''">
 
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-laporan"
@@ -153,13 +153,13 @@
                        role="button"
                        aria-expanded="false"
                        aria-controls="sidebar-laporan"
-                       th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'laporanPengeluaran') ? '' : ' collapsed'">
+                       th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? '' : ' collapsed'">
                         <span class="nav-link-title">Laporan</span>
                     </a>
 
                     <div class="collapse"
                          id="sidebar-laporan"
-                         th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'laporanPengeluaran') ? ' show' : ''">
+                         th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' show' : ''">
 
                         <ul class="nav flex-column ms-3">
 
@@ -173,7 +173,7 @@
                                    aria-expanded="false"
                                    aria-controls="laporanPendapatanSub"
                                    th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan') ? '' : ' collapsed'">
-                                    Laporan Pendapatan
+                                    Laporan Penjualan
                                 </a>
 
                                 <div class="collapse"
@@ -185,7 +185,7 @@
                                             <a class="nav-link"
                                                href="/laporan/pendapatan/periode"
                                                th:classappend="${activeSubPage} == 'pendapatanPeriode' ? ' active' : ''">
-                                                Per Waktu
+                                                Per Periode
                                             </a>
                                         </li>
                                         <li class="nav-item">
@@ -196,19 +196,44 @@
                                             </a>
                                         </li>
                                     </ul>
-
                                 </div>
                             </li>
 
                             <!-- Laporan Pengeluaran -->
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   href="/laporan/pengeluaran"
-                                   th:classappend="${activePage} == 'laporanPengeluaran' ? ' active' : ''">
-                                    Laporan Pengeluaran
+                            <li class="nav-item dropdown"
+                                th:classappend="(${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' active' : ''">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#laporanPengeluaranSub"
+                                   data-bs-toggle="collapse"
+                                   role="button"
+                                   aria-expanded="false"
+                                   aria-controls="laporanPengeluaranSub"
+                                   th:classappend="(${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? '' : ' collapsed'">
+                                    Laporan Pembelian
                                 </a>
-                            </li>
 
+                                <div class="collapse"
+                                     id="laporanPengeluaranSub"
+                                     th:classappend="(${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' show' : ''">
+
+                                    <ul class="nav flex-column ms-3">
+                                        <li class="nav-item">
+                                            <a class="nav-link"
+                                               href="/laporan/pengeluaran/periode"
+                                               th:classappend="${activeSubPage} == 'pengeluaranPeriode' ? ' active' : ''">
+                                                Per Periode
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link"
+                                               href="/laporan/pengeluaran/pelanggan"
+                                               th:classappend="${activeSubPage} == 'pengeluaranPelanggan' ? ' active' : ''">
+                                                Per Pelanggan
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </li>

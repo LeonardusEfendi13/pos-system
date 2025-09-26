@@ -10,8 +10,7 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LaporanPerPelangganDTO {
-    private String customerName;
-    private BigDecimal totalHargaPenjualan;
-    private BigDecimal labaPenjualan;
+public class LaporanPembelianPerWaktuDTO {
+    private String period;
+    private BigDecimal totalHargaPembelian;
 }
