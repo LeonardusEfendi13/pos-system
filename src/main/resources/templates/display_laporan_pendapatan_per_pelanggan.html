@@ -88,7 +88,24 @@
                 </div>
             </form>
 
-            <div style="max-height: 70vh; overflow-y: auto;">
+            <div class="row mt-3">
+                <div class="col-md-4 offset-md-2">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Pendapatan Kotor <span id="totalKotorDisplay" class="card-text fw-bold text-primary"></span></h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Pendapatan Bersih : <span id="totalBersihDisplay" class="card-text fw-bold text-success"> Rp0</span></h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="max-height: 70vh; overflow-y: auto;padding-top:10px">
                 <table id="userTable" class="table table-striped table-bordered">
                     <thead class="sticky-top">
                     <tr>
@@ -102,8 +119,8 @@
                     <tr th:each="laporan, iterStat : ${laporanData}">
                         <td th:text="${iterStat.index + 1}">1</td>
                         <td th:text="${laporan.customerName}">Nama</td>
-                        <td><span th:text="${laporan.totalHargaPenjualan}" data-value="${laporan.totalHargaPenjualan}"></span></td>
-                        <td><span th:text="${laporan.labaPenjualan}" data-value="${laporan.labaPenjualan}"></span></td>
+                        <td><span th:attr="data-value=${laporan.totalHargaPenjualan}" th:text="${laporan.totalHargaPenjualan}"></span></td>
+                        <td><span th:attr="data-value=${laporan.labaPenjualan}" th:text="${laporan.labaPenjualan}"></span></td>
                     </tr>
                     </tbody>
                 </table>
@@ -122,21 +139,87 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 <script th:inline="none">
+    // Fungsi format range periode sesuai filter
+    function formatRangePeriode(start, end, filter) {
+        if (!start || !end) return '';
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (isNaN(startDate) || isNaN(endDate)) return '';
+
+        if (filter === 'day') {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'month') {
+            const options = { month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'year') {
+            const options = { year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        }
+        return '';
+    }
+    // Format currency
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    // Sum columns by selector
+    function sumColumn(selector) {
+        let sum = 0;
+        document.querySelectorAll(selector).forEach(el => {
+            const value = parseFloat(el.getAttribute('data-value'));
+            if (!isNaN(value)) {
+                sum += value;
+            }
+        });
+        return sum;
+    }
+
+    // Update displayed totals
+    function updateTotals() {
+        // Get all filtered rows data (not just visible page)
+        const allData = $('#userTable').DataTable().rows({ search: 'applied' }).data();
+
+        let totalKotor = 0;
+        let totalBersih = 0;
+
+        allData.each(function(row) {
+            // row[2] and row[3] are HTML strings, so we create a temporary DOM element to extract data-value
+            const tempDivKotor = document.createElement('div');
+            tempDivKotor.innerHTML = row[2];
+            const kotorStr = tempDivKotor.querySelector('span')?.getAttribute('data-value') || '0';
+
+            const tempDivBersih = document.createElement('div');
+            tempDivBersih.innerHTML = row[3];
+            const bersihStr = tempDivBersih.querySelector('span')?.getAttribute('data-value') || '0';
+
+            const kotorNum = parseInt(kotorStr, 10) || 0;
+            const bersihNum = parseInt(bersihStr, 10) || 0;
+
+            totalKotor += kotorNum;
+            totalBersih += bersihNum;
+        });
+
+        // Format and display totals
+        document.getElementById('totalKotorDisplay').textContent = formatCurrency(totalKotor);
+        document.getElementById('totalBersihDisplay').textContent = formatCurrency(totalBersih);
+    }
+
     $(document).ready(function () {
-        // Format currency in the table
+        // Format all currency in table
         document.querySelectorAll('td span').forEach(el => {
             const number = parseFloat(el.textContent);
             if (!isNaN(number)) {
-                el.textContent = new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(number);
+                el.textContent = formatCurrency(number);
             }
         });
 
-        // Register custom sort type for currency columns
+        // Custom sort for currency
         jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
             "tsc-pre": function (data) {
                 return parseInt(data.replace(/\D/g, ''), 10);
@@ -149,7 +232,7 @@
             }
         });
 
-        // Initialize DataTables with pagination
+        // Init DataTable
         const table = $('#userTable').DataTable({
             paging: true,
             pageLength: 10,
@@ -171,28 +254,37 @@
             scrollCollapse: true,
         });
 
-        // Export full table to PDF (all pages)
+        // Initial total calculation
+        updateTotals();
+
+        // Update totals when table is filtered or paginated
+        table.on('draw', function () {
+            updateTotals();
+        });
+
+        // === Export to PDF ===
         document.getElementById('viewPdfBtn').addEventListener('click', async () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
-            // === STEP 1: Get Filter Text and Dates ===
-            const filterSelect = document.getElementById('filterOptions');
-            const selectedText = filterSelect ? filterSelect.options[filterSelect.selectedIndex].textContent : "Hari";
-
-            const startDateValue = document.getElementById('startDate')?.value;
-            const endDateValue = document.getElementById('endDate')?.value;
-
-            function formatIndoDate(dateStr, type) {
+            // Date formatting
+            const formatIndoDate = (dateStr, type) => {
                 const date = new Date(dateStr);
                 const options = { year: 'numeric' };
                 if (type === 'month') options.month = 'long';
-                else if (type === 'day') options.month = 'long', options.day = 'numeric';
+                else if (type === 'day') {
+                    options.month = 'long';
+                    options.day = 'numeric';
+                }
                 return new Intl.DateTimeFormat('id-ID', options).format(date);
-            }
+            };
 
-            let formattedStart, formattedEnd;
+            const filterSelect = document.getElementById('filterOptions');
+            const startDateValue = document.getElementById('startDate')?.value;
+            const endDateValue = document.getElementById('endDate')?.value;
+
             const filterValue = filterSelect?.value;
+            let formattedStart, formattedEnd;
             if (filterValue === 'month') {
                 formattedStart = formatIndoDate(startDateValue, 'month');
                 formattedEnd = formatIndoDate(endDateValue, 'month');
@@ -204,18 +296,15 @@
                 formattedEnd = formatIndoDate(endDateValue, 'day');
             }
 
-            // === STEP 2: Build Title ===
             const title = `Laporan Pendapatan Per Pelanggan`;
             const subtitle = `Periode: ${formattedStart} - ${formattedEnd}`;
 
-            // === STEP 3: Build Table Data from ALL DataTable Rows ===
-            const table = $('#userTable').DataTable();
-            const allData = table.rows().data(); // all rows, not just visible
+            const tableData = $('#userTable').DataTable();
+            const allData = tableData.rows().data();
 
             const body = [];
             for (let i = 0; i < allData.length; i++) {
                 const row = allData[i];
-                const cells = $('<div>').html(row[2]).text(); // Extract text from span inside cell
                 body.push([
                     i + 1,
                     $(row[1]).text() || row[1],
@@ -224,35 +313,30 @@
                 ]);
             }
 
-            // === STEP 4: Write PDF Content ===
             doc.setFontSize(14);
             const pageWidth = doc.internal.pageSize.getWidth();
-            const titleWidth = doc.getTextWidth(title);
-            const titleX = (pageWidth - titleWidth) / 2;
+            const titleX = (pageWidth - doc.getTextWidth(title)) / 2;
             doc.text(title, titleX, 20);
 
             doc.setFontSize(11);
-            const subtitleWidth = doc.getTextWidth(subtitle);
-            const subtitleX = (pageWidth - subtitleWidth) / 2;
+            const subtitleX = (pageWidth - doc.getTextWidth(subtitle)) / 2;
             doc.text(subtitle, subtitleX, 28);
 
-            // Add some vertical space before table
             doc.autoTable({
                 startY: 36,
                 head: [['No', 'Nama Pelanggan', 'Total Pendapatan Kotor', 'Total Pendapatan Bersih']],
                 body: body,
                 styles: { fontSize: 10 },
-                headStyles: { fillColor: [0, 123, 255] }, // Bootstrap blue
+                headStyles: { fillColor: [0, 123, 255] },
                 columnStyles: {
-                    0: { cellWidth: 10 },    // No
-                    1: { cellWidth: 60 },    // Nama Pelanggan
-                    2: { cellWidth: 55 },    // Kotor
-                    3: { cellWidth: 55 },    // Bersih
+                    0: { cellWidth: 10 },
+                    1: { cellWidth: 60 },
+                    2: { cellWidth: 55 },
+                    3: { cellWidth: 55 },
                 },
                 margin: { left: 14, right: 14 }
             });
 
-            // === STEP 5: Open PDF
             window.open(doc.output('bloburl'), '_blank');
         });
     });
