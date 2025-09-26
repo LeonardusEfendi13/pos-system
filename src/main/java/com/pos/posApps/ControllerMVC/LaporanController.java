@@ -1,9 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.LaporanPembelianPerPelangganDTO;
-import com.pos.posApps.DTO.Dtos.LaporanPembelianPerWaktuDTO;
-import com.pos.posApps.DTO.Dtos.LaporanPenjualanPerPelangganDTO;
-import com.pos.posApps.DTO.Dtos.LaporanPenjualanPerWaktuDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.CustomerService;
@@ -167,5 +164,24 @@ public class LaporanController {
 
         // Add any necessary data
         return "display_laporan_pengeluaran_per_pelanggan"; // Thymeleaf template
+    }
+
+    @GetMapping("/nilai_persediaan")
+    public String laporanNilaiPersediaan(HttpSession session, Model model){
+        Long clientId;
+        try{
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        }catch (Exception e){
+            return "redirect:/login";
+        }
+
+        List<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId);
+        System.out.println("Data : " + laporanData);
+        model.addAttribute("laporanData", laporanData);
+        model.addAttribute("activePage", "nilaiPersediaan");
+
+        // Add any necessary data
+        return "display_laporan_nilai_persediaan_barang"; // Thymeleaf template
     }
 }

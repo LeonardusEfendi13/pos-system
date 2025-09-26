@@ -145,7 +145,7 @@
 
                 <!-- Laporan -->
                 <li class="nav-item dropdown"
-                    th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' active' : ''">
+                    th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan' or ${activePage} == 'nilaiPersediaan') ? ' active' : ''">
 
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-laporan"
@@ -153,15 +153,23 @@
                        role="button"
                        aria-expanded="false"
                        aria-controls="sidebar-laporan"
-                       th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? '' : ' collapsed'">
+                       th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan' or ${activePage} == 'nilaiPersediaan') ? '' : ' collapsed'">
                         <span class="nav-link-title">Laporan</span>
                     </a>
 
                     <div class="collapse"
                          id="sidebar-laporan"
-                         th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan') ? ' show' : ''">
+                         th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan' or ${activePage} == 'nilaiPersediaan') ? ' show' : ''">
 
                         <ul class="nav flex-column ms-3">
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/laporan/nilai_persediaan"
+                                   th:classappend="${activePage} == 'nilaiPersediaan' ? ' active' : ''">
+                                    Laporan Nilai Persediaan Barang
+                                </a>
+                            </li>
 
                             <!-- Laporan Pendapatan -->
                             <li class="nav-item dropdown"

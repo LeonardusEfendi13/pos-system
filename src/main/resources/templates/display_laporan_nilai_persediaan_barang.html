@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:inline="html">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Laporan Nilai Persediaan Barang</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Popper.js (Bootstrap 5 needs it for dropdowns & collapse) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+       body {
+           background-color: #f4f4f4;
+       }
+
+       .logout-button {
+           margin-top: auto;
+           padding: 1rem;
+       }
+
+       .add-user-btn {
+           margin-bottom: 15px;
+       }
+
+       .filter-container {
+           margin: 20px 0;
+       }
+
+       .dropdown-item.disabled {
+           pointer-events: none;
+           opacity: 0.5;
+       }
+
+       input[type="checkbox"]:disabled {
+         opacity: 1;
+         pointer-events: none;
+         accent-color: #007bff;
+       }
+
+       .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e0e7ff;
+            padding-left: calc(1rem - 4px);
+        }
+
+    </style>
+</head>
+<body>
+<div class="page">
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <div class="page-wrapper">
+        <div class="container-fluid">
+            <h2 style="text-align:center; padding-top:10px">Laporan Nilai Persediaan Barang</h2>
+
+            <div class="row mt-3">
+                <!-- Centered Total Nilai Barang -->
+                <div class="col-md-4 offset-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                Total Nilai Barang <span id="totalNilaiBarang" class="card-text fw-bold text-primary"></span>
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right-aligned PDF Button -->
+                <div class="col-md-2 ms-auto">
+                    <button id="exportPdfBtn" type="button" class="btn btn-warning w-100">
+                        <i class="bi bi-eye-fill me-1"></i> View as PDF
+                    </button>
+                </div>
+            </div>
+
+            <div style="max-height: 70vh; overflow-y: auto;padding-top:10px">
+                <table id="userTable" class="table table-striped table-bordered">
+                    <thead class="sticky-top">
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Kode Barang</th>
+                        <th scope="col">Nama Barang</th>
+                        <th scope="col">Stock</th>
+                        <th scope="col">Harga Beli</th>
+                        <th scope="col">Harga Jual</th>
+                        <th scope="col">Total Nilai Barang</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="laporan, iterStat : ${laporanData}">
+                        <td th:text="${iterStat.index + 1}">1</td>
+                        <td th:text="${laporan.shortName}">Nama</td>
+                        <td th:text="${laporan.fullName}">Nama</td>
+                        <td th:text="${laporan.qty}">Nama</td>
+                        <td><span th:attr="data-value=${laporan.supplierPrice}" th:text="${laporan.supplierPrice}"></span></td>
+                        <td><span th:attr="data-value=${laporan.hargaJual}" th:text="${laporan.hargaJual}"></span></td>
+                        <td><span th:attr="data-value=${laporan.totalPrice}" th:text="${laporan.totalPrice}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- jsPDF & autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script th:inline="none">
+    // Fungsi format range periode sesuai filter
+    function formatRangePeriode(start, end, filter) {
+        if (!start || !end) return '';
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (isNaN(startDate) || isNaN(endDate)) return '';
+
+        if (filter === 'day') {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'month') {
+            const options = { month: 'long', year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        } else if (filter === 'year') {
+            const options = { year: 'numeric' };
+            return `${new Intl.DateTimeFormat('id-ID', options).format(startDate)} - ${new Intl.DateTimeFormat('id-ID', options).format(endDate)}`;
+        }
+        return '';
+    }
+    // Format currency
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    // Sum columns by selector
+    function sumColumn(selector) {
+        let sum = 0;
+        document.querySelectorAll(selector).forEach(el => {
+            const value = parseFloat(el.getAttribute('data-value'));
+            if (!isNaN(value)) {
+                sum += value;
+            }
+        });
+        return sum;
+    }
+
+    // Update displayed totals
+    function updateTotals() {
+        // Get all filtered rows data (not just visible page)
+        const allData = $('#userTable').DataTable().rows({ search: 'applied' }).data();
+
+        let totalNilaiBarang = 0;
+
+        allData.each(function(row) {
+            const tempDivNilaiBarang = document.createElement('div');
+            tempDivNilaiBarang.innerHTML = row[6];
+            const nilaiBarangStr = tempDivNilaiBarang.querySelector('span')?.getAttribute('data-value') || '0';
+
+            const nilaiBarang = parseInt(nilaiBarangStr, 10) || 0;
+
+            totalNilaiBarang += nilaiBarang;
+        });
+
+        // Format and display totals
+        document.getElementById('totalNilaiBarang').textContent = formatCurrency(totalNilaiBarang);
+    }
+
+    $(document).ready(function () {
+        // Format all currency in table
+        document.querySelectorAll('td span').forEach(el => {
+            const number = parseFloat(el.textContent);
+            if (!isNaN(number)) {
+                el.textContent = formatCurrency(number);
+            }
+        });
+
+        // Custom sort for currency
+        jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
+            "tsc-pre": function (data) {
+                return parseInt(data.replace(/\D/g, ''), 10);
+            },
+            "tsc-asc": function (a, b) {
+                return a - b;
+            },
+            "tsc-desc": function (a, b) {
+                return b - a;
+            }
+        });
+
+        // Init DataTable
+        const table = $('#userTable').DataTable({
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            ordering: true,
+            order: [],
+            language: {
+                search: "Cari: ",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "›",
+                    previous: "‹"
+                }
+            },
+            scrollCollapse: true,
+        });
+
+        // Initial total calculation
+        updateTotals();
+
+        // Update totals when table is filtered or paginated
+        table.on('draw', function () {
+            updateTotals();
+        });
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Add title
+        doc.setFontSize(14);
+        doc.text("Laporan Nilai Persediaan Barang", 105, 15, null, null, 'center');
+
+        // Get total nilai barang
+        const totalNilaiBarang = document.getElementById('totalNilaiBarang').textContent || 'Rp0';
+
+        // Add total
+        doc.setFontSize(12);
+        doc.text(`Total Nilai Barang: ${totalNilaiBarang}`, 14, 25);
+
+        // Collect data from table (all rows, not just visible)
+        const table = $('#userTable').DataTable();
+        const data = table.rows({ search: 'applied' }).data();
+
+        const rows = [];
+        data.each(function (row) {
+            const rowData = [
+                row[0], // No
+                row[1], // Kode
+                row[2], // Nama
+                row[3], // Stock
+                $(row[4]).text(), // Harga Beli
+                $(row[5]).text(), // Harga Jual
+                $(row[6]).text(), // Total Nilai
+            ];
+            rows.push(rowData);
+        });
+
+        // AutoTable
+        doc.autoTable({
+            startY: 35,
+            head: [[
+                'No', 'Kode Barang', 'Nama Barang', 'Stock',
+                'Harga Beli', 'Harga Jual', 'Total Nilai Barang'
+            ]],
+            body: rows,
+            theme: 'grid',
+            styles: {
+                fontSize: 9
+            }
+        });
+
+        // Open in new tab instead of download
+        window.open(doc.output('bloburl'), '_blank');
+    });
+
+</script>
+</body>
+</html>
