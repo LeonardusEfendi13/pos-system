@@ -15,37 +15,103 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <style>
+        /* ===========================
+           Global Styles
+        ============================ */
+        html, body {
+          overflow-x: hidden;
+          margin: 0;
+          padding: 0;
+        }
+
+        .container-fluid {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+
+        /* ===========================
+           Navigation
+        ============================ */
         .nav-link.active {
-           background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
-           color: #e0e7ff;
-           padding-left: calc(1rem - 4px); /* agar padding kiri pas */
-       }
-       body {
-           background-color: #f4f4f4;
-       }
+          background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+          color: #e0e7ff;
+          padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+        }
 
-       .logout-button {
-           margin-top: auto;
-           padding: 1rem;
-       }
+        .logout-button {
+          margin-top: auto;
+          padding: 1rem;
+        }
 
-       .add-user-btn {
-           margin-bottom: 15px;
-       }
+        /* ===========================
+           Buttons
+        ============================ */
+        .add-user-btn {
+          margin-bottom: 15px;
+        }
 
-       /* ADD: margin below filter */
-       .filter-container {
-           margin: 20px 0;
-       }
-       .dropdown-item.disabled {
-           pointer-events: none;
-           opacity: 0.5;
-       }
-       input[type="checkbox"]:disabled {
-         opacity: 1;               /* Keep full opacity */
-         pointer-events: none;     /* Prevent interaction */
-         accent-color: #007bff;    /* Custom bright color (blue in this case) */
-       }
+        /* ===========================
+           Filters
+        ============================ */
+        .filter-container {
+          margin: 20px 0;
+        }
+
+        /* ===========================
+           Dropdown & Form Controls
+        ============================ */
+        .dropdown-item.disabled {
+          pointer-events: none;
+          opacity: 0.5;
+        }
+
+        input[type="checkbox"]:disabled {
+          opacity: 1;               /* keep full opacity */
+          pointer-events: none;     /* prevent interaction */
+          accent-color: #007bff;    /* custom bright blue */
+        }
+        /* Table Wrapper */
+        #tableWrapper {
+          height: 100%;
+          overflow-y: auto;
+          overflow-x: hidden;
+          transition: height 0.3s ease;
+        }
+
+        /* Detail Container */
+        #detailContainer {
+          display: none;
+          flex-shrink: 0;          /* biar tidak ketekan table */
+          background: white;
+          border-top: 2px solid #ccc;
+          box-shadow: 0 -2px 8px rgba(0,0,0,.1);
+          border-radius: 8px 8px 0 0;
+          overflow: hidden;
+          transition: height 0.3s ease;
+        }
+
+        .detail-header {
+          background: #f8f9fa;
+          padding: .5rem 1rem;
+          border-bottom: 1px solid #ddd;
+        }
+
+        .detail-body {
+          height: calc(100% - 45px); /* header tinggi fix */
+          overflow-y: auto;
+        }
+
+        /* Sticky header tabel detail */
+        #detailContent table thead th {
+          position: sticky;
+          top: 0;
+          background: #f8f9fa;
+          z-index: 10;
+        }
+        #userTable tbody tr.previewing-row,
+        #userTable tbody tr.previewing-row td {
+          background-color: #FFA500 !important;
+        }
     </style>
 </head>
 <body>
@@ -100,47 +166,73 @@
                 </div>
             </form>
 
-            <div style="max-height: 70vh; overflow-y: auto;">
-                <table id="userTable" class="table table-striped table-bordered">
-                    <thead class="sticky-top">
-                    <tr>
-                        <th scope="col">No</th>
-                        <th scope="col">No. Faktur</th>
-                        <th scope="col">Tanggal Faktur</th>
-                        <th scope="col">Tanggal Jatuh Tempo</th>
-                        <th scope="col">Total Beli</th>
-                        <th scope="col">Supplier</th>
-                        <th scope="col">Tipe Pembayaran</th>
-                        <th scope="col">Lunas</th>
-                        <th scope="col">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="pembelian, iterStat : ${pembelianData}" th:attr="data-id=${pembelian.pembelianId}, data-iskredit=${!pembelian.isCash}, data-islunas=${pembelian.isPaid}">
-                        <td th:text="${iterStat.index + 1}">1</td>
-                        <td th:text="${pembelian.noFaktur}">No Faktur</td>
-                        <td th:text="${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
-                        <td th:text="${pembelian.isCash} ? ${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))} : ${#temporals.format(pembelian.tanggalTempo, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
-                        <td><span th:text="${pembelian.totalPrice}">Rp0</span></td>
-                        <td th:text="${pembelian.supplierDTO.supplierName}">Supplier</td>
-                        <td th:text="${pembelian.isCash} ? 'Tunai' : 'Kredit'"></td>
-                        <td style="text-align:center">
-                            <input type="checkbox" th:checked="${pembelian.isPaid}" style="transform:scale(1.5);pointer-events: none;"/>
-                        </td>
-                        <td>
-                            <form th:action="@{/pembelian/tambah}" method="get" style="display:inline;">
-                                <input type="hidden" name="pembelianId" th:value="${pembelian.pembelianId}">
-                                <button class="btn btn-sm btn-primary me-1">Edit</button>
-                            </form>
-                            <form th:action="@{|/pembelian/delete/${pembelian.pembelianId}|}" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this data?');">
-                                    <i class="ti ti-trash"></i> Delete
+            <div class="container-fluid d-flex flex-column" style="height: 85vh;">
+                <!-- Table Wrapper -->
+                <div id="tableWrapper" style="padding-left: 20px;">
+                    <table id="userTable" class="table table-striped table-bordered">
+                        <thead class="sticky-top">
+                        <tr>
+                            <th scope="col">No</th>
+                            <th scope="col">No. Faktur</th>
+                            <th scope="col">Tanggal Faktur</th>
+                            <th scope="col">Tanggal Jatuh Tempo</th>
+                            <th scope="col">Total Beli</th>
+                            <th scope="col">Supplier</th>
+                            <th scope="col">Tipe Pembayaran</th>
+                            <th scope="col">Lunas</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="pembelian, iterStat : ${pembelianData}"
+                            th:attr="data-id=${pembelian.pembelianId}, data-iskredit=${!pembelian.isCash}, data-islunas=${pembelian.isPaid}">
+                            <td th:text="${iterStat.index + 1}">1</td>
+                            <td th:text="${pembelian.noFaktur}">No Faktur</td>
+                            <td th:text="${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">
+                                Tanggal Jual
+                            </td>
+                            <td th:text="${pembelian.isCash} ? ${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))} : ${#temporals.format(pembelian.tanggalTempo, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">
+                                Tanggal Jual
+                            </td>
+                            <td><span th:text="${pembelian.totalPrice}">Rp0</span></td>
+                            <td th:text="${pembelian.supplierDTO.supplierName}">Supplier</td>
+                            <td th:text="${pembelian.isCash} ? 'Tunai' : 'Kredit'"></td>
+                            <td style="text-align:center">
+                                <input type="checkbox" th:checked="${pembelian.isPaid}"
+                                       style="transform:scale(1.5);pointer-events: none;"/>
+                            </td>
+                            <td>
+                                <form th:action="@{/pembelian/tambah}" method="get" style="display:inline;">
+                                    <input type="hidden" name="pembelianId" th:value="${pembelian.pembelianId}">
+                                    <button class="btn btn-sm btn-primary me-1">Edit</button>
+                                </form>
+                                <form th:action="@{|/pembelian/delete/${pembelian.pembelianId}|}" method="post"
+                                      style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this data?');">
+                                        <i class="ti ti-trash"></i> Delete
+                                    </button>
+                                </form>
+                                <!-- Preview Button -->
+                                <button type="button" class="btn btn-sm btn-info preview-btn"
+                                        th:data-id="${pembelian.pembelianId}">
+                                    Preview
                                 </button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Detail -->
+                <div id="detailContainer">
+                    <div class="detail-header d-flex justify-content-between align-items-center">
+                        <h5 id="detailTitle" class="mb-0">Detail Pembelian</h5>
+                        <button id="closeDetail" class="btn btn-sm btn-outline-secondary">Tutup</button>
+                    </div>
+                    <div class="detail-body">
+                        <div id="detailContent" class="table-responsive"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -154,7 +246,28 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
+<script th:inline="javascript">
+    var pembelianData = /*[[${pembelianData}]]*/ [];
+    var detailsMap = {};
+
+    console.log("pembelian data : " + pembelianData);
+
+    pembelianData.forEach(function (p) {
+      detailsMap[p.pembelianId] = p.pembelianDetailDTOS;
+    });
+    console.log("pembelian data details : ", detailsMap);
+
+</script>
 <script>
+    function formatCurrency(amount) {
+        if (amount == null) return "-";
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(amount);
+      }
+
     $(document).ready(function () {
        const $contextMenu = $('#contextMenu');
        const $menuItem = $('#contextLunaskan');
@@ -269,6 +382,89 @@
            },
            scrollCollapse: true,
        });
+
+       function format(details) {
+            if (!details || details.length === 0) {
+              return "<div class='p-2 text-muted'>Tidak ada detail produk</div>";
+            }
+
+            let html = `
+              <table class="table table-sm table-bordered mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Kode</th>
+                    <th>Nama Barang</th>
+                    <th>Qty</th>
+                    <th>Harga Beli</th>
+                    <th>Diskon (Rp)</th>
+                    <th>Total</th>
+                    <th>Markup 1</th>
+                    <th>Harga Jual 1</th>
+                    <th>Markup 2</th>
+                    <th>Harga Jual 2</th>
+                    <th>Markup 3</th>
+                    <th>Harga Jual 3</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+            details.forEach((d) => {
+              html += `
+                <tr>
+                  <td>${d.code}</td>
+                  <td>${d.name}</td>
+                  <td>${d.qty}</td>
+                  <td>${formatCurrency(d.price)}</td>
+                  <td>${formatCurrency(d.discAmount)}</td>
+                  <td>${formatCurrency(d.total)}</td>
+                  <td>${d.markup1 || "-"}</td>
+                  <td>${d.hargaJual1 ? formatCurrency(d.hargaJual1) : "-"}</td>
+                  <td>${d.markup2 || "-"}</td>
+                  <td>${d.hargaJual2 ? formatCurrency(d.hargaJual2) : "-"}</td>
+                  <td>${d.markup3 || "-"}</td>
+                  <td>${d.hargaJual3 ? formatCurrency(d.hargaJual3) : "-"}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+            return html;
+          }
+
+        // Preview
+          // Preview button handler
+        $("#userTable tbody").on("click", ".preview-btn", function () {
+          const pembelianId = $(this).data("id");
+          const details = detailsMap[pembelianId] || [];
+          const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
+
+          console.log("no faktur : ", noFaktur);
+
+          $("#detailTitle").text("Detail Pembelian (" + noFaktur + ")");
+          $("#userTable tbody tr").removeClass("previewing-row");
+          $(this).closest("tr").addClass("previewing-row");
+
+          // Pastikan ada data
+          if (details.length === 0) {
+            $("#detailContent").html("<p class='text-muted'>Tidak ada detail pembelian.</p>");
+          } else {
+            $("#detailContent").html(format(details));
+          }
+
+          $("#detailContainer").show().css("height", "40%");
+          $("#tableWrapper").css("height", "60%");
+        });
+
+        // Tutup detail
+        $("#closeDetail").on("click", function () {
+          $("#detailContainer").hide();
+          $("#tableWrapper").css("height", "100%");
+
+          // Reset judul
+          $("#detailTitle").text("Detail Pembelian");
+
+          // Hapus highlight row
+          $("#userTable tbody tr").removeClass("previewing-row");
+        });
    });
 </script>
 </body>
