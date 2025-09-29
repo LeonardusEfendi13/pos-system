@@ -3,39 +3,408 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>POS</title>
+    <title>POS Dashboard</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+    <!-- Tabler CSS -->
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"
+    />
 
-    <!-- Bootstrap 5 (example) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap 5 -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    />
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
+          margin: 0;
+          height: 100vh;
+          overflow: hidden; /* cegah body ada scrollbar */
+        }
+        .page {
+          display: flex;
+          height: 100vh;
+          width: 100%;
+        }
+        aside {
+          flex-shrink: 0; /* sidebar tetap ukuran */
+        }
+        .page-wrapper {
+          flex: 1;
+          overflow-y: auto; /* hanya konten scroll */
           background-color: #f4f4f4;
         }
-
-        .logout-button {
-          margin-top: auto;
-          padding: 1rem;
-        }
-
     </style>
 </head>
 <body>
 <div class="page">
+    <!-- Sidebar -->
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <!-- Main content -->
     <div class="page-wrapper">
-        <div style="background-color:red">
-            <h1>Welcome to Dashboard Home</h1>
+        <div class="container py-4">
+            <div style="text-align: center">
+                <h1 style="text-align: center">Dashboard Anugrah Motor</h1>
+                <h4 id="currentDate">TANGGAL HARI INI</h4>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="row mb-4" style="padding-top:15px">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="card-title">Jumlah Transaksi Hari Ini</h4>
+                            <span class="display-6 fw-bold" id="transactionCount" th:text="${topBarData.countTransaction}">999</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="card-title">Nilai Penjualan Hari Ini</h4>
+                            <span class="display-6 fw-bold text-success" id="totalTransaction" th:text="${topBarData.totalTransaction}">
+                                Rp 25.255.255
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="card-title">Nilai Laba Hari Ini</h4>
+                            <span class="display-6 fw-bold text-primary" id="totalRevenue" th:text="${topBarData.totalProfit}">
+                                Rp 5.555.555
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="card-title mb-0">Grafik Keuangan</h4>
+                        <form method="get" action="/home">
+                            <div class="d-flex gap-2">
+                                <!-- Period Filter -->
+                                <select id="periodFilter" class="form-select w-auto">
+                                    <option value="day" selected>Harian</option>
+                                    <option value="month">Bulanan</option>
+                                    <option value="year">Tahunan</option>
+                                </select>
+
+                                <!-- Start & End Date -->
+                                <input type="date" id="startDate" class="form-control"/>
+                                <input type="date" id="endDate" class="form-control"/>
+
+                                <div style="width: 30%;">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        Terapkan Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                    <canvas id="financeChart" height="120"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Products & Top Customers -->
+            <div class="row">
+                <!-- Top 10 Produk -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Top 10 Produk Terlaris (<span class="startDateField"></span> - <span class="endDateField">)</span></h4>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th style="width:10%">Rank</th>
+                                        <th style="width: 70%">Produk</th>
+                                        <th style="width:20%">Jumlah Terjual</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="topProductsTable">
+                                        <tr th:each="product, iterStat : ${homeProductData}" th:if="${!homeProductData.empty}">
+                                            <td style="width:5%" th:text="${iterStat.index + 1}">1</td>
+                                            <td style="width:80%" th:text="${product.name}"></td>
+                                            <td style="width:15%" th:text="${product.qty}"></td>
+                                        </tr>
+                                        <tr th:if="${homeProductData.empty}">
+                                            <td colspan="3" class="text-center text-muted">
+                                                Tidak ada data untuk ditampilkan.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 5 Pelanggan -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Top 5 Pelanggan (<span class="startDateField"></span> - <span class="endDateField"></span>)</h4>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Nama Pelanggan</th>
+                                        <th>Total Pembelian</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="topCustomersTable">
+                                        <tr th:each="customer, iterStat : ${homeCustomerData}" th:if="${!homeCustomerData.empty}">
+                                            <td style="width:5%" th:text="${iterStat.index + 1}">1</td>
+                                            <td style="width:60%" th:text="${customer.name}"></td>
+                                            <td class="totalSpending" style="width:35%" th:text="${customer.totalSpending}"></td>
+                                        </tr>
+                                        <tr th:if="${homeCustomerData.empty}">
+                                            <td colspan="3" class="text-center text-muted">
+                                                Tidak ada data untuk ditampilkan.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<!-- Tabler Core JS -->
-<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+
+<!-- Tabler JS -->
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function formatToRupiah(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    let totalTransaction = document.getElementById("totalTransaction");
+    let numericTotalTransaction = parseInt(totalTransaction.textContent.replace(/\D/g, ''));
+    totalTransaction.textContent = formatToRupiah(numericTotalTransaction);
+
+    let totalRevenue = document.getElementById("totalRevenue");
+    let numericTotalRevenue = parseInt(totalRevenue.textContent.replace(/\D/g, ''));
+    totalRevenue.textContent = formatToRupiah(numericTotalRevenue);
+
+    let totalSpendingElements = document.querySelectorAll(".totalSpending");
+    totalSpendingElements.forEach(element => {
+        let numericValue = parseInt(element.textContent.replace(/\D/g, ''));
+        element.textContent = formatToRupiah(numericValue);
+    });
+
+
+    const currentDate = document.getElementById("currentDate");
+
+    function formatTanggalWaktuIndonesia(date = new Date()) {
+      const hari = new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
+      }).format(date);
+      const tanggal = new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+      const jam = date.getHours().toString().padStart(2, "0");
+      const menit = date.getMinutes().toString().padStart(2, "0");
+      const detik = date.getSeconds().toString().padStart(2, "0");
+
+      return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
+    }
+
+    function updateJam() {
+      currentDate.textContent = formatTanggalWaktuIndonesia();
+    }
+
+    const periodFilter = document.getElementById("periodFilter");
+    const startDateInput = document.getElementById("startDate");
+    const endDateInput = document.getElementById("endDate");
+
+    function setDefaultDates(period) {
+      const today = new Date();
+
+      if (period === "day") {
+        startDateInput.type = "date";
+        endDateInput.type = "date";
+        startDateInput.value = today.toISOString().split("T")[0];
+        endDateInput.value = today.toISOString().split("T")[0];
+      } else if (period === "month") {
+        startDateInput.type = "month";
+        endDateInput.type = "month";
+        const month = today.toISOString().slice(0, 7);
+        startDateInput.value = month;
+        endDateInput.value = month;
+      } else if (period === "year") {
+        startDateInput.type = "number";
+        endDateInput.type = "number";
+        startDateInput.value = today.getFullYear();
+        endDateInput.value = today.getFullYear();
+      }
+    }
+
+    // Dummy chart data
+    const chartData = {
+      day: {
+        labels: [
+          "Senin",
+          "Selasa",
+          "Rabu",
+          "Kamis",
+          "Jumat",
+          "Sabtu",
+          "Minggu",
+        ],
+        pendapatan: [
+          12000000, 15000000, 13000000, 18000000, 20000000, 22000000,
+          25000000,
+        ],
+        pengeluaran: [
+          5000000, 7000000, 6000000, 8000000, 7500000, 9000000, 8500000,
+        ],
+        laba: [
+          7000000, 8000000, 7000000, 10000000, 12500000, 13000000, 16500000,
+        ],
+      },
+      month: {
+        labels: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Agu",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ],
+        pendapatan: [
+          120000000, 130000000, 125000000, 140000000, 150000000, 160000000,
+          155000000, 165000000, 170000000, 180000000, 175000000, 190000000,
+        ],
+        pengeluaran: [
+          50000000, 60000000, 55000000, 65000000, 70000000, 72000000,
+          71000000, 75000000, 78000000, 80000000, 82000000, 85000000,
+        ],
+        laba: [
+          70000000, 70000000, 70000000, 75000000, 80000000, 88000000,
+          84000000, 90000000, 92000000, 100000000, 93000000, 105000000,
+        ],
+      },
+      year: {
+        labels: ["2021", "2022", "2023", "2024", "2025"],
+        pendapatan: [
+          1200000000, 1350000000, 1400000000, 1500000000, 1600000000,
+        ],
+        pengeluaran: [500000000, 550000000, 600000000, 650000000, 700000000],
+        laba: [700000000, 800000000, 800000000, 850000000, 900000000],
+      },
+    };
+
+    // Initialize chart
+    const ctx = document.getElementById("financeChart").getContext("2d");
+    let financeChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: chartData.day.labels,
+        datasets: [
+          {
+            label: "Pendapatan",
+            data: chartData.day.pendapatan,
+            borderColor: "green",
+            fill: false,
+            tension: 0.3,
+          },
+          {
+            label: "Pengeluaran",
+            data: chartData.day.pengeluaran,
+            borderColor: "red",
+            fill: false,
+            tension: 0.3,
+          },
+          {
+            label: "Laba Rugi",
+            data: chartData.day.laba,
+            borderColor: "blue",
+            fill: false,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "top" } },
+        scales: {
+          y: {
+            ticks: { callback: (value) => "Rp " + value.toLocaleString() },
+          },
+        },
+      },
+    });
+    function filterDataByDate(data, startDate, endDate) {
+      // Misal data harian, labels = ["Senin","Selasa",...]
+      // Ini contoh: ambil subset sesuai index dummy
+      const startIndex = 0; // bisa dihitung dari startDate
+      const endIndex = data.labels.length; // bisa dihitung dari endDate
+      return {
+        labels: data.labels.slice(startIndex, endIndex),
+        pendapatan: data.pendapatan.slice(startIndex, endIndex),
+        pengeluaran: data.pengeluaran.slice(startIndex, endIndex),
+        laba: data.laba.slice(startIndex, endIndex),
+      };
+    }
+
+    // Call initially
+    setDefaultDates(periodFilter.value);
+
+    function updateChart() {
+      const period = periodFilter.value;
+      const startDate = startDateInput.value;
+      const endDate = endDateInput.value;
+
+      let data = chartData[period];
+      data = filterDataByDate(data, startDate, endDate);
+
+      financeChart.data.labels = data.labels;
+      financeChart.data.datasets[0].data = data.pendapatan;
+      financeChart.data.datasets[1].data = data.pengeluaran;
+      financeChart.data.datasets[2].data = data.laba;
+      financeChart.update();
+    }
+
+    // Event listeners
+    periodFilter.addEventListener("change", () => {
+      setDefaultDates(periodFilter.value);
+      updateChart();
+    });
+    startDateInput.addEventListener("change", updateChart);
+    endDateInput.addEventListener("change", updateChart);
+    updateJam();
+    setInterval(updateJam, 1000);
+</script>
 </body>
 </html>
