@@ -1,10 +1,12 @@
 package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.ClientDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.ClientService;
 import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
@@ -30,6 +32,7 @@ public class PenjualanController {
     private AuthService authService;
     private PenjualanService penjualanService;
     private CustomerService customerService;
+    private ClientService clientService;
 
     @GetMapping
     public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId){
@@ -52,13 +55,14 @@ public class PenjualanController {
 
         List<PenjualanDTO> penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId);
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
-        System.out.println("penjualan data : " + penjualanData);
+        ClientDTO clientSettingData = clientService.getClientSettings(clientId);
         model.addAttribute("penjualanData", penjualanData);
         model.addAttribute("customerId", customerId);
         model.addAttribute("customerData", customerData);
         model.addAttribute("activePage", "penjualan");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        model.addAttribute("settingData", clientSettingData);
         return "display_penjualan";
     }
 
