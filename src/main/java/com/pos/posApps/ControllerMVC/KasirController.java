@@ -28,7 +28,6 @@ public class KasirController {
 
     @GetMapping
     public String displayKasir(Model model, HttpSession session, Long transactionId){
-        System.out.println("display called");
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
