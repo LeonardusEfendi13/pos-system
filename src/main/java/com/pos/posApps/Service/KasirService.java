@@ -233,7 +233,7 @@ public class KasirService {
                 }
             }
 
-            return new ResponseInBoolean(true, "Data berhasil disimpan");
+            return new ResponseInBoolean(true, transactionEntity.getTransactionNumber());
 
         } catch (Exception e) {
             System.out.println("Exception caught: " + e);
