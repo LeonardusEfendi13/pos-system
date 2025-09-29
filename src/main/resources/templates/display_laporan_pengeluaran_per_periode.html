@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Laporan Pengeluaran Per Periode</title>
+    <title>Laporan Pembelian Per Periode</title>
 
     <!-- Tabler -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
@@ -65,7 +65,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
     <div class="page-wrapper">
         <div class="container-fluid">
-            <h2 style="text-align:center; padding-top:10px">Laporan Pengeluaran Per Periode</h2>
+            <h2 style="text-align:center; padding-top:10px">Laporan Pembelian Per Periode</h2>
 
             <!-- Filter form -->
             <form method="get" action="/laporan/pengeluaran/periode" class="row filter-container align-items-end">
@@ -377,7 +377,7 @@
             const pageWidth = doc.internal.pageSize.getWidth();
 
             // Judul dan subtitle periode
-            const title = "Laporan Pengeluaran Per Periode";
+            const title = "Laporan Pembelian Per Periode";
             const dateRange = `Periode: ${formatRangePeriode(startDateValue, endDateValue, filterOption)}`;
 
             // Header
@@ -416,17 +416,22 @@
                 // Format tanggal bisa dipertimbangkan jika raw date tersedia (kalau backend sudah kirim bagus, skip)
                 // Kalau kamu punya data raw date lain, bisa diproses di sini
 
+                const parser = new DOMParser();
+                const docKotor = parser.parseFromString(row[2], 'text/html');
+                const docBersih = parser.parseFromString(row[3], 'text/html');
+
+                const valueKotor = parseInt(docKotor.querySelector('span')?.getAttribute('data-value') || '0');
+
                 return [
                     index + 1,
                     periodeText,
-                    formatCurrency(row[2]),
-                    formatCurrency(row[3])
+                    formatCurrency(valueKotor),
                 ];
             });
 
             doc.autoTable({
                 startY: 80,
-                head: [['No', 'Periode', 'Total Pendapatan Kotor', 'Total Pendapatan Bersih']],
+                head: [['No', 'Periode', 'Total Pembelian']],
                 body: bodyData,
                 styles: { fontSize: 10, cellPadding: 4 },
                 headStyles: { fillColor: [41, 128, 185] },

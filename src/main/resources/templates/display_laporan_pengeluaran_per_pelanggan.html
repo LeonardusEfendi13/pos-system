@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Laporan Pengeluaran Per Pelanggan</title>
+    <title>Laporan Pembelian Per Pelanggan</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
@@ -63,7 +63,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
     <div class="page-wrapper">
         <div class="container-fluid">
-            <h2 style="text-align:center; padding-top:10px">Laporan Pengeluaran Per Pelanggan</h2>
+            <h2 style="text-align:center; padding-top:10px">Laporan Pembelian Per Pelanggan</h2>
 
             <!-- Date range filters -->
             <form method="get" action="/laporan/pengeluaran/pelanggan" class="row filter-container align-items-end">
@@ -286,7 +286,7 @@
             }
 
             // === STEP 2: Build Title ===
-            const title = `Laporan Pengeluaran Per Supplier`;
+            const title = `Laporan Pembelian Per Supplier`;
             const subtitle = `Periode: ${formattedStart} - ${formattedEnd}`;
 
             // === STEP 3: Build Table Data from ALL DataTable Rows ===
@@ -301,7 +301,6 @@
                     i + 1,
                     $(row[1]).text() || row[1],
                     $(row[2]).text() || row[2],
-                    $(row[3]).text() || row[3]
                 ]);
             }
 
@@ -320,15 +319,14 @@
             // Add some vertical space before table
             doc.autoTable({
                 startY: 36,
-                head: [['No', 'Nama Pelanggan', 'Total Pendapatan Kotor', 'Total Pendapatan Bersih']],
+                head: [['No', 'Nama Pelanggan', 'Total Pembelian']],
                 body: body,
                 styles: { fontSize: 10 },
                 headStyles: { fillColor: [0, 123, 255] }, // Bootstrap blue
                 columnStyles: {
                     0: { cellWidth: 10 },    // No
-                    1: { cellWidth: 60 },    // Nama Pelanggan
-                    2: { cellWidth: 55 },    // Kotor
-                    3: { cellWidth: 55 },    // Bersih
+                    1: { cellWidth: 80 },    // Nama Pelanggan
+                    2: { cellWidth: 100 },    // Kotor
                 },
                 margin: { left: 14, right: 14 }
             });

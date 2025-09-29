@@ -118,7 +118,6 @@
                     <div class="card">
                         <div class="card-body">
                             <h6 class="card-title">Total Pendapatan Kotor <span id="totalKotorDisplay" class="card-text fw-bold text-primary">Rp0</span></h6>
-<!--                            <p id="totalKotorDisplay" class="card-text fw-bold text-primary">Rp0</p>-->
                         </div>
                     </div>
                 </div>
@@ -126,7 +125,6 @@
                     <div class="card">
                         <div class="card-body">
                             <h6 class="card-title">Total Pendapatan Bersih <span id="totalBersihDisplay" class="card-text fw-bold text-success">Rp0</span></h6>
-<!--                            <p id="totalBersihDisplay" class="card-text fw-bold text-success">Rp0</p>-->
                         </div>
                     </div>
                 </div>
@@ -413,11 +411,18 @@
                 // Format tanggal bisa dipertimbangkan jika raw date tersedia (kalau backend sudah kirim bagus, skip)
                 // Kalau kamu punya data raw date lain, bisa diproses di sini
 
+               const parser = new DOMParser();
+                const docKotor = parser.parseFromString(row[2], 'text/html');
+                const docBersih = parser.parseFromString(row[3], 'text/html');
+
+                const valueKotor = parseInt(docKotor.querySelector('span')?.getAttribute('data-value') || '0');
+                const valueBersih = parseInt(docBersih.querySelector('span')?.getAttribute('data-value') || '0');
+
                 return [
                     index + 1,
                     periodeText,
-                    formatCurrency(row[2]),
-                    formatCurrency(row[3])
+                    formatCurrency(valueKotor),
+                    formatCurrency(valueBersih)
                 ];
             });
 
