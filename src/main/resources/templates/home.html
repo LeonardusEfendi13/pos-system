@@ -306,6 +306,22 @@
       }).format(amount);
     }
 
+    let totalTransaction = document.getElementById("totalTransaction");
+    let numericTotalTransaction = parseInt(totalTransaction.textContent.replace(/\D/g, ''));
+    totalTransaction.textContent = formatToRupiah(numericTotalTransaction);
+
+    let totalRevenue = document.getElementById("totalRevenue");
+    let numericTotalRevenue = parseInt(totalRevenue.textContent.replace(/\D/g, ''));
+    totalRevenue.textContent = formatToRupiah(numericTotalRevenue);
+
+    let totalSpendingElements = document.querySelectorAll(".totalSpending");
+    totalSpendingElements.forEach(element => {
+        let numericValue = parseInt(element.textContent.replace(/\D/g, ''));
+        element.textContent = formatToRupiah(numericValue);
+    });
+
+
+
     function filterDataByDate(data, startDateStr, endDateStr, period) {
       if (!startDateStr || !endDateStr) return data;
 
