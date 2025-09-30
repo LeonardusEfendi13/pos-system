@@ -6,7 +6,6 @@ import com.pos.posApps.Entity.PurchasingEntity;
 import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
-import com.pos.posApps.Repository.TransactionDetailRepository;
 import com.pos.posApps.Repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -115,6 +114,7 @@ public class LaporanService {
 
         return new ArrayList<>(finalMap.values());
     }
+
     public List<LaporanPembelianPerWaktuDTO> getLaporanPengeluaranDataByPeriode(
             Long clientId,
             LocalDateTime startDate,

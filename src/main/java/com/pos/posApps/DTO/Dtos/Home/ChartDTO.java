@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GraphicDTO {
+public class ChartDTO {
     private List<String> labels;
     private List<BigDecimal> pendapatan;
     private List<BigDecimal> pengeluaran;
