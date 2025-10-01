@@ -39,7 +39,6 @@ public class PreorderController {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
-            System.out.println("catch preorder");
             return "redirect:/login";
         }
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
@@ -67,7 +66,6 @@ public class PreorderController {
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
             return "redirect:/login";
         }
         List<ProductDTO> productEntity = productService.getProductData(clientData.getClientId());
@@ -77,7 +75,6 @@ public class PreorderController {
         if(preorderId != null){
             preorderData = preorderService.getPreorderDataById(clientData.getClientId(), preorderId);
         }
-        System.out.println("preorder data untuk edit : " + preorderData );
         model.addAttribute("preorderData", preorderData);
         model.addAttribute("activePage", "preorderTambah");
         model.addAttribute("productData", productEntity);

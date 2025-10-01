@@ -32,7 +32,6 @@ public class StockMovementService {
             stockMovementsRepository.save(stockMovementsEntity);
             return true;
         }catch (Exception e){
-            System.out.println("Error when adjusting stock : " + e.getMessage());
             return false;
         }
     }

@@ -18,7 +18,6 @@ public class Utils {
             String token = (String) session.getAttribute(authSessionKey);
             Long clientId = authService.validateToken(token).getClientEntity().getClientId();
             if(clientId == null){
-                System.out.println("Masuk sini");
                 return "redirect:/login";
             }
             if(targetEndpoint != null && targetPage == null){

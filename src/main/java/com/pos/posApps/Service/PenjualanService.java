@@ -303,7 +303,6 @@ public class PenjualanService {
     public boolean deletePenjualan(Long transactionId, ClientEntity clientData) {
         Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
         if (transactionEntityOpt.isEmpty()) {
-            System.out.println("Transaction not found");
             return false;
         }
         TransactionEntity transactionEntity = transactionEntityOpt.get();
@@ -328,7 +327,6 @@ public class PenjualanService {
                         clientData
                 ));
                 if (!isAdjusted) {
-                    System.out.println("Gagal adjust di delete penjualan");
                     return false;
                 }
             }

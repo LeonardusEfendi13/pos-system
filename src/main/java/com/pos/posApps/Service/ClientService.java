@@ -24,7 +24,6 @@ public class ClientService {
         try{
             Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
             if(clientEntityOpt.isEmpty()){
-                System.out.println("Client Not Found");
                 return null;
             }
 
@@ -38,7 +37,6 @@ public class ClientService {
             );
 
         }catch (Exception e){
-            System.out.println("Exception Catched : " + e.getMessage());
             return null;
         }
     }
@@ -63,7 +61,6 @@ public class ClientService {
             clientRepository.save(client);
             return true;
         }catch (Exception e) {
-            System.out.println("Exception catched : " + e.getMessage());
             return false;
         }
     }
@@ -91,7 +88,6 @@ public class ClientService {
         try{
             Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(req.getClientId());
             if(clientEntityOpt.isEmpty()){
-                System.out.println("Client Not Found");
                 return false;
             }
 
@@ -104,7 +100,6 @@ public class ClientService {
             clientRepository.save(clientEntity);
             return true;
         }catch (Exception e){
-            System.out.println("Exception catched : " + e.getMessage());
             return false;
         }
 
@@ -113,7 +108,6 @@ public class ClientService {
     public boolean doDisableClient(Long clientId){
         Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
         if(clientEntityOpt.isEmpty()){
-            System.out.println("Client Not Found");
             return false;
         }
 

@@ -90,8 +90,6 @@ public class PreorderService {
             preorderEntity.setTotalDiscount(req.getTotalDisc());
             preorderRepository.save(preorderEntity);
 
-            System.out.println("Created Preorder : " + newPreorderId);
-
             //Insert all the transaction details
             Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
             Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
@@ -112,7 +110,6 @@ public class PreorderService {
             }
             return new ResponseInBoolean(true, "Preorder berhasil dibuat");
         } catch (Exception e) {
-            System.out.println("Exception catched : " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
@@ -131,7 +128,6 @@ public class PreorderService {
             Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndPreorderDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, preorderId);
 
             if(preorderEntityOpt.isEmpty()){
-                System.out.println("transaction ga nemu");
                 return new ResponseInBoolean(false, "Data transaksi tidak ditemukan");
             }
             PreorderEntity preorderEntity = preorderEntityOpt.get();
@@ -167,7 +163,6 @@ public class PreorderService {
             }
             return new ResponseInBoolean(true, "Data berhasil disimpan");
         }catch (Exception e){
-            System.out.println("Exception catched : " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }

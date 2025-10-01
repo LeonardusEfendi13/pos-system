@@ -1,10 +1,14 @@
 <!-- fragments/sidebar.html -->
 <aside th:fragment="sidebar(sidebarData)" xmlns:th="http://www.w3.org/1999/xhtml"
-       class="navbar navbar-vertical navbar-expand-sm position-absolute" data-bs-theme="dark" style="width:fit-content">
+       class="navbar navbar-vertical navbar-expand-sm" data-bs-theme="dark" style="width:200px;word-wrap:break-word">
 
     <div class="container-fluid">
         <h2 class="navbar-brand navbar-brand-autodark">
-            <a th:href="@{/home}" th:text="${sidebarData.namaToko}" style="margin-left:10px !important">AAANU</a>
+            <a th:href="@{/home}"
+               th:text="${sidebarData.namaToko}"
+               style="margin-left:10px !important; word-break: break-word; white-space: normal; display: block; max-width: 150px;text-align:center">
+                AAANU
+            </a>
         </h2>
 
         <div class="collapse navbar-collapse" id="sidebar-menu">

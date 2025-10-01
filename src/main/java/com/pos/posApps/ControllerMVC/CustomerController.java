@@ -45,7 +45,6 @@ public class CustomerController {
 
         List<CustomerEntity> customerList = customerService.getCustomerList(clientId);
         model.addAttribute("customerData", customerList);
-        System.out.println("customer data : " + customerList);
         model.addAttribute("activePage", "customer");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
@@ -60,7 +59,6 @@ public class CustomerController {
             RedirectAttributes redirectAttributes) {
         ClientEntity clientData;
         AccountEntity accEntity;
-        System.out.println("Entering add customer : " +customerName);
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -74,13 +72,11 @@ public class CustomerController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientData);
             if (isInserted) {
-                System.out.println("Customer Created");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Customer Created");
                 return "redirect:/customer";
             }
         }
-        System.out.println("Failed create customer");
         redirectAttributes.addFlashAttribute("status", "failed");
         redirectAttributes.addFlashAttribute("message", "Failed to Create Customer");
         return "redirect:/customer";
@@ -109,19 +105,15 @@ public class CustomerController {
         if (authService.hasAccessToModifyData(role)) {
             boolean isUpdated = customerService.doUpdateCustomer(customerId, customerName, clientId, customerAlamat);
             if (isUpdated) {
-                System.out.println("Customer success");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Customer Updated");
                 return "redirect:/customer";
             }
-            System.out.println("Customer Failed");
 
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to update Customer");
             return "redirect:/customer";
         }
-
-        System.out.println("No Access to Update Account Data");
         redirectAttributes.addFlashAttribute("status", "failed");
         redirectAttributes.addFlashAttribute("message", "No Access to Edit Account");
         return "redirect:/login";
@@ -148,12 +140,10 @@ public class CustomerController {
         if (authService.hasAccessToModifyData(role)) {
             boolean isDeleted = customerService.deleteCustomer(customerId, clientId);
             if (isDeleted) {
-                System.out.println("success delete");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Customer Deleted");
                 return "redirect:/customer";
             }
-            System.out.println("failed delete");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to Delete Customer");
             return "redirect:/customer";

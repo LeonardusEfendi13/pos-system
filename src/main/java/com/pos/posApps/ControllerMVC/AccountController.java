@@ -70,7 +70,6 @@ public class AccountController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = accountService.doCreateAccount(registerRequest, clientData);
             if (isInserted) {
-                System.out.println("Account Created");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Account Created");
                 return "redirect:/user";
@@ -87,7 +86,6 @@ public class AccountController {
             @Valid EditUserRequest request,
             RedirectAttributes redirectAttributes
     ) {
-        System.out.println("Entering edit endpoint");
         Roles role;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -96,24 +94,18 @@ public class AccountController {
             return "redirect:/login";
         }
 
-        System.out.println("Edit user request : " + request);
-
         if (authService.hasAccessToModifyData(role)) {
             boolean isUpdated = accountService.doUpdateAccount(request);
             if (isUpdated) {
-                System.out.println("account success");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Account Updated");
                 return "redirect:/user";
             }
-            System.out.println("account Failed");
 
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to update Account");
             return "redirect:/user";
         }
-
-        System.out.println("No Access to Update Account Data");
         redirectAttributes.addFlashAttribute("status", "failed");
         redirectAttributes.addFlashAttribute("message", "No Access to Edit Account");
         return "redirect:/login";
@@ -137,19 +129,16 @@ public class AccountController {
         if (authService.hasAccessToModifyData(role)) {
             boolean isDeleted = accountService.doDisableAccount(userId);
             if (isDeleted) {
-                System.out.println("success delete");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Account Deleted");
                 return "redirect:/user";
             }
-            System.out.println("failed delete");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to Delete Account");
             return "redirect:/user";
         }
 
         //todo add redirect attributes
-        System.out.println("No Access to Update Account Data");
         return "redirect:/login";
     }
 }

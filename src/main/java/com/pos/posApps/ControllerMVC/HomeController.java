@@ -32,10 +32,6 @@ public class HomeController {
 
     @GetMapping
     public String home(HttpSession session, Model model, String startDate, String endDate, String periodFilter){
-        System.out.println("Period filter : " + periodFilter);
-        System.out.println("Start Date (1) : " + startDate);
-        System.out.println("end date (1) : " + endDate);
-
         Long clientId;
         String token;
         try{
@@ -62,8 +58,6 @@ public class HomeController {
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
-        System.out.println("sidebar data : " + sidebarData);
-
         model.addAttribute("topBarData", topBarData);
         model.addAttribute("homeCustomerData", homeCustomerData);
         model.addAttribute("homeProductData", homeProductData);

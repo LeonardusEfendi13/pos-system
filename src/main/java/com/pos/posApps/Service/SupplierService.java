@@ -26,27 +26,19 @@ public class SupplierService {
         try{
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(supplierName, clientData.getClientId());
             if(supplierEntity != null){
-                System.out.println("Supplier alr exists");
                 return false;
             }
 
             SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
             Long lastSupplierId = lastSupplierData == null ? 0L : lastSupplierData.getSupplierId();
             Long newSupplierId = Generator.generateId(lastSupplierId);
-
-            System.out.println("Success generated  id");
-
-
             SupplierEntity newSupplierEntity = new SupplierEntity();
             newSupplierEntity.setSupplierId(newSupplierId);
             newSupplierEntity.setSupplierName(supplierName);
             newSupplierEntity.setClientEntity(clientData);
             supplierRepository.save(newSupplierEntity);
-            System.out.println("Success save data");
-
             return true;
         }catch (Exception e){
-            System.out.println("exception : " + e);
             return false;
         }
     }
@@ -78,9 +70,6 @@ public class SupplierService {
 
     @Transactional
     public Boolean disableSupplier(Long supplierId, ClientEntity clientData){
-        System.out.println("supp id : " + supplierId);
-        System.out.println("client id : " + clientData.getClientId());
-
         try{
             SupplierEntity supplierEntity = supplierRepository.findFirstBySupplierIdAndClientEntity_ClientIdAndDeletedAtIsNull(supplierId, clientData.getClientId());
             if(supplierEntity == null){

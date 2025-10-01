@@ -39,7 +39,6 @@ public class PembelianController {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
-            System.out.println("catch pembelian");
             return "redirect:/login";
         }
 
@@ -94,7 +93,6 @@ public class PembelianController {
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {

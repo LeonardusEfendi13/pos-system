@@ -58,7 +58,6 @@ public class SupplierController {
             accEntity = authService.validateToken(token);
             clientData = accEntity.getClientEntity();
             if (clientData.getClientId() == null) {
-                System.out.println("No Access to products");
                 return "redirect:/login";
             }
         }catch (Exception e){
@@ -68,12 +67,10 @@ public class SupplierController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = supplierService.insertSupplier(supplierName, clientData);
             if (isInserted) {
-                System.out.println("Success cuy");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data created");
                 return "redirect:/supplier";
             }
-            System.out.println("failed to create supplier");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to create data");
             return "redirect:/supplier";
@@ -90,7 +87,6 @@ public class SupplierController {
             accEntity = authService.validateToken(token);
             clientData = accEntity.getClientEntity();
             if (clientData.getClientId() == null) {
-                System.out.println("No Access to products");
                 return "redirect:/login";
             }
         }catch (Exception e){
@@ -100,12 +96,10 @@ public class SupplierController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.editSupplier(supplierId, supplierName, clientData);
             if(isEdited){
-                System.out.println("success edit");
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Edited");
                 return "redirect:/supplier";
             }
-            System.out.println("Failed edit");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to edit Data");
             return "redirect:/supplier";
@@ -123,7 +117,6 @@ public class SupplierController {
             accEntity = authService.validateToken(token);
             clientData = accEntity.getClientEntity();
             if (clientData.getClientId() == null) {
-                System.out.println("No Access to products");
                 return "redirect:/login";
             }
         }catch (Exception e){
@@ -133,13 +126,10 @@ public class SupplierController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = supplierService.disableSupplier(supplierId, clientData);
             if(isEdited){
-                System.out.println("success delete");
-
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");
                 return "redirect:/supplier";
             }
-            System.out.println("Failed to delete");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/supplier";

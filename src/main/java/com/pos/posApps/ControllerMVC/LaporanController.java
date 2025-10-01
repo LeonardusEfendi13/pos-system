@@ -50,7 +50,6 @@ public class LaporanController {
 
         List<LaporanPenjualanPerWaktuDTO> laporanData = laporanService.getLaporanPenjualanDataByPeriode(clientId, inputStartDate, inputEndDate, customerId, filterOptions);
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
-        System.out.println("Data : " + laporanData);
         model.addAttribute("customerData", customerData);
         model.addAttribute("customerId", customerId);
         model.addAttribute("startDate", startDate);
@@ -161,7 +160,6 @@ public class LaporanController {
         LocalDateTime inputEndDate = parsedEnd.atTime(23, 59, 59);
 
         List<LaporanPembelianPerPelangganDTO> laporanData = laporanService.getLaporanPembelianDataByCustomer(clientId, inputStartDate, inputEndDate);
-        System.out.println("Data : " + laporanData);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("laporanData", laporanData);
@@ -186,7 +184,6 @@ public class LaporanController {
         }
 
         List<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId);
-        System.out.println("Data : " + laporanData);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "nilaiPersediaan");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);

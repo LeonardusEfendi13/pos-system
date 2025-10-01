@@ -61,10 +61,8 @@ public class DeveloperController {
         }
         boolean isUpdated = clientService.doEditClient(req);
         if(isUpdated){
-            System.out.println("Client Edited");
             return "200";
         }
-        System.out.println("Failed to edit client");
         return "500";
     }
 
@@ -93,7 +91,6 @@ public class DeveloperController {
     public String createAccount(
             @RequestBody RegisterFromDevRequest req, HttpSession session)
     {
-        System.out.println("req : " + req);
         String token = (String) session.getAttribute(authSessionKey);
         ClientEntity clientData = authService.validateToken(token).getClientEntity();
 

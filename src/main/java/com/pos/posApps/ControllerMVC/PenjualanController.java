@@ -41,7 +41,6 @@ public class PenjualanController {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
-            System.out.println("catch penjualan");
             return "redirect:/login";
         }
 
@@ -74,7 +73,6 @@ public class PenjualanController {
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {

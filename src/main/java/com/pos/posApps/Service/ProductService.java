@@ -53,7 +53,6 @@ public class ProductService {
     }
 
     public Long getStockAwalProduct(Long productId, LocalDateTime startDate){
-        System.out.println("Entering get stock awal");
         List<StockMovementsEntity> stockData = stockMovementsRepository.findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(productId, startDate);
         return stockData.stream()
                 .max(Comparator.comparing(StockMovementsEntity::getCreatedAt))
@@ -87,7 +86,6 @@ public class ProductService {
         try {
             ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
             if (productEntity != null) {
-                System.out.println("Product already exists");
                 return false;
             }
 
@@ -96,7 +94,6 @@ public class ProductService {
 
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntityOpt.isEmpty()) {
-                System.out.println("Can't find supplier with id : " + req.getSupplierId());
                 return false;
             }
 
@@ -113,12 +110,10 @@ public class ProductService {
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
 
-            System.out.println("success save new product");
             //Insert Product Prices
             Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
             Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
-            System.out.println("Otw insert kartu stock karena insert new product");
             boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
                     newProduct,
                     "-",
@@ -129,12 +124,10 @@ public class ProductService {
                     clientData
             ));
             if(!isAdjusted){
-                System.out.println("Gagal adjust di insert product");
                 return false;
             }
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
-                System.out.println("Entering loop product prices ");
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
                 newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(newProduct);
@@ -147,7 +140,6 @@ public class ProductService {
 
             return true;
         } catch (Exception e) {
-            System.out.println("Exception : " + e);
             return false;
         }
 
@@ -157,7 +149,6 @@ public class ProductService {
     public boolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
         Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
         if (productEntityOpt.isEmpty()) {
-            System.out.println("Product not found");
             return false;
         }
 
@@ -168,12 +159,10 @@ public class ProductService {
                         || productRepository.existsByShortNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getShortName(), clientEntity.getClientId(), req.getProductId())
                         || productRepository.existsByProductIdAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getProductId(), clientEntity.getClientId(), req.getProductId());
         if (isDuplicate) {
-            System.out.println("Product already exists");
             return false;
         }
 
         if(!Objects.equals(req.getStock(), productEntity.getStock())){
-            System.out.println("Stok berubah karena edit product");
             boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
                     productEntity,
                     "-",
@@ -184,14 +173,12 @@ public class ProductService {
                     clientEntity
             ));
             if(!isAdjusted){
-                System.out.println("Gagal adjust di edit product");
                 return false;
             }
         }
 
         Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
         if (supplierEntityOpt.isEmpty()) {
-            System.out.println("Can't find supplier with id : " + req.getSupplierId());
             return false;
         }
         SupplierEntity supplierEntity = supplierEntityOpt.get();
@@ -210,7 +197,6 @@ public class ProductService {
         Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
         for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
-            System.out.println("Entering loop product prices ");
             ProductPricesEntity newProductPrices = new ProductPricesEntity();
             newProductPrices.setProductPricesId(newProductPricesId);
             newProductPrices.setProductEntity(productEntity);
@@ -227,7 +213,6 @@ public class ProductService {
     public boolean deleteProducts(Long productId) {
         Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
         if (productEntityOpt.isEmpty()) {
-            System.out.println("Product not found");
             return false;
         }
         ProductEntity productEntity = productEntityOpt.get();

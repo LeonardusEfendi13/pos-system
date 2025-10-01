@@ -26,22 +26,10 @@ public class AuthController {
     @GetMapping("/")
     public String redirect(HttpSession session) {
         return Utils.validateSession(session, null, "home");
-//        String token = (String) session.getAttribute(authSessionKey);
-//        AccountEntity accountData = authService.validateToken(token);
-//        if(accountData == null){
-//            return "redirect:/login";
-//        }
-//        ClientEntity clientData = accountData.getClientEntity();
-//        if(clientData.getClientId() == null){
-//            System.out.println("Masuk sini");
-//            return "redirect:/login";
-//        }
-//        return "redirect:/home";
     }
 
     @GetMapping("/login")
     public String showLoginPage(Model model, HttpSession session){
-        System.out.println("Masuk login page");
         model.addAttribute("loginRequest", new LoginRequest());
         if(session.getAttribute(authSessionKey) != null){
             return "redirect:/home";
@@ -59,16 +47,13 @@ public class AuthController {
             HttpSession httpSession,
             BindingResult bindingResult,
             Model model) {
-        System.out.println("Masuk Login");
         if(bindingResult.hasErrors()){
-            System.out.println("binding error");
             model.addAttribute("login_status", "200");
             return "redirect:/login";
         }
         String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
 
         if(token == null){
-            System.out.println("token null");
             model.addAttribute("login_status", "401");
             return "redirect:/login";
         }

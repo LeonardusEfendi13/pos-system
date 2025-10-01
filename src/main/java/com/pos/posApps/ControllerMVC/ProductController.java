@@ -49,7 +49,6 @@ public class ProductController {
 
         List<ProductDTO> productEntity = productService.getProductData(clientId);
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
-        System.out.println("product entity : " + productEntity);
         model.addAttribute("productData", productEntity);
         model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("activePage", "masterBarang");
@@ -76,13 +75,10 @@ public class ProductController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted) {
-                System.out.println("success insert");
-
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", "Data Created");
                 return "redirect:/products";
             }
-            System.out.println("failed to insert");
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
             return "redirect:/products";
@@ -95,7 +91,6 @@ public class ProductController {
     @PostMapping("/edit")
     public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
-        System.out.println("Edit Request : " + req);
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -128,7 +123,6 @@ public class ProductController {
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
-            System.out.println("No Access to products");
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
@@ -157,8 +151,6 @@ public class ProductController {
             return "redirect:/login";
         }
 
-        System.out.println("product id received : " + productId);
-
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
 
@@ -169,8 +161,6 @@ public class ProductController {
         List<ProductDTO> productEntity = productService.getProductData(clientId);
         List<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
-        System.out.println("product entity : " + productEntity);
-        System.out.println("stock movement entity : " + stokData);
         model.addAttribute("isShowDetail", isShowDetail);
         model.addAttribute("productData", productEntity);
         model.addAttribute("activePage", "kartuStok");

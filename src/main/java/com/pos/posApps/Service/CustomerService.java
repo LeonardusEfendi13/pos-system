@@ -52,7 +52,6 @@ public class CustomerService {
             return false;
         }
         CustomerEntity customerEntity = customerEntityOpt.get();
-        System.out.println("Customer found");
         customerEntity.setName(customerName);
         customerEntity.setAlamat(customerAlamat);
         customerRepository.save(customerEntity);

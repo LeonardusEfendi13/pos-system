@@ -63,7 +63,6 @@ public class AccountService {
     public boolean doUpdateAccount(EditUserRequest request){
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(request.getId());
         if(accountEntity != null){
-            System.out.println("Account found");
             accountEntity.setName(request.getName());
             accountEntity.setUsername(request.getUsername());
             accountEntity.setUsername(request.getUsername());
@@ -71,7 +70,6 @@ public class AccountService {
             accountRepository.save(accountEntity);
             return true;
         }else{
-            System.out.println("Account Not Found");
             return false;
         }
     }
@@ -88,7 +86,6 @@ public class AccountService {
 
     public UserDTO getCurrentLoggedInUser(String token){
         Long userId = loginTokenRepository.findByTokenAndDeletedAtIsNull(token).getAccountEntity().getAccountId();
-        System.out.println("user id : " + userId);
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
         return new UserDTO(
                 accountEntity.getAccountId(),
@@ -101,7 +98,6 @@ public class AccountService {
     public boolean doDisableAccount(Long userId){
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
         if(accountEntity == null){
-            System.out.println("Account Not Found");
             return false;
         }
 

@@ -28,13 +28,11 @@ public class AuthService {
         try {
             AccountEntity accountData = accountRepository.findByUsernameAndDeletedAtIsNull(username);
             if (accountData == null) {
-                System.out.println("Account not found");
                 return null;
             }
 
             boolean isPasswordEqual = passwordEncoder.matches(password, accountData.getPassword());
             if(!isPasswordEqual) {
-                System.out.println("pass not equal");
                 return null;
             }
 
@@ -60,7 +58,6 @@ public class AuthService {
             loginTokenRepository.save(loginToken);
             return generatedToken;
         } catch (Exception e) {
-            System.out.println("Error in login");
             e.printStackTrace();
             return null;
         }

@@ -138,7 +138,6 @@ public class PembelianService {
     public boolean deletePurchasing(Long purchasingId, ClientEntity clientData){
         Optional<PurchasingEntity> transactionEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), purchasingId);
         if(transactionEntityOpt.isEmpty()){
-            System.out.println("Transaction not found");
             return false;
         }
         PurchasingEntity transactionEntity = transactionEntityOpt.get();
@@ -162,7 +161,6 @@ public class PembelianService {
                         clientData
                 ));
                 if (!isAdjusted) {
-                    System.out.println("Gagal adjust di delete pembelian");
                     return false;
                 }
             }
@@ -178,7 +176,6 @@ public class PembelianService {
 
     @Transactional
     public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData){
-        System.out.println("req : " + req);
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
         if(pembelian.isPresent()){
@@ -211,7 +208,6 @@ public class PembelianService {
             purchasingEntity.setClientEntity(clientData);
             purchasingEntity.setSubtotal(req.getSubtotal());
             purchasingRepository.save(purchasingEntity);
-            System.out.println("Created transaction : " + newPurchasingId);
 
             //Insert all the transaction details
             Long lastTransactionDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
@@ -289,7 +285,6 @@ public class PembelianService {
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
         }catch (Exception e){
-            System.out.println("Exception catched : " + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
             return new ResponseInBoolean(false, e.getMessage());
         }
@@ -480,7 +475,6 @@ public class PembelianService {
             return new ResponseInBoolean(true, "Data berhasil disimpan");
 
         } catch (Exception e) {
-            System.out.println("Exception caught: " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
@@ -497,7 +491,6 @@ public class PembelianService {
             purchasingRepository.save(purchasingData);
             return true;
         }catch (Exception e){
-            System.out.println("Error : " + e);
             e.printStackTrace();
             return false;
         }

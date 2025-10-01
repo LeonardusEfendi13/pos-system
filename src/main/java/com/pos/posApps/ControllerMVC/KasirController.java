@@ -48,7 +48,6 @@ public class KasirController {
         model.addAttribute("productData", productEntity);
         model.addAttribute("customerData", customerEntities);
         model.addAttribute("settingData", clientSettingData);
-        System.out.println("customer data : " + customerEntities);
         return "display_kasir_penjualan";
     }
 }

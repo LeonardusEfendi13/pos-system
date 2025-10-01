@@ -52,14 +52,11 @@ public class RestControllerProduct {
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
         }
-        System.out.println("Entering add product from pembelian");
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted) {
-                System.out.println("success insert");
                 return ResponseEntity.ok("Berhasil menyimpan data");
             }
-            System.out.println("failed to insert");
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Gagal menyimpan data");
         }
         return ResponseEntity.status(UNAUTHORIZED).body("Anda tidak memiliki akses untuk ini!");

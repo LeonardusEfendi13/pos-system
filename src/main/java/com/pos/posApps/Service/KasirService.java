@@ -56,9 +56,6 @@ public class KasirService {
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
-            System.out.println("Created transaction : " + newTransactionId);
-
-
             //Insert all the transaction details
             Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
@@ -92,13 +89,11 @@ public class KasirService {
                         clientData
                 ));
                 if (!isAdjusted) {
-                    System.out.println("Gagal adjust di edit product");
                     return new ResponseInBoolean(false, "Gagal adjust di create transaction");
                 }
             }
             return new ResponseInBoolean(true, generatedNotaNumber);
         } catch (Exception e) {
-            System.out.println("Exception catched : " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
@@ -147,7 +142,6 @@ public class KasirService {
 
                     boolean isQtyChanged = (newQty == null || !Objects.equals(newQty, old.getQty()));
                     if (!isQtyChanged) {
-                        System.out.println("Qty tidak berubah untuk " + key + ", skip kartu stok restore.");
                         oldProductMap.put(key, old);
                         continue; // Skip kartu stok restore
                     }
@@ -214,7 +208,6 @@ public class KasirService {
                 TransactionDetailEntity oldDetail = oldProductMap.get(dto.getCode());
                 if (oldDetail != null && Objects.equals(oldDetail.getQty(), dto.getQty())) {
                     // Qty sama → tidak perlu insert kartu stok
-                    System.out.println("Qty tidak berubah, skip kartu stok untuk " + dto.getName());
                     continue;
                 }
 
@@ -236,7 +229,6 @@ public class KasirService {
             return new ResponseInBoolean(true, transactionEntity.getTransactionNumber());
 
         } catch (Exception e) {
-            System.out.println("Exception caught: " + e);
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
