@@ -1,6 +1,9 @@
 package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.LoginRequest;
+import com.pos.posApps.DTO.Dtos.UserDTO;
+import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.LoginTokenService;
 import com.pos.posApps.Util.Utils;
@@ -22,6 +25,8 @@ public class AuthController {
 
     private LoginTokenService loginTokenService;
 
+    private AccountService accountService;
+
 
     @GetMapping("/")
     public String redirect(HttpSession session) {
@@ -31,8 +36,14 @@ public class AuthController {
     @GetMapping("/login")
     public String showLoginPage(Model model, HttpSession session){
         model.addAttribute("loginRequest", new LoginRequest());
-        if(session.getAttribute(authSessionKey) != null){
-            return "redirect:/home";
+        String token = (String) session.getAttribute(authSessionKey);
+        if(token != null){
+            UserDTO userData = accountService.getCurrentLoggedInUser(token);
+            if(userData.getRole().equals(Roles.SUPER_ADMIN)){
+                return "redirect:/home";
+            }else{
+                return "redirect:/kasir";
+            }
         }
         return "login";
     }
@@ -59,7 +70,12 @@ public class AuthController {
         }
         httpSession.setAttribute(authSessionKey, token);
         model.addAttribute("activePage", "dashboard");
-        return "redirect:/home";
+        UserDTO userData = accountService.getCurrentLoggedInUser(token);
+        if(userData.getRole().equals(Roles.SUPER_ADMIN)){
+            return "redirect:/home";
+        }else{
+            return "redirect:/kasir";
+        }
     }
 
     @GetMapping("/logout")

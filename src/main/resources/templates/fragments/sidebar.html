@@ -1,6 +1,6 @@
 <!-- fragments/sidebar.html -->
 <aside th:fragment="sidebar(sidebarData)" xmlns:th="http://www.w3.org/1999/xhtml"
-       class="navbar navbar-vertical navbar-expand-sm" data-bs-theme="dark" style="width:200px;word-wrap:break-word">
+       class="navbar navbar-vertical navbar-expand-sm" data-bs-theme="dark" style="word-wrap:break-word">
 
     <div class="container-fluid">
         <h2 class="navbar-brand navbar-brand-autodark">
@@ -15,7 +15,9 @@
             <ul class="navbar-nav pt-lg-3">
 
                 <!-- Dashboard -->
-                <li class="nav-item" th:classappend="${activePage} == 'home' ? ' active'">
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'home' ? ' active'">
                     <a th:href="@{/home}" class="nav-link">
                         <span class="nav-link-title">Dashboard</span>
                     </a>
@@ -30,6 +32,7 @@
 
                 <!-- Master Barang -->
                 <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                     th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? ' active' : ''">
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-barang"
@@ -64,7 +67,9 @@
                 </li>
 
                 <!-- Supplier -->
-                <li class="nav-item" th:classappend="${activePage} == 'supplier' ? ' active'">
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'supplier' ? ' active'">
                     <a class="nav-link" th:href="@{/supplier}">
                         <span class="nav-link-title">Supplier</span>
                     </a>
@@ -72,6 +77,7 @@
 
                 <!-- Preorder -->
                 <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                     th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat') ? ' active' : ''">
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-preorder"
@@ -114,6 +120,7 @@
 
                 <!-- Pembelian -->
                 <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                     th:classappend="(${activePage} == 'pembelianTambah' or ${activePage} == 'pembelianRiwayat') ? ' active' : ''">
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-pembelian"
@@ -126,6 +133,7 @@
                     </a>
 
                     <div class="collapse"
+                         th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                          id="sidebar-pembelian"
                          th:classappend="(${activePage} == 'pembelianTambah' or ${activePage} == 'pembelianRiwayat') ? ' show' : ''">
                         <ul class="nav flex-column ms-3">
@@ -149,6 +157,7 @@
 
                 <!-- Laporan -->
                 <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                     th:classappend="(${activePage} == 'pendapatanPeriode' or ${activePage} == 'pendapatanPelanggan' or ${activePage} == 'pengeluaranPeriode' or ${activePage} == 'pengeluaranPelanggan' or ${activePage} == 'nilaiPersediaan') ? ' active' : ''">
 
                     <a class="nav-link dropdown-toggle"
@@ -251,21 +260,27 @@
                 </li>
 
                 <!-- Customer -->
-                <li class="nav-item" th:classappend="${activePage} == 'customer' ? ' active'">
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'customer' ? ' active'">
                     <a th:href="@{/customer}" class="nav-link">
                         <span class="nav-link-title">Customer</span>
                     </a>
                 </li>
 
                 <!-- User -->
-                <li class="nav-item" th:classappend="${activePage} == 'user' ? ' active'">
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'user' ? ' active'">
                     <a th:href="@{/user}" class="nav-link">
                         <span class="nav-link-title">User</span>
                     </a>
                 </li>
 
                 <!-- Settings -->
-                <li class="nav-item" th:classappend="${activePage} == 'setting' ? ' active'">
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'setting' ? ' active'">
                     <a class="nav-link" th:href="@{/setting}">
                         <span class="nav-link-title">Settings</span>
                     </a>

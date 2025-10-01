@@ -5,6 +5,9 @@ import com.pos.posApps.DTO.Dtos.Home.HomeCustomerDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
+import com.pos.posApps.DTO.Dtos.UserDTO;
+import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.HomeService;
 import com.pos.posApps.Service.SidebarService;
@@ -29,6 +32,7 @@ public class HomeController {
     private AuthService authService;
     private HomeService homeService;
     private SidebarService sidebarService;
+    private AccountService accountService;
 
     @GetMapping
     public String home(HttpSession session, Model model, String startDate, String endDate, String periodFilter){
@@ -58,6 +62,7 @@ public class HomeController {
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        System.out.println("sidebar data : " + sidebarData);
         model.addAttribute("topBarData", topBarData);
         model.addAttribute("homeCustomerData", homeCustomerData);
         model.addAttribute("homeProductData", homeProductData);
@@ -67,7 +72,12 @@ public class HomeController {
         model.addAttribute("periodFilter", periodFilter);
         model.addAttribute("chartDatas", chartData);
         model.addAttribute("sidebarData", sidebarData);
-
-        return "home";
+        UserDTO userData = accountService.getCurrentLoggedInUser(token);
+        if(userData.getRole().equals(Roles.SUPER_ADMIN)){
+            return "home";
+        }else{
+            return "redirect:/penjualan";
+        }
+//        return "home";
     }
 }
