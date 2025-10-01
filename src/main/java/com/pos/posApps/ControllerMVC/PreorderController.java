@@ -2,14 +2,12 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.PreorderDTO;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.PreorderEntity;
 import com.pos.posApps.Entity.SupplierEntity;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.PreorderService;
-import com.pos.posApps.Service.ProductService;
-import com.pos.posApps.Service.SupplierService;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -31,12 +29,14 @@ public class PreorderController {
     private PreorderService preorderService;
     private SupplierService supplierService;
     private ProductService productService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showListPreorder(Long supplierId, String startDate, String endDate, HttpSession session, Model model){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             System.out.println("catch preorder");
@@ -56,6 +56,8 @@ public class PreorderController {
         model.addAttribute("activePage", "preorderRiwayat");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_preorder";
     }
 
@@ -82,43 +84,4 @@ public class PreorderController {
         model.addAttribute("supplierData", supplierEntities);
         return "display_kasir_preorder";
     }
-
-//    @PostMapping("/edit-preorder")
-//    public String editPreorder(HttpSession session, EditPreorderRequest req){
-//        String token = (String) session.getAttribute(authSessionKey);
-//        AccountEntity accEntity = authService.validateToken(token);
-//        ClientEntity clientData = accEntity.getClientEntity();
-//        if (clientData.getClientId() == null) {
-//            System.out.println("No Access to products");
-//            return "redirect:/login";
-//        }
-//
-//        if (authService.hasAccessToModifyData(accEntity.getRole())) {
-//            boolean isInserted = preorderService.editPreorder(req, clientData);
-//            if (isInserted) {
-//                return "200";
-//            }
-//            return "500";
-//        }
-//        return "redirect:/login";
-//    }
-
-//    @PostMapping("/delete-preorder")
-//    public String deletePreorder(HttpSession session, Long preorderId){
-//        String token = (String) session.getAttribute(authSessionKey);
-//        AccountEntity accEntity = authService.validateToken(token);
-//        ClientEntity clientData = accEntity.getClientEntity();
-//        if (clientData.getClientId() == null) {
-//            System.out.println("No Access to products");
-//            return "redirect:/login";
-//        }
-//        if (authService.hasAccessToModifyData(accEntity.getRole())) {
-//            boolean isEdited = preorderService.deleteProducts(preorderId);
-//            if(isEdited){
-//                return "200";
-//            }
-//            return "500";
-//        }
-//        return "redirect:/login";
-//    }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Laporan Pendapatan Per Periode</title>
+    <title>Laporan Penjualan Per Periode</title>
 
     <!-- Tabler -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
@@ -62,7 +62,7 @@
 </head>
 <body>
 <div class="page">
-    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <aside th:replace="fragments/sidebar :: sidebar(sidebarData=${sidebarData})"></aside>
     <div class="page-wrapper">
         <div class="container-fluid">
             <h2 style="text-align:center; padding-top:10px">Laporan Pendapatan Per Periode</h2>

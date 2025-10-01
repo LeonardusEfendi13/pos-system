@@ -2,13 +2,11 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.ClientDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.ClientService;
-import com.pos.posApps.Service.CustomerService;
-import com.pos.posApps.Service.PenjualanService;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -33,12 +31,14 @@ public class PenjualanController {
     private PenjualanService penjualanService;
     private CustomerService customerService;
     private ClientService clientService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             System.out.println("catch penjualan");
@@ -63,6 +63,8 @@ public class PenjualanController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("settingData", clientSettingData);
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_penjualan";
     }
 

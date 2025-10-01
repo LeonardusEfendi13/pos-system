@@ -60,7 +60,7 @@
 </head>
 <body>
 <div class="page">
-    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+    <aside th:replace="fragments/sidebar :: sidebar(sidebarData=${sidebarData})"></aside>
     <div class="page-wrapper">
         <div class="container-fluid">
             <h2 style="text-align:center; padding-top:10px">Laporan Nilai Persediaan Barang</h2>

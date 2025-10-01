@@ -2,12 +2,14 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.EditUserRequest;
 import com.pos.posApps.DTO.Dtos.RegisterRequest;
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.SidebarService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -27,12 +29,14 @@ public class AccountController {
 
     private AccountService accountService;
     private AuthService authService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showUser(HttpSession session, Model model) {
         Long clientId;
+        String token;
         try {
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         } catch (Exception e) {
             return "redirect:/login";
@@ -41,6 +45,8 @@ public class AccountController {
         List<UserDTO> userList = accountService.getUserList(clientId);
         model.addAttribute("userData", userList);
         model.addAttribute("activePage", "user");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_user";
     }
 

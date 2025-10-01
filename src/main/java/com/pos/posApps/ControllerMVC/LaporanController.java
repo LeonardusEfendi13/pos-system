@@ -2,10 +2,7 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.CustomerService;
-import com.pos.posApps.Service.LaporanService;
-import com.pos.posApps.Service.SupplierService;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,12 +25,14 @@ public class LaporanController {
     private CustomerService customerService;
     private LaporanService laporanService;
     private SupplierService supplierService;
+    private SidebarService sidebarService;
 
     @GetMapping("/pendapatan/periode")
     public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -59,7 +58,9 @@ public class LaporanController {
         model.addAttribute("filterOptions", filterOptions);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pendapatanPeriode");
-        model.addAttribute("activeSubPage", "pendapatanPeriode"); // Add this!
+        model.addAttribute("activeSubPage", "pendapatanPeriode");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
 
         // Add any necessary data
         return "display_laporan_pendapatan_per_periode"; // Thymeleaf template
@@ -68,8 +69,9 @@ public class LaporanController {
     @GetMapping("/pendapatan/pelanggan")
     public String laporanPendapatanPelanggan(HttpSession session, Model model, String startDate, String endDate){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -86,12 +88,13 @@ public class LaporanController {
         LocalDateTime inputEndDate = parsedEnd.atTime(23, 59, 59);
 
         List<LaporanPenjualanPerPelangganDTO> laporanData = laporanService.getLaporanPenjualanDataByCustomer(clientId, inputStartDate, inputEndDate);
-        System.out.println("Data : " + laporanData);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pendapatanPelanggan");
-        model.addAttribute("activeSubPage", "pendapatanPelanggan"); // Add this!
+        model.addAttribute("activeSubPage", "pendapatanPelanggan");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
 
         // Add any necessary data
         return "display_laporan_pendapatan_per_pelanggan"; // Thymeleaf template
@@ -101,8 +104,9 @@ public class LaporanController {
     @GetMapping("/pengeluaran/periode")
     public String laporanPengeluaran(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -120,7 +124,6 @@ public class LaporanController {
 
         List<LaporanPembelianPerWaktuDTO> laporanData = laporanService.getLaporanPengeluaranDataByPeriode(clientId, inputStartDate, inputEndDate, customerId, filterOptions);
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
-        System.out.println("Data : " + laporanData);
         model.addAttribute("supplierData", supplierData);
         model.addAttribute("customerId", customerId);
         model.addAttribute("startDate", startDate);
@@ -129,6 +132,8 @@ public class LaporanController {
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pengeluaranPeriode");
         model.addAttribute("activeSubPage", "pengeluaranPeriode");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
 
         // Add any necessary data
         return "display_laporan_pengeluaran_per_periode"; // Thymeleaf template
@@ -137,8 +142,9 @@ public class LaporanController {
     @GetMapping("/pengeluaran/pelanggan")
     public String laporanPengeluaranPelanggan(HttpSession session, Model model, String startDate, String endDate){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -160,7 +166,9 @@ public class LaporanController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "pengeluaranPelanggan");
-        model.addAttribute("activeSubPage", "pengeluaranPelanggan"); // Add this!
+        model.addAttribute("activeSubPage", "pengeluaranPelanggan");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
 
         // Add any necessary data
         return "display_laporan_pengeluaran_per_pelanggan"; // Thymeleaf template
@@ -169,8 +177,9 @@ public class LaporanController {
     @GetMapping("/nilai_persediaan")
     public String laporanNilaiPersediaan(HttpSession session, Model model){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -180,8 +189,8 @@ public class LaporanController {
         System.out.println("Data : " + laporanData);
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "nilaiPersediaan");
-
-        // Add any necessary data
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_laporan_nilai_persediaan_barang"; // Thymeleaf template
     }
 }

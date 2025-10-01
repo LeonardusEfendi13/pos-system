@@ -1,9 +1,11 @@
 package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.SidebarService;
 import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -26,12 +28,14 @@ public class SupplierController {
 
     private AuthService authService;
     private SupplierService supplierService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String displaySupplier(HttpSession session, Model model){
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -40,6 +44,8 @@ public class SupplierController {
         List<SupplierEntity> supplierEntityList = supplierService.getSupplierList(clientId);
         model.addAttribute("supplierData", supplierEntityList);
         model.addAttribute("activePage", "supplier");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_supplier";
     }
 

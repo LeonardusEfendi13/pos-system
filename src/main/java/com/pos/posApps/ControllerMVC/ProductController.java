@@ -1,14 +1,12 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.CreateProductRequest;
-import com.pos.posApps.DTO.Dtos.EditProductRequest;
-import com.pos.posApps.DTO.Dtos.ProductDTO;
-import com.pos.posApps.DTO.Dtos.StockMovementsDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ProductService;
+import com.pos.posApps.Service.SidebarService;
 import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -33,16 +31,21 @@ public class ProductController {
     private AuthService authService;
     private ProductService productService;
     private SupplierService supplierService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showListProducts(HttpSession session, Model model) {
         Long clientId;
+        String token;
         try {
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         } catch (Exception e) {
             return "redirect:/login";
         }
+
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
 
         List<ProductDTO> productEntity = productService.getProductData(clientId);
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
@@ -50,6 +53,7 @@ public class ProductController {
         model.addAttribute("productData", productEntity);
         model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("activePage", "masterBarang");
+
         return "display_products";
     }
 
@@ -145,8 +149,9 @@ public class ProductController {
     public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId) {
         Long clientId;
         boolean isShowDetail = true;
+        String token;
         try {
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         } catch (Exception e) {
             return "redirect:/login";
@@ -174,6 +179,8 @@ public class ProductController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("stockAwal", stockAwal);
         model.addAttribute("selectedItemId", productId);
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_kartuStok";
     }
 }

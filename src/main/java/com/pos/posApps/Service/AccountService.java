@@ -7,6 +7,7 @@ import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.AccountRepository;
 import com.pos.posApps.Repository.ClientRepository;
+import com.pos.posApps.Repository.LoginTokenRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,9 @@ public class AccountService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private LoginTokenRepository loginTokenRepository;
 
     @Transactional
     public boolean doCreateAccount(RegisterRequest request, ClientEntity clientData){
@@ -80,6 +84,18 @@ public class AccountService {
                 user.getUsername(),
                 user.getRole()
         )).toList();
+    }
+
+    public UserDTO getCurrentLoggedInUser(String token){
+        Long userId = loginTokenRepository.findByTokenAndDeletedAtIsNull(token).getAccountEntity().getAccountId();
+        System.out.println("user id : " + userId);
+        AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
+        return new UserDTO(
+                accountEntity.getAccountId(),
+                accountEntity.getName(),
+                accountEntity.getUsername(),
+                accountEntity.getRole()
+        );
     }
 
     public boolean doDisableAccount(Long userId){

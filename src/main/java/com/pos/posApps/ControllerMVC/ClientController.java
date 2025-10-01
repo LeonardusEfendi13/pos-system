@@ -1,9 +1,11 @@
 package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.ClientDTO;
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ClientService;
+import com.pos.posApps.Service.SidebarService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -23,12 +25,14 @@ public class ClientController {
 
     private AuthService authService;
     private ClientService clientService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showSettings(HttpSession session, Model model) {
         Long clientId;
+        String token;
         try {
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         } catch (Exception e) {
             return "redirect:/login";
@@ -44,6 +48,8 @@ public class ClientController {
 
         model.addAttribute("settingData", clientSettings);
         model.addAttribute("activePage", "setting");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_setting";
     }
 

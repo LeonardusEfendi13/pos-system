@@ -1,11 +1,11 @@
 <!-- fragments/sidebar.html -->
-<aside th:fragment="sidebar" xmlns:th="http://www.w3.org/1999/xhtml"
-       class="navbar navbar-vertical navbar-expand-sm position-absolute" data-bs-theme="dark">
+<aside th:fragment="sidebar(sidebarData)" xmlns:th="http://www.w3.org/1999/xhtml"
+       class="navbar navbar-vertical navbar-expand-sm position-absolute" data-bs-theme="dark" style="width:fit-content">
 
     <div class="container-fluid">
-        <h1 class="navbar-brand navbar-brand-autodark">
-            <a th:href="@{/home}">Anugrah Motor</a>
-        </h1>
+        <h2 class="navbar-brand navbar-brand-autodark">
+            <a th:href="@{/home}" th:text="${sidebarData.namaToko}" style="margin-left:10px !important">AAANU</a>
+        </h2>
 
         <div class="collapse navbar-collapse" id="sidebar-menu">
             <ul class="navbar-nav pt-lg-3">

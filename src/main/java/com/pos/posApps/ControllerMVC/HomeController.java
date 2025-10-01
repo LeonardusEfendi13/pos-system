@@ -4,8 +4,10 @@ import com.pos.posApps.DTO.Dtos.Home.ChartDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeCustomerDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
+import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.HomeService;
+import com.pos.posApps.Service.SidebarService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -26,6 +28,7 @@ public class HomeController {
 
     private AuthService authService;
     private HomeService homeService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String home(HttpSession session, Model model, String startDate, String endDate, String periodFilter){
@@ -34,8 +37,9 @@ public class HomeController {
         System.out.println("end date (1) : " + endDate);
 
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             return "redirect:/login";
@@ -57,19 +61,18 @@ public class HomeController {
         List<HomeProductDTO> homeProductData = homeService.getTop10Product(finalStartDate, finalEndDate);
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        System.out.println("sidebar data : " + sidebarData);
 
-        System.out.println("Chart Data : " + chartData);
-        System.out.println("Home customer data : " + homeCustomerData);
         model.addAttribute("topBarData", topBarData);
         model.addAttribute("homeCustomerData", homeCustomerData);
         model.addAttribute("homeProductData", homeProductData);
         model.addAttribute("activePage", "home");
         model.addAttribute("startDate", finalStartDate);
-        System.out.println("Start Date (2) : " + finalStartDate.toLocalDate());
-        System.out.println("end date (2) : " + finalEndDate.toLocalDate());
         model.addAttribute("endDate", finalEndDate);
         model.addAttribute("periodFilter", periodFilter);
         model.addAttribute("chartDatas", chartData);
+        model.addAttribute("sidebarData", sidebarData);
 
         return "home";
     }

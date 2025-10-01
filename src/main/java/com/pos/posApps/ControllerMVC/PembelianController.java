@@ -4,10 +4,7 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.PembelianService;
-import com.pos.posApps.Service.ProductService;
-import com.pos.posApps.Service.SupplierService;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -32,14 +29,14 @@ public class PembelianController {
     private PembelianService pembelianService;
     private SupplierService supplierService;
     private ProductService productService;
+    private SidebarService sidebarService;
 
     @GetMapping
     public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai){
-        System.out.println("STart date : " +startDate);
-        System.out.println("end date : " +endDate);
         Long clientId;
+        String token;
         try{
-            String token = (String) session.getAttribute(authSessionKey);
+            token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
         }catch (Exception e){
             System.out.println("catch pembelian");
@@ -55,7 +52,6 @@ public class PembelianController {
 
         List<PembelianDTO> pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai);
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
-        System.out.println("pembelian data : " + pembelianData);
         model.addAttribute("pembelianData", pembelianData);
         model.addAttribute("supplierId", supplierId);
         model.addAttribute("supplierData", supplierData);
@@ -64,7 +60,8 @@ public class PembelianController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("lunas", lunas);
         model.addAttribute("tunai", tunai);
-
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
         return "display_pembelian";
     }
 
@@ -84,7 +81,6 @@ public class PembelianController {
         if (pembelianId != null) {
             pembelianData = pembelianService.getPembelianDataById(clientId, pembelianId);
         }
-        System.out.println("Pembelian data untuk edit : " + pembelianData );
         model.addAttribute("pembelianData", pembelianData);
         model.addAttribute("activePage", "pembelianTambah");
         model.addAttribute("productData", productEntity);
