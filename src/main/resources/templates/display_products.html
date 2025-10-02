@@ -358,14 +358,9 @@
     var message = /*[[${message}]]*/ "Unknown message";
 
     if (status == 'true') {
-        console.log("otw alert");
         alert(message);
     }
     /*]]>*/
-</script>
-<script th:inline="javascript">
-    var status = [[${status}]];
-    console.log("status = ", status);
 </script>
 <script>
     $(document).ready(function () {
@@ -502,10 +497,6 @@
             const form = document.getElementById("barangForm");
             const formData = new FormData(form);
 
-            console.log("=== Form Data to be Sent ===");
-            for (const [name, value] of formData.entries()) {
-                console.log(`${name}: ${value}`);
-            }
             e.preventDefault();
             rupiahInputs.forEach(input => {
                 // Validate input value before cleaning
@@ -514,7 +505,6 @@
                 }
 
                 const cleaned = cleanRupiahToNumber(input.value);
-                console.log("cleaned rupiah:", cleaned);
                 input.value = cleaned;
             });
 

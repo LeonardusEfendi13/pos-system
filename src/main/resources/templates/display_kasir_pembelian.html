@@ -633,10 +633,6 @@
     let masterProducts = /*[[${productData}]]*/ [];
     const masterSuppliers = /*[[${supplierData}]]*/ [];
     const masterTransactions = /*[[${pembelianData}]]*/ [];
-    console.log(
-      "master Transaction Saved:",
-      JSON.stringify(masterTransactions, null, 2)
-    );
   function populateSupplierOptions() {
     const select = document.getElementById("supplierId");
     // Clear all options except the first placeholder
@@ -674,7 +670,6 @@
             jsonData[key] = key.toLowerCase().includes('price') ? parseRupiah(value) : value;
           }
         });
-        console.log("JSON data to send:", JSON.stringify(jsonData, null, 2));
 
       try {
         // 1. Send add product request
@@ -699,8 +694,6 @@
 
         // 3. Replace masterProducts with new list
         masterProducts = updatedProductList;
-        console.log("Updated masterProducts:", masterProducts);
-
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
         modal.hide();
@@ -813,7 +806,6 @@
 
         // Form submission listener to clean up Rupiah values before submission.
         document.getElementById("barangForm").addEventListener("submit", function (e) {
-            console.log("Masuk logic yg ini kan");
             e.preventDefault(); // Stop the default form submission temporarily
 
             // Clean Rupiah inputs by removing formatting
@@ -874,8 +866,6 @@
             alert("Harap pilih supplier terlebih dahulu");
             return;
         }
-        console.log("supplier id cek faktur : " , supplierId);
-        console.log(noFaktur);
         const params = noFaktur + "_" + supplierId;
         const apiUrl = `/api/pembelian/cek/${params}`;
 
@@ -893,12 +883,10 @@
         })
         .then(data => {
             // Handle the response data from your backend
-            console.log('API response:', data);
             // For example, show a message
             alert(data);
         })
         .catch(error => {
-            console.error('Error calling API:', error);
             alert('Failed to check invoice number');
         });
     }
@@ -974,7 +962,6 @@
 
    function generateTransactionNumber() {
      const timestamp = Date.now();
-     console.log("timestamp : " + timestamp);
      const random = Math.floor(Math.random() * 10000);
      return `#TRX${timestamp}${random}`;
    }
@@ -1097,7 +1084,6 @@
         // handle formatted rupiah
         if (val.startsWith("Rp")) {
           val = parseRupiah(val);
-          console.log("formatted value : " + val);
         }
 
         if (val === "" || isNaN(val)) {
@@ -1138,7 +1124,6 @@
     }
 
    function addNewRow(focus = true) {
-    console.log("Add new row ");
      const rows = sellTableBody.querySelectorAll("tr");
      if (rows.length > 0) {
        const lastRowCodeInput =
@@ -1377,7 +1362,6 @@
 
       markUp1Input.addEventListener("input", () => {
           let val = markUp1Input.value;
-          console.log("value markup1 is : " + val);
 
           // Jika ada titik desimal, batasi hanya 2 digit setelah koma
           if (val.includes(".")) {
@@ -1402,7 +1386,6 @@
 
       markUp2Input.addEventListener("input", () => {
           let val = markUp2Input.value;
-          console.log("value markup2 is : " + val);
 
           // Jika ada titik desimal, batasi hanya 2 digit setelah koma
           if (val.includes(".")) {
@@ -1427,7 +1410,6 @@
 
       markUp3Input.addEventListener("input", () => {
           let val = markUp3Input.value;
-          console.log("value markup3 is : " + val);
 
           // Jika ada titik desimal, batasi hanya 2 digit setelah koma
           if (val.includes(".")) {
@@ -1524,14 +1506,11 @@
 
         if (tier && tier.price > 0) {
           // ✅ ada harga jual dari backend → isi & enabled
-          console.log("harusnya tier nya ada");
           markupInput.value = ((tier.price - product.hargaBeli) / product.hargaBeli * 100).toFixed(2);
           markupInput.disabled = false;
           hargaInput.value = formatRupiah(tier.price);
           hargaInput.disabled = false;
         } else {
-          console.log("harusnya tier nya ga ada");
-
           // ❌ tidak ada harga jual → disable
           markupInput.value = 0;
           markupInput.disabled = true;
@@ -1996,7 +1975,6 @@
      }
 
      const isCash = document.getElementById("paymentType").value === "tunai";
-     console.log("value payment type : " + document.getElementById("paymentType").value);
         let poDueDate = null;
         const poDueDateInput = document.getElementById("poDueDate");
 
@@ -2013,13 +1991,9 @@
         alert("Nama supplier tidak boleh kosong");
         return;
      }
-     console.log("selected customer : " + selectedCustomerId);
-     console.log("master Suppliers : " + masterSuppliers);
      const selectedCustomer = masterSuppliers.find(
        (c) => c.supplierId == selectedCustomerId
      );
-
-     console.log("selected customer v2: " + selectedCustomer);
 
      const purchasingNumberInput = document.getElementById("invoiceNumber").value;
      if(!purchasingNumberInput){
@@ -2083,19 +2057,12 @@
          });
        }
      });
-     console.log(
-       "Transaction Saved:",
-       JSON.stringify(transactionData, null, 2)
-     );
      try {
       let response;
-      console.log("otw save nih, transaction data : " + JSON.stringify(transactionData, null, 2));
-
       if (
         masterTransactions.pembelianId !== null &&
         masterTransactions.pembelianDetailDTOS !== null
       ) {
-        console.log("otw edit");
         response = await fetch(`/api/pembelian/edit/${masterTransactions.pembelianId}`, {
           method: "POST",
           headers: {
@@ -2104,7 +2071,6 @@
           body: JSON.stringify(transactionData),
         });
       } else {
-        console.log("otw add");
         response = await fetch("/api/pembelian/add", {
           method: "POST",
           headers: {
@@ -2120,7 +2086,6 @@
       }
 
       const result = await response.text();
-      console.log("Transaction Saved:", result);
       alert("Transaction saved successfully!");
 
       if (
@@ -2407,7 +2372,6 @@
         [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
           .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
 
-          console.log("===Load Transaction===");
         [priceInput, hargaJual1Input, hargaJual2Input, hargaJual3Input]
           .forEach(inp => {
             ensureZeroOnBlur(inp, 0, row);

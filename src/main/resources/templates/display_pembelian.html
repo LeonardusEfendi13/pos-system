@@ -250,13 +250,9 @@
     var pembelianData = /*[[${pembelianData}]]*/ [];
     var detailsMap = {};
 
-    console.log("pembelian data : " + pembelianData);
-
     pembelianData.forEach(function (p) {
       detailsMap[p.pembelianId] = p.pembelianDetailDTOS;
     });
-    console.log("pembelian data details : ", detailsMap);
-
 </script>
 <script>
     function formatCurrency(amount) {
@@ -436,8 +432,6 @@
           const pembelianId = $(this).data("id");
           const details = detailsMap[pembelianId] || [];
           const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
-
-          console.log("no faktur : ", noFaktur);
 
           $("#detailTitle").text("Detail Pembelian (" + noFaktur + ")");
           $("#userTable tbody tr").removeClass("previewing-row");

@@ -192,8 +192,6 @@
       const productIdInput = document.getElementById("productId");
 
       if (productIdInput && productIdInput.value) {
-        console.log("productId is loaded:", productIdInput.value);
-
         // Optional: lookup name
         const selectedProduct = masterProducts.find(p => p.productId == productIdInput.value);
         if (selectedProduct) {
@@ -207,7 +205,6 @@
     const productModalEl = document.getElementById("productModal");
     const productModal = new bootstrap.Modal(productModalEl);
     document.getElementById('btnCariBarang').addEventListener('click', function() {
-        console.log("entering cari barang");
         productModal.show();
         loadProductTable();
     });

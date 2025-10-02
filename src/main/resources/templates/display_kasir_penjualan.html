@@ -609,22 +609,9 @@
 
 <script th:inline="javascript">
     const masterProducts = /*[[${productData}]]*/ [];
-    console.log("Product Datas:", JSON.stringify(masterProducts, null, 2));
     const masterCustomers = /*[[${customerData}]]*/ [];
-    console.log(
-      "master Customer Saved:",
-      JSON.stringify(masterCustomers, null, 2)
-    );
     const masterTransactions = /*[[${penjualanData}]]*/ [];
-    console.log(
-      "master Transaction Saved:",
-      JSON.stringify(masterTransactions, null, 2)
-    );
     const masterSettings = /*[[${settingData}]]*/ [];
-    console.log(
-      "master Settings:",
-      JSON.stringify(masterSettings, null, 2)
-    );
 </script>
 <script>
     $(document).ready(function () {
@@ -771,7 +758,6 @@
       // ⚡ Fetch 10 transaksi terakhir dari backend
       const response = await fetch("/api/kasir/transaction/list");
 
-      console.log("data : " + JSON.stringify(response, null, 2));
       if (!response.ok) throw new Error("Gagal fetch transaksi");
 
       const transactions = await response.json();
@@ -789,7 +775,6 @@
       if (!response.ok) throw new Error("Gagal fetch revenue transaksi");
 
       const totalRevenue = await response.text();
-      console.log("Total revenue per today : " + totalRevenue);
 
       // 💰 Format the revenue (optional)
       const formatted = new Intl.NumberFormat("id-ID", {
@@ -913,9 +898,6 @@
 
             trx.tanggal = formattedDateTime;
             trx.inv_number = trx.transactionNumber;
-            console.log(
-              "otw generate, datanya : " + JSON.stringify(trx, null, 2)
-            );
             generateReceiptContent(trx); // render content to #receiptContent
 
             // Wait for the DOM to update
@@ -1055,9 +1037,6 @@
 
           // ✅ Load the detail table immediately for the first row
           const trx = firstRow._transactionData;
-          console.log(
-            "trx data di line 771 : " + JSON.stringify(trx, null, 2)
-          );
 
           if (trx && trx.transactionDetailDTOS) {
             loadDetailTable(trx.transactionDetailDTOS);
@@ -1073,8 +1052,6 @@
   function loadDetailTable(items) {
     const detailBody = document.querySelector("#detailTable tbody");
     detailBody.innerHTML = "";
-    console.log("items data : " + JSON.stringify(items, null, 2));
-    console.log("items length : " + items.length);
 
     if (!items || items.length === 0) {
       const tr = document.createElement("tr");
@@ -1129,7 +1106,6 @@
 
   function generateTransactionNumber() {
     const timestamp = Date.now();
-    console.log("timestamp : " + timestamp);
     const random = Math.floor(Math.random() * 10000);
     return `#TRX${timestamp}${random}`;
   }
@@ -1156,7 +1132,6 @@
   }
 
   function parseRupiah(rupiahString) {
-    console.log("value rupiah : " + rupiahString);
     if (!rupiahString) return 0;
     return parseFloat(
       rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
@@ -1987,13 +1962,9 @@
     }
 
     const selectedCustomerId = customerSelect.value;
-    console.log("selected customer : " + selectedCustomerId);
-    console.log("master customer : " + masterCustomers);
     const selectedCustomer = masterCustomers.find(
       (c) => c.customerId == selectedCustomerId
     );
-
-    console.log("selected customer v2: " + selectedCustomer);
 
       // ⭐ Clean up half-typed rows before collecting data
       cleanUpRowsBeforeSave();
@@ -2032,14 +2003,8 @@
         });
       }
     });
-    console.log(
-      "Transaction Saved:",
-      JSON.stringify(transactionData, null, 2)
-    );
 
     const isPrintBill = document.getElementById("printBill");
-
-    console.log("start sending to be");
     try {
       // Save transaction
       let response;
@@ -2069,10 +2034,8 @@
 
       const result = await response.text();
       if (!response.ok) {
-        console.log("response : " + result);
         throw new Error(`${result}`);
       }
-      console.log("Result from DB:", result);
       const data = {
         inv_number: result,
         customer_name: selectedCustomer.name,
@@ -2103,9 +2066,6 @@
           })
         ),
       };
-      console.log("data : " + data);
-      console.log("data jsoned : " + JSON.stringify(data, null, 2));
-
       const isPrintBill = document.getElementById("printBill");
 
       if (isPrintBill.checked) {
@@ -2244,8 +2204,6 @@ vertical-align: middle;
       (c) => c.customerId == 1
     ).customerId;
     customerSelect.value = customerUmum;
-    console.log("master cust 0 : " + customerUmum);
-
     addNewRow();
     calculateGrandTotal();
   }
@@ -2420,7 +2378,6 @@ vertical-align: middle;
     masterTransactions.transactionId !== null &&
     masterTransactions.transactionDetailDTOS !== null
   ) {
-    console.log("otw init master transactions");
     loadTransaction(masterTransactions);
   }
   updateJam();
@@ -2664,7 +2621,6 @@ vertical-align: middle;
         pageDiv.appendChild(grandTotal);
         root.appendChild(pageDiv);
       });
-      console.log("✅ Receipt content generated.");
     }
 </script>
 </body>

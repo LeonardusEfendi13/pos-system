@@ -718,10 +718,6 @@
     let masterProducts = /*[[${productData}]]*/ [];
     const masterSuppliers = /*[[${supplierData}]]*/ [];
     const masterTransactions = /*[[${preorderData}]]*/ [];
-    console.log(
-      "master Transaction Saved:",
-      JSON.stringify(masterTransactions, null, 2)
-    );
     function populateSupplierOptions() {
       const select = document.getElementById("supplierId");
       // Clear all options except the first placeholder
@@ -764,8 +760,6 @@
               : value;
           }
         });
-        console.log("JSON data to send:", JSON.stringify(jsonData, null, 2));
-
         try {
           // 1. Send add product request
           const response = await fetch("/api/product/add", {
@@ -789,8 +783,6 @@
 
           // 3. Replace masterProducts with new list
           masterProducts = updatedProductList;
-          console.log("Updated masterProducts:", masterProducts);
-
           // Close modal and reset form
           const modal = bootstrap.Modal.getInstance(
             document.getElementById("barangModal")
@@ -916,7 +908,6 @@
       document
         .getElementById("barangForm")
         .addEventListener("submit", function (e) {
-          console.log("Masuk logic yg ini kan");
           e.preventDefault(); // Stop the default form submission temporarily
 
           // Clean Rupiah inputs by removing formatting
@@ -1018,7 +1009,6 @@
 
     function generateTransactionNumber() {
       const timestamp = Date.now();
-      console.log("timestamp : " + timestamp);
       const random = Math.floor(Math.random() * 10000);
       return `#TRX${timestamp}${random}`;
     }
@@ -1835,14 +1825,8 @@
           });
         }
       });
-      console.log(
-        "Transaction Saved:",
-        JSON.stringify(transactionData, null, 2)
-      );
-
       const isPrintBill = document.getElementById("printBill");
 
-      console.log("start sending to be");
       try {
         // Save transaction
         let response;
@@ -1872,10 +1856,8 @@
 
         const result = await response.text();
         if (!response.ok) {
-          console.log("response : " + result);
           throw new Error(`${result}`);
         }
-        console.log("Result from DB:", result);
 
         const data = {
           inv_number: result,
@@ -1904,8 +1886,6 @@
             })
           ),
         };
-        console.log("data jsoned : " + JSON.stringify(data, null, 2));
-
         const isPrintBill = document.getElementById("printBill");
 
         if (isPrintBill.checked) {
@@ -2211,7 +2191,6 @@
       masterTransactions.preorderId !== null &&
       masterTransactions.preorderDetailDTOS !== null
     ) {
-      console.log("otw init master transactions");
       loadTransaction(masterTransactions);
     }
     updateJam();
