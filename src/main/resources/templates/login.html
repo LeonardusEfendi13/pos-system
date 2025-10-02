@@ -15,5 +15,20 @@
         <button type="submit">Sign In</button>
     </form>
 </div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var status = /*[[${status}]]*/ false;
+    var message = /*[[${message}]]*/ "Unknown message";
+
+    console.log("message : " + message);
+
+    if (status == 'true') {
+        console.log("otw alert");
+        alert(message);
+    }
+    /*]]>*/
+</script>
 </body>
 </html>
+
+

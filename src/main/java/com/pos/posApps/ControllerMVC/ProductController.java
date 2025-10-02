@@ -65,7 +65,7 @@ public class ProductController {
             accEntity = authService.validateToken(token);
             clientData = accEntity.getClientEntity();
             if (clientData.getClientId() == null) {
-                redirectAttributes.addFlashAttribute("status", "failed");
+                redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Session Expired");
                 return "redirect:/login";
             }
@@ -73,17 +73,17 @@ public class ProductController {
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = productService.insertProducts(req, clientData);
-            if (isInserted) {
-                redirectAttributes.addFlashAttribute("status", "success");
+            ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
+            if (isInserted.isStatus()) {
+                redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Created");
                 return "redirect:/products";
             }
-            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
             return "redirect:/products";
         }
-        redirectAttributes.addFlashAttribute("status", "failed");
+        redirectAttributes.addFlashAttribute("status", true);
         redirectAttributes.addFlashAttribute("message", "Session Expired");
         return "redirect:/login";
     }
@@ -95,7 +95,7 @@ public class ProductController {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
             if(accEntity.getClientEntity().getClientId() == null){
-                redirectAttributes.addFlashAttribute("status", "failed");
+                redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Session Expired");
                 return "redirect:/login";
             }
@@ -106,11 +106,11 @@ public class ProductController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
             if (isEdited) {
-                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Edited");
                 return "redirect:/products";
             }
-            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to edit data");
             return "redirect:/products";
         }
@@ -128,11 +128,11 @@ public class ProductController {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.deleteProducts(productId);
             if (isEdited) {
-                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");
                 return "redirect:/products";
             }
-            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/products";
         }

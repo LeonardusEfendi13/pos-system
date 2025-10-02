@@ -2,6 +2,7 @@ package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
@@ -53,8 +54,8 @@ public class RestControllerProduct {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Something went wrong");
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = productService.insertProducts(req, clientData);
-            if (isInserted) {
+            ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
+            if (isInserted.isStatus()) {
                 return ResponseEntity.ok("Berhasil menyimpan data");
             }
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Gagal menyimpan data");

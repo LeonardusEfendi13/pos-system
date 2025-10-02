@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
@@ -57,15 +58,18 @@ public class AuthController {
             @Valid LoginRequest loginRequest,
             HttpSession httpSession,
             BindingResult bindingResult,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
         if(bindingResult.hasErrors()){
-            model.addAttribute("login_status", "200");
+            redirectAttributes.addFlashAttribute("status", true);
+            redirectAttributes.addFlashAttribute("message", "Username / Password salah");
             return "redirect:/login";
         }
         String token = authService.doLoginAndGetToken(loginRequest.getUsername(), loginRequest.getPassword());
 
         if(token == null){
-            model.addAttribute("login_status", "401");
+            redirectAttributes.addFlashAttribute("status", true);
+            redirectAttributes.addFlashAttribute("message", "Username / Password salah");
             return "redirect:/login";
         }
         httpSession.setAttribute(authSessionKey, token);

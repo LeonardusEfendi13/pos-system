@@ -82,11 +82,11 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean insertProducts(CreateProductRequest req, ClientEntity clientData) {
+    public ResponseInBoolean insertProducts(CreateProductRequest req, ClientEntity clientData) {
         try {
             ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
             if (productEntity != null) {
-                return false;
+                return new ResponseInBoolean(false, "Barang sudah ada");
             }
 
             Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
@@ -94,7 +94,7 @@ public class ProductService {
 
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntityOpt.isEmpty()) {
-                return false;
+                return new ResponseInBoolean(false, "Data Supplier tidak ditemukan");
             }
 
             SupplierEntity supplierEntity = supplierEntityOpt.get();
@@ -124,7 +124,7 @@ public class ProductService {
                     clientData
             ));
             if(!isAdjusted){
-                return false;
+                return new ResponseInBoolean(false, "Gagal insert kartu stok");
             }
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
@@ -138,9 +138,9 @@ public class ProductService {
                 productPricesRepository.save(newProductPrices);
             }
 
-            return true;
+            return new ResponseInBoolean(true, "Berhasil tambah produk baru");
         } catch (Exception e) {
-            return false;
+            return new ResponseInBoolean(false, "Gagal insert produk, hubungi admin!");
         }
 
     }
