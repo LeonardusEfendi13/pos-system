@@ -44,7 +44,7 @@
 <body>
 <div class="page">
     <!-- Sidebar -->
-    <aside th:replace="fragments/sidebar :: sidebar(sidebarData=${sidebarData})"></aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
 
     <!-- Main content -->
     <div class="page-wrapper">
