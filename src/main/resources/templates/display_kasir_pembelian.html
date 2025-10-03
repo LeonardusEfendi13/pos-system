@@ -900,10 +900,23 @@
         productModal.show();
       });
 
-     // Set default PO Date = today
-       const poDate = document.getElementById("poDate");
-       const today = new Date().toISOString().split("T")[0];
-       poDate.value = today;
+        // Set default PO Date = today
+        const poDate = document.getElementById("poDate");
+        const poDueDate = document.getElementById("poDueDate");
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+        poDate.value = todayStr;
+
+        // Add 30 days
+        const dueDate = new Date();
+        dueDate.setDate(today.getDate() + 30); // Automatically handles month/year rollovers
+
+        const dueDateStr = dueDate.toISOString().split("T")[0];
+        poDueDate.value = dueDateStr;
+         console.log("po due date value : " , dueDateStr);
+
 
        const cekButton = document.querySelector(".btn-info");
        const noFakturInput = document.getElementById("invoiceNumber");
@@ -915,7 +928,6 @@
             cekButton.disabled = false;
         }
        }
-
         toggleButtonState();
         noFakturInput.addEventListener('input', toggleButtonState);
      });
