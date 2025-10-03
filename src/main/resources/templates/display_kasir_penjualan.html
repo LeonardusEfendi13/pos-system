@@ -1361,7 +1361,7 @@
           alert("Kode barang belum diisi!");
           return;
         }
-        cekHargaBtn.disabled = true;
+        cekHargaBtn.style.pointerEvents = "none";
         cekHargaBtn.textContent = "Loading...";
 
         try {
@@ -1391,7 +1391,12 @@
         if (e.key === "Enter") {
           e.preventDefault();
           const code = codeInput.value.trim().toUpperCase();
-          if (!code) return;
+          if (!code){
+            selectedRow = row;
+            loadProductTable();
+            productModal.show();
+            return;
+          };
 
           const product = masterProducts.find((p) => p.shortName === code);
           if (product) {
@@ -1402,6 +1407,15 @@
             codeInput.value = "";
             codeInput.focus();
           }
+        }
+      });
+
+      codeInput.addEventListener("dblclick", () => {
+        if (!codeInput.value.trim()) {
+          // 🚀 Kalau kosong → buka modal
+          selectedRow = row;
+          loadProductTable();
+          productModal.show();
         }
       });
 
@@ -1661,6 +1675,7 @@
     }
 
     function loadProductTable(filteredProducts = masterProducts) {
+
       productTableBody.innerHTML = "";
       let rows = [];
 
@@ -2252,7 +2267,8 @@ vertical-align: middle;
             alert("Kode barang belum diisi!");
             return;
           }
-          cekHargaBtn.disabled = true;
+          cekHargaBtn.style.pointerEvents = "none";
+
           cekHargaBtn.textContent = "Loading...";
           try {
             const res = await fetch(
