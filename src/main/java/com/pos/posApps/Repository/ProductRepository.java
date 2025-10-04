@@ -16,6 +16,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     ProductEntity findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
+    Optional<ProductEntity> findFirstByOrderByProductIdDesc();
+
     Optional<ProductEntity> findFirstByProductIdAndDeletedAtIsNull(Long productId);
 
     boolean existsByFullNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(
