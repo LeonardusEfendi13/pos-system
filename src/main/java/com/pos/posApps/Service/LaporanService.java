@@ -31,7 +31,7 @@ public class LaporanService {
     @Autowired
     PurchasingRepository purchasingRepository;
 
-    public List<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId){
+    public List<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId) {
         List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
         return productData.stream().map(product -> new LaporanNilaiPersediaanDTO(
                 product.getShortName(),
@@ -123,9 +123,9 @@ public class LaporanService {
             String filterOptions
     ) {
         List<PurchasingEntity> purchasingData;
-        if(supplierId == null){
+        if (supplierId == null) {
             purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate);
-        }else{
+        } else {
             purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate);
         }
 
@@ -145,19 +145,19 @@ public class LaporanService {
         // Grouping by actual data
         Map<String, LaporanPembelianPerWaktuDTO> groupedMap = purchasingData.stream()
                 .flatMap(trx -> trx.getPurchasingDetailEntities().stream()
-                        .filter(detail -> detail.getDeletedAt() == null)
-                        .map(detail -> {
-                            String period = trx.getCreatedAt().format(formatter);
+                                .filter(detail -> detail.getDeletedAt() == null)
+                                .map(detail -> {
+                                    String period = trx.getCreatedAt().format(formatter);
 //                            BigDecimal hargaJual = detail.getPrice();
-                            BigDecimal totalPrice = detail.getTotalPrice();
+                                    BigDecimal totalPrice = detail.getTotalPrice();
 //                            Long qty = detail.getQty();
 
-                            ProductEntity product = productMap.get(detail.getShortName());
-                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
+                                    ProductEntity product = productMap.get(detail.getShortName());
+                                    BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
 //                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
 
-                            return Map.entry(period, new LaporanPembelianPerWaktuDTO(period, totalPrice));
-                        })
+                                    return Map.entry(period, new LaporanPembelianPerWaktuDTO(period, totalPrice));
+                                })
                 )
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -254,22 +254,22 @@ public class LaporanService {
         // Group by customer name
         Map<String, LaporanPembelianPerPelangganDTO> groupedByCustomer = purchasingData.stream()
                 .flatMap(trx -> trx.getPurchasingDetailEntities().stream()
-                        .filter(detail -> detail.getDeletedAt() == null)
-                        .map(detail -> {
-                            String supplierName = trx.getSupplierEntity() != null
-                                    ? trx.getSupplierEntity().getSupplierName()
-                                    : "Unknown Supplier";
+                                .filter(detail -> detail.getDeletedAt() == null)
+                                .map(detail -> {
+                                    String supplierName = trx.getSupplierEntity() != null
+                                            ? trx.getSupplierEntity().getSupplierName()
+                                            : "Unknown Supplier";
 
 //                            BigDecimal hargaJual = detail.getPrice();
-                            BigDecimal totalPrice = detail.getTotalPrice();
+                                    BigDecimal totalPrice = detail.getTotalPrice();
 //                            Long qty = detail.getQty();
 
 //                            ProductEntity product = productMap.get(detail.getShortName());
 //                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
 
-                            return Map.entry(supplierName,
-                                    new LaporanPembelianPerPelangganDTO(supplierName, totalPrice));
-                        })
+                                    return Map.entry(supplierName,
+                                            new LaporanPembelianPerPelangganDTO(supplierName, totalPrice));
+                                })
                 )
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,

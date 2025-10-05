@@ -9,14 +9,13 @@ import com.pos.posApps.Repository.StockMovementsRepository;
 import com.pos.posApps.Repository.SupplierRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -39,7 +38,7 @@ public class ProductService {
     StockMovementService stockMovementService;
 
 
-    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate){
+    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate) {
         List<StockMovementsEntity> stockMovementData = stockMovementsRepository.findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(clientId, productId, startDate, endDate);
         return stockMovementData.stream().map(data -> new StockMovementsDTO(
                 data.getStockMovementsId(),
@@ -52,7 +51,7 @@ public class ProductService {
         )).collect(Collectors.toList());
     }
 
-    public Long getStockAwalProduct(Long productId, LocalDateTime startDate){
+    public Long getStockAwalProduct(Long productId, LocalDateTime startDate) {
         List<StockMovementsEntity> stockData = stockMovementsRepository.findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(productId, startDate);
         return stockData.stream()
                 .max(Comparator.comparing(StockMovementsEntity::getCreatedAt))
@@ -61,7 +60,9 @@ public class ProductService {
     }
 
     public List<ProductDTO> getProductData(Long clientId) {
-        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
+        List<ProductEntity> productData = productRepository
+                .findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
+
         return productData.stream().map(product -> new ProductDTO(
                 product.getProductId(),
                 product.getShortName(),
@@ -76,9 +77,32 @@ public class ProductService {
                                 productPrices.getPrice(),
                                 productPrices.getMaximalCount()
                         ))
-                        .collect(Collectors.toList()),  // collect the stream to a list
+                        .collect(Collectors.toList()),
                 product.getSupplierEntity().getSupplierId()
         )).collect(Collectors.toList());
+    }
+
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
+        Page<ProductEntity> productData = productRepository.
+                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+
+        return productData.map(product -> new ProductDTO(
+                product.getProductId(),
+                product.getShortName(),
+                product.getFullName(),
+                product.getSupplierPrice(),
+                product.getStock(),
+                product.getProductPricesEntity().stream()
+                        .map(productPrices -> new ProductPricesDTO(
+                                productPrices.getProductPricesId(),
+                                product.getProductId(),
+                                productPrices.getPercentage(),
+                                productPrices.getPrice(),
+                                productPrices.getMaximalCount()
+                        ))
+                        .collect(Collectors.toList()),
+                product.getSupplierEntity().getSupplierId()
+        ));
     }
 
     @Transactional
@@ -123,7 +147,7 @@ public class ProductService {
                     req.getStock(),
                     clientData
             ));
-            if(!isAdjusted){
+            if (!isAdjusted) {
                 return new ResponseInBoolean(false, "Gagal insert kartu stok");
             }
 
@@ -162,7 +186,7 @@ public class ProductService {
             return false;
         }
 
-        if(!Objects.equals(req.getStock(), productEntity.getStock())){
+        if (!Objects.equals(req.getStock(), productEntity.getStock())) {
             boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
                     productEntity,
                     "-",
@@ -172,7 +196,7 @@ public class ProductService {
                     req.getStock(),
                     clientEntity
             ));
-            if(!isAdjusted){
+            if (!isAdjusted) {
                 return false;
             }
         }

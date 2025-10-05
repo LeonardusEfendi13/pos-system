@@ -30,12 +30,14 @@
         .add-product-btn {
             margin-bottom: 15px;
         }
-       .modalHeader {
-          cursor: pointer;
-          background-color: #f1f1f1;
-          padding: 10px;
-          font-weight: bold;
+
+        .modalHeader {
+            cursor: pointer;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-weight: bold;
         }
+
         .nav-link.active {
             background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
             color: #e0e7ff;
@@ -52,34 +54,38 @@
 
             <!-- Add Barang Button -->
             <div style="text-align:end; padding-right: 20px">
-                <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addBarangModal" id="add-barang-btn">Add Product </button>
+                <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addBarangModal"
+                        id="add-barang-btn">Add Product
+                </button>
             </div>
             <div style="max-height: 70vh; overflow-y: auto;">
                 <table id="productTable" class="table table-striped table-bordered">
-                <thead class="sticky-top">
-                <tr>
-                    <th scope="col">No</th>
-                    <th scope="col">Kode Part</th>
-                    <th scope="col">Nama Barang</th>
-                    <th scope="col">Stok</th>
-                    <th scope="col">Harga Jual</th>
-                    <th scope="col">Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="product, iterStat : ${productData}">
-                    <td th:text="${iterStat.index + 1}">1</td>
-                    <td th:text="${product.shortName}">Kode Part</td>
-                    <td th:text="${product.fullName}">Nama Barang</td>
-                    <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>
-                    <td class="rupiah-price" th:data-price="${product.productPricesDTO[0].price}" th:text="${product.productPricesDTO[0].price}">Harga Jual</td>
-                    <td>
-                        <button
-                                class="btn btn-sm btn-primary me-1 edit-barang-btn"
-                                data-bs-toggle="modal"
-                                data-bs-target="#addBarangModal"
-                                id="edit-barang-btn"
-                                th:attr="
+                    <thead class="sticky-top">
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Kode Part</th>
+                        <th scope="col">Nama Barang</th>
+                        <th scope="col">Stok</th>
+                        <th scope="col">Harga Jual</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product, iterStat : ${productData}">
+                        <td th:text="${iterStat.index + 1}">1</td>
+                        <td th:text="${product.shortName}">Kode Part</td>
+                        <td th:text="${product.fullName}">Nama Barang</td>
+                        <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>
+                        <td class="rupiah-price" th:data-price="${product.productPricesDTO[0].price}"
+                            th:text="${product.productPricesDTO[0].price}">Harga Jual
+                        </td>
+                        <td>
+                            <button
+                                    class="btn btn-sm btn-primary me-1 edit-barang-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#addBarangModal"
+                                    id="edit-barang-btn"
+                                    th:attr="
                                     data-productid=${product.productId},
                                     data-shortname=${product.shortName},
                                     data-fullname=${product.fullName},
@@ -94,25 +100,50 @@
                                     data-maxqty3=${product.productPricesDTO[2].maximalCount},
                                     data-percentage1=${product.productPricesDTO[0].percentage},
                                     data-percentage2=${product.productPricesDTO[1].percentage},
-                                    data-percentage3=${product.productPricesDTO[2].percentage},
+                                    data-percentage3=${product.productPricesDTO[2].percentage}
                                 "
-                        >Edit
-                        </button>
-
-                        <form th:action="@{|/products/delete/${product.productId}|}"
-                              method="post"
-                              style="display:inline;">
-                            <button type="submit"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Are you sure you want to delete this user?');"
-                                    title="Delete User">
-                                <i class="ti ti-trash"></i> Delete
+                            >Edit
                             </button>
-                        </form>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+
+                            <form th:action="@{|/products/delete/${product.productId}|}"
+                                  method="post"
+                                  style="display:inline;">
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Are you sure you want to delete this user?');"
+                                        title="Delete User">
+                                    <i class="ti ti-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!--  Pagination  -->
+                <div class="d-flex justify-content-between align-items-center my-2">
+                    <div>
+                        Menampilkan <span th:text="${startData}">1</span>-
+                        <span th:text="${endData}">10</span> dari
+                        <span th:text="${totalData}">10</span> data
+                    </div>
+
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products(page=${currentPage - 1})}">Prev</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/products(page=${i})}" th:text="${i + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products(page=${currentPage + 1})}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
 
@@ -216,7 +247,7 @@
                             <hr/>
 
                             <!-- Harga Jual -->
-                            <h6>Harga Jual</h6>
+                            <h6>Harga Jual</h6>WEB
                             <table class="table table-bordered table-sm align-middle">
                                 <thead class="table-light">
                                 <tr>
@@ -349,7 +380,7 @@
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script>
     $(document).ready(function () {
-      $("#barangModal").draggable();
+        $("#barangModal").draggable();
     });
 </script>
 <script th:inline="javascript">
@@ -383,7 +414,7 @@
         const rupiahPrices = document.querySelectorAll(".rupiah-price");
 
         // --- Helper Functions ---
-        function updatePercentage(hargaJualInput, pctOutput){
+        function updatePercentage(hargaJualInput, pctOutput) {
             const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
             const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
             const hargaJual = parseCurrency(hargaJualRaw);
@@ -452,14 +483,14 @@
         }
 
         // Listener for the "Add Product" button to open the modal and clear the form.
-        $('#add-barang-btn').on('click', function() {
+        $('#add-barang-btn').on('click', function () {
             clearForm();
             $('#barangModal').modal('show');
         });
 
         // Listener for the "Edit" buttons to open the modal and populate the form.
         // The data attributes on these buttons are crucial for this to work.
-        $('.edit-barang-btn').on('click', function() {
+        $('.edit-barang-btn').on('click', function () {
             const data = $(this).data();
             populateForm(data);
             $('#barangModal').modal('show');
@@ -511,36 +542,36 @@
             document.getElementById("barangForm").submit();
         });
 
-<!--        Handle maxqty-->
+        <!--        Handle maxqty-->
         const dirtyFlags = {
-          maxqty2: false,
-          maxqty3: false
+            maxqty2: false,
+            maxqty3: false
         };
 
         function onInputChange() {
-          dirtyFlags[this.id] = true; // User changed the value, mark dirty
+            dirtyFlags[this.id] = true; // User changed the value, mark dirty
         }
 
         function validateOnBlur() {
-          const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
-          const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
-          const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
+            const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
+            const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
+            const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
 
-          if (this.id === 'maxqty2') {
-            if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
-              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
-              dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
-              this.focus(); // refocus to fix
+            if (this.id === 'maxqty2') {
+                if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+                    alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+                    dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
+                    this.focus(); // refocus to fix
+                }
             }
-          }
 
-          if (this.id === 'maxqty3') {
-            if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
-              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
-              dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
-              this.focus(); // refocus to fix
+            if (this.id === 'maxqty3') {
+                if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
+                    alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+                    dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
+                    this.focus(); // refocus to fix
+                }
             }
-          }
         }
 
         const maxqty2Input = document.getElementById('maxqty2');
@@ -553,24 +584,19 @@
         maxqty3Input.addEventListener('blur', validateOnBlur);
 
         $('#productTable').DataTable({
-            paging: true,         // aktifkan paging
-            pageLength: 10,       // jumlah data per halaman
-            lengthMenu: [5, 10, 25, 50], // opsi pilihan jumlah data
-            ordering: true,       // aktifkan sorting
-            order: [],            // default: tidak ada sort
+            paging: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            ordering: true,
+            order: [],
+            info: false,
             language: {
                 search: "Cari: ",
                 lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "›",
-                    previous: "‹"
-                }
+                zeroRecords: "Data tidak ditemukan"
             }
         });
+
     });
 </script>
 </body>
