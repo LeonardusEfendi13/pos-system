@@ -82,17 +82,53 @@ public class ProductService {
         )).collect(Collectors.toList());
     }
 
-    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-        Page<ProductEntity> productData = productRepository.
-                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+//    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
+//        Page<ProductEntity> productData = productRepository.
+//                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+//
+//        return productData.map(product -> new ProductDTO(
+//                product.getProductId(),
+//                product.getShortName(),
+//                product.getFullName(),
+//                product.getSupplierPrice(),
+//                product.getStock(),
+//                product.getProductPricesEntity().stream()
+//                        .map(productPrices -> new ProductPricesDTO(
+//                                productPrices.getProductPricesId(),
+//                                product.getProductId(),
+//                                productPrices.getPercentage(),
+//                                productPrices.getPrice(),
+//                                productPrices.getMaximalCount()
+//                        ))
+//                        .collect(Collectors.toList()),
+//                product.getSupplierEntity().getSupplierId()
+//        ));
+//    }
 
-        return productData.map(product -> new ProductDTO(
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
+        Page<ProductEntity> productData = productRepository
+                .findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+        return productData.map(this::convertToDTO);
+    }
+
+    public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable) {
+        Page<ProductEntity> productData = productRepository
+                .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndFullNameContainingIgnoreCaseOrderByProductIdDesc(
+                        clientId, search, pageable
+                );
+        return productData.map(this::convertToDTO);
+    }
+
+    private ProductDTO convertToDTO(ProductEntity product) {
+        return new ProductDTO(
                 product.getProductId(),
                 product.getShortName(),
                 product.getFullName(),
                 product.getSupplierPrice(),
                 product.getStock(),
-                product.getProductPricesEntity().stream()
+                product.getProductPricesEntity() == null
+                        ? new ArrayList<>()
+                        : product.getProductPricesEntity().stream()
                         .map(productPrices -> new ProductPricesDTO(
                                 productPrices.getProductPricesId(),
                                 product.getProductId(),
@@ -102,7 +138,7 @@ public class ProductService {
                         ))
                         .collect(Collectors.toList()),
                 product.getSupplierEntity().getSupplierId()
-        ));
+        );
     }
 
     @Transactional

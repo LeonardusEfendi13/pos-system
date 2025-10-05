@@ -32,8 +32,8 @@ public class ProductController {
     private SupplierService supplierService;
     private SidebarService sidebarService;
 
-    @GetMapping
-    public String showListProducts(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
+    @GetMapping("")
+    public String showListProducts(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -46,12 +46,20 @@ public class ProductController {
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
 
-        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
+        Page<ProductDTO> productEntity;
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
+
+        if (search == null || search.isEmpty()) {
+            productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
+        } else {
+            productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size));
+        }
+
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productEntity.getTotalPages());
         model.addAttribute("supplierData", supplierService.getSupplierList(clientId));
+        model.addAttribute("search", search);
         model.addAttribute("activePage", "masterBarang");
 
         Integer totalPages = productEntity.getTotalPages();
@@ -66,6 +74,7 @@ public class ProductController {
 
         return "display_products";
     }
+
 
     @PostMapping("/add")
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
