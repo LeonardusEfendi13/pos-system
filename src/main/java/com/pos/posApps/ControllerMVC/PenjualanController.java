@@ -32,19 +32,23 @@ public class PenjualanController {
     private ClientService clientService;
     private SidebarService sidebarService;
 
+    private int safeSize(Integer size) {
+        return (size == null || size <= 0) ? 10 : size;
+    }
+
     @GetMapping
-    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size){
+    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
-        endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
+        endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
@@ -54,7 +58,7 @@ public class PenjualanController {
         Page<PenjualanDTO> penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId, PageRequest.of(page, size));
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
-        model.addAttribute("penjualanData", penjualanData);
+        model.addAttribute("penjualanData", penjualanData.getContent());
         model.addAttribute("customerId", customerId);
         model.addAttribute("customerData", customerData);
         model.addAttribute("activePage", "penjualan");
@@ -64,19 +68,24 @@ public class PenjualanController {
         Integer totalPages = penjualanData.getTotalPages();
         Integer start = Math.max(0, page - 2);
         Integer end = Math.min(totalPages - 1, page + 2);
+        size = safeSize(size);
+        model.addAttribute("size", size);
         model.addAttribute("start", start);
         model.addAttribute("end", end);
         model.addAttribute("startData", page * size + 1);
         model.addAttribute("endData", page * size + penjualanData.getNumberOfElements());
         model.addAttribute("totalData", penjualanData.getTotalElements());
         model.addAttribute("settingData", clientSettingData);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_penjualan";
     }
 
     @PostMapping("/delete/{transactionId}")
-    public String deletePenjualan(@PathVariable("transactionId") Long transactionId, HttpSession session, RedirectAttributes redirectAttributes){
+    public String deletePenjualan(@PathVariable("transactionId") Long transactionId, HttpSession session, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

@@ -16,68 +16,69 @@
 
     <style>
         html, body {
-          overflow-x: hidden;
-          margin: 0;
-          padding: 0;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
 
         .container-fluid {
-          padding-left: 0 !important;
-          padding-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
 
         .filter-container {
-          margin: 20px 0;
+            margin: 20px 0;
         }
 
         /* Table Wrapper */
         #tableWrapper {
-          height: 100%;
-          overflow-y: auto;
-          overflow-x: hidden;
-          transition: height 0.3s ease;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: height 0.3s ease;
         }
 
         /* Detail Container */
         #detailContainer {
-          display: none;
-          height: 50%;
-          background: white;
-          border-top: 2px solid #ccc;
-          box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-          border-radius: 8px 8px 0 0;
-          overflow: hidden;
-          transition: height 0.3s ease;
+            display: none;
+            height: 50%;
+            background: white;
+            border-top: 2px solid #ccc;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            transition: height 0.3s ease;
         }
 
         /* Sticky header detail */
         .detail-header {
-          position: sticky;
-          top: 0;
-          z-index: 20;
-          background: #fff;
-          border-bottom: 1px solid #ddd;
-          padding: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
         }
 
         /* Scroll body detail */
         .detail-body {
-          position: relative;
-          height: calc(100% - 50px);
-          overflow-y: auto;
-          padding: 5px;
+            position: relative;
+            height: calc(100% - 50px);
+            overflow-y: auto;
+            padding: 5px;
         }
 
         /* Sticky header tabel detail */
         #detailContent table thead th {
-          position: sticky;
-          top: 0;
-          background: #f8f9fa;
-          z-index: 10;
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
         }
+
         #userTable tbody tr.previewing-row,
         #userTable tbody tr.previewing-row td {
-          background-color: #FFA500 !important;
+            background-color: #FFA500 !important;
         }
     </style>
 </head>
@@ -139,7 +140,8 @@
                                     <input type="hidden" name="transactionId" th:value="${penjualan.transactionId}"/>
                                     <button class="btn btn-sm btn-primary me-1">Edit</button>
                                 </form>
-                                <form th:action="@{|/penjualan/delete/${penjualan.transactionId}|}" method="post" style="display: inline">
+                                <form th:action="@{|/penjualan/delete/${penjualan.transactionId}|}" method="post"
+                                      style="display: inline">
                                     <button type="submit" class="btn btn-sm btn-danger"
                                             onclick="return confirm('Are you sure you want to delete this data?');">
                                         <i class="ti ti-trash"></i> Delete
@@ -154,6 +156,61 @@
                         </tr>
                         </tbody>
                     </table>
+
+                    <!--  Pagination  -->
+                    <div class="d-flex justify-content-between align-items-center my-2">
+                        <div>
+                            Menampilkan <span th:text="${startData}">1</span>-
+                            <span th:text="${endData}">10</span> dari
+                            <span th:text="${totalData}">10</span> data
+                        </div>
+
+                        <nav>
+                            <ul class="pagination mb-0">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                    <a class="page-link"
+                                       th:href="@{/penjualan(
+                   page=${currentPage - 1},
+                   size=${size},
+                   startDate=${startDate},
+                   endDate=${endDate},
+                   customerId=${customerId}
+               )}">
+                                        Prev
+                                    </a>
+                                </li>
+
+                                <li class="page-item"
+                                    th:each="i : ${#numbers.sequence(start, end)}"
+                                    th:classappend="${i == currentPage} ? 'active'">
+                                    <a class="page-link"
+                                       th:href="@{/penjualan(
+                   page=${i},
+                   size=${size},
+                   startDate=${startDate},
+                   endDate=${endDate},
+                   customerId=${customerId}
+               )}"
+                                       th:text="${i + 1}">
+                                    </a>
+                                </li>
+
+                                <li class="page-item"
+                                    th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                    <a class="page-link"
+                                       th:href="@{/penjualan(
+                   page=${currentPage + 1},
+                   size=${size},
+                   startDate=${startDate},
+                   endDate=${endDate},
+                   customerId=${customerId}
+               )}">
+                                        Next
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
 
                 <!-- Detail Section -->
@@ -182,18 +239,18 @@
     var detailsMap = {};
 
     penjualanData.forEach(function (p) {
-      detailsMap[p.transactionId] = p.transactionDetailDTOS;
+        detailsMap[p.transactionId] = p.transactionDetailDTOS;
     });
     /*]]>*/
 </script>
 
 <script>
     function format(details) {
-      if (!details || details.length === 0) {
-        return "<div class='p-2 text-muted'>Tidak ada detail produk</div>";
-      }
+        if (!details || details.length === 0) {
+            return "<div class='p-2 text-muted'>Tidak ada detail produk</div>";
+        }
 
-      let html = `
+        let html = `
           <table class="table table-sm table-bordered mb-0">
             <thead class="table-light">
               <tr>
@@ -207,8 +264,8 @@
             </thead>
             <tbody>`;
 
-      details.forEach((d) => {
-        html += `
+        details.forEach((d) => {
+            html += `
               <tr>
                 <td>${d.code}</td>
                 <td>${d.name}</td>
@@ -217,91 +274,87 @@
                 <td>${formatCurrency(d.discAmount)}</td>
                 <td>${formatCurrency(d.total)}</td>
               </tr>`;
-      });
+        });
 
-      html += `</tbody></table>`;
-      return html;
+        html += `</tbody></table>`;
+        return html;
     }
 
     function formatCurrency(amount) {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(amount);
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(amount);
     }
 
     $(document).ready(function () {
-      // Format currency in main table
-      document.querySelectorAll("td span").forEach((el) => {
-        const number = parseFloat(el.textContent);
-        el.textContent = new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(number);
-      });
+        // Format currency in main table
+        document.querySelectorAll("td span").forEach((el) => {
+            const number = parseFloat(el.textContent);
+            el.textContent = new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            }).format(number);
+        });
 
-      // DataTable init
-      $("#userTable").DataTable({
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50],
-        ordering: true,
-        order: [],
-        language: {
-          search: "Cari: ",
-          lengthMenu: "Tampilkan _MENU_ data per halaman",
-          zeroRecords: "Data tidak ditemukan",
-          info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-          paginate: {
-            first: "Awal",
-            last: "Akhir",
-            next: "›",
-            previous: "‹",
-          },
-        },
-        scrollCollapse: true,
-      });
+        // DataTable init
+        $("#userTable").DataTable({
+            paging: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            ordering: true,
+            order: [],
+            info: false,
+            language: {
+                search: "Cari: ",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
 
-      // Preview button handler
-    $("#userTable tbody").on("click", ".preview-btn", function () {
-      const transactionId = $(this).data("id");
-      const details = detailsMap[transactionId] || [];
+            },
+            scrollCollapse: true,
+        });
 
-      // Ambil nomor faktur dari kolom ke-2
-      const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
+        // Preview button handler
+        $("#userTable tbody").on("click", ".preview-btn", function () {
+            const transactionId = $(this).data("id");
+            const details = detailsMap[transactionId] || [];
 
-      // Update judul detail
-      $("#detailTitle").text("Detail Penjualan (" + noFaktur + ")");
+            // Ambil nomor faktur dari kolom ke-2
+            const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
 
-      // Hapus highlight di semua row
-      $("#userTable tbody tr").removeClass("previewing-row");
+            // Update judul detail
+            $("#detailTitle").text("Detail Penjualan (" + noFaktur + ")");
 
-      // Tambahkan highlight di row ini
-      $(this).closest("tr").addClass("previewing-row");
+            // Hapus highlight di semua row
+            $("#userTable tbody tr").removeClass("previewing-row");
 
-      // Isi detail
-      $("#detailContent").html(format(details));
+            // Tambahkan highlight di row ini
+            $(this).closest("tr").addClass("previewing-row");
 
-      // Show detail container
-      $("#detailContainer").show();
-      $("#tableWrapper").css("height", "60%");
-      $("#detailContainer").css("height", "50%");
-    });
+            // Isi detail
+            $("#detailContent").html(format(details));
 
-    // Tutup detail
-    $("#closeDetail").on("click", function () {
-      $("#detailContainer").hide();
-      $("#tableWrapper").css("height", "100%");
+            // Show detail container
+            $("#detailContainer").show();
+            $("#tableWrapper").css("height", "60%");
+            $("#detailContainer").css("height", "50%");
+        });
 
-      // Reset judul
-      $("#detailTitle").text("Detail Penjualan");
+        // Tutup detail
+        $("#closeDetail").on("click", function () {
+            $("#detailContainer").hide();
+            $("#tableWrapper").css("height", "100%");
 
-      // Hapus highlight row
-      $("#userTable tbody tr").removeClass("previewing-row");
-    });
+            // Reset judul
+            $("#detailTitle").text("Detail Penjualan");
+
+            // Hapus highlight row
+            $("#userTable tbody tr").removeClass("previewing-row");
+        });
     });
 </script>
 </body>
