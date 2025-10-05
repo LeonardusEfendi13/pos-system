@@ -5,6 +5,8 @@ import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -234,6 +236,38 @@ public class PenjualanService {
                         ))
                         .collect(Collectors.toList())
         )).collect(Collectors.toList());
+    }
+
+    public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, Pageable pageable) {
+        Page<TransactionEntity> transactionData;
+        if (customerId == null) {
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate, pageable);
+        } else {
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
+        }
+        return transactionData.map(transactions -> new PenjualanDTO(
+                transactions.getTransactionId(),
+                new CustomerDTO(
+                        transactions.getCustomerEntity().getCustomerId(),
+                        transactions.getCustomerEntity().getName(),
+                        transactions.getCustomerEntity().getAlamat()
+                ),
+                transactions.getTransactionNumber(),
+                transactions.getSubtotal(),
+                transactions.getTotalPrice(),
+                transactions.getTotalDiscount(),
+                transactions.getCreatedAt(),
+                transactions.getTransactionDetailEntities().stream()
+                        .map(transactionDetail -> new TransactionDetailDTO(
+                                transactionDetail.getShortName(),
+                                transactionDetail.getFullName(),
+                                transactionDetail.getPrice(),
+                                transactionDetail.getQty(),
+                                transactionDetail.getDiscountAmount(),
+                                transactionDetail.getTotalPrice()
+                        ))
+                        .collect(Collectors.toList())  // collect the stream to a list
+        ));
     }
 
     public List<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId) {
