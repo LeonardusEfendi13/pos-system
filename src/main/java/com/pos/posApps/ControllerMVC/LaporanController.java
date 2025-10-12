@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -208,4 +210,29 @@ public class LaporanController {
 
         return "display_laporan_nilai_persediaan_barang"; // Thymeleaf template
     }
+
+    @GetMapping("/nilai_persediaan/view-pdf")
+    public void viewLaporanNilaiPersediaanPDF(HttpSession session, HttpServletResponse response) throws IOException {
+        Long clientId;
+        String token;
+        try {
+            token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            response.sendRedirect("/login");
+            return;
+        }
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=laporan_nilai_persediaan.pdf");
+
+        try {
+            laporanService.exportLaporanNilaiPersediaanStream(clientId, response.getOutputStream());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Gagal membuat PDF");
+        }
+    }
+
+
 }
