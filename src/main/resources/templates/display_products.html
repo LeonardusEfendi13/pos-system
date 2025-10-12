@@ -48,10 +48,12 @@
                 <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addBarangModal"
                         id="add-barang-btn">Add Product
                 </button>
-                <form method="get" action="/products" class="d-flex justify-content-end">
-                    <input type="text" name="search" placeholder="Cari produk..."
-                           th:value="${search != null ? search : ''}">
-                    <button type="submit" class="btn btn-light btn-outline-dark ms-2">Cari</button>
+                <form method="get" action="/products" class="d-flex align-items-end">
+                    <div class="input-group">
+                        <input type="text" class="form-control rounded rounded-end-0" name="search" id="searchInput" placeholder="Cari produk..."
+                               th:value="${search != null ? search : ''}">
+                        <button type="submit" class="btn btn-info">Cari</button>
+                    </div>
                 </form>
             </div>
 
@@ -591,6 +593,28 @@
             scrollX: true,
             language: {
                 zeroRecords: "Data tidak ditemukan"
+            }
+        });
+
+        const $searchInput = $('#searchInput');
+        const baseUrl = '/products';
+
+        $searchInput.on('input', function() {
+            if ($(this).val().trim() === '') {
+                const currentUrl = new URL(window.location.href);
+                const hasSearchParam = currentUrl.searchParams.has('search');
+
+                if (hasSearchParam) {
+                    window.location.href = baseUrl;
+                }
+            }
+        });
+
+        $('#searchButton').on('click', function(e) {
+            if ($searchInput.val().trim() === '') {
+                e.preventDefault();
+
+                window.location.href = baseUrl;
             }
         });
     });
