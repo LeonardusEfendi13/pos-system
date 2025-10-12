@@ -82,32 +82,8 @@ public class ProductService {
         )).collect(Collectors.toList());
     }
 
-//    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-//        Page<ProductEntity> productData = productRepository.
-//                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
-//
-//        return productData.map(product -> new ProductDTO(
-//                product.getProductId(),
-//                product.getShortName(),
-//                product.getFullName(),
-//                product.getSupplierPrice(),
-//                product.getStock(),
-//                product.getProductPricesEntity().stream()
-//                        .map(productPrices -> new ProductPricesDTO(
-//                                productPrices.getProductPricesId(),
-//                                product.getProductId(),
-//                                productPrices.getPercentage(),
-//                                productPrices.getPrice(),
-//                                productPrices.getMaximalCount()
-//                        ))
-//                        .collect(Collectors.toList()),
-//                product.getSupplierEntity().getSupplierId()
-//        ));
-//    }
-
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-        Page<ProductEntity> productData = productRepository
-                .findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+        Page<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
         return productData.map(this::convertToDTO);
     }
 

@@ -6,6 +6,9 @@ import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,25 +40,40 @@ public class PembelianService {
     @Autowired
     ProductPricesRepository productPricesRepository;
 
-    public List<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai) {
-        List<PurchasingEntity> purchasingData;
+    public Page<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, Pageable pageable) {
+        Page<PurchasingEntity> purchasingData;
         if(supplierId == null){
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate);
+            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate, pageable);
         }else{
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate);
+            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate, pageable);
         }
-        if (tunai != null) {
-            purchasingData = purchasingData.stream()
-                    .filter(p -> p.isCash() == tunai)
-                    .collect(Collectors.toList());
+        return purchasingData.map(this::convertToDTO);
+    }
+
+    public Page<PembelianDTO> searchPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPembelianData(clientId, startDate, endDate, supplierId, lunas, tunai, pageable);
         }
 
-        if (lunas != null && (tunai == null || !tunai)) {
-            purchasingData = purchasingData.stream()
-                    .filter(p -> !p.isCash() && p.isPaid() == lunas)
-                    .collect(Collectors.toList());
-        }
-        return purchasingData.stream().map(purchasings -> new PembelianDTO(
+        Page<PurchasingEntity> purchasingData = purchasingRepository
+                .searchPurchasings(
+                        clientId,
+                        startDate,
+                        endDate,
+                        supplierId,
+                        lunas,
+                        tunai,
+                        trimmedSearch,
+                        pageable
+                );
+
+        return purchasingData.map(this::convertToDTO);
+    }
+
+    private PembelianDTO convertToDTO(PurchasingEntity purchasings) {
+        return new PembelianDTO(
                 purchasings.getPurchasingId(),
                 purchasings.getPurchasingNumber(),
                 purchasings.getPoDate(),
@@ -85,8 +103,8 @@ public class PembelianService {
                                 purchasingDetail.getHargaJual2(),
                                 purchasingDetail.getHargaJual3()
                         ))
-                        .collect(Collectors.toList())  // collect the stream to a list
-        )).collect(Collectors.toList());
+                        .collect(Collectors.toList())
+        );
     }
 
     public boolean checkNoFaktur(String noFaktur, ClientEntity clientData, Long supplierId){

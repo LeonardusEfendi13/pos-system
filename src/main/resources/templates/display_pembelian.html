@@ -197,7 +197,7 @@
                         <tbody>
                         <tr th:each="pembelian, iterStat : ${pembelianData}"
                             th:attr="data-id=${pembelian.pembelianId}, data-iskredit=${!pembelian.isCash}, data-islunas=${pembelian.isPaid}">
-                            <td th:text="${iterStat.index + 1}">1</td>
+                            <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
                             <td th:text="${pembelian.noFaktur}">No Faktur</td>
                             <td th:text="${#temporals.format(pembelian.tanggalBeli, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">
                                 Tanggal Jual
@@ -233,6 +233,36 @@
                         </tr>
                         </tbody>
                     </table>
+
+                    <!--  Pagination  -->
+                    <div class="d-flex justify-content-between align-items-center my-2">
+                        <div>
+                            Menampilkan
+                            <span th:if="${totalData > 0}">
+                                <span th:text="${startData}">1</span> -
+                                <span th:text="${endData}">10</span>
+                            </span>
+                            <span th:unless="${totalData > 0}" th:text="0">0</span>
+                            dari
+                            <span th:text="${totalData}">0</span> data
+                        </div>
+
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination mb-0">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/products(page=${currentPage - 1}, search=${search})}">‹</a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
+                                    th:classappend="${i == currentPage} ? 'active'">
+                                    <a class="page-link" th:href="@{/products(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                                </li>
+
+                                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/products(page=${currentPage + 1}, search=${search})}">›</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
                 <!-- Detail -->
                 <div id="detailContainer">

@@ -70,7 +70,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="product, iterStat : ${productData}">
-                    <td th:text="${iterStat.index + 1}">1</td>
+                    <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
                     <td th:text="${product.shortName}">Kode Part</td>
                     <td th:text="${product.fullName}">Nama Barang</td>
                     <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>

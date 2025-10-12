@@ -238,6 +238,8 @@ public class PenjualanService {
         )).collect(Collectors.toList());
     }
 
+    // File: PenjualanService.java
+
     public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, Pageable pageable) {
         Page<TransactionEntity> transactionData;
         if (customerId == null) {
@@ -245,39 +247,31 @@ public class PenjualanService {
         } else {
             transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
         }
-        return transactionData.map(transactions -> new PenjualanDTO(
-                transactions.getTransactionId(),
-                new CustomerDTO(
-                        transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName(),
-                        transactions.getCustomerEntity().getAlamat()
-                ),
-                transactions.getTransactionNumber(),
-                transactions.getSubtotal(),
-                transactions.getTotalPrice(),
-                transactions.getTotalDiscount(),
-                transactions.getCreatedAt(),
-                transactions.getTransactionDetailEntities().stream()
-                        .map(transactionDetail -> new TransactionDetailDTO(
-                                transactionDetail.getShortName(),
-                                transactionDetail.getFullName(),
-                                transactionDetail.getPrice(),
-                                transactionDetail.getQty(),
-                                transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice()
-                        ))
-                        .collect(Collectors.toList())  // collect the stream to a list
-        ));
+        return transactionData.map(this::convertToDTO);
     }
 
-    public List<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId) {
-        List<TransactionEntity> transactionData;
-        if (customerId == null) {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
-        } else {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate);
+    public Page<PenjualanDTO> searchPenjualanData( Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPenjualanData(clientId, startDate, endDate, customerId, pageable);
         }
-        return transactionData.stream().map(transactions -> new PenjualanDTO(
+
+        Page<TransactionEntity> transactionData = transactionRepository
+                .searchTransactions(
+                        clientId,
+                        startDate,
+                        endDate,
+                        customerId,
+                        trimmedSearch,
+                        pageable
+                );
+
+        return transactionData.map(this::convertToDTO);
+    }
+
+    private PenjualanDTO convertToDTO(TransactionEntity transactions) {
+        return new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
                         transactions.getCustomerEntity().getCustomerId(),
@@ -298,8 +292,8 @@ public class PenjualanService {
                                 transactionDetail.getDiscountAmount(),
                                 transactionDetail.getTotalPrice()
                         ))
-                        .collect(Collectors.toList())  // collect the stream to a list
-        )).collect(Collectors.toList());
+                        .collect(Collectors.toList())
+        );
     }
 
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {

@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
-
     @Query("SELECT p FROM ProductEntity p " +
             "WHERE p.clientEntity.clientId = :clientId " +
             "AND p.deletedAt IS NULL " +
@@ -25,11 +24,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Page<ProductEntity> searchProducts(
             @Param("clientId") Long clientId,
             @Param("search") String search,
-            Pageable pageable
-    );
-
-    Page<ProductEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByProductIdDesc(
-            Long clientId,
             Pageable pageable
     );
 
