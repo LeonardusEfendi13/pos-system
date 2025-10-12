@@ -17,10 +17,6 @@ import java.util.stream.Stream;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
-    Page<ProductEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndFullNameContainingIgnoreCaseOrderByProductIdDesc(
-            Long clientId,
-            String search,
-  
     @Query("SELECT p FROM ProductEntity p " +
             "WHERE p.clientEntity.clientId = :clientId " +
             "AND p.deletedAt IS NULL " +
