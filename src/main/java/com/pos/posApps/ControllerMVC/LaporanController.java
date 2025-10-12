@@ -5,10 +5,13 @@ import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,13 +31,13 @@ public class LaporanController {
     private SidebarService sidebarService;
 
     @GetMapping("/pendapatan/periode")
-    public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
+    public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -66,13 +69,13 @@ public class LaporanController {
     }
 
     @GetMapping("/pendapatan/pelanggan")
-    public String laporanPendapatanPelanggan(HttpSession session, Model model, String startDate, String endDate){
+    public String laporanPendapatanPelanggan(HttpSession session, Model model, String startDate, String endDate) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -101,13 +104,13 @@ public class LaporanController {
 
     // ======= Laporan Pengeluaran =======
     @GetMapping("/pengeluaran/periode")
-    public String laporanPengeluaran(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
+    public String laporanPengeluaran(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -139,13 +142,13 @@ public class LaporanController {
     }
 
     @GetMapping("/pengeluaran/pelanggan")
-    public String laporanPengeluaranPelanggan(HttpSession session, Model model, String startDate, String endDate){
+    public String laporanPengeluaranPelanggan(HttpSession session, Model model, String startDate, String endDate) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -173,17 +176,17 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan")
-    public String laporanNilaiPersediaan(HttpSession session, Model model){
+    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
-        List<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId);
+        Page<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId, PageRequest.of(page, size));
         model.addAttribute("laporanData", laporanData);
         model.addAttribute("activePage", "nilaiPersediaan");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);

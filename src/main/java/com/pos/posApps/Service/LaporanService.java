@@ -8,6 +8,8 @@ import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
 import com.pos.posApps.Repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,6 +44,28 @@ public class LaporanService {
                 BigDecimal.valueOf(product.getStock()).multiply(product.getSupplierPrice())
         )).collect(Collectors.toList());
     }
+
+    public Page<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId, Pageable pageable) {
+        Page<ProductEntity> productPage = productRepository
+                .findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(
+                        clientId, pageable);
+
+        System.out.println("Total elements: " + productPage.getTotalElements());
+        System.out.println("Page size: " + productPage.getSize());
+        System.out.println("Elements in this page: " + productPage.getNumberOfElements());
+
+        return productPage.map(product -> new LaporanNilaiPersediaanDTO(
+                product.getShortName(),
+                product.getFullName(),
+                product.getStock(),
+                product.getSupplierPrice(),
+                product.getProductPricesEntity().isEmpty()
+                        ? BigDecimal.ZERO
+                        : product.getProductPricesEntity().get(0).getPrice(),
+                BigDecimal.valueOf(product.getStock()).multiply(product.getSupplierPrice())
+        ));
+    }
+
 
     public List<LaporanPenjualanPerWaktuDTO> getLaporanPenjualanDataByPeriode(
             Long clientId,
