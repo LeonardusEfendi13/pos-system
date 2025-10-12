@@ -110,6 +110,31 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!--  Pagination  -->
+                <div class="d-flex justify-content-between align-items-center my-2">
+                    <div>
+                        Menampilkan <span th:text="${startData}">1</span>-
+                        <span th:text="${endData}">10</span> dari
+                        <span th:text="${totalData}">10</span> data
+                    </div>
+
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/laporan/nilai_persediaan(page=${currentPage - 1})}">Prev</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/laporan/nilai_persediaan(page=${i})}" th:text="${i + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/laporan/nilai_persediaan(page=${currentPage + 1})}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
@@ -211,22 +236,16 @@
 
         // Init DataTable
         const table = $('#userTable').DataTable({
-            paging: true,
+            paging: false,
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
             ordering: true,
             order: [],
+            info: false,
             language: {
                 search: "Cari: ",
                 lengthMenu: "Tampilkan _MENU_ data per halaman",
                 zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "›",
-                    previous: "‹"
-                }
             },
             scrollCollapse: true,
         });
@@ -241,54 +260,56 @@
     });
 
     document.getElementById('exportPdfBtn').addEventListener('click', function () {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        // const { jsPDF } = window.jspdf;
+        // const doc = new jsPDF();
+        //
+        // // Add title
+        // doc.setFontSize(14);
+        // doc.text("Laporan Nilai Persediaan Barang", 105, 15, null, null, 'center');
+        //
+        // // Get total nilai barang
+        // const totalNilaiBarang = document.getElementById('totalNilaiBarang').textContent || 'Rp0';
+        //
+        // // Add total
+        // doc.setFontSize(12);
+        // doc.text(`Total Nilai Barang: ${totalNilaiBarang}`, 14, 25);
+        //
+        // // Collect data from table (all rows, not just visible)
+        // const table = $('#userTable').DataTable();
+        // const data = table.rows({ search: 'applied' }).data();
+        //
+        // const rows = [];
+        // data.each(function (row) {
+        //     const rowData = [
+        //         row[0], // No
+        //         row[1], // Kode
+        //         row[2], // Nama
+        //         row[3], // Stock
+        //         $(row[4]).text(), // Harga Beli
+        //         $(row[5]).text(), // Harga Jual
+        //         $(row[6]).text(), // Total Nilai
+        //     ];
+        //     rows.push(rowData);
+        // });
+        //
+        // // AutoTable
+        // doc.autoTable({
+        //     startY: 35,
+        //     head: [[
+        //         'No', 'Kode Barang', 'Nama Barang', 'Stock',
+        //         'Harga Beli', 'Harga Jual', 'Total Nilai Barang'
+        //     ]],
+        //     body: rows,
+        //     theme: 'grid',
+        //     styles: {
+        //         fontSize: 9
+        //     }
+        // });
+        //
+        // // Open in new tab instead of download
+        // window.open(doc.output('bloburl'), '_blank');
 
-        // Add title
-        doc.setFontSize(14);
-        doc.text("Laporan Nilai Persediaan Barang", 105, 15, null, null, 'center');
-
-        // Get total nilai barang
-        const totalNilaiBarang = document.getElementById('totalNilaiBarang').textContent || 'Rp0';
-
-        // Add total
-        doc.setFontSize(12);
-        doc.text(`Total Nilai Barang: ${totalNilaiBarang}`, 14, 25);
-
-        // Collect data from table (all rows, not just visible)
-        const table = $('#userTable').DataTable();
-        const data = table.rows({ search: 'applied' }).data();
-
-        const rows = [];
-        data.each(function (row) {
-            const rowData = [
-                row[0], // No
-                row[1], // Kode
-                row[2], // Nama
-                row[3], // Stock
-                $(row[4]).text(), // Harga Beli
-                $(row[5]).text(), // Harga Jual
-                $(row[6]).text(), // Total Nilai
-            ];
-            rows.push(rowData);
-        });
-
-        // AutoTable
-        doc.autoTable({
-            startY: 35,
-            head: [[
-                'No', 'Kode Barang', 'Nama Barang', 'Stock',
-                'Harga Beli', 'Harga Jual', 'Total Nilai Barang'
-            ]],
-            body: rows,
-            theme: 'grid',
-            styles: {
-                fontSize: 9
-            }
-        });
-
-        // Open in new tab instead of download
-        window.open(doc.output('bloburl'), '_blank');
+        window.open('nilai_persediaan/view-pdf', '_blank')
     });
 
 </script>

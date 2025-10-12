@@ -3,13 +3,18 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,13 +33,13 @@ public class LaporanController {
     private SidebarService sidebarService;
 
     @GetMapping("/pendapatan/periode")
-    public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
+    public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -66,13 +71,13 @@ public class LaporanController {
     }
 
     @GetMapping("/pendapatan/pelanggan")
-    public String laporanPendapatanPelanggan(HttpSession session, Model model, String startDate, String endDate){
+    public String laporanPendapatanPelanggan(HttpSession session, Model model, String startDate, String endDate) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -101,13 +106,13 @@ public class LaporanController {
 
     // ======= Laporan Pengeluaran =======
     @GetMapping("/pengeluaran/periode")
-    public String laporanPengeluaran(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions){
+    public String laporanPengeluaran(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -139,13 +144,13 @@ public class LaporanController {
     }
 
     @GetMapping("/pengeluaran/pelanggan")
-    public String laporanPengeluaranPelanggan(HttpSession session, Model model, String startDate, String endDate){
+    public String laporanPengeluaranPelanggan(HttpSession session, Model model, String startDate, String endDate) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
@@ -173,21 +178,61 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan")
-    public String laporanNilaiPersediaan(HttpSession session, Model model){
+    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
-        List<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId);
-        model.addAttribute("laporanData", laporanData);
+        Page<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId, PageRequest.of(page, size));
+
+        Integer totalPages = laporanData.getTotalPages();
+        Integer start = Math.max(0, page - 2);
+        Integer end = Math.min(totalPages - 1, page + 2);
+
+        model.addAttribute("laporanData", laporanData.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
+        model.addAttribute("size", size);
+        model.addAttribute("startData", page * size + 1);
+        model.addAttribute("endData", page * size + laporanData.getNumberOfElements());
+        model.addAttribute("totalData", laporanData.getTotalElements());
+
         model.addAttribute("activePage", "nilaiPersediaan");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
+
         return "display_laporan_nilai_persediaan_barang"; // Thymeleaf template
     }
+
+    @GetMapping("/nilai_persediaan/view-pdf")
+    public void viewLaporanNilaiPersediaanPDF(HttpSession session, HttpServletResponse response) throws IOException {
+        Long clientId;
+        String token;
+        try {
+            token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            response.sendRedirect("/login");
+            return;
+        }
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=laporan_nilai_persediaan.pdf");
+
+        try {
+            laporanService.exportLaporanNilaiPersediaanStream(clientId, response.getOutputStream());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Gagal membuat PDF");
+        }
+    }
+
+
 }
