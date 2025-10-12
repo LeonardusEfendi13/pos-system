@@ -37,7 +37,7 @@ public class PenjualanController {
     }
 
     @GetMapping
-    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
+    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -50,14 +50,19 @@ public class PenjualanController {
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
-
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-
-        Page<PenjualanDTO> penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId, PageRequest.of(page, size));
+        Page<PenjualanDTO> penjualanData;
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
+
+        if (search == null || search.isEmpty()) {
+            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId, PageRequest.of(page, size));
+        } else {
+            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, customerId, search, PageRequest.of(page, size));
+        }
+
         model.addAttribute("penjualanData", penjualanData.getContent());
         model.addAttribute("customerId", customerId);
         model.addAttribute("customerData", customerData);
@@ -65,16 +70,28 @@ public class PenjualanController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
 
+        Long totalElements = penjualanData.getTotalElements();
+
         Integer totalPages = penjualanData.getTotalPages();
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+
         Integer start = Math.max(0, page - 2);
         Integer end = Math.min(totalPages - 1, page + 2);
         size = safeSize(size);
         model.addAttribute("size", size);
         model.addAttribute("start", start);
-        model.addAttribute("end", end);
-        model.addAttribute("startData", page * size + 1);
-        model.addAttribute("endData", page * size + penjualanData.getNumberOfElements());
-        model.addAttribute("totalData", penjualanData.getTotalElements());
+        model.addAttribute("end", end);model.addAttribute("totalData", totalElements);
+
+        if (totalElements == 0) {
+            model.addAttribute("startData", 0);
+            model.addAttribute("endData", 0);
+        } else {
+            model.addAttribute("startData", page * size + 1);
+            model.addAttribute("endData", page * size + penjualanData.getNumberOfElements());
+        }
+
         model.addAttribute("settingData", clientSettingData);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);

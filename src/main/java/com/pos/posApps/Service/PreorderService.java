@@ -38,6 +38,23 @@ public class PreorderService {
         }
     }
 
+    public Page<PreorderEntity> searchPreorderData(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPreorderData(clientId, supplierId, startDate, endDate, pageable);
+        }
+
+        return preorderRepository.searchPreorders(
+                clientId,
+                supplierId,
+                startDate,
+                endDate,
+                trimmedSearch,
+                pageable
+        );
+    }
+
     public PreorderDTO getPreorderDataById(Long clientId, Long preorderId) {
         Optional<PreorderEntity> preorderOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndPreorderDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, preorderId);
         if (preorderOpt.isEmpty()) {

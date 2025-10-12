@@ -32,6 +32,10 @@ public class ProductController {
     private SupplierService supplierService;
     private SidebarService sidebarService;
 
+    private int safeSize(Integer size) {
+        return (size == null || size <= 0) ? 10 : size;
+    }
+
     @GetMapping("")
     public String showListProducts(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
@@ -58,14 +62,15 @@ public class ProductController {
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productEntity.getTotalPages());
-        model.addAttribute("supplierData", supplierService.getSupplierList(clientId));
+        model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("search", search);
         model.addAttribute("activePage", "masterBarang");
 
         Integer totalPages = productEntity.getTotalPages();
         Integer start = Math.max(0, page - 2);
         Integer end = Math.min(totalPages - 1, page + 2);
-
+        size = safeSize(size);
+        model.addAttribute("size", size);
         model.addAttribute("start", start);
         model.addAttribute("end", end);
         model.addAttribute("startData", page * size + 1);

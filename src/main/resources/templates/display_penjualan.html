@@ -91,11 +91,11 @@
 
             <!-- Filter Form -->
             <form method="get" action="/penjualan" class="row filter-container">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="startDate" class="form-label">Start Date</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}"/>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}"/>
                 </div>
@@ -110,12 +110,19 @@
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
                 </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="input-group">
+                        <input type="text" class="form-control rounded rounded-end-0" name="search" id="searchInput" placeholder="Cari produk..."
+                               th:value="${search != null ? search : ''}">
+                        <button type="submit" class="btn btn-info">Cari</button>
+                    </div>
+                </div>
             </form>
 
             <div class="container-fluid d-flex flex-column" style="height: 85vh;">
                 <!-- Table Wrapper -->
                 <div id="tableWrapper" style="padding-left: 20px;">
-                    <table id="userTable" class="table table-striped table-bordered">
+                    <table id="userTable" class="table table-striped table-bordered w-100">
                         <thead class="sticky-top">
                         <tr>
                             <th>No</th>
@@ -128,7 +135,7 @@
                         </thead>
                         <tbody>
                         <tr th:each="penjualan, iterStat : ${penjualanData}">
-                            <td th:text="${iterStat.index + 1}">1</td>
+                            <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
                             <td th:text="${penjualan.transactionNumber}">No Faktur</td>
                             <td th:text="${#temporals.format(penjualan.tanggalJual, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
                                 Tanggal Jual
@@ -160,53 +167,28 @@
                     <!--  Pagination  -->
                     <div class="d-flex justify-content-between align-items-center my-2">
                         <div>
-                            Menampilkan <span th:text="${startData}">1</span>-
-                            <span th:text="${endData}">10</span> dari
-                            <span th:text="${totalData}">10</span> data
+                            Menampilkan
+                            <span th:if="${totalData > 0}">
+                                <span th:text="${startData}">1</span> -
+                                <span th:text="${endData}">10</span>
+                            </span>
+                            <span th:unless="${totalData > 0}" th:text="0">0</span>
+                            dari
+                            <span th:text="${totalData}">0</span> data
                         </div>
 
-                        <nav>
+                        <nav aria-label="Page navigation example">
                             <ul class="pagination mb-0">
                                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                    <a class="page-link"
-                                       th:href="@{/penjualan(
-                   page=${currentPage - 1},
-                   size=${size},
-                   startDate=${startDate},
-                   endDate=${endDate},
-                   customerId=${customerId}
-               )}">
-                                        Prev
-                                    </a>
+                                    <a class="page-link" th:href="@{/products(page=${currentPage - 1}, search=${search})}">‹</a>
                                 </li>
-
-                                <li class="page-item"
-                                    th:each="i : ${#numbers.sequence(start, end)}"
+                                <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
                                     th:classappend="${i == currentPage} ? 'active'">
-                                    <a class="page-link"
-                                       th:href="@{/penjualan(
-                   page=${i},
-                   size=${size},
-                   startDate=${startDate},
-                   endDate=${endDate},
-                   customerId=${customerId}
-               )}"
-                                       th:text="${i + 1}">
-                                    </a>
+                                    <a class="page-link" th:href="@{/products(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
                                 </li>
 
-                                <li class="page-item"
-                                    th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                                    <a class="page-link"
-                                       th:href="@{/penjualan(
-                   page=${currentPage + 1},
-                   size=${size},
-                   startDate=${startDate},
-                   endDate=${endDate},
-                   customerId=${customerId}
-               )}">
-                                        Next
-                                    </a>
+                                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/products(page=${currentPage + 1}, search=${search})}">›</a>
                                 </li>
                             </ul>
                         </nav>
@@ -308,12 +290,18 @@
             ordering: true,
             order: [],
             info: false,
+            searching: false,
+            scrollX: true,
             language: {
-                search: "Cari: ",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-
+            lengthMenu: "Tampilkan _MENU_ data per halaman",
+            zeroRecords: "Data tidak ditemukan",
+            info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+            paginate: {
+                first: "Awal",
+                last: "Akhir",
+                next: "›",
+                previous: "‹",
+            },
             },
             scrollCollapse: true,
         });
@@ -354,6 +342,28 @@
 
             // Hapus highlight row
             $("#userTable tbody tr").removeClass("previewing-row");
+        });
+
+        const $searchInput = $('#searchInput');
+        const baseUrl = '/penjualan';
+
+        $searchInput.on('input', function() {
+            if ($(this).val().trim() === '') {
+                const currentUrl = new URL(window.location.href);
+                const hasSearchParam = currentUrl.searchParams.has('search');
+
+                if (hasSearchParam) {
+                    window.location.href = baseUrl;
+                }
+            }
+        });
+
+        $('#searchButton').on('click', function(e) {
+            if ($searchInput.val().trim() === '') {
+                e.preventDefault();
+
+                window.location.href = baseUrl;
+            }
         });
     });
 </script>

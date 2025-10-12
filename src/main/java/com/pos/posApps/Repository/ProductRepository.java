@@ -20,6 +20,18 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Page<ProductEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndFullNameContainingIgnoreCaseOrderByProductIdDesc(
             Long clientId,
             String search,
+  
+    @Query("SELECT p FROM ProductEntity p " +
+            "WHERE p.clientEntity.clientId = :clientId " +
+            "AND p.deletedAt IS NULL " +
+            "AND (" +
+            "    LOWER(p.shortName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "    OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%'))" +
+            ") " +
+            "ORDER BY p.productId DESC")
+    Page<ProductEntity> searchProducts(
+            @Param("clientId") Long clientId,
+            @Param("search") String search,
             Pageable pageable
     );
 
