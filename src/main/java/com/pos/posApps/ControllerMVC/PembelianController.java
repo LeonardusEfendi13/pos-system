@@ -7,11 +7,12 @@ import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -30,12 +31,8 @@ public class PembelianController {
     private ProductService productService;
     private SidebarService sidebarService;
 
-    private int safeSize(Integer size) {
-        return (size == null || size <= 0) ? 10 : size;
-    }
-
     @GetMapping
-    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search){
+    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai){
         Long clientId;
         String token;
         try{
@@ -52,15 +49,8 @@ public class PembelianController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        Page<PembelianDTO> pembelianData;
+        List<PembelianDTO> pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai);
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
-
-        if (search == null || search.isEmpty()) {
-            pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, PageRequest.of(page, size));
-        } else {
-            pembelianData = pembelianService.searchPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, search, PageRequest.of(page, size));
-        }
-
         model.addAttribute("pembelianData", pembelianData);
         model.addAttribute("supplierId", supplierId);
         model.addAttribute("supplierData", supplierData);
@@ -69,31 +59,6 @@ public class PembelianController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("lunas", lunas);
         model.addAttribute("tunai", tunai);
-
-        Long totalElements = pembelianData.getTotalElements();
-
-        Integer totalPages = pembelianData.getTotalPages();
-        if (totalPages == 0) {
-            totalPages = 1;
-        }
-
-        Integer start = Math.max(0, page - 2);
-        Integer end = Math.min(totalPages - 1, page + 2);
-        size = safeSize(size);
-        model.addAttribute("size", size);
-        model.addAttribute("start", start);
-        model.addAttribute("end", end);model.addAttribute("totalData", totalElements);
-
-        if (totalElements == 0) {
-            model.addAttribute("startData", 0);
-            model.addAttribute("endData", 0);
-        } else {
-            model.addAttribute("startData", page * size + 1);
-            model.addAttribute("endData", page * size + pembelianData.getNumberOfElements());
-        }
-
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_pembelian";

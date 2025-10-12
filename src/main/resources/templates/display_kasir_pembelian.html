@@ -679,7 +679,6 @@
           body: JSON.stringify(jsonData),
         });
 
-        // limit 50/100/150 & query src name code
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || "Failed to save product");
