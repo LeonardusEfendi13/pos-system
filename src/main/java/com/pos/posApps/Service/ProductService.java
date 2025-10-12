@@ -37,6 +37,28 @@ public class ProductService {
     @Autowired
     StockMovementService stockMovementService;
 
+    private ProductDTO convertToDTO(ProductEntity product) {
+        return new ProductDTO(
+                product.getProductId(),
+                product.getShortName(),
+                product.getFullName(),
+                product.getSupplierPrice(),
+                product.getStock(),
+                product.getProductPricesEntity() == null
+                        ? new ArrayList<>()
+                        : product.getProductPricesEntity().stream()
+                        .map(productPrices -> new ProductPricesDTO(
+                                productPrices.getProductPricesId(),
+                                product.getProductId(),
+                                productPrices.getPercentage(),
+                                productPrices.getPrice(),
+                                productPrices.getMaximalCount()
+                        ))
+                        .collect(Collectors.toList()),
+                product.getSupplierEntity().getSupplierId()
+        );
+    }
+
 
     public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate) {
         List<StockMovementsEntity> stockMovementData = stockMovementsRepository.findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(clientId, productId, startDate, endDate);
@@ -82,32 +104,10 @@ public class ProductService {
         )).collect(Collectors.toList());
     }
 
-//    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-//        Page<ProductEntity> productData = productRepository.
-//                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
-//
-//        return productData.map(product -> new ProductDTO(
-//                product.getProductId(),
-//                product.getShortName(),
-//                product.getFullName(),
-//                product.getSupplierPrice(),
-//                product.getStock(),
-//                product.getProductPricesEntity().stream()
-//                        .map(productPrices -> new ProductPricesDTO(
-//                                productPrices.getProductPricesId(),
-//                                product.getProductId(),
-//                                productPrices.getPercentage(),
-//                                productPrices.getPrice(),
-//                                productPrices.getMaximalCount()
-//                        ))
-//                        .collect(Collectors.toList()),
-//                product.getSupplierEntity().getSupplierId()
-//        ));
-//    }
-
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-        Page<ProductEntity> productData = productRepository
-                .findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+        Page<ProductEntity> productData = productRepository.
+                findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+
         return productData.map(this::convertToDTO);
     }
 
@@ -116,29 +116,8 @@ public class ProductService {
                 .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndFullNameContainingIgnoreCaseOrderByProductIdDesc(
                         clientId, search, pageable
                 );
-        return productData.map(this::convertToDTO);
-    }
 
-    private ProductDTO convertToDTO(ProductEntity product) {
-        return new ProductDTO(
-                product.getProductId(),
-                product.getShortName(),
-                product.getFullName(),
-                product.getSupplierPrice(),
-                product.getStock(),
-                product.getProductPricesEntity() == null
-                        ? new ArrayList<>()
-                        : product.getProductPricesEntity().stream()
-                        .map(productPrices -> new ProductPricesDTO(
-                                productPrices.getProductPricesId(),
-                                product.getProductId(),
-                                productPrices.getPercentage(),
-                                productPrices.getPrice(),
-                                productPrices.getMaximalCount()
-                        ))
-                        .collect(Collectors.toList()),
-                product.getSupplierEntity().getSupplierId()
-        );
+        return productData.map(this::convertToDTO);
     }
 
     @Transactional

@@ -20,12 +20,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             Pageable pageable
     );
 
-
-    Page<ProductEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByProductIdDesc(
-            Long clientId,
-            Pageable pageable
-    );
-
     Page<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId, Pageable pageable);
 
     List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId);
