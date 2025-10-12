@@ -43,4 +43,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     boolean existsByProductIdAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(
             Long productId, Long clientId, Long excludedProductId
     );
+
+    @Query("""
+    SELECT p.productId
+    FROM ProductEntity p
+    WHERE p.clientEntity.clientId = :clientId
+      AND p.deletedAt IS NULL
+      AND p.productPricesEntity IS NOT EMPTY
+    ORDER BY p.productId DESC
+""")
+    Page<Long> findProductIds(@Param("clientId") Long clientId, Pageable pageable);
+
 }

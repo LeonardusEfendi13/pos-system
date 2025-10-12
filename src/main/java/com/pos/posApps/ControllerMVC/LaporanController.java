@@ -176,7 +176,7 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan")
-    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
+    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         Long clientId;
         String token;
         try {
@@ -187,10 +187,25 @@ public class LaporanController {
         }
 
         Page<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId, PageRequest.of(page, size));
-        model.addAttribute("laporanData", laporanData);
+
+        Integer totalPages = laporanData.getTotalPages();
+        Integer start = Math.max(0, page - 2);
+        Integer end = Math.min(totalPages - 1, page + 2);
+
+        model.addAttribute("laporanData", laporanData.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
+        model.addAttribute("size", size);
+        model.addAttribute("startData", page * size + 1);
+        model.addAttribute("endData", page * size + laporanData.getNumberOfElements());
+        model.addAttribute("totalData", laporanData.getTotalElements());
+
         model.addAttribute("activePage", "nilaiPersediaan");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
+
         return "display_laporan_nilai_persediaan_barang"; // Thymeleaf template
     }
 }
