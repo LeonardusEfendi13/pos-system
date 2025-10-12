@@ -10,12 +10,11 @@ import com.pos.posApps.Service.SidebarService;
 import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -33,8 +32,12 @@ public class ProductController {
     private SupplierService supplierService;
     private SidebarService sidebarService;
 
-    @GetMapping
-    public String showListProducts(HttpSession session, Model model) {
+    private int safeSize(Integer size) {
+        return (size == null || size <= 0) ? 10 : size;
+    }
+
+    @GetMapping("")
+    public String showListProducts(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -47,14 +50,36 @@ public class ProductController {
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
 
-        List<ProductDTO> productEntity = productService.getProductData(clientId);
+        Page<ProductDTO> productEntity;
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
-        model.addAttribute("productData", productEntity);
+
+        if (search == null || search.isEmpty()) {
+            productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
+        } else {
+            productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size));
+        }
+
+        model.addAttribute("productData", productEntity.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productEntity.getTotalPages());
         model.addAttribute("supplierData", supplierEntity);
+        model.addAttribute("search", search);
         model.addAttribute("activePage", "masterBarang");
+
+        Integer totalPages = productEntity.getTotalPages();
+        Integer start = Math.max(0, page - 2);
+        Integer end = Math.min(totalPages - 1, page + 2);
+        size = safeSize(size);
+        model.addAttribute("size", size);
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
+        model.addAttribute("startData", page * size + 1);
+        model.addAttribute("endData", page * size + productEntity.getNumberOfElements());
+        model.addAttribute("totalData", productEntity.getTotalElements());
 
         return "display_products";
     }
+
 
     @PostMapping("/add")
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
@@ -94,7 +119,7 @@ public class ProductController {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
-            if(accEntity.getClientEntity().getClientId() == null){
+            if (accEntity.getClientEntity().getClientId() == null) {
                 redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Session Expired");
                 return "redirect:/login";
@@ -152,7 +177,7 @@ public class ProductController {
         }
 
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
-        endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
+        endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();

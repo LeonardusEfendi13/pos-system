@@ -16,36 +16,39 @@
 
     <style>
         .nav-link.active {
-           background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
-           color: #e0e7ff;
-           padding-left: calc(1rem - 4px); /* agar padding kiri pas */
-       }
-       body {
-           background-color: #f4f4f4;
-       }
+            background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+            color: #e0e7ff;
+            padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+        }
 
-       .logout-button {
-           margin-top: auto;
-           padding: 1rem;
-       }
+        body {
+            background-color: #f4f4f4;
+        }
 
-       .add-user-btn {
-           margin-bottom: 15px;
-       }
+        .logout-button {
+            margin-top: auto;
+            padding: 1rem;
+        }
 
-       /* ADD: margin below filter */
-       .filter-container {
-           margin: 20px 0;
-       }
-       .dropdown-item.disabled {
-           pointer-events: none;
-           opacity: 0.5;
-       }
-       input[type="checkbox"]:disabled {
-         opacity: 1;               /* Keep full opacity */
-         pointer-events: none;     /* Prevent interaction */
-         accent-color: #007bff;    /* Custom bright color (blue in this case) */
-       }
+        .add-user-btn {
+            margin-bottom: 15px;
+        }
+
+        /* ADD: margin below filter */
+        .filter-container {
+            margin: 20px 0;
+        }
+
+        .dropdown-item.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        input[type="checkbox"]:disabled {
+            opacity: 1; /* Keep full opacity */
+            pointer-events: none; /* Prevent interaction */
+            accent-color: #007bff; /* Custom bright color (blue in this case) */
+        }
     </style>
 </head>
 <body>
@@ -57,11 +60,11 @@
 
             <!-- ADD: Date range filters -->
             <form method="get" action="/preorder" class="row filter-container">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="startDate" class="form-label">Start Date</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
                 </div>
@@ -77,12 +80,19 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Cari</button>
+                    <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="input-group">
+                        <input type="text" class="form-control rounded rounded-end-0" name="search" id="searchInput" placeholder="Cari produk..."
+                               th:value="${search != null ? search : ''}">
+                        <button type="submit" class="btn btn-info">Cari</button>
+                    </div>
                 </div>
             </form>
 
             <div style="max-height: 70vh; overflow-y: auto;">
-                <table id="userTable" class="table table-striped table-bordered">
+                <table id="userTable" class="table table-striped table-bordered w-100">
                     <thead class="sticky-top">
                     <tr>
                         <th scope="col">No</th>
@@ -94,8 +104,10 @@
                     </thead>
                     <tbody>
                     <tr th:each="preorder, iterStat : ${preorderData}">
-                        <td th:text="${iterStat.index + 1}">1</td>
-                        <td th:text="${#temporals.format(preorder.createdAt, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
+                        <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
+                        <td th:text="${#temporals.format(preorder.createdAt, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">
+                            Tanggal Jual
+                        </td>
                         <td><span th:text="${preorder.totalPrice}">Rp0</span></td>
                         <td th:text="${preorder.supplierEntity.supplierName}">Supplier</td>
                         <td>
@@ -103,8 +115,10 @@
                                 <input type="hidden" name="preorderId" th:value="${preorder.preorderId}">
                                 <button class="btn btn-sm btn-primary me-1">Edit</button>
                             </form>
-                            <form th:action="@{|/preorder/delete/${preorder.preorderId}|}" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?');">
+                            <form th:action="@{|/preorder/delete/${preorder.preorderId}|}" method="post"
+                                  style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Apakah anda yakin untuk menghapus data ini?');">
                                     <i class="ti ti-trash"></i> Delete
                                 </button>
                             </form>
@@ -112,6 +126,31 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!--  Pagination  -->
+                <div class="d-flex justify-content-between align-items-center my-2">
+                    <div>
+                        Menampilkan <span th:text="${startData}">1</span>-
+                        <span th:text="${endData}">10</span> dari
+                        <span th:text="${totalData}">10</span> data
+                    </div>
+
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products(page=${currentPage - 1}, search=${search})}">‹</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/products(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products(page=${currentPage + 1}, search=${search})}">›</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
@@ -124,56 +163,50 @@
 
 <script>
 
-   $(document).ready(function () {
-       // Format currency
-       document.querySelectorAll('td span').forEach(el => {
-           const number = parseFloat(el.textContent);
-           el.textContent = new Intl.NumberFormat('id-ID', {
-               style: 'currency',
-               currency: 'IDR',
-               minimumFractionDigits: 0,
-               maximumFractionDigits: 0
-           }).format(number);
-       });
+    $(document).ready(function () {
+        // Format currency
+        document.querySelectorAll('td span').forEach(el => {
+            const number = parseFloat(el.textContent);
+            el.textContent = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(number);
+        });
 
-       // Register custom sort type
-       jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
-           "tsc-pre": function (data) {
-               return parseInt(data.replace(/\D/g, ''), 10);
-           },
-           "tsc-asc": function (a, b) {
-               return a - b;
-           },
-           "tsc-desc": function (a, b) {
-               return b - a;
-           }
-       });
+        // Register custom sort type
+        jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
+            "tsc-pre": function (data) {
+                return parseInt(data.replace(/\D/g, ''), 10);
+            },
+            "tsc-asc": function (a, b) {
+                return a - b;
+            },
+            "tsc-desc": function (a, b) {
+                return b - a;
+            }
+        });
 
-       const table = $('#userTable').DataTable({
-           columnDefs: [{
-               targets: 1, // No. Faktur
-               type: 'tsc'
-           }],
-           paging: true,
-           pageLength: 10,
-           lengthMenu: [5, 10, 25, 50],
-           ordering: true,
-           order: [],
-           language: {
-               search: "Cari: ",
-               lengthMenu: "Tampilkan _MENU_ data per halaman",
-               zeroRecords: "Data tidak ditemukan",
-               info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-               paginate: {
-                   first: "Awal",
-                   last: "Akhir",
-                   next: "›",
-                   previous: "‹"
-               }
-           },
-           scrollCollapse: true,
-       });
-   });
+        const table = $('#userTable').DataTable({
+            columnDefs: [{
+                targets: 1, // No. Faktur
+                type: 'tsc'
+            }],
+            paging: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            ordering: true,
+            order: [],
+            info: false,
+            searching: false,
+            scrollX: true,
+            language: {
+                zeroRecords: "Data tidak ditemukan",
+            },
+            scrollCollapse: true,
+        });
+    });
 </script>
 </body>
 </html>

@@ -20,10 +20,10 @@ public class ClientService {
     @Autowired
     private ClientRepository clientRepository;
 
-    public ClientDTO getClientSettings(Long clientId){
-        try{
+    public ClientDTO getClientSettings(Long clientId) {
+        try {
             Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
-            if(clientEntityOpt.isEmpty()){
+            if (clientEntityOpt.isEmpty()) {
                 return null;
             }
 
@@ -36,13 +36,13 @@ public class ClientService {
                     clientEntity.getNoTelp()
             );
 
-        }catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
 
     public boolean updateClientField(Long clientId, String fieldKey, String fieldValue) {
-        try{
+        try {
             Optional<ClientEntity> clientOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
             if (clientOpt.isEmpty()) return false;
@@ -60,14 +60,14 @@ public class ClientService {
             }
             clientRepository.save(client);
             return true;
-        }catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
     }
 
     @Transactional
-    public boolean doCreateClient(CreateClientRequest req){
-        try{
+    public boolean doCreateClient(CreateClientRequest req) {
+        try {
             Long lastClientId = clientRepository.findFirstByOrderByClientIdDesc().map(ClientEntity::getClientId).orElse(0L);
             Long newClientId = Generator.generateId(lastClientId);
             ClientEntity clientEntity = new ClientEntity();
@@ -78,16 +78,16 @@ public class ClientService {
             clientRepository.save(clientEntity);
 
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
 
     }
 
-    public boolean doEditClient(EditClientRequest req){
-        try{
+    public boolean doEditClient(EditClientRequest req) {
+        try {
             Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(req.getClientId());
-            if(clientEntityOpt.isEmpty()){
+            if (clientEntityOpt.isEmpty()) {
                 return false;
             }
 
@@ -99,15 +99,15 @@ public class ClientService {
             clientEntity.setKota(req.getKota());
             clientRepository.save(clientEntity);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
 
     }
 
-    public boolean doDisableClient(Long clientId){
+    public boolean doDisableClient(Long clientId) {
         Optional<ClientEntity> clientEntityOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
-        if(clientEntityOpt.isEmpty()){
+        if (clientEntityOpt.isEmpty()) {
             return false;
         }
 

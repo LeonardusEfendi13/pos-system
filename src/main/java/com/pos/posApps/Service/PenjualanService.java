@@ -5,6 +5,8 @@ import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -236,14 +238,40 @@ public class PenjualanService {
         )).collect(Collectors.toList());
     }
 
-    public List<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId) {
-        List<TransactionEntity> transactionData;
+    // File: PenjualanService.java
+
+    public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, Pageable pageable) {
+        Page<TransactionEntity> transactionData;
         if (customerId == null) {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate, pageable);
         } else {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate);
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
         }
-        return transactionData.stream().map(transactions -> new PenjualanDTO(
+        return transactionData.map(this::convertToDTO);
+    }
+
+    public Page<PenjualanDTO> searchPenjualanData( Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPenjualanData(clientId, startDate, endDate, customerId, pageable);
+        }
+
+        Page<TransactionEntity> transactionData = transactionRepository
+                .searchTransactions(
+                        clientId,
+                        startDate,
+                        endDate,
+                        customerId,
+                        trimmedSearch,
+                        pageable
+                );
+
+        return transactionData.map(this::convertToDTO);
+    }
+
+    private PenjualanDTO convertToDTO(TransactionEntity transactions) {
+        return new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
                         transactions.getCustomerEntity().getCustomerId(),
@@ -264,8 +292,8 @@ public class PenjualanService {
                                 transactionDetail.getDiscountAmount(),
                                 transactionDetail.getTotalPrice()
                         ))
-                        .collect(Collectors.toList())  // collect the stream to a list
-        )).collect(Collectors.toList());
+                        .collect(Collectors.toList())
+        );
     }
 
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {

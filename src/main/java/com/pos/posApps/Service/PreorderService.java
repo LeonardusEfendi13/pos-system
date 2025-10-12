@@ -8,10 +8,11 @@ import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.SupplierRepository;
 import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -29,12 +30,29 @@ public class PreorderService {
     @Autowired
     PreorderDetailRepository preorderDetailRepository;
 
-    public List<PreorderEntity> getPreorderData(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate) {
+    public Page<PreorderEntity> getPreorderData(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         if (supplierId == null) {
-            return preorderRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, startDate, endDate);
+            return preorderRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, startDate, endDate, pageable);
         } else {
-            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, supplierId, startDate, endDate);
+            return preorderRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(clientId, supplierId, startDate, endDate, pageable);
         }
+    }
+
+    public Page<PreorderEntity> searchPreorderData(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPreorderData(clientId, supplierId, startDate, endDate, pageable);
+        }
+
+        return preorderRepository.searchPreorders(
+                clientId,
+                supplierId,
+                startDate,
+                endDate,
+                trimmedSearch,
+                pageable
+        );
     }
 
     public PreorderDTO getPreorderDataById(Long clientId, Long preorderId) {

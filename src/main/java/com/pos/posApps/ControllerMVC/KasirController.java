@@ -7,10 +7,13 @@ import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -27,7 +30,7 @@ public class KasirController {
     private ClientService clientService;
 
     @GetMapping
-    public String displayKasir(Model model, HttpSession session, Long transactionId){
+    public String displayKasir(Model model, HttpSession session, Long transactionId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -35,19 +38,29 @@ public class KasirController {
         } catch (Exception e) {
             return "redirect:/login";
         }
-        List<ProductDTO> productEntity = productService.getProductData(clientId);
+
+        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
         List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
 
-        PenjualanDTO penjualanData = new PenjualanDTO();
-        if(transactionId != null){
-            penjualanData = penjualanService.getPenjualanDataById(clientId, transactionId);
-        }
+        System.out.println("productEntity = " + productEntity);
+        System.out.println("customerEntity: " + customerEntities);
+        model.addAttribute("clientSettingData", clientSettingData);
+
+
+        PenjualanDTO penjualanData = (transactionId != null)
+                ? penjualanService.getPenjualanDataById(clientId, transactionId)
+                : new PenjualanDTO();
+
         model.addAttribute("penjualanData", penjualanData);
         model.addAttribute("activePage", "kasir");
-        model.addAttribute("productData", productEntity);
+        model.addAttribute("productData", productEntity.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productEntity.getTotalPages());
         model.addAttribute("customerData", customerEntities);
         model.addAttribute("settingData", clientSettingData);
+
         return "display_kasir_penjualan";
     }
 }
+
