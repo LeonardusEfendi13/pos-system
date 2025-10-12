@@ -58,7 +58,7 @@ public class ProductController {
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productEntity.getTotalPages());
-        model.addAttribute("supplierData", supplierService.getSupplierList(clientId));
+        model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("search", search);
         model.addAttribute("activePage", "masterBarang");
 

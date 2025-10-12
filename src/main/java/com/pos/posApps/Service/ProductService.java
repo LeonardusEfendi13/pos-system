@@ -112,10 +112,19 @@ public class ProductService {
     }
 
     public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getProductData(clientId, pageable);
+        }
+
         Page<ProductEntity> productData = productRepository
-                .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndFullNameContainingIgnoreCaseOrderByProductIdDesc(
-                        clientId, search, pageable
+                .searchProducts(
+                        clientId,
+                        trimmedSearch,
+                        pageable
                 );
+
         return productData.map(this::convertToDTO);
     }
 
