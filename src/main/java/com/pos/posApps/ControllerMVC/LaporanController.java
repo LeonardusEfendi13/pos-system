@@ -3,18 +3,19 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.io.IOException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -212,26 +213,18 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan/view-pdf")
-    public void viewLaporanNilaiPersediaanPDF(HttpSession session, HttpServletResponse response) throws IOException {
-        Long clientId;
-        String token;
-        try {
-            token = (String) session.getAttribute(authSessionKey);
-            clientId = authService.validateToken(token).getClientEntity().getClientId();
-        } catch (Exception e) {
-            response.sendRedirect("/login");
-            return;
-        }
+    public ResponseEntity<StreamingResponseBody> viewLaporanNilaiPersediaanPDF(HttpSession session) {
+        String token = (String) session.getAttribute(authSessionKey);
+        Long clientId = authService.validateToken(token).getClientEntity().getClientId();
 
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "inline; filename=laporan_nilai_persediaan.pdf");
+        StreamingResponseBody stream = outputStream -> {
+            laporanService.exportLaporanNilaiPersediaanStream(clientId, outputStream);
+        };
 
-        try {
-            laporanService.exportLaporanNilaiPersediaanStream(clientId, response.getOutputStream());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Gagal membuat PDF");
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=laporan_nilai_persediaan.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(stream);
     }
 
 
