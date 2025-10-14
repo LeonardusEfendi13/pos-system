@@ -31,7 +31,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             Pageable pageable
     );
 
-    Page<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId, Pageable pageable);
+    @Query("""
+    SELECT DISTINCT p FROM ProductEntity p
+    JOIN p.productPricesEntity prices
+    WHERE p.clientEntity.clientId = :clientId
+      AND p.deletedAt IS NULL
+""")
+    Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
 
     List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId);
 
