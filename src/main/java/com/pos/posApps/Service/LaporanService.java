@@ -359,7 +359,6 @@ public class LaporanService {
 
     public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outputStream) {
         Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
-
         String sql = "SELECT p.short_name, p.full_name, p.stock, p.supplier_price, " +
                 "COALESCE(pp.price, 0) AS harga_jual " +
                 "FROM product p " +
@@ -371,39 +370,48 @@ public class LaporanService {
                 ") pp ON pp.product_id = p.product_id " +
                 "WHERE p.client_id = ? " +
                 "AND p.deleted_at IS NULL " +
-                "ORDER BY p.short_name";
+                "ORDER BY p.stock DESC";
 
         try {
+            //Get total asset
+            BigDecimal totalAsset = productRepository.sumInventoryValue(clientId);
+
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
             writer.setFullCompression();
             document.open();
 
-            // Header font
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-            document.add(new Paragraph("Laporan Nilai Persediaan Barang", headerFont));
-            document.add(new Paragraph("Client ID: " + clientId));
+            // Title
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Paragraph title = new Paragraph("Laporan Nilai Persediaan Barang", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+
+            Paragraph clientInfo = new Paragraph("Total Nilai Barang : "+ formatRupiah(totalAsset));
+            clientInfo.setAlignment(Element.ALIGN_CENTER);
+            document.add(clientInfo);
             document.add(Chunk.NEWLINE);
 
-            // Buat table header
+            // Table structure
+            float[] columnWidths = {3, 5, 1, 2, 2, 2};
+            String[] headers = {"Kode", "Nama Barang", "Stock", "Harga Beli", "Harga Jual", "Total Nilai"};
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+
+            // Create header table
             PdfPTable headerTable = new PdfPTable(6);
             headerTable.setWidthPercentage(100);
-            headerTable.setWidths(new float[]{2, 4, 2, 2, 2, 2});
+            headerTable.setWidths(columnWidths);
 
-            String[] titles = {"Kode", "Nama Barang", "Stock", "Harga Beli", "Harga Jual", "Total Nilai"};
-            Font columnHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-
-            for (String title : titles) {
-                PdfPCell cell = new PdfPCell(new Phrase(title, columnHeaderFont));
-                cell.setBackgroundColor(LIGHT_GRAY);
-                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            for (String header : headers) {
+                PdfPCell cell = createCell(header, headerFont, Element.ALIGN_CENTER, LIGHT_GRAY);
                 headerTable.addCell(cell);
             }
+
             document.add(headerTable);
 
-            // Table data, gunakan chunking flush untuk performa
+            // Data table
             PdfPTable dataTable = new PdfPTable(6);
             dataTable.setWidthPercentage(100);
-            dataTable.setWidths(new float[]{2, 4, 2, 2, 2, 2});
+            dataTable.setWidths(columnWidths);
 
             final int FLUSH_INTERVAL = 200;
             final int[] counter = {0};
@@ -417,12 +425,12 @@ public class LaporanService {
                     BigDecimal hargaJual = rs.getBigDecimal("harga_jual");
                     BigDecimal totalNilai = hargaBeli.multiply(BigDecimal.valueOf(stock));
 
-                    dataTable.addCell(new Phrase(kode));
-                    dataTable.addCell(new Phrase(nama));
-                    dataTable.addCell(new Phrase(String.valueOf(stock)));
-                    dataTable.addCell(new Phrase(formatRupiah(hargaBeli)));
-                    dataTable.addCell(new Phrase(formatRupiah(hargaJual)));
-                    dataTable.addCell(new Phrase(formatRupiah(totalNilai)));
+                    dataTable.addCell(createCell(kode, Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(nama, Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(String.valueOf(stock), Element.ALIGN_CENTER));
+                    dataTable.addCell(createCell(formatRupiah(hargaBeli), Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(formatRupiah(hargaJual), Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(formatRupiah(totalNilai), Element.ALIGN_LEFT));
 
                     counter[0]++;
                     if (counter[0] % FLUSH_INTERVAL == 0) {
@@ -435,7 +443,7 @@ public class LaporanService {
                 }
             });
 
-            // Tambah sisa baris
+            // Add remaining rows
             if (counter[0] % FLUSH_INTERVAL != 0) {
                 document.add(dataTable);
             }
@@ -447,8 +455,21 @@ public class LaporanService {
             throw new RuntimeException("Gagal generate PDF streaming", e);
         }
     }
+    private PdfPCell createCell(String content, int alignment) {
+        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 10), alignment, null);
+    }
+
+    private PdfPCell createCell(String content, Font font, int alignment, Color bgColor) {
+        PdfPCell cell = new PdfPCell(new Phrase(content, font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        if (bgColor != null) {
+            cell.setBackgroundColor(bgColor);
+        }
+        return cell;
+    }
 
     private String formatRupiah(BigDecimal value) {
-        return String.format("Rp%,.0f", value).replace(",", ".");
+        return String.format("Rp %,.0f", value).replace(",", ".");
     }
 }

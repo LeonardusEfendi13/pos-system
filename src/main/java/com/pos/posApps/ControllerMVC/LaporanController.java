@@ -226,6 +226,4 @@ public class LaporanController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(stream);
     }
-
-
 }
