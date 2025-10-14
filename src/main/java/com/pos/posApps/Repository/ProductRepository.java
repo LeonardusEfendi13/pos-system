@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -83,4 +84,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @QueryHint(name = org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE, value = "1000")
     })
     Stream<ProductEntity> streamAllByClientId(@Param("clientId") long clientId);
+
+    @Query("SELECT SUM(p.stock * p.supplierPrice) FROM ProductEntity p WHERE p.clientEntity.clientId = :clientId")
+    BigDecimal sumInventoryValue(@Param("clientId") Long clientId);
 }

@@ -15,13 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.lowagie.text.pdf.PdfWriter;
 
 import java.awt.*;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -31,7 +32,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import static java.awt.Color.LIGHT_GRAY;
 
 @Service
 public class LaporanService {
@@ -353,83 +354,119 @@ public class LaporanService {
         return periods;
     }
 
-    @Transactional(readOnly = true)
-    public void exportLaporanNilaiPersediaanStream(long clientId, OutputStream outputStream) {
+    public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outputStream) {
         Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
-        try (Stream<ProductEntity> productStream = productRepository.streamAllByClientId(clientId)) {
+        String sql = "SELECT p.short_name, p.full_name, p.stock, p.supplier_price, " +
+                "COALESCE(pp.price, 0) AS harga_jual " +
+                "FROM product p " +
+                "LEFT JOIN (" +
+                "    SELECT DISTINCT ON (product_id) product_id, price " +
+                "    FROM product_prices " +
+                "    WHERE deleted_at IS NULL " +
+                "    ORDER BY product_id, product_prices_id" +
+                ") pp ON pp.product_id = p.product_id " +
+                "WHERE p.client_id = ? " +
+                "AND p.deleted_at IS NULL " +
+                "ORDER BY p.stock DESC";
+
+        try {
+            //Get total asset
+            BigDecimal totalAsset = productRepository.sumInventoryValue(clientId);
+
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
-            writer.setFullCompression(); // PDF lebih kecil
+            writer.setFullCompression();
             document.open();
 
-            // Header
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-            document.add(new Paragraph("Laporan Nilai Persediaan Barang", headerFont));
-            document.add(new Paragraph("Client ID: " + clientId));
+            // Title
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Paragraph title = new Paragraph("Laporan Nilai Persediaan Barang", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+
+            Paragraph clientInfo = new Paragraph("Total Nilai Barang : "+ formatRupiah(totalAsset));
+            clientInfo.setAlignment(Element.ALIGN_CENTER);
+            document.add(clientInfo);
             document.add(Chunk.NEWLINE);
 
-            // Table header
+            // Table structure
+            float[] columnWidths = {3, 5, 1, 2, 2, 2};
+            String[] headers = {"Kode", "Nama Barang", "Stock", "Harga Beli", "Harga Jual", "Total Nilai"};
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+
+            // Create header table
             PdfPTable headerTable = new PdfPTable(6);
             headerTable.setWidthPercentage(100);
-            headerTable.setWidths(new float[]{2, 4, 2, 2, 2, 2});
+            headerTable.setWidths(columnWidths);
 
-            Stream.of("Kode", "Nama Barang", "Stock", "Harga Beli", "Harga Jual", "Total Nilai")
-                    .forEach(title -> {
-                        PdfPCell cell = new PdfPCell(new Phrase(title, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10)));
-                        cell.setBackgroundColor(Color.LIGHT_GRAY);
-                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                        headerTable.addCell(cell);
-                    });
+            for (String header : headers) {
+                PdfPCell cell = createCell(header, headerFont, Element.ALIGN_CENTER, LIGHT_GRAY);
+                headerTable.addCell(cell);
+            }
+
             document.add(headerTable);
 
-            // Buffer table kecil (biar nggak berat)
-            PdfPTable chunkTable = new PdfPTable(6);
-            chunkTable.setWidthPercentage(100);
-            chunkTable.setWidths(new float[]{2, 4, 2, 2, 2, 2});
+            // Data table
+            PdfPTable dataTable = new PdfPTable(6);
+            dataTable.setWidthPercentage(100);
+            dataTable.setWidths(columnWidths);
 
-            final int FLUSH_INTERVAL = 1000; // flush tiap 1000 baris
+            final int FLUSH_INTERVAL = 200;
             final int[] counter = {0};
 
-            productStream.forEach(product -> {
+            jdbcTemplate.query(sql, new Object[]{clientId}, (ResultSet rs) -> {
                 try {
-                    BigDecimal hargaJual = product.getProductPricesEntity().isEmpty()
-                            ? BigDecimal.ZERO
-                            : product.getProductPricesEntity().get(0).getPrice();
+                    String kode = rs.getString("short_name");
+                    String nama = rs.getString("full_name");
+                    int stock = rs.getInt("stock");
+                    BigDecimal hargaBeli = rs.getBigDecimal("supplier_price");
+                    BigDecimal hargaJual = rs.getBigDecimal("harga_jual");
+                    BigDecimal totalNilai = hargaBeli.multiply(BigDecimal.valueOf(stock));
 
-                    BigDecimal totalNilai = BigDecimal
-                            .valueOf(product.getStock())
-                            .multiply(product.getSupplierPrice());
-
-                    chunkTable.addCell(new Phrase(product.getShortName()));
-                    chunkTable.addCell(new Phrase(product.getFullName()));
-                    chunkTable.addCell(new Phrase(String.valueOf(product.getStock())));
-                    chunkTable.addCell(new Phrase(formatRupiah(product.getSupplierPrice())));
-                    chunkTable.addCell(new Phrase(formatRupiah(hargaJual)));
-                    chunkTable.addCell(new Phrase(formatRupiah(totalNilai)));
+                    dataTable.addCell(createCell(kode, Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(nama, Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(String.valueOf(stock), Element.ALIGN_CENTER));
+                    dataTable.addCell(createCell(formatRupiah(hargaBeli), Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(formatRupiah(hargaJual), Element.ALIGN_LEFT));
+                    dataTable.addCell(createCell(formatRupiah(totalNilai), Element.ALIGN_LEFT));
 
                     counter[0]++;
                     if (counter[0] % FLUSH_INTERVAL == 0) {
-                        document.add(chunkTable);
-                        chunkTable.flushContent(); // kosongkan isi table tanpa reset struktur
-                        writer.flush(); // paksa tulis ke OutputStream
+                        document.add(dataTable);
+                        dataTable.flushContent();
+                        writer.flush();
                     }
-                } catch (Exception ex) {
-                    throw new RuntimeException("Error saat tulis PDF baris: " + ex.getMessage(), ex);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error saat tulis PDF baris: " + e.getMessage(), e);
                 }
             });
 
-            // Tambahkan sisa data terakhir
+            // Add remaining rows
             if (counter[0] % FLUSH_INTERVAL != 0) {
-                document.add(chunkTable);
+                document.add(dataTable);
             }
 
             document.close();
             writer.flush();
+
         } catch (Exception e) {
             throw new RuntimeException("Gagal generate PDF streaming", e);
         }
     }
+    private PdfPCell createCell(String content, int alignment) {
+        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 10), alignment, null);
+    }
+
+    private PdfPCell createCell(String content, Font font, int alignment, Color bgColor) {
+        PdfPCell cell = new PdfPCell(new Phrase(content, font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        if (bgColor != null) {
+            cell.setBackgroundColor(bgColor);
+        }
+        return cell;
+    }
 
     private String formatRupiah(BigDecimal value) {
-        return String.format("Rp%,.0f", value).replace(",", ".");
+        return String.format("Rp %,.0f", value).replace(",", ".");
     }
 }
