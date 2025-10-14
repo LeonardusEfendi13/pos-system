@@ -45,20 +45,17 @@ public class LaporanService {
     @Autowired
     PurchasingRepository purchasingRepository;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    public List<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId) {
-        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
-        return productData.stream().map(product -> new LaporanNilaiPersediaanDTO(
-                product.getShortName(),
-                product.getFullName(),
-                product.getStock(),
-                product.getSupplierPrice(),
-                product.getProductPricesEntity().get(0).getPrice(),
-                BigDecimal.valueOf(product.getStock()).multiply(product.getSupplierPrice())
-        )).collect(Collectors.toList());
-    }
+//    public List<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId) {
+//        List<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
+//        return productData.stream().map(product -> new LaporanNilaiPersediaanDTO(
+//                product.getShortName(),
+//                product.getFullName(),
+//                product.getStock(),
+//                product.getSupplierPrice(),
+//                product.getProductPricesEntity().get(0).getPrice(),
+//                BigDecimal.valueOf(product.getStock()).multiply(product.getSupplierPrice())
+//        )).collect(Collectors.toList());
+//    }
 
     public Page<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId, Pageable pageable) {
         Page<Long> productIdsPage = productRepository.findProductIds(clientId, pageable);
