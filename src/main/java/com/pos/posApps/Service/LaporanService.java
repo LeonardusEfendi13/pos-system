@@ -128,7 +128,7 @@ public class LaporanService {
                 ));
 
         // Ensure all periods are present in the final map, even if zero
-        Map<String, LaporanPenjualanPerWaktuDTO> finalMap = new TreeMap<>(); // TreeMap to ensure natural ordering
+        Map<String, LaporanPenjualanPerWaktuDTO> finalMap = new TreeMap<>(Comparator.reverseOrder());
         for (String period : allPeriods) {
             LaporanPenjualanPerWaktuDTO data = groupedMap.getOrDefault(
                     period,
