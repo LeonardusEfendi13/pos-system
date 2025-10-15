@@ -30,7 +30,7 @@ public class KasirController {
     private ClientService clientService;
 
     @GetMapping
-    public String displayKasir(Model model, HttpSession session, Long transactionId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
+    public String displayKasir(Model model, HttpSession session, Long transactionId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);

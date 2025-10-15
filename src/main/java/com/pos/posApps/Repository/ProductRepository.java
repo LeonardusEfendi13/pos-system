@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Repository
@@ -72,19 +73,9 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             """)
     Page<Long> findProductIds(@Param("clientId") Long clientId, Pageable pageable);
 
-
-    @Query("""
-                SELECT p FROM ProductEntity p
-                WHERE p.clientEntity.clientId = :clientId
-                  AND p.productPricesEntity IS NOT EMPTY
-                  AND p.deletedAt IS NULL
-                ORDER BY p.productId DESC
-            """)
-    @QueryHints(value = {
-            @QueryHint(name = org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE, value = "1000")
-    })
-    Stream<ProductEntity> streamAllByClientId(@Param("clientId") long clientId);
-
     @Query("SELECT SUM(p.stock * p.supplierPrice) FROM ProductEntity p WHERE p.clientEntity.clientId = :clientId")
     BigDecimal sumInventoryValue(@Param("clientId") Long clientId);
+
+    List<ProductEntity> findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(Long clientId, Set<String> shortNames);
+
 }
