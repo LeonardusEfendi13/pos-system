@@ -69,10 +69,11 @@ public class PembelianController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("lunas", lunas);
         model.addAttribute("tunai", tunai);
+        model.addAttribute("search", search);
 
-        Long totalElements = pembelianData.getTotalElements();
+        long totalElements = pembelianData.getTotalElements();
 
-        Integer totalPages = pembelianData.getTotalPages();
+        int totalPages = pembelianData.getTotalPages();
         if (totalPages == 0) {
             totalPages = 1;
         }

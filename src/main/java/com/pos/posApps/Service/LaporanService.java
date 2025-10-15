@@ -79,11 +79,11 @@ public class LaporanService {
 
         if (customerId == null) {
             transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                    .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
                             clientId, startDate, endDate);
         } else {
             transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
+                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
                             clientId, customerId, startDate, endDate);
         }
 
@@ -214,7 +214,7 @@ public class LaporanService {
         List<TransactionEntity> transactionData;
 
         transactionData = transactionRepository
-                .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
                         clientId, startDate, endDate);
 
 

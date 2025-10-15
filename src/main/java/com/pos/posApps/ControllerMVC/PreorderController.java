@@ -70,9 +70,9 @@ public class PreorderController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
 
-        Long totalElements = preorderEntity.getTotalElements();
+        long totalElements = preorderEntity.getTotalElements();
 
-        Integer totalPages = preorderEntity.getTotalPages();
+        int totalPages = preorderEntity.getTotalPages();
         if (totalPages == 0) {
             totalPages = 1;
         }
