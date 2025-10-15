@@ -191,9 +191,11 @@ public class LaporanController {
 
         Page<LaporanNilaiPersediaanDTO> laporanData = laporanService.getLaporanNilaiPersediaan(clientId, PageRequest.of(page, size));
 
-        Integer totalPages = laporanData.getTotalPages();
+        int totalPages = laporanData.getTotalPages();
         Integer start = Math.max(0, page - 2);
         Integer end = Math.min(totalPages - 1, page + 2);
+
+        String totalAssets = laporanService.getTotalAsset(clientId);
 
         model.addAttribute("laporanData", laporanData.getContent());
         model.addAttribute("currentPage", page);
@@ -204,6 +206,7 @@ public class LaporanController {
         model.addAttribute("startData", page * size + 1);
         model.addAttribute("endData", page * size + laporanData.getNumberOfElements());
         model.addAttribute("totalData", laporanData.getTotalElements());
+        model.addAttribute("totalAsset" , totalAssets);
 
         model.addAttribute("activePage", "nilaiPersediaan");
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);

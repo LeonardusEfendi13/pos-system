@@ -48,10 +48,14 @@ public class LaporanService {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
+    public String getTotalAsset(long clientId){
+        return formatRupiah(productRepository.sumInventoryValue(clientId));
+
+    }
+
     public Page<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId, Pageable pageable) {
         Page<Long> productIdsPage = productRepository.findProductIds(clientId, pageable);
         List<ProductEntity> products = productRepository.findAllById(productIdsPage.getContent());
-
         List<LaporanNilaiPersediaanDTO> dtos = products.stream()
                 .map(product -> new LaporanNilaiPersediaanDTO(
                         product.getShortName(),
