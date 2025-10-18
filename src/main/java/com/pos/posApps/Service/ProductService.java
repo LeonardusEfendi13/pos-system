@@ -109,6 +109,13 @@ public class ProductService {
         return productData.map(this::convertToDTO);
     }
 
+    public Page<ProductDTO> getProductDataForPembelian(Long clientId, Pageable pageable) {
+        Page<ProductEntity> productData = productRepository
+                .findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+
+        return productData.map(this::convertToDTO);
+    }
+
     public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 

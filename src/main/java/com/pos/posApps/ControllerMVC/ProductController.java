@@ -80,7 +80,6 @@ public class ProductController {
         return "display_products";
     }
 
-
     @PostMapping("/add")
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
