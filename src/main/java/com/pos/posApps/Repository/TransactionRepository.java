@@ -44,5 +44,5 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
 
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 
-    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(Long clientId, Long transactionId);
+    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(Long clientId, Long transactionId);
 }

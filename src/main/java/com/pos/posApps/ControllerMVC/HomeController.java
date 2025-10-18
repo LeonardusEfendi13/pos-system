@@ -62,7 +62,6 @@ public class HomeController {
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
-        System.out.println("sidebar data : " + sidebarData);
         model.addAttribute("topBarData", topBarData);
         model.addAttribute("homeCustomerData", homeCustomerData);
         model.addAttribute("homeProductData", homeProductData);

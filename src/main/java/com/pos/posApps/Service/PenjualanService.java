@@ -297,7 +297,7 @@ public class PenjualanService {
     }
 
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
-        Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, penjualanId);
+        Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, penjualanId);
         if (transactionsOpt.isEmpty()) {
             return null;
         }
@@ -329,7 +329,7 @@ public class PenjualanService {
 
     @Transactional
     public boolean deletePenjualan(Long transactionId, ClientEntity clientData) {
-        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
+        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientData.getClientId(), transactionId);
         if (transactionEntityOpt.isEmpty()) {
             return false;
         }

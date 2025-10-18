@@ -664,6 +664,8 @@
     const masterSettings = /*[[${settingData}]]*/ [];
 </script>
 <script>
+    let dynamicProductsCache = [];
+
     $(document).ready(function () {
         $("#revenueModal").draggable();
         $("#reprintModal").draggable();
@@ -1367,6 +1369,64 @@
         const codeInput = row.querySelector(".code-input");
         const nameInput = row.querySelector(".name-input");
         const priceInput = row.querySelector(".price-input");
+        // ✅ Hanya izinkan angka pada price-input
+        priceInput.addEventListener("keypress", (e) => {
+          const char = String.fromCharCode(e.which);
+          if (!/[0-9]/.test(char)) {
+            e.preventDefault(); // hanya angka
+            return;
+          }
+
+          // 🚫 Cegah angka 0 di awal input
+          const currentValue = priceInput.value;
+          if (currentValue === "" && char === "0") {
+            e.preventDefault();
+          }
+        });
+
+        // ✅ Bersihkan leading zero (contoh: 00050 → 50) saat input berubah
+        priceInput.addEventListener("input", () => {
+          priceInput.value = priceInput.value.replace(/^0+(?=\d)/, ""); // hapus nol di depan
+        });
+
+        // ✅ Format otomatis ke Rupiah saat kehilangan fokus
+       priceInput.addEventListener("blur", () => {
+          const raw = priceInput.value.replace(/\D/g, "");
+          const number = parseInt(raw || "0", 10);
+          const code = codeInput.value.trim().toUpperCase();
+
+          // 🔍 Cari produk di masterProducts atau dynamic cache
+          let product = masterProducts.find((p) => p.shortName === code);
+          if (!product) {
+            product = dynamicProductsCache.find((p) => p.shortName === code);
+          }
+
+          if (product) {
+            const hargaBeli = product.hargaBeli || 0;
+            const hargaDefault = product.productPricesDTO?.[0]?.price || 0;
+
+            if (number < hargaBeli && number > 0) {
+              alert(
+                `⚠️ Harga jual (${formatRupiah(number)}) tidak boleh di bawah harga beli (${formatRupiah(hargaBeli)})`
+              );
+              priceInput.value = formatRupiah(hargaDefault);
+            } else {
+              priceInput.value = formatRupiah(number);
+            }
+          } else {
+            // fallback kalau produk belum ada di masterProducts / cache
+            priceInput.value = formatRupiah(number);
+          }
+
+          updateTotalRow(row);
+        });
+
+        // ✅ Saat fokus, hilangkan format agar bisa edit angka mentah
+        priceInput.addEventListener("focus", () => {
+          const value = parseRupiah(priceInput.value);
+          priceInput.value = value === 0 ? "" : value;
+        });
+
         const qtyInput = row.querySelector(".qty-input");
         const discPercentInput = row.querySelector(".discount-percent-input");
         const discAmountInput = row.querySelector(".discount-amount-input");
@@ -1405,28 +1465,66 @@
         });
 
         // --- Event untuk kode barang (Enter → cari product)
-        codeInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                const code = codeInput.value.trim().toUpperCase();
-                if (!code) {
-                    selectedRow = row;
-                    loadProductTable();
-                    productModal.show();
-                    return;
-                }
-                ;
+        codeInput.addEventListener("keydown", async (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const code = codeInput.value.trim().toUpperCase();
 
-                const product = masterProducts.find((p) => p.shortName === code);
-                if (product) {
-                    fillProductRow(row, product);
-                    maybeAddNewRow();
-                } else {
-                    alert("Product not found");
-                    codeInput.value = "";
-                    codeInput.focus();
-                }
+            if (!code) {
+              selectedRow = row;
+              loadProductTable();
+              productModal.show();
+              return;
             }
+
+            // 🔍 Cari produk di masterProducts dulu
+            let product = masterProducts.find((p) => p.shortName === code);
+
+            // 🚀 Kalau belum ada, fetch ke backend
+            if (!product) {
+              try {
+                const res = await fetch(`/products/search?keyword=${encodeURIComponent(code)}&field=shortName`);
+                if (res.ok) {
+                  const result = await res.json();
+                  if (result && result.length > 0) {
+                    product = result[0];
+                    // ✅ Simpan ke cache agar validasi harga jual bisa pakai data B ini
+                    dynamicProductsCache.push(product);
+                  }
+                }
+              } catch (err) {
+                console.error("Error fetching product:", err);
+              }
+            }
+
+            if (product) {
+              // 🔁 Cek apakah produk ini sudah ada di baris lain
+              const existingRow = [...sellTableBody.querySelectorAll("tr")].find((r) => {
+                const existingCode = r.querySelector(".code-input").value.trim().toUpperCase();
+                return existingCode === code;
+              });
+
+              if (existingRow && existingRow !== row) {
+                // ✅ Kalau sudah ada → tambahkan qty dan update total
+                const qtyInput = existingRow.querySelector(".qty-input");
+                qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+                updateTotalRow(existingRow);
+
+                // Kosongkan input baru agar tidak duplikat
+                codeInput.value = "";
+                codeInput.focus();
+                return;
+              }
+
+              // 🔹 Kalau produk baru → isi data ke baris ini
+              fillProductRow(row, product);
+              maybeAddNewRow();
+            } else {
+              alert("Product not found");
+              codeInput.value = "";
+              codeInput.focus();
+            }
+          }
         });
 
         codeInput.addEventListener("dblclick", () => {
@@ -1442,7 +1540,9 @@
         qtyInput.addEventListener("input", () => {
             const qty = parseInt(qtyInput.value) || 0;
             const code = codeInput.value.trim();
-            const product = masterProducts.find((p) => p.shortName === code);
+            const product =
+              masterProducts.find((p) => p.shortName === code) ||
+              dynamicProductsCache.find((p) => p.shortName === code);
 
             if (product) {
                 const newPrice = getPriceByQty(product, qty);
@@ -1543,63 +1643,94 @@
     }
 
     function selectProduct(product) {
-        const rows = [...sellTableBody.querySelectorAll("tr")];
+      const rows = [...sellTableBody.querySelectorAll("tr")];
 
-        // ---- First, check if product already exists in any row ----
-        let existingRow = rows.find((r) => {
-            const code = r
-                .querySelector(".code-input")
-                .value.trim()
-                .toUpperCase();
-            return code === product.shortName;
-        });
+      // ---- First, check if product already exists in any row ----
+      let existingRow = rows.find((r) => {
+        const code = r.querySelector(".code-input").value.trim().toUpperCase();
+        return code === product.shortName;
+      });
 
-        if (existingRow) {
-            // ✅ Increase qty if already exists
-            const qtyInput = existingRow.querySelector(".qty-input");
-            qtyInput.value = parseInt(qtyInput.value || "0") + 1;
-            updateTotalRow(existingRow);
+      if (existingRow) {
+        // ✅ Increase qty if already exists
+        const qtyInput = existingRow.querySelector(".qty-input");
+        qtyInput.value = parseInt(qtyInput.value || "0") + 1;
 
-            productModal.hide();
-            selectedRow = null;
-            return; // stop here, no duplicates
-        }
+        // 🧮 Jalankan tiering ulang setelah qty bertambah
+        const priceInput = existingRow.querySelector(".price-input");
+        const qty = parseInt(qtyInput.value || "1", 10);
+        const newPrice = getPriceByQty(product, qty);
+        priceInput.value = formatRupiah(newPrice);
 
-        // ---- If product not already in table ----
-        if (selectedRow) {
-            // ✅ Replace that specific row (from modal click)
-            fillProductRow(selectedRow, product);
-            selectedRow.querySelector(".qty-input").value = 1;
-            selectedRow.querySelector(".discount-percent-input").value = "0";
-            selectedRow.querySelector(".discount-amount-input").value = "0";
-            updateTotalRow(selectedRow);
-
-            productModal.hide();
-            selectedRow = null;
-            return; // stop here
-        }
-
-        // ---- Normal flow (manual typing/scan, new row needed) ----
-        let targetRow = rows.find((r) => {
-            const code = r.querySelector(".code-input").value.trim();
-            return code === "";
-        });
-
-        if (!targetRow) {
-            addNewRow(false);
-            targetRow = sellTableBody.lastElementChild;
-        }
-
-        fillProductRow(targetRow, product);
-        targetRow.querySelector(".qty-input").value = 1;
-        updateTotalRow(targetRow);
-        maybeAddNewRow();
+        updateTotalRow(existingRow);
 
         productModal.hide();
+        selectedRow = null;
+        return; // stop here, no duplicates
+      }
 
-        setTimeout(() => {
-            focusNextEmptyRow();
-        }, 200);
+      // ---- If product not already in table ----
+      if (selectedRow) {
+        // ✅ Replace that specific row (from modal click)
+        fillProductRow(selectedRow, product);
+        const qtyInput = selectedRow.querySelector(".qty-input");
+        const priceInput = selectedRow.querySelector(".price-input");
+
+        qtyInput.value = 1;
+        selectedRow.querySelector(".discount-percent-input").value = "0";
+        selectedRow.querySelector(".discount-amount-input").value = "0";
+
+        // 🧮 Hitung harga tier pertama (qty 1)
+        const newPrice = getPriceByQty(product, 1);
+        priceInput.value = formatRupiah(newPrice);
+
+        updateTotalRow(selectedRow);
+
+        // ✅ Simpan produk hasil modal ke cache (untuk validasi selanjutnya)
+        if (!dynamicProductsCache.find((p) => p.shortName === product.shortName)) {
+          dynamicProductsCache.push(product);
+        }
+
+        productModal.hide();
+        selectedRow = null;
+        return; // stop here
+      }
+
+      // ---- Normal flow (manual typing/scan, new row needed) ----
+      let targetRow = rows.find((r) => {
+        const code = r.querySelector(".code-input").value.trim();
+        return code === "";
+      });
+
+      if (!targetRow) {
+        addNewRow(false);
+        targetRow = sellTableBody.lastElementChild;
+      }
+
+      fillProductRow(targetRow, product);
+
+      const qtyInput = targetRow.querySelector(".qty-input");
+      const priceInput = targetRow.querySelector(".price-input");
+
+      qtyInput.value = 1;
+
+      // 🧮 Jalankan tiering untuk qty 1
+      const newPrice = getPriceByQty(product, 1);
+      priceInput.value = formatRupiah(newPrice);
+
+      updateTotalRow(targetRow);
+      maybeAddNewRow();
+
+      // ✅ Cache produk hasil modal untuk validasi harga beli dll
+      if (!dynamicProductsCache.find((p) => p.shortName === product.shortName)) {
+        dynamicProductsCache.push(product);
+      }
+
+      productModal.hide();
+
+      setTimeout(() => {
+        focusNextEmptyRow();
+      }, 200);
     }
 
     function calculateGrandTotal() {
@@ -1726,6 +1857,13 @@
                 currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
                 // focus row (so Enter works naturally)
                 row.focus();
+            });
+
+            // 🔑 Press Enter to select
+            row.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    selectProduct(product);
+                }
             });
 
             productTableBody.appendChild(row);
@@ -1930,45 +2068,16 @@
         const rows = [...sellTableBody.querySelectorAll("tr")];
 
         rows.forEach((row) => {
-            const codeInput = row.querySelector(".code-input");
-            const nameInput = row.querySelector(".name-input");
-            const priceInput = row.querySelector(".price-input");
-            const qtyInput = row.querySelector(".qty-input");
+            const code = row.querySelector(".code-input")?.value.trim();
+            const name = row.querySelector(".name-input")?.value.trim();
+            const price = row.querySelector(".price-input")?.value.trim();
+            const qty = row.querySelector(".qty-input")?.value.trim();
 
-            const typedCode = codeInput.value.trim().toUpperCase();
+            const isFullyFilled = code && name && price && qty;
 
-            // if user half-typed something
-            if (typedCode !== "") {
-                const product = masterProducts.find(
-                    (p) => p.shortName === typedCode
-                );
-
-                if (!product) {
-                    if (row.dataset.originalCode) {
-                        // revert to original data
-                        codeInput.value = row.dataset.originalCode;
-                        nameInput.value = row.dataset.originalName;
-                        priceInput.value = row.dataset.originalPrice;
-                        qtyInput.value = row.dataset.originalQty;
-                        row.querySelector(".discount-percent-input").value =
-                            row.dataset.originalDiscountPercent;
-                        row.querySelector(".discount-amount-input").value =
-                            row.dataset.originalDiscountAmount;
-                        row.querySelector(".total-cell").textContent =
-                            row.dataset.originalTotal;
-
-                        updateTotalRow(row);
-                    } else {
-                        // brand new row, clear it
-                        codeInput.value = "";
-                        nameInput.value = "";
-                        priceInput.value = "Rp 0";
-                        qtyInput.value = "1";
-                        row.querySelector(".discount-percent-input").value = "0";
-                        row.querySelector(".discount-amount-input").value = "0";
-                        row.querySelector(".total-cell").textContent = "Rp 0";
-                    }
-                }
+            if (!isFullyFilled) {
+                // Hapus baris yang tidak lengkap
+                row.remove();
             }
         });
     }
@@ -2293,6 +2402,64 @@ vertical-align: middle;
             const codeInput = row.querySelector(".code-input");
             const qtyInput = row.querySelector(".qty-input");
             const priceInput = row.querySelector(".price-input");
+            // ✅ Hanya izinkan angka pada price-input
+            priceInput.addEventListener("keypress", (e) => {
+              const char = String.fromCharCode(e.which);
+              if (!/[0-9]/.test(char)) {
+                e.preventDefault(); // hanya angka
+                return;
+              }
+
+              // 🚫 Cegah angka 0 di awal input
+              const currentValue = priceInput.value;
+              if (currentValue === "" && char === "0") {
+                e.preventDefault();
+              }
+            });
+
+            // ✅ Bersihkan leading zero (contoh: 00050 → 50) saat input berubah
+            priceInput.addEventListener("input", () => {
+              priceInput.value = priceInput.value.replace(/^0+(?=\d)/, ""); // hapus nol di depan
+            });
+
+            // ✅ Format otomatis ke Rupiah saat kehilangan fokus
+            priceInput.addEventListener("blur", () => {
+              const raw = priceInput.value.replace(/\D/g, "");
+              const number = parseInt(raw || "0", 10);
+              const code = codeInput.value.trim().toUpperCase();
+
+              // 🔍 Cari produk di masterProducts atau dynamic cache
+              let product = masterProducts.find((p) => p.shortName === code);
+              if (!product) {
+                product = dynamicProductsCache.find((p) => p.shortName === code);
+              }
+
+              if (product) {
+                const hargaBeli = product.hargaBeli || 0;
+                const hargaDefault = product.productPricesDTO?.[0]?.price || 0;
+
+                if (number < hargaBeli && number > 0) {
+                  alert(
+                    `⚠️ Harga jual (${formatRupiah(number)}) tidak boleh di bawah harga beli (${formatRupiah(hargaBeli)})`
+                  );
+                  priceInput.value = formatRupiah(hargaDefault);
+                } else {
+                  priceInput.value = formatRupiah(number);
+                }
+              } else {
+                // fallback kalau produk belum ada di masterProducts / cache
+                priceInput.value = formatRupiah(number);
+              }
+
+              updateTotalRow(row);
+            });
+
+            // ✅ Saat fokus, hilangkan format agar bisa edit angka mentah
+            priceInput.addEventListener("focus", () => {
+              const value = parseRupiah(priceInput.value);
+              priceInput.value = value === 0 ? "" : value;
+            });
+
             const discPercentInput = row.querySelector(".discount-percent-input");
             const discAmountInput = row.querySelector(".discount-amount-input");
             const cekHargaBtn = row.querySelector(".cek-harga-btn");
@@ -2333,8 +2500,9 @@ vertical-align: middle;
             qtyInput.addEventListener("input", () => {
                 const qty = parseInt(qtyInput.value) || 0;
                 const code = codeInput.value.trim();
-                const product = masterProducts.find((p) => p.shortName === code);
-                if (product) {
+                const product =
+                  masterProducts.find((p) => p.shortName === code) ||
+                  dynamicProductsCache.find((p) => p.shortName === code);                if (product) {
                     const newPrice = getPriceByQty(product, qty);
                     priceInput.value = formatRupiah(newPrice);
                 }
@@ -2471,7 +2639,7 @@ vertical-align: middle;
             {width: "80px", align: "right", field: "price", label: "Harga"},
             {
                 width: "60px",
-                align: "center",
+                align: "right",
                 field: "discount",
                 label: "Disc Rp",
             },
