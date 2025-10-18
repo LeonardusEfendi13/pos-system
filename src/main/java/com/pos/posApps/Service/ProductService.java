@@ -73,6 +73,24 @@ public class ProductService {
         )).collect(Collectors.toList());
     }
 
+    public Page<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
+                .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
+                        clientId, productId, startDate, endDate, pageable
+                );
+
+        return stockMovementData.map(data -> new StockMovementsDTO(
+                data.getStockMovementsId(),
+                data.getReferenceNo(),
+                data.getTipeKartuStok(),
+                data.getQtyIn(),
+                data.getQtyOut(),
+                data.getSaldo(),
+                data.getCreatedAt()
+        ));
+    }
+
+
     public Long getStockAwalProduct(Long productId, LocalDateTime startDate) {
         List<StockMovementsEntity> stockData = stockMovementsRepository.findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(productId, startDate);
         return stockData.stream()
@@ -280,4 +298,21 @@ public class ProductService {
 
         return true;
     }
+
+    public List<ProductDTO> searchProductByKeyword(Long clientId, String keyword, String field) {
+        List<ProductEntity> products;
+
+        if ("shortName".equalsIgnoreCase(field)) {
+            products = productRepository.findByShortNameContaining(clientId, keyword);
+        } else if ("fullName".equalsIgnoreCase(field)) {
+            products = productRepository.findByFullNameContaining(clientId, keyword);
+        } else {
+            products = productRepository.findAllWithPricesByClientId(clientId, keyword);
+        }
+
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+
+
 }

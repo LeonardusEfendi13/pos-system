@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>Preorder</title>
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -34,170 +34,186 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
         body {
-          background-color: #f8f9fa;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             "Helvetica Neue", Arial, sans-serif;
         }
+
         .card {
-          border: none;
-          box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
 
         .table {
-          margin-bottom: 0;
+            margin-bottom: 0;
         }
+
         .table thead {
-          background-color: #e9ecef;
+            background-color: #e9ecef;
         }
+
         .table td,
         .table th {
-          vertical-align: middle;
-          padding: 0.5rem 0.75rem;
+            vertical-align: middle;
+            padding: 0.5rem 0.75rem;
         }
+
         .form-control-sm,
         .form-select-sm {
-          padding: 0.25rem 0.5rem;
-          font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
         }
+
         .btn {
-          font-size: 0.875rem;
+            font-size: 0.875rem;
         }
 
         #contextMenu {
-          position: absolute;
-          display: none;
-          background-color: white;
-          border: 1px solid #ccc;
-          z-index: 1000;
-          min-width: 150px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-          border-radius: 0.25rem;
+            position: absolute;
+            display: none;
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
         }
+
         #contextMenu ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
+
         #contextMenu li {
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 0.875rem;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.875rem;
         }
+
         #contextMenu li:hover {
-          background-color: #f0f0f0;
+            background-color: #f0f0f0;
         }
 
         /* Custom styles for the scrollable table */
         .scrollable-table {
-          max-height: 50vh;
-          overflow-y: auto;
+            max-height: 50vh;
+            overflow-y: auto;
         }
 
         /* Payment section styling */
         .payment-section-card {
-          background-color: #e9ecef;
-          padding: 1.5rem;
+            background-color: #e9ecef;
+            padding: 1.5rem;
         }
+
         html,
         body {
-          height: 100%;
-          overflow: hidden; /* hilangkan scroll body */
+            height: 100%;
+            overflow: hidden; /* hilangkan scroll body */
         }
+
         .table-responsive {
-          border-radius: 0.3rem;
-          height: 100%;
-          max-width: 100%;
-          overflow-y: auto; /* kalau banyak data scroll di tabel aja */
-          overflow-x: auto;
+            border-radius: 0.3rem;
+            height: 100%;
+            max-width: 100%;
+            overflow-y: auto; /* kalau banyak data scroll di tabel aja */
+            overflow-x: auto;
         }
+
         .scrollable-table thead th {
-          position: sticky;
-          top: 0;
-          background: #f8f9fa; /* biar header tidak tembus */
-          z-index: 2; /* biar header di atas isi tabel */
+            position: sticky;
+            top: 0;
+            background: #f8f9fa; /* biar header tidak tembus */
+            z-index: 2; /* biar header di atas isi tabel */
         }
+
         #sellTable {
-          width: max-content; /* Biarkan tabel melebar melebihi container */
-          min-width: 100%; /* Tetap 100% minimal */
+            width: max-content; /* Biarkan tabel melebar melebihi container */
+            min-width: 100%; /* Tetap 100% minimal */
         }
 
         #sellTable th,
         #sellTable td {
-          white-space: nowrap; /* Jangan wrap konten */
+            white-space: nowrap; /* Jangan wrap konten */
         }
 
         .bottom-right-fixed {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          z-index: 1000;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
         }
 
         #productTable th,
         #productTable td {
-          border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+            border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
         }
 
         #productTable th:last-child,
         #productTable td:last-child {
-          border-right: none; /* Remove border on the last column */
+            border-right: none; /* Remove border on the last column */
         }
 
         #productTable thead th {
-          position: sticky;
-          top: 0;
-          background-color: #f8f9fa;
-          z-index: 10;
-          border-right: 1px solid #dee2e6;
-          padding-top: 0.3rem;
-          padding-bottom: 0.3rem;
-          height: 40px; /* fixed height */
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-right: 1px solid #dee2e6;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            height: 40px; /* fixed height */
         }
 
         #productTable thead th:last-child {
-          border-right: none;
+            border-right: none;
         }
 
         #productTable tbody td {
-          border-right: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
         }
 
         #productTable tbody td:last-child {
-          border-right: none;
+            border-right: none;
         }
 
         /* Push the first row down by header height */
         #productTable tbody tr:first-child {
-          padding-top: 40px;
-          display: table-row;
+            padding-top: 40px;
+            display: table-row;
         }
 
         #sellTable input.form-control {
-          border: none;           /* hilangkan border bootstrap */
-          box-shadow: none;       /* hilangkan shadow fokus */
-          padding: 0 2px;         /* rapat kiri kanan */
-          height: 20px;           /* perkecil tinggi */
-          font-size: 0.8rem;      /* font lebih kecil */
-          line-height: 1.2;
-          margin: 0;
-          border-radius: 0;
+            border: none; /* hilangkan border bootstrap */
+            box-shadow: none; /* hilangkan shadow fokus */
+            padding: 0 2px; /* rapat kiri kanan */
+            height: 20px; /* perkecil tinggi */
+            font-size: 0.8rem; /* font lebih kecil */
+            line-height: 1.2;
+            margin: 0;
+            border-radius: 0;
         }
+
         #sellTable td,
         #sellTable th {
-          padding: 2px 4px;  /* default bootstrap 8–12px, ini lebih rapat */
+            padding: 2px 4px; /* default bootstrap 8–12px, ini lebih rapat */
         }
+
         #sellTable input:focus {
-          outline: none; /* supaya pas fokus tidak muncul border biru tebal */
-          background-color: #fff7cc;
+            outline: none; /* supaya pas fokus tidak muncul border biru tebal */
+            background-color: #fff7cc;
         }
+
         #sellTable td:has(input:focus) {
-          background-color: #fff3cd; /* warna highlight cell */
+            background-color: #fff3cd; /* warna highlight cell */
         }
-       .modalHeader {
-          cursor: pointer;
-          background-color: #f1f1f1;
-          padding: 10px;
-          font-weight: bold;
+
+        .modalHeader {
+            cursor: pointer;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -216,7 +232,7 @@
                             id="customerSelect"
                             class="form-select form-select-sm w-100"
                     ></select>
-                    <br />
+                    <br/>
 
                     <button
                             class="btn btn-success add-product-btn"
@@ -370,7 +386,7 @@
                                 min="0"
                         />
                     </div>
-                    <hr class="my-2" />
+                    <hr class="my-2"/>
                     <div
                             class="d-flex justify-content-between align-items-center mb-2"
                     >
@@ -432,7 +448,7 @@
                         ></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" id="productId" name="productId" />
+                        <input type="hidden" id="productId" name="productId"/>
                         <!-- Kode -->
                         <div class="mb-3 row">
                             <label class="col-sm-2 col-form-label" for="shortName"
@@ -497,7 +513,7 @@
                             </div>
                         </div>
 
-                        <hr />
+                        <hr/>
 
                         <!-- Harga Beli -->
                         <div class="mb-3">
@@ -518,7 +534,7 @@
                             </div>
                         </div>
 
-                        <hr />
+                        <hr/>
 
                         <!-- Harga Jual -->
                         <h6>Harga Jual</h6>
@@ -710,272 +726,273 @@
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script>
     $(document).ready(function () {
-      $("#barangModal").draggable();
-      $("#productModal").draggable();
+        $("#barangModal").draggable();
+        $("#productModal").draggable();
     });
 </script>
 <script th:inline="javascript">
-    let masterProducts = /*[[${productData}]]*/ [];
-    const masterSuppliers = /*[[${supplierData}]]*/ [];
-    const masterTransactions = /*[[${preorderData}]]*/ [];
-    function populateSupplierOptions() {
-      const select = document.getElementById("supplierId");
-      // Clear all options except the first placeholder
-      select.length = 1;
+    let masterProducts = [[${productData}]];
+    const masterSuppliers = [[${supplierData}]];
+    const masterTransactions = [[${preorderData}]];
 
-      masterSuppliers.forEach((supplier) => {
-        const option = document.createElement("option");
-        option.value = supplier.supplierId;
-        option.textContent = supplier.supplierName;
-        select.appendChild(option);
-      });
+    function populateSupplierOptions() {
+        const select = document.getElementById("supplierId");
+        // Clear all options except the first placeholder
+        select.length = 1;
+
+        masterSuppliers.forEach((supplier) => {
+            const option = document.createElement("option");
+            option.value = supplier.supplierId;
+            option.textContent = supplier.supplierName;
+            select.appendChild(option);
+        });
     }
 
     // Run after DOM is loaded
     document.addEventListener("DOMContentLoaded", () => {
-      populateSupplierOptions();
+        populateSupplierOptions();
     });
 </script>
 <script th:inline="none">
     //Send new product to backend
     document
-      .getElementById("addProductForm")
-      .addEventListener("click", async function () {
-        const form = document.getElementById("barangForm");
-        const formData = new FormData(form);
-        const jsonData = {};
+        .getElementById("addProductForm")
+        .addEventListener("click", async function () {
+            const form = document.getElementById("barangForm");
+            const formData = new FormData(form);
+            const jsonData = {};
 
-        // Convert FormData to JSON with array handling
-        formData.forEach((value, key) => {
-          const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
-          if (match) {
-            const [, arrName, index, field] = match;
-            jsonData[arrName] = jsonData[arrName] || [];
-            jsonData[arrName][index] = jsonData[arrName][index] || {};
-            jsonData[arrName][index][field] =
-              field === "price" ? parseRupiah(value) : value;
-          } else {
-            jsonData[key] = key.toLowerCase().includes("price")
-              ? parseRupiah(value)
-              : value;
-          }
-        });
-        try {
-          // 1. Send add product request
-          const response = await fetch("/api/product/add", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(jsonData),
-          });
+            // Convert FormData to JSON with array handling
+            formData.forEach((value, key) => {
+                const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+                if (match) {
+                    const [, arrName, index, field] = match;
+                    jsonData[arrName] = jsonData[arrName] || [];
+                    jsonData[arrName][index] = jsonData[arrName][index] || {};
+                    jsonData[arrName][index][field] =
+                        field === "price" ? parseRupiah(value) : value;
+                } else {
+                    jsonData[key] = key.toLowerCase().includes("price")
+                        ? parseRupiah(value)
+                        : value;
+                }
+            });
+            try {
+                // 1. Send add product request
+                const response = await fetch("/api/product/add", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(jsonData),
+                });
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || "Failed to save product");
-          }
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Failed to save product");
+                }
 
-          // 2. If add succeeded, fetch updated product list
-          const fetchResponse = await fetch("/api/product/list"); // your GET endpoint for full list
-          if (!fetchResponse.ok) {
-            throw new Error("Failed to fetch updated product list");
-          }
+                // 2. If add succeeded, fetch updated product list
+                const fetchResponse = await fetch("/api/product/list"); // your GET endpoint for full list
+                if (!fetchResponse.ok) {
+                    throw new Error("Failed to fetch updated product list");
+                }
 
-          const updatedProductList = await fetchResponse.json();
+                const updatedProductList = await fetchResponse.json();
 
-          // 3. Replace masterProducts with new list
-          masterProducts = updatedProductList;
-          // Close modal and reset form
-          const modal = bootstrap.Modal.getInstance(
-            document.getElementById("barangModal")
-          );
-          modal.hide();
-          form.reset();
+                // 3. Replace masterProducts with new list
+                masterProducts = updatedProductList;
+                // Close modal and reset form
+                const modal = bootstrap.Modal.getInstance(
+                    document.getElementById("barangModal")
+                );
+                modal.hide();
+                form.reset();
 
-          alert("Produk berhasil disimpan dan daftar produk diperbarui.");
-        } catch (err) {
-          console.error("Error:", err);
-          alert(err.message);
-        }
-      });
-    $(document).ready(function () {
-      const barangModal = document.getElementById("barangModal");
-      const barangForm = document.getElementById("barangForm");
-      const rupiahFormatter = new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      });
-
-      const hargaBeliInput = document.getElementById("supplierPrice");
-      const hargaJual1 = document.getElementById("hargaJual1");
-      const hargaJual2 = document.getElementById("hargaJual2");
-      const hargaJual3 = document.getElementById("hargaJual3");
-      const pct1 = document.getElementById("pct1");
-      const pct2 = document.getElementById("pct2");
-      const pct3 = document.getElementById("pct3");
-      const rupiahInputs = document.querySelectorAll(".rupiah-input");
-      const rupiahPrices = document.querySelectorAll(".rupiah-price");
-
-      // --- Helper Functions ---
-      function updatePercentage(hargaJualInput, pctOutput) {
-        const hargaBeli =
-          parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, "")) || 0;
-        const hargaJualRaw = (hargaJualInput.value || "")
-          .toString()
-          .replace(/[^0-9.]/g, "");
-        const hargaJual = parseCurrency(hargaJualRaw);
-
-        const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
-        const result = calculatedPct.toFixed(2);
-        pctOutput.value = result;
-      }
-
-      function updateHargaJual(pctInput, jualOutput) {
-        const hargaBeli =
-          parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, "")) || 0;
-        const percentage = parseFloat(pctInput.value) || 0;
-        const calculatedHargaJual =
-          hargaBeli + hargaBeli * (percentage / 100);
-        jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
-      }
-
-      function parseCurrency(input) {
-        if (!input) return 0;
-
-        // Remove currency symbol and spaces
-        let cleaned = input.replace(/[^0-9.,]/g, "");
-
-        // Remove thousands separator
-        cleaned = cleaned.replace(/\./g, "");
-
-        // Replace decimal comma with dot
-        cleaned = cleaned.replace(/,/g, ".");
-
-        return parseFloat(cleaned) || 0;
-      }
-
-      function cleanRupiahToNumber(value) {
-        return value.replace(/[^0-9]/g, "");
-      }
-
-      function clearForm() {
-        barangForm.reset();
-        $("#modalLabel").text("Tambah Master Barang & Jasa");
-        $("#barangForm").attr("action", "/api/product/add");
-        $("#productId").val(""); // Clear the hidden ID for new products
-        $("#shortName").focus();
-      }
-
-      // Listener for the "Add Product" button to open the modal and clear the form.
-      $("#add-barang-btn").on("click", function () {
-        clearForm();
-        $("#barangModal").modal("show");
-      });
-
-      // Event listeners for price and percentage inputs (remains the same)
-      hargaJual1.addEventListener("input", () =>
-        updatePercentage(hargaJual1, pct1)
-      );
-      hargaJual2.addEventListener("input", () =>
-        updatePercentage(hargaJual2, pct2)
-      );
-      hargaJual3.addEventListener("input", () =>
-        updatePercentage(hargaJual3, pct3)
-      );
-      pct1.addEventListener("input", () => updateHargaJual(pct1, hargaJual1));
-      pct2.addEventListener("input", () => updateHargaJual(pct2, hargaJual2));
-      pct3.addEventListener("input", () => updateHargaJual(pct3, hargaJual3));
-
-      // Event listeners for Rupiah formatting (remains the same)
-      rupiahInputs.forEach(function (input) {
-        input.addEventListener("input", function () {
-          let rawValue = this.value.replace(/[^0-9]/g, "");
-          this.value = rawValue ? rupiahFormatter.format(rawValue) : "";
-        });
-        input.addEventListener("blur", function () {
-          let rawValue = this.value.replace(/[^0-9]/g, "");
-          this.value = rawValue ? rupiahFormatter.format(rawValue) : "";
-        });
-      });
-
-      document.querySelectorAll(".rupiah-price").forEach((element) => {
-        const price = parseFloat(element.getAttribute("data-price"));
-        if (!isNaN(price)) {
-          element.textContent = rupiahFormatter.format(price);
-        }
-      });
-
-      // Form submission listener to clean up Rupiah values before submission.
-      document
-        .getElementById("barangForm")
-        .addEventListener("submit", function (e) {
-          e.preventDefault(); // Stop the default form submission temporarily
-
-          // Clean Rupiah inputs by removing formatting
-          rupiahInputs.forEach((input) => {
-            if (input.value && input.value.trim() !== "") {
-              input.value = cleanRupiahToNumber(input.value);
+                alert("Produk berhasil disimpan dan daftar produk diperbarui.");
+            } catch (err) {
+                console.error("Error:", err);
+                alert(err.message);
             }
-          });
-
-          this.submit();
+        });
+    $(document).ready(function () {
+        const barangModal = document.getElementById("barangModal");
+        const barangForm = document.getElementById("barangForm");
+        const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
         });
 
-      const dirtyFlags = {
-        maxqty2: false,
-        maxqty3: false,
-      };
+        const hargaBeliInput = document.getElementById("supplierPrice");
+        const hargaJual1 = document.getElementById("hargaJual1");
+        const hargaJual2 = document.getElementById("hargaJual2");
+        const hargaJual3 = document.getElementById("hargaJual3");
+        const pct1 = document.getElementById("pct1");
+        const pct2 = document.getElementById("pct2");
+        const pct3 = document.getElementById("pct3");
+        const rupiahInputs = document.querySelectorAll(".rupiah-input");
+        const rupiahPrices = document.querySelectorAll(".rupiah-price");
 
-      function onInputChange() {
-        dirtyFlags[this.id] = true; // User changed the value, mark dirty
-      }
+        // --- Helper Functions ---
+        function updatePercentage(hargaJualInput, pctOutput) {
+            const hargaBeli =
+                parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, "")) || 0;
+            const hargaJualRaw = (hargaJualInput.value || "")
+                .toString()
+                .replace(/[^0-9.]/g, "");
+            const hargaJual = parseCurrency(hargaJualRaw);
 
-      function validateOnBlur() {
-        const maxqty1 =
-          parseInt(document.getElementById("maxqty1").value) || 0;
-        const maxqty2 =
-          parseInt(document.getElementById("maxqty2").value) || 0;
-        const maxqty3 =
-          parseInt(document.getElementById("maxqty3").value) || 0;
-
-        if (this.id === "maxqty2") {
-          if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
-            alert("Maks Qty tidak boleh lebih kecil dari nilai sebelumnya");
-            dirtyFlags.maxqty2 = false; // reset dirty flag after alert
-            this.focus(); // refocus to fix
-          }
+            const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
+            const result = calculatedPct.toFixed(2);
+            pctOutput.value = result;
         }
 
-        if (this.id === "maxqty3") {
-          if (
-            dirtyFlags.maxqty3 &&
-            !(maxqty3 > maxqty2 && maxqty3 > maxqty1)
-          ) {
-            alert("Maks Qty tidak boleh lebih kecil dari nilai sebelumnya");
-            dirtyFlags.maxqty3 = false; // reset dirty flag after alert
-            this.focus(); // refocus to fix
-          }
+        function updateHargaJual(pctInput, jualOutput) {
+            const hargaBeli =
+                parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, "")) || 0;
+            const percentage = parseFloat(pctInput.value) || 0;
+            const calculatedHargaJual =
+                hargaBeli + hargaBeli * (percentage / 100);
+            jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
         }
-      }
 
-      const maxqty2Input = document.getElementById("maxqty2");
-      const maxqty3Input = document.getElementById("maxqty3");
+        function parseCurrency(input) {
+            if (!input) return 0;
 
-      maxqty2Input.addEventListener("input", onInputChange);
-      maxqty3Input.addEventListener("input", onInputChange);
+            // Remove currency symbol and spaces
+            let cleaned = input.replace(/[^0-9.,]/g, "");
 
-      maxqty2Input.addEventListener("blur", validateOnBlur);
-      maxqty3Input.addEventListener("blur", validateOnBlur);
+            // Remove thousands separator
+            cleaned = cleaned.replace(/\./g, "");
+
+            // Replace decimal comma with dot
+            cleaned = cleaned.replace(/,/g, ".");
+
+            return parseFloat(cleaned) || 0;
+        }
+
+        function cleanRupiahToNumber(value) {
+            return value.replace(/[^0-9]/g, "");
+        }
+
+        function clearForm() {
+            barangForm.reset();
+            $("#modalLabel").text("Tambah Master Barang & Jasa");
+            $("#barangForm").attr("action", "/api/product/add");
+            $("#productId").val(""); // Clear the hidden ID for new products
+            $("#shortName").focus();
+        }
+
+        // Listener for the "Add Product" button to open the modal and clear the form.
+        $("#add-barang-btn").on("click", function () {
+            clearForm();
+            $("#barangModal").modal("show");
+        });
+
+        // Event listeners for price and percentage inputs (remains the same)
+        hargaJual1.addEventListener("input", () =>
+            updatePercentage(hargaJual1, pct1)
+        );
+        hargaJual2.addEventListener("input", () =>
+            updatePercentage(hargaJual2, pct2)
+        );
+        hargaJual3.addEventListener("input", () =>
+            updatePercentage(hargaJual3, pct3)
+        );
+        pct1.addEventListener("input", () => updateHargaJual(pct1, hargaJual1));
+        pct2.addEventListener("input", () => updateHargaJual(pct2, hargaJual2));
+        pct3.addEventListener("input", () => updateHargaJual(pct3, hargaJual3));
+
+        // Event listeners for Rupiah formatting (remains the same)
+        rupiahInputs.forEach(function (input) {
+            input.addEventListener("input", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, "");
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : "";
+            });
+            input.addEventListener("blur", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, "");
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : "";
+            });
+        });
+
+        document.querySelectorAll(".rupiah-price").forEach((element) => {
+            const price = parseFloat(element.getAttribute("data-price"));
+            if (!isNaN(price)) {
+                element.textContent = rupiahFormatter.format(price);
+            }
+        });
+
+        // Form submission listener to clean up Rupiah values before submission.
+        document
+            .getElementById("barangForm")
+            .addEventListener("submit", function (e) {
+                e.preventDefault(); // Stop the default form submission temporarily
+
+                // Clean Rupiah inputs by removing formatting
+                rupiahInputs.forEach((input) => {
+                    if (input.value && input.value.trim() !== "") {
+                        input.value = cleanRupiahToNumber(input.value);
+                    }
+                });
+
+                this.submit();
+            });
+
+        const dirtyFlags = {
+            maxqty2: false,
+            maxqty3: false,
+        };
+
+        function onInputChange() {
+            dirtyFlags[this.id] = true; // User changed the value, mark dirty
+        }
+
+        function validateOnBlur() {
+            const maxqty1 =
+                parseInt(document.getElementById("maxqty1").value) || 0;
+            const maxqty2 =
+                parseInt(document.getElementById("maxqty2").value) || 0;
+            const maxqty3 =
+                parseInt(document.getElementById("maxqty3").value) || 0;
+
+            if (this.id === "maxqty2") {
+                if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+                    alert("Maks Qty tidak boleh lebih kecil dari nilai sebelumnya");
+                    dirtyFlags.maxqty2 = false; // reset dirty flag after alert
+                    this.focus(); // refocus to fix
+                }
+            }
+
+            if (this.id === "maxqty3") {
+                if (
+                    dirtyFlags.maxqty3 &&
+                    !(maxqty3 > maxqty2 && maxqty3 > maxqty1)
+                ) {
+                    alert("Maks Qty tidak boleh lebih kecil dari nilai sebelumnya");
+                    dirtyFlags.maxqty3 = false; // reset dirty flag after alert
+                    this.focus(); // refocus to fix
+                }
+            }
+        }
+
+        const maxqty2Input = document.getElementById("maxqty2");
+        const maxqty3Input = document.getElementById("maxqty3");
+
+        maxqty2Input.addEventListener("input", onInputChange);
+        maxqty3Input.addEventListener("input", onInputChange);
+
+        maxqty2Input.addEventListener("blur", validateOnBlur);
+        maxqty3Input.addEventListener("blur", validateOnBlur);
     });
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const addButton = document.getElementById("add-barang-btn");
-      const productModalEl = document.getElementById("barangModal");
-      const productModal = new bootstrap.Modal(productModalEl);
+        const addButton = document.getElementById("add-barang-btn");
+        const productModalEl = document.getElementById("barangModal");
+        const productModal = new bootstrap.Modal(productModalEl);
 
-      addButton.addEventListener("click", () => {
-        productModal.show();
-      });
+        addButton.addEventListener("click", () => {
+            productModal.show();
+        });
     });
 
     const sellTableBody = document.getElementById("sellTableBody");
@@ -985,21 +1002,21 @@
     const productModalEl = document.getElementById("productModal");
     const productModal = new bootstrap.Modal(productModalEl);
     productModalEl.addEventListener("shown.bs.modal", () => {
-      searchName.focus();
+        searchName.focus();
     });
     const subTotalDisplay = document.getElementById("subTotalDisplay");
     const grandTotalDisplay = document.getElementById("grandTotalDisplay");
     const grandDiscountPercent = document.getElementById(
-      "grandDiscountPercent"
+        "grandDiscountPercent"
     );
     const grandDiscountAmount = document.getElementById(
-      "grandDiscountAmount"
+        "grandDiscountAmount"
     );
     const returnAmountInput = document.getElementById("returnAmount");
     const saveButton = document.querySelector(".btn-primary");
 
     const transactionNumberDisplay = document.getElementById(
-      "transactionNumberDisplay"
+        "transactionNumberDisplay"
     );
     const customerSelect = document.getElementById("customerSelect");
 
@@ -1008,154 +1025,155 @@
     let activeSearchField = "shortName";
 
     function generateTransactionNumber() {
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 10000);
-      return `#TRX${timestamp}${random}`;
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000);
+        return `#TRX${timestamp}${random}`;
     }
 
     function isRowEmpty(row) {
-      const code = row.querySelector(".code-input").value.trim();
-      return code === "";
+        const code = row.querySelector(".code-input").value.trim();
+        return code === "";
     }
 
     function formatTanggalWaktuIndonesia(date = new Date()) {
-      const hari = new Intl.DateTimeFormat("id-ID", {
-        weekday: "long",
-      }).format(date);
-      const tanggal = new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-      const jam = date.getHours().toString().padStart(2, "0");
-      const menit = date.getMinutes().toString().padStart(2, "0");
-      const detik = date.getSeconds().toString().padStart(2, "0");
+        const hari = new Intl.DateTimeFormat("id-ID", {
+            weekday: "long",
+        }).format(date);
+        const tanggal = new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }).format(date);
+        const jam = date.getHours().toString().padStart(2, "0");
+        const menit = date.getMinutes().toString().padStart(2, "0");
+        const detik = date.getSeconds().toString().padStart(2, "0");
 
-      return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
+        return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
     }
 
     function parseRupiah(rupiahString) {
-      if (!rupiahString) return 0;
-      return parseFloat(
-        rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
-      );
+        if (!rupiahString) return 0;
+        return parseFloat(
+            rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
+        );
     }
 
     function formatRupiah(number) {
-      return (
-        "Rp " +
-        number.toLocaleString("id-ID", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })
-      );
+        return (
+            "Rp " +
+            number.toLocaleString("id-ID", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            })
+        );
     }
 
     function handleFormattedFocus(event) {
-      let value = parseRupiah(event.target.value);
-      if (value === 0) {
-        event.target.value = "";
-      } else {
-        event.target.value = value;
-      }
+        let value = parseRupiah(event.target.value);
+        if (value === 0) {
+            event.target.value = "";
+        } else {
+            event.target.value = value;
+        }
     }
 
     function handleFormattedBlur(event) {
-      const input = event.target;
-      const row = input.closest("tr");
-      const codeInput = row.querySelector(".code-input");
+        const input = event.target;
+        const row = input.closest("tr");
+        const codeInput = row.querySelector(".code-input");
 
-      // Ambil produk yang sesuai dari masterProducts
-      const product = masterProducts.find(
-        (p) => p.shortName === codeInput.value.trim()
-      );
+        // Ambil produk yang sesuai dari masterProducts
+        const product = masterProducts.find(
+            (p) => p.shortName === codeInput.value.trim()
+        );
 
-      // Pastikan ada produk sebelum melakukan validasi
-      if (product) {
-        const hargaBeli = product.hargaBeli;
-        const parsedValue = parseRupiah(input.value);
+        // Pastikan ada produk sebelum melakukan validasi
+        if (product) {
+            const hargaBeli = product.hargaBeli;
+            const parsedValue = parseRupiah(input.value);
 
-        // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
-        if (parsedValue < hargaBeli && parsedValue > 0) {
-          alert(
-            "Harga tidak boleh lebih rendah dari harga beli: " +
-              formatRupiah(hargaBeli)
-          );
-          input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
-          updateTotalRow(row);
-          return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
+            // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
+            if (parsedValue < hargaBeli && parsedValue > 0) {
+                alert(
+                    "Harga tidak boleh lebih rendah dari harga beli: " +
+                    formatRupiah(hargaBeli)
+                );
+                input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
+                updateTotalRow(row);
+                return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
+            }
         }
-      }
-      const value = event.target.value.replace(/[^0-9]/g, "");
-      if (value === "" || isNaN(value)) {
-        event.target.value = formatRupiah(0);
-      } else {
-        event.target.value = formatRupiah(parseInt(value));
-      }
+        const value = event.target.value.replace(/[^0-9]/g, "");
+        if (value === "" || isNaN(value)) {
+            event.target.value = formatRupiah(0);
+        } else {
+            event.target.value = formatRupiah(parseInt(value));
+        }
     }
 
     function clearZeroOnFocus(event) {
-      if (event.target.value === "0") {
-        event.target.value = "";
-      }
+        if (event.target.value === "0") {
+            event.target.value = "";
+        }
     }
 
     function ensureZeroOnBlur(input, decimals = 0, row = null) {
-      input.addEventListener("blur", () => {
-        let val = input.value.trim();
+        input.addEventListener("blur", () => {
+            let val = input.value.trim();
 
-        if (val === "" || isNaN(val)) {
-          if (decimals > 0) {
-            input.value = (0).toFixed(decimals); // misal 0.00
-          } else {
-            input.value = "0";
-          }
-        }
+            if (val === "" || isNaN(val)) {
+                if (decimals > 0) {
+                    input.value = (0).toFixed(decimals); // misal 0.00
+                } else {
+                    input.value = "0";
+                }
+            }
 
-        // ✅ kalau ada row, update subtotal row & grand total
-        if (row) {
-          updateTotalRow(row);
-        } else {
-          calculateGrandTotal();
-        }
-      });
+            // ✅ kalau ada row, update subtotal row & grand total
+            if (row) {
+                updateTotalRow(row);
+            } else {
+                calculateGrandTotal();
+            }
+        });
     }
-    function ensureOneOnBlur(input, decimals = 0, row = null) {
-      input.addEventListener("blur", () => {
-        let val = input.value.trim();
 
-        if (val === "" || isNaN(val)) {
-          if (decimals > 0) {
-            input.value = (0).toFixed(decimals); // misal 0.00
-          } else {
-            input.value = "1";
-          }
-        }
-        // ✅ kalau ada row, update subtotal row & grand total
-        if (row) {
-          updateTotalRow(row);
-        } else {
-          calculateGrandTotal();
-        }
-      });
+    function ensureOneOnBlur(input, decimals = 0, row = null) {
+        input.addEventListener("blur", () => {
+            let val = input.value.trim();
+
+            if (val === "" || isNaN(val)) {
+                if (decimals > 0) {
+                    input.value = (0).toFixed(decimals); // misal 0.00
+                } else {
+                    input.value = "1";
+                }
+            }
+            // ✅ kalau ada row, update subtotal row & grand total
+            if (row) {
+                updateTotalRow(row);
+            } else {
+                calculateGrandTotal();
+            }
+        });
     }
 
     function addNewRow(focus = true) {
-      const rows = sellTableBody.querySelectorAll("tr");
-      if (rows.length > 0) {
-        const lastRowCodeInput =
-          rows[rows.length - 1].querySelector(".code-input");
-        if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
-          if (focus) {
-            lastRowCodeInput.focus();
-          }
-          return;
+        const rows = sellTableBody.querySelectorAll("tr");
+        if (rows.length > 0) {
+            const lastRowCodeInput =
+                rows[rows.length - 1].querySelector(".code-input");
+            if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
+                if (focus) {
+                    lastRowCodeInput.focus();
+                }
+                return;
+            }
         }
-      }
-      const rowNumber = rows.length + 1;
-      const row = document.createElement("tr");
+        const rowNumber = rows.length + 1;
+        const row = document.createElement("tr");
 
-      row.innerHTML = `
+        row.innerHTML = `
 <td class="row-number">${rowNumber}</td>
 <td><input type="text" class="form-control form-control-sm code-input" /></td>
 <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
@@ -1167,1031 +1185,1051 @@
 <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
 `;
 
-      sellTableBody.appendChild(row);
+        sellTableBody.appendChild(row);
 
-      const codeInput = row.querySelector(".code-input");
-      const nameInput = row.querySelector(".name-input");
-      const priceInput = row.querySelector(".price-input");
-      const qtyInput = row.querySelector(".qty-input");
-      const discPercentInput = row.querySelector(".discount-percent-input");
-      const discAmountInput = row.querySelector(".discount-amount-input");
-      // tambahkan auto-set 0 on blur
-      [
-        discPercentInput,
-        discAmountInput,
-      ].forEach((inp) => ensureZeroOnBlur(inp, 2, row));
+        const codeInput = row.querySelector(".code-input");
+        const nameInput = row.querySelector(".name-input");
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+        const discPercentInput = row.querySelector(".discount-percent-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+        // tambahkan auto-set 0 on blur
+        [
+            discPercentInput,
+            discAmountInput,
+        ].forEach((inp) => ensureZeroOnBlur(inp, 2, row));
 
-      [priceInput].forEach(
-        (inp) => ensureZeroOnBlur(inp, 0, row)
-      ); // integer → 0
+        [priceInput].forEach(
+            (inp) => ensureZeroOnBlur(inp, 0, row)
+        ); // integer → 0
 
-      [qtyInput].forEach((inp) => ensureOneOnBlur(inp, 0, row));
-      const inputs = [
-        codeInput,
-        nameInput,
-        priceInput,
-        qtyInput,
-        discPercentInput,
-        discAmountInput,
-      ];
+        [qtyInput].forEach((inp) => ensureOneOnBlur(inp, 0, row));
+        const inputs = [
+            codeInput,
+            nameInput,
+            priceInput,
+            qtyInput,
+            discPercentInput,
+            discAmountInput,
+        ];
 
-      inputs.forEach((input, index) => {
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            const currentRow = e.target.closest("tr");
-            const lastRow = sellTableBody.lastElementChild;
+        inputs.forEach((input, index) => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const currentRow = e.target.closest("tr");
+                    const lastRow = sellTableBody.lastElementChild;
 
-            // pastikan ada baris kosong berikutnya
-            if (currentRow === lastRow && !isRowEmpty(currentRow)) {
-              // panggil function yang sudah ada untuk tambah baris
-              maybeAddNewRow();
-            }
+                    // pastikan ada baris kosong berikutnya
+                    if (currentRow === lastRow && !isRowEmpty(currentRow)) {
+                        // panggil function yang sudah ada untuk tambah baris
+                        maybeAddNewRow();
+                    }
 
-            // fokuskan ke baris berikutnya (pasti kosong karena maybeAddNewRow)
-            const nextRow = currentRow.nextElementSibling;
-            if (nextRow) {
-              nextRow.querySelector(".code-input").focus();
-            }
-          } else if (
-            e.key === "ArrowUp" ||
-            e.key === "ArrowDown" ||
-            e.key === "ArrowLeft" ||
-            e.key === "ArrowRight"
-          ) {
-            e.preventDefault();
+                    // fokuskan ke baris berikutnya (pasti kosong karena maybeAddNewRow)
+                    const nextRow = currentRow.nextElementSibling;
+                    if (nextRow) {
+                        nextRow.querySelector(".code-input").focus();
+                    }
+                } else if (
+                    e.key === "ArrowUp" ||
+                    e.key === "ArrowDown" ||
+                    e.key === "ArrowLeft" ||
+                    e.key === "ArrowRight"
+                ) {
+                    e.preventDefault();
 
-            const currentRows = [...sellTableBody.querySelectorAll("tr")];
-            const currentRowIndex = currentRows.indexOf(row);
-            const editableInputs = [
-              ...row.querySelectorAll("input:not([readonly])"),
-            ];
-            const currentEditableIndex = editableInputs.indexOf(e.target);
+                    const currentRows = [...sellTableBody.querySelectorAll("tr")];
+                    const currentRowIndex = currentRows.indexOf(row);
+                    const editableInputs = [
+                        ...row.querySelectorAll("input:not([readonly])"),
+                    ];
+                    const currentEditableIndex = editableInputs.indexOf(e.target);
 
-            let nextRowIndex = currentRowIndex;
-            let nextEditableIndex = currentEditableIndex;
+                    let nextRowIndex = currentRowIndex;
+                    let nextEditableIndex = currentEditableIndex;
 
-            if (e.key === "ArrowUp") {
-              nextRowIndex = Math.max(0, currentRowIndex - 1);
-            } else if (e.key === "ArrowDown") {
-              nextRowIndex = currentRowIndex + 1;
-              if (nextRowIndex >= currentRows.length) {
-                addNewRow();
-                nextRowIndex = currentRows.length;
-              }
-            } else if (e.key === "ArrowLeft") {
-              nextEditableIndex = Math.max(0, currentEditableIndex - 1);
-            } else if (e.key === "ArrowRight") {
-              nextEditableIndex = Math.min(
-                editableInputs.length - 1,
-                currentEditableIndex + 1
-              );
-            }
+                    if (e.key === "ArrowUp") {
+                        nextRowIndex = Math.max(0, currentRowIndex - 1);
+                    } else if (e.key === "ArrowDown") {
+                        nextRowIndex = currentRowIndex + 1;
+                        if (nextRowIndex >= currentRows.length) {
+                            addNewRow();
+                            nextRowIndex = currentRows.length;
+                        }
+                    } else if (e.key === "ArrowLeft") {
+                        nextEditableIndex = Math.max(0, currentEditableIndex - 1);
+                    } else if (e.key === "ArrowRight") {
+                        nextEditableIndex = Math.min(
+                            editableInputs.length - 1,
+                            currentEditableIndex + 1
+                        );
+                    }
 
-            const targetRow =
-              sellTableBody.querySelectorAll("tr")[nextRowIndex];
-            const targetEditableInputs = [
-              ...targetRow.querySelectorAll("input:not([readonly])"),
-            ];
-            const targetInput = targetEditableInputs[nextEditableIndex];
+                    const targetRow =
+                        sellTableBody.querySelectorAll("tr")[nextRowIndex];
+                    const targetEditableInputs = [
+                        ...targetRow.querySelectorAll("input:not([readonly])"),
+                    ];
+                    const targetInput = targetEditableInputs[nextEditableIndex];
 
-            if (targetInput) {
-              targetInput.focus();
-              if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown" ) {
-                targetInput.select();
-              }
-            }
-          }
+                    if (targetInput) {
+                        targetInput.focus();
+                        if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+                            targetInput.select();
+                        }
+                    }
+                }
+            });
         });
-      });
 
-      priceInput.addEventListener("focus", handleFormattedFocus);
-      priceInput.addEventListener("blur", handleFormattedBlur);
-      priceInput.addEventListener("input", () => {
-        updateTotalRow(row);
-      });
-
-      qtyInput.addEventListener("focus", clearZeroOnFocus);
-      discPercentInput.addEventListener("focus", clearZeroOnFocus);
-      discAmountInput.addEventListener("focus", clearZeroOnFocus);
-
-      grandDiscountPercent.addEventListener("focus", clearZeroOnFocus);
-      grandDiscountAmount.addEventListener("focus", clearZeroOnFocus);
-
-      [discPercentInput, discAmountInput].forEach((inp) => {
-        inp.addEventListener("blur", () => {
-          if (inp.value.trim() === "" || isNaN(parseFloat(inp.value))) {
-            inp.value = "0";
-          }
+        priceInput.addEventListener("focus", handleFormattedFocus);
+        priceInput.addEventListener("blur", handleFormattedBlur);
+        priceInput.addEventListener("input", () => {
+            updateTotalRow(row);
         });
-      });
 
-      if (focus) codeInput.focus();
+        qtyInput.addEventListener("focus", clearZeroOnFocus);
+        discPercentInput.addEventListener("focus", clearZeroOnFocus);
+        discAmountInput.addEventListener("focus", clearZeroOnFocus);
 
-      codeInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const code = codeInput.value.trim().toUpperCase();
+        grandDiscountPercent.addEventListener("focus", clearZeroOnFocus);
+        grandDiscountAmount.addEventListener("focus", clearZeroOnFocus);
 
-          if (!code) {
-            selectedRow = row;
-            productModal.show();
-            loadProductTable();
-            return;
-          }
+        [discPercentInput, discAmountInput].forEach((inp) => {
+            inp.addEventListener("blur", () => {
+                if (inp.value.trim() === "" || isNaN(parseFloat(inp.value))) {
+                    inp.value = "0";
+                }
+            });
+        });
 
-          const product = masterProducts.find((p) => p.shortName === code);
-          if (product) {
-            const rows = [...sellTableBody.querySelectorAll("tr")];
-            let existingRow = null;
-            for (const r of rows) {
-              if (r === row) continue;
-              const cInput = r.querySelector(".code-input");
-              if (cInput.value.trim().toUpperCase() === code) {
-                existingRow = r;
-                break;
-              }
+        if (focus) codeInput.focus();
+
+        codeInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const code = codeInput.value.trim().toUpperCase();
+
+                if (!code) {
+                    selectedRow = row;
+                    productModal.show();
+                    loadProductTable();
+                    return;
+                }
+
+                const product = masterProducts.find((p) => p.shortName === code);
+                if (product) {
+                    const rows = [...sellTableBody.querySelectorAll("tr")];
+                    let existingRow = null;
+                    for (const r of rows) {
+                        if (r === row) continue;
+                        const cInput = r.querySelector(".code-input");
+                        if (cInput.value.trim().toUpperCase() === code) {
+                            existingRow = r;
+                            break;
+                        }
+                    }
+
+                    if (existingRow) {
+                        const qInput = existingRow.querySelector(".qty-input");
+                        qInput.value = parseInt(qInput.value || "0") + 1;
+                        updateTotalRow(existingRow);
+
+                        // Clear the current row and focus
+                        codeInput.value = "";
+                        row.querySelector(".name-input").value = "";
+                        row.querySelector(".price-input").value = "Rp 0";
+                        row.querySelector(".qty-input").value = "1";
+                        row.querySelector(".discount-percent-input").value = "0";
+                        row.querySelector(".discount-amount-input").value = "0";
+                        row.querySelector(".total-cell").textContent = "Rp 0";
+                        codeInput.focus();
+                    } else {
+                        fillProductRow(row, product);
+                        maybeAddNewRow();
+                    }
+                } else {
+                    alert("Product not found");
+                    codeInput.value = ""; // Clear the input field
+                    codeInput.focus();
+                }
+            }
+        });
+
+        qtyInput.addEventListener("input", () => {
+            const qty = parseInt(qtyInput.value) || 0;
+            const code = codeInput.value.trim();
+            const product = masterProducts.find((p) => p.shortName === code);
+
+            updateTotalRow(row);
+        });
+
+        discPercentInput.addEventListener("input", () => {
+            let val = discPercentInput.value;
+
+            // Jika ada titik desimal, batasi hanya 2 digit setelah koma
+            if (val.includes(".")) {
+                const [intPart, decPart] = val.split(".");
+                discPercentInput.value = intPart + "." + decPart.slice(0, 2);
             }
 
-            if (existingRow) {
-              const qInput = existingRow.querySelector(".qty-input");
-              qInput.value = parseInt(qInput.value || "0") + 1;
-              updateTotalRow(existingRow);
+            const price = parseRupiah(row.querySelector(".price-input").value);
+            const qty = parseInt(qtyInput.value) || 0;
+            const discountPercent = parseFloat(discPercentInput.value) || 0;
 
-              // Clear the current row and focus
-              codeInput.value = "";
-              row.querySelector(".name-input").value = "";
-              row.querySelector(".price-input").value = "Rp 0";
-              row.querySelector(".qty-input").value = "1";
-              row.querySelector(".discount-percent-input").value = "0";
-              row.querySelector(".discount-amount-input").value = "0";
-              row.querySelector(".total-cell").textContent = "Rp 0";
-              codeInput.focus();
+            if (price * qty > 0) {
+                const discountAmount = price * qty * (discountPercent / 100);
+                discAmountInput.value = Math.round(discountAmount);
             } else {
-              fillProductRow(row, product);
-              maybeAddNewRow();
+                discAmountInput.value = "0";
             }
-          } else {
-            alert("Product not found");
-            codeInput.value = ""; // Clear the input field
-            codeInput.focus();
-          }
-        }
-      });
+            updateTotalRow(row);
+        });
 
-      qtyInput.addEventListener("input", () => {
-        const qty = parseInt(qtyInput.value) || 0;
-        const code = codeInput.value.trim();
-        const product = masterProducts.find((p) => p.shortName === code);
+        discAmountInput.addEventListener("input", () => {
+            const price = parseRupiah(row.querySelector(".price-input").value);
+            const qty = parseInt(qtyInput.value) || 0;
+            const discountAmount = parseFloat(discAmountInput.value) || 0;
 
-        updateTotalRow(row);
-      });
+            if (price * qty > 0) {
+                const discountPercent = (discountAmount / (price * qty)) * 100;
+                discPercentInput.value = isFinite(discountPercent)
+                    ? discountPercent.toFixed(2)
+                    : "0";
+            } else {
+                discPercentInput.value = "0";
+            }
+            updateTotalRow(row);
+        });
 
-      discPercentInput.addEventListener("input", () => {
-        let val = discPercentInput.value;
-
-        // Jika ada titik desimal, batasi hanya 2 digit setelah koma
-        if (val.includes(".")) {
-          const [intPart, decPart] = val.split(".");
-          discPercentInput.value = intPart + "." + decPart.slice(0, 2);
-        }
-
-        const price = parseRupiah(row.querySelector(".price-input").value);
-        const qty = parseInt(qtyInput.value) || 0;
-        const discountPercent = parseFloat(discPercentInput.value) || 0;
-
-        if (price * qty > 0) {
-          const discountAmount = price * qty * (discountPercent / 100);
-          discAmountInput.value = Math.round(discountAmount);
-        } else {
-          discAmountInput.value = "0";
-        }
-        updateTotalRow(row);
-      });
-
-      discAmountInput.addEventListener("input", () => {
-        const price = parseRupiah(row.querySelector(".price-input").value);
-        const qty = parseInt(qtyInput.value) || 0;
-        const discountAmount = parseFloat(discAmountInput.value) || 0;
-
-        if (price * qty > 0) {
-          const discountPercent = (discountAmount / (price * qty)) * 100;
-          discPercentInput.value = isFinite(discountPercent)
-            ? discountPercent.toFixed(2)
-            : "0";
-        } else {
-          discPercentInput.value = "0";
-        }
-        updateTotalRow(row);
-      });
-
-      row.addEventListener("contextmenu", function (e) {
-        e.preventDefault();
-        selectedRow = row;
-        showContextMenu(e.pageX, e.pageY);
-      });
-      calculateGrandTotal();
+        row.addEventListener("contextmenu", function (e) {
+            e.preventDefault();
+            selectedRow = row;
+            showContextMenu(e.pageX, e.pageY);
+        });
+        calculateGrandTotal();
     }
 
     function maybeAddNewRow() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
-      const lastRow = rows[rows.length - 1];
-      const codeVal = lastRow.querySelector(".code-input").value.trim();
-      if (codeVal) {
-        addNewRow();
-      }
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        const lastRow = rows[rows.length - 1];
+        const codeVal = lastRow.querySelector(".code-input").value.trim();
+        if (codeVal) {
+            addNewRow();
+        }
     }
 
 
     function fillProductRow(row, product) {
-      const qty = 1; // default qty
+        const qty = 1; // default qty
 
-      row.querySelector(".code-input").value = product.shortName;
-      row.querySelector(".name-input").value = product.fullName;
-      row.querySelector(".price-input").value = formatRupiah(
-        product.hargaBeli
-      );
-      row.querySelector(".qty-input").value = qty;
-      row.querySelector(".discount-percent-input").value = 0;
-      row.querySelector(".discount-amount-input").value = 0;
-      row.querySelector(".stok-input").value = product.stok;
-      updateTotalRow(row);
+        row.querySelector(".code-input").value = product.shortName;
+        row.querySelector(".name-input").value = product.fullName;
+        row.querySelector(".price-input").value = formatRupiah(
+            product.hargaBeli
+        );
+        row.querySelector(".qty-input").value = qty;
+        row.querySelector(".discount-percent-input").value = 0;
+        row.querySelector(".discount-amount-input").value = 0;
+        row.querySelector(".stok-input").value = product.stok;
+        updateTotalRow(row);
     }
 
     function updateTotalRow(r) {
-      const price = parseRupiah(r.querySelector(".price-input").value);
-      const qty = parseInt(r.querySelector(".qty-input").value) || 0;
-      const discAmount =
-        parseFloat(r.querySelector(".discount-amount-input").value) || 0;
-      const subtotal = price * qty;
-      const total = subtotal - discAmount;
-      r.querySelector(".total-cell").textContent =
-        "Rp " + total.toLocaleString("id-ID");
-      calculateGrandTotal();
+        const price = parseRupiah(r.querySelector(".price-input").value);
+        const qty = parseInt(r.querySelector(".qty-input").value) || 0;
+        const discAmount =
+            parseFloat(r.querySelector(".discount-amount-input").value) || 0;
+        const subtotal = price * qty;
+        const total = subtotal - discAmount;
+        r.querySelector(".total-cell").textContent =
+            "Rp " + total.toLocaleString("id-ID");
+        calculateGrandTotal();
     }
 
     function selectProduct(product) {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
-      let targetRow = rows.find((r) => {
-        const code = r.querySelector(".code-input").value.trim();
-        return code === "";
-      });
-      if (!targetRow) {
-        addNewRow(false);
-        targetRow = sellTableBody.lastElementChild;
-      }
-
-      let existingRow = null;
-      for (const r of rows) {
-        const code = r
-          .querySelector(".code-input")
-          .value.trim()
-          .toUpperCase();
-        if (code === product.shortName) {
-          existingRow = r;
-          break;
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        let targetRow = rows.find((r) => {
+            const code = r.querySelector(".code-input").value.trim();
+            return code === "";
+        });
+        if (!targetRow) {
+            addNewRow(false);
+            targetRow = sellTableBody.lastElementChild;
         }
-      }
 
-      if (existingRow) {
-        const qtyInput = existingRow.querySelector(".qty-input");
-        qtyInput.value = parseInt(qtyInput.value || "0") + 1;
-        updateTotalRow(existingRow);
-
-        if (targetRow) {
-          targetRow.querySelector(".code-input").value = "";
-          targetRow.querySelector(".name-input").value = "";
-          targetRow.querySelector(".price-input").value = "Rp 0";
-          targetRow.querySelector(".qty-input").value = "1";
-          targetRow.querySelector(".discount-percent-input").value = "0";
-          targetRow.querySelector(".discount-amount-input").value = "0";
-          targetRow.querySelector(".total-cell").textContent = "Rp 0";
+        let existingRow = null;
+        for (const r of rows) {
+            const code = r
+                .querySelector(".code-input")
+                .value.trim()
+                .toUpperCase();
+            if (code === product.shortName) {
+                existingRow = r;
+                break;
+            }
         }
-      } else {
-        fillProductRow(targetRow, product);
-        maybeAddNewRow();
-      }
 
-      productModal.hide();
+        if (existingRow) {
+            const qtyInput = existingRow.querySelector(".qty-input");
+            qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+            updateTotalRow(existingRow);
 
-      setTimeout(() => {
-        focusNextEmptyRow();
-      }, 200);
+            if (targetRow) {
+                targetRow.querySelector(".code-input").value = "";
+                targetRow.querySelector(".name-input").value = "";
+                targetRow.querySelector(".price-input").value = "Rp 0";
+                targetRow.querySelector(".qty-input").value = "1";
+                targetRow.querySelector(".discount-percent-input").value = "0";
+                targetRow.querySelector(".discount-amount-input").value = "0";
+                targetRow.querySelector(".total-cell").textContent = "Rp 0";
+            }
+        } else {
+            fillProductRow(targetRow, product);
+            maybeAddNewRow();
+        }
+
+        productModal.hide();
+
+        setTimeout(() => {
+            focusNextEmptyRow();
+        }, 200);
     }
 
     function calculateGrandTotal() {
-      let subtotal = 0;
-      let totalDiscount = 0;
-      const rows = sellTableBody.querySelectorAll("tr");
-      rows.forEach((row) => {
-        const price = parseRupiah(row.querySelector(".price-input").value);
-        const qty = parseInt(row.querySelector(".qty-input").value) || 0;
-        const discAmt =
-          parseFloat(row.querySelector(".discount-amount-input").value) || 0;
+        let subtotal = 0;
+        let totalDiscount = 0;
+        const rows = sellTableBody.querySelectorAll("tr");
+        rows.forEach((row) => {
+            const price = parseRupiah(row.querySelector(".price-input").value);
+            const qty = parseInt(row.querySelector(".qty-input").value) || 0;
+            const discAmt =
+                parseFloat(row.querySelector(".discount-amount-input").value) || 0;
 
-        if (price && qty) {
-          subtotal += price * qty;
-          totalDiscount += discAmt;
+            if (price && qty) {
+                subtotal += price * qty;
+                totalDiscount += discAmt;
+            }
+        });
+
+        const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
+        const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+
+        let finalDiscount = totalDiscount;
+        if (grandDiscPercent > 0) {
+            finalDiscount += subtotal * (grandDiscPercent / 100);
+        } else {
+            finalDiscount += grandDiscAmount;
         }
-      });
 
-      const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
-      const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+        const grandTotal = subtotal - finalDiscount;
 
-      let finalDiscount = totalDiscount;
-      if (grandDiscPercent > 0) {
-        finalDiscount += subtotal * (grandDiscPercent / 100);
-      } else {
-        finalDiscount += grandDiscAmount;
-      }
+        subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
+        grandTotalDisplay.textContent =
+            "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
 
-      const grandTotal = subtotal - finalDiscount;
-
-      subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
-      grandTotalDisplay.textContent =
-        "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
-
-      calculateReturnAmount();
+        calculateReturnAmount();
     }
 
     function calculateReturnAmount() {
-      const grandTotal =
-        parseFloat(
-          grandTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ) || 0;
-      saveButton.disabled =
-        sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
+        const grandTotal =
+            parseFloat(
+                grandTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ) || 0;
+        saveButton.disabled =
+            sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
     }
 
     grandDiscountPercent.addEventListener("input", () => {
-      updateGrandDiscountAmount();
+        updateGrandDiscountAmount();
     });
 
     grandDiscountAmount.addEventListener("input", () => {
-      updateGrandDiscountPercent();
+        updateGrandDiscountPercent();
     });
 
     function updateGrandDiscountAmount() {
-      const subtotal =
-        parseFloat(
-          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
-        ) || 0;
-      const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
+        const subtotal =
+            parseFloat(
+                subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+            ) || 0;
+        const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
 
-      if (subtotal > 0 && discountPercent >= 0) {
-        const discountAmount = subtotal * (discountPercent / 100);
-        grandDiscountAmount.value = discountAmount.toFixed(0);
-      } else {
-        grandDiscountAmount.value = 0;
-      }
-      calculateGrandTotal();
+        if (subtotal > 0 && discountPercent >= 0) {
+            const discountAmount = subtotal * (discountPercent / 100);
+            grandDiscountAmount.value = discountAmount.toFixed(0);
+        } else {
+            grandDiscountAmount.value = 0;
+        }
+        calculateGrandTotal();
     }
 
     function updateGrandDiscountPercent() {
-      const subtotal =
-        parseFloat(
-          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
-        ) || 0;
-      const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
+        const subtotal =
+            parseFloat(
+                subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+            ) || 0;
+        const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
 
-      if (subtotal > 0 && discountAmount >= 0) {
-        const discountPercent = (discountAmount / subtotal) * 100;
-        grandDiscountPercent.value = discountPercent.toFixed(2);
-      } else {
-        grandDiscountPercent.value = 0;
-      }
-      calculateGrandTotal();
+        if (subtotal > 0 && discountAmount >= 0) {
+            const discountPercent = (discountAmount / subtotal) * 100;
+            grandDiscountPercent.value = discountPercent.toFixed(2);
+        } else {
+            grandDiscountPercent.value = 0;
+        }
+        calculateGrandTotal();
     }
 
     function loadProductTable(filteredProducts = masterProducts) {
-      productTableBody.innerHTML = "";
-      let rows = [];
+        productTableBody.innerHTML = "";
+        let rows = [];
 
-      filteredProducts.forEach((product, index) => {
-        const row = document.createElement("tr");
-        row.setAttribute("data-index", index);
-        row.tabIndex = 0;
-        row.style.cursor = "pointer";
+        filteredProducts.forEach((product, index) => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-index", index);
+            row.tabIndex = 0;
+            row.style.cursor = "pointer";
 
-        row.innerHTML = `
+            row.innerHTML = `
 <td>${product.shortName}</td>
 <td>${product.fullName}</td>
 <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
 <td>${product.stok}</td>
 `;
 
-        row.addEventListener("dblclick", () => {
-          selectProduct(product);
+            row.addEventListener("dblclick", () => {
+                selectProduct(product);
+            });
+
+            productTableBody.appendChild(row);
+            rows.push(row);
         });
 
-        productTableBody.appendChild(row);
-        rows.push(row);
-      });
+        currentKeyboardIndex = -1;
+        highlightRow(null);
 
-      currentKeyboardIndex = -1;
-      highlightRow(null);
+        document.onkeydown = null;
 
-      document.onkeydown = null;
+        document.onkeydown = function (e) {
+            if (!productModalEl.classList.contains("show")) return;
 
-      document.onkeydown = function (e) {
-        if (!productModalEl.classList.contains("show")) return;
+            const activeElement = document.activeElement;
+            const isInSearch =
+                activeElement === searchCode || activeElement === searchName;
 
-        const activeElement = document.activeElement;
-        const isInSearch =
-          activeElement === searchCode || activeElement === searchName;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-        switch (e.key) {
-          case "ArrowDown":
-            e.preventDefault();
-            if (rows.length === 0) return;
+                    if (isInSearch) {
+                        currentKeyboardIndex = 0;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    } else {
+                        if (currentKeyboardIndex < rows.length - 1)
+                            currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
 
-            if (isInSearch) {
-              currentKeyboardIndex = 0;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
-            } else {
-              if (currentKeyboardIndex < rows.length - 1)
-                currentKeyboardIndex++;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+                case "ArrowUp":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
+
+                    if (!isInSearch) {
+                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
+
+                case "ArrowLeft":
+                    e.preventDefault();
+                    searchCode.focus();
+                    break;
+
+                case "ArrowRight":
+                    e.preventDefault();
+                    searchName.focus();
+                    break;
+
+                case "Enter":
+                    e.preventDefault();
+
+                    if (isInSearch) {
+                        doFilter();
+                    } else {
+                        if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                            const selectedCode = rows[currentKeyboardIndex]
+                                .querySelector("td")
+                                .textContent.trim();
+                            const selected = masterProducts.find(
+                                (p) => p.shortName === selectedCode
+                            );
+                            if (selected) selectProduct(selected);
+                        }
+                    }
+                    break;
             }
-            break;
+        };
 
-          case "ArrowUp":
-            e.preventDefault();
-            if (rows.length === 0) return;
-
-            if (!isInSearch) {
-              if (currentKeyboardIndex > 0) currentKeyboardIndex--;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+        function highlightRow(row) {
+            rows.forEach((r) => r.classList.remove("table-active"));
+            if (row) {
+                row.classList.add("table-active");
+                row.scrollIntoView({block: "nearest", behavior: "smooth"});
             }
-            break;
-
-          case "ArrowLeft":
-            e.preventDefault();
-            searchCode.focus();
-            break;
-
-          case "ArrowRight":
-            e.preventDefault();
-            searchName.focus();
-            break;
-
-          case "Enter":
-            e.preventDefault();
-
-            if (isInSearch) {
-              doFilter();
-            } else {
-              if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
-                const selectedCode = rows[currentKeyboardIndex]
-                  .querySelector("td")
-                  .textContent.trim();
-                const selected = masterProducts.find(
-                  (p) => p.shortName === selectedCode
-                );
-                if (selected) selectProduct(selected);
-              }
-            }
-            break;
         }
-      };
-
-      function highlightRow(row) {
-        rows.forEach((r) => r.classList.remove("table-active"));
-        if (row) {
-          row.classList.add("table-active");
-          row.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
-      }
     }
 
     searchCode.addEventListener("focus", () => {
-      activeSearchField = "shortName";
+        activeSearchField = "shortName";
     });
 
     searchName.addEventListener("focus", () => {
-      activeSearchField = "fullName";
+        activeSearchField = "fullName";
     });
 
-    function doFilter() {
-      if (activeSearchField === "shortName") {
-        const val = searchCode.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.shortName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      } else if (activeSearchField === "fullName") {
-        const val = searchName.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.fullName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      }
+    async function doFilter() {
+        const keyword = activeSearchField === "shortName"
+            ? searchCode.value.trim()
+            : searchName.value.trim();
+
+        if (!keyword) {
+            loadProductTable(masterProducts);
+            return;
+        }
+
+        try {
+            const field = activeSearchField;
+            const response = await fetch(`/products/search?keyword=${encodeURIComponent(keyword)}&field=${field}`);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch products");
+            }
+
+            const filteredProducts = await response.json();
+
+            if (!filteredProducts || filteredProducts.length === 0) {
+                loadProductTable([]);
+                return;
+            }
+
+            loadProductTable(filteredProducts);
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mencari produk: " + err.message);
+            loadProductTable(masterProducts); // fallback ke semua produk
+        }
     }
 
+
+
     [searchCode, searchName].forEach((input) => {
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doFilter();
-        }
-      });
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                doFilter();
+            }
+        });
     });
 
     function showContextMenu(x, y) {
-      const menu = document.getElementById("contextMenu");
-      menu.style.top = `${y}px`;
-      menu.style.left = `${x}px`;
-      menu.style.display = "block";
+        const menu = document.getElementById("contextMenu");
+        menu.style.top = `${y}px`;
+        menu.style.left = `${x}px`;
+        menu.style.display = "block";
     }
 
     function deleteRow() {
-      if (selectedRow) {
-        selectedRow.remove();
-        selectedRow = null;
-        document.getElementById("contextMenu").style.display = "none";
+        if (selectedRow) {
+            selectedRow.remove();
+            selectedRow = null;
+            document.getElementById("contextMenu").style.display = "none";
 
-        reindexRows();
+            reindexRows();
 
-        if (sellTableBody.querySelectorAll("tr").length === 0) {
-          addNewRow();
+            if (sellTableBody.querySelectorAll("tr").length === 0) {
+                addNewRow();
+            }
+            calculateGrandTotal();
         }
-        calculateGrandTotal();
-      }
     }
+
     function reindexRows() {
-      const rows = sellTableBody.querySelectorAll("tr");
-      rows.forEach((row, index) => {
-        // Assuming the first cell (td) contains the row number
-        row.cells[0].textContent = index + 1;
-      });
+        const rows = sellTableBody.querySelectorAll("tr");
+        rows.forEach((row, index) => {
+            // Assuming the first cell (td) contains the row number
+            row.cells[0].textContent = index + 1;
+        });
     }
 
     document.addEventListener("click", () => {
-      document.getElementById("contextMenu").style.display = "none";
+        document.getElementById("contextMenu").style.display = "none";
     });
 
     productModalEl.addEventListener("hidden.bs.modal", () => {
-      searchCode.value = "";
-      searchName.value = "";
-      loadProductTable();
-      focusNextEmptyRow();
+        searchCode.value = "";
+        searchName.value = "";
+        loadProductTable();
+        focusNextEmptyRow();
     });
 
     function focusNextEmptyRow() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
-      for (const row of rows) {
-        const codeInput = row.querySelector(".code-input");
-        const nameInput = row.querySelector(".name-input");
-        if (codeInput.value.trim() === "" && nameInput.value.trim() === "") {
-          codeInput.focus();
-          return;
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        for (const row of rows) {
+            const codeInput = row.querySelector(".code-input");
+            const nameInput = row.querySelector(".name-input");
+            if (codeInput.value.trim() === "" && nameInput.value.trim() === "") {
+                codeInput.focus();
+                return;
+            }
         }
-      }
-      addNewRow(true);
+        addNewRow(true);
     }
 
     function loadCustomers() {
-      customerSelect.innerHTML =
-        '<option value="">-- Pilih Supplier --</option>';
-      masterSuppliers.forEach((supplier) => {
-        const option = document.createElement("option");
-        const newOption = `<option value="${supplier.supplierId}">${supplier.supplierName}</option>`;
-        customerSelect.insertAdjacentHTML("beforeend", newOption);
-      });
+        customerSelect.innerHTML =
+            '<option value="">-- Pilih Supplier --</option>';
+        masterSuppliers.forEach((supplier) => {
+            const option = document.createElement("option");
+            const newOption = `<option value="${supplier.supplierId}">${supplier.supplierName}</option>`;
+            customerSelect.insertAdjacentHTML("beforeend", newOption);
+        });
     }
 
     async function saveTransaction() {
-      const grandTotal =
-        parseFloat(
-          grandTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ) || 0;
-      if (
-        sellTableBody.querySelectorAll("tr").length === 0 ||
-        grandTotal === 0
-      ) {
-        alert("Transaction cannot be saved with no items.");
-        return;
-      }
-
-      const selectedCustomerId = customerSelect.value;
-      if(!selectedCustomerId){
-        alert("Nama supplier tidak boleh kosong");
-        return;
-     }
-      const selectedCustomer = masterSuppliers.find(
-        (c) => c.supplierId == selectedCustomerId
-      );
-
-      const transactionData = {
-        supplierId: selectedCustomer.supplierId,
-        preorderDetailDTOS: [],
-        subtotal: parseFloat(
-          subTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ),
-        totalDisc: parseFloat(grandDiscountAmount.value) || 0,
-        totalPrice: grandTotal,
-      };
-
-      sellTableBody.querySelectorAll("tr").forEach((row) => {
-        const code = row.querySelector(".code-input").value;
-        if (code) {
-          transactionData.preorderDetailDTOS.push({
-            code: code,
-            name: row.querySelector(".name-input").value,
-            price: parseRupiah(row.querySelector(".price-input").value),
-            qty: parseInt(row.querySelector(".qty-input").value),
-            discAmount: parseFloat(
-              row.querySelector(".discount-amount-input").value
-            ),
-            total: parseFloat(
-              row
-                .querySelector(".total-cell")
-                .textContent.replace("Rp ", "")
-                .replace(/\./g, "")
-                .replace(",", ".")
-            ),
-          });
-        }
-      });
-      const isPrintBill = document.getElementById("printBill");
-
-      try {
-        // Save transaction
-        let response;
+        const grandTotal =
+            parseFloat(
+                grandTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ) || 0;
         if (
-          masterTransactions.preorderId !== null &&
-          masterTransactions.preorderDetailDTOS !== null
+            sellTableBody.querySelectorAll("tr").length === 0 ||
+            grandTotal === 0
         ) {
-          response = await fetch(
-            `/api/preorder/edit/${masterTransactions.preorderId}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(transactionData),
-            }
-          );
-        } else {
-          response = await fetch("/api/preorder/add", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(transactionData),
-          });
+            alert("Transaction cannot be saved with no items.");
+            return;
         }
 
-        const result = await response.text();
-        if (!response.ok) {
-          throw new Error(`${result}`);
+        const selectedCustomerId = customerSelect.value;
+        if (!selectedCustomerId) {
+            alert("Nama supplier tidak boleh kosong");
+            return;
         }
+        const selectedCustomer = masterSuppliers.find(
+            (c) => c.supplierId == selectedCustomerId
+        );
 
-        const data = {
-          inv_number: result,
-          supplier_name: selectedCustomer.supplierName,
-          tanggal: `${new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })} ${new Date().toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}`,
-          subtotal: transactionData.subtotal,
-          grandTotal: transactionData.totalPrice,
-          totalDisc: transactionData.totalDisc,
-          preorderDetailDTOS: transactionData.preorderDetailDTOS.map(
-            (item, index) => ({
-              no: index + 1,
-              code: item.code,
-              name: item.name,
-              qty: item.qty,
-              price: item.price.toLocaleString("id-ID"),
-              discount: item.discAmount.toLocaleString("id-ID"),
-              total: item.total.toLocaleString("id-ID"),
-            })
-          ),
+        const transactionData = {
+            supplierId: selectedCustomer.supplierId,
+            preorderDetailDTOS: [],
+            subtotal: parseFloat(
+                subTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ),
+            totalDisc: parseFloat(grandDiscountAmount.value) || 0,
+            totalPrice: grandTotal,
         };
+
+        sellTableBody.querySelectorAll("tr").forEach((row) => {
+            const code = row.querySelector(".code-input").value;
+            if (code) {
+                transactionData.preorderDetailDTOS.push({
+                    code: code,
+                    name: row.querySelector(".name-input").value,
+                    price: parseRupiah(row.querySelector(".price-input").value),
+                    qty: parseInt(row.querySelector(".qty-input").value),
+                    discAmount: parseFloat(
+                        row.querySelector(".discount-amount-input").value
+                    ),
+                    total: parseFloat(
+                        row
+                            .querySelector(".total-cell")
+                            .textContent.replace("Rp ", "")
+                            .replace(/\./g, "")
+                            .replace(",", ".")
+                    ),
+                });
+            }
+        });
         const isPrintBill = document.getElementById("printBill");
 
-        if (isPrintBill.checked) {
-          alert("Data berhasil disimpan!");
-          generatePDF(data);
-        } else {
-          alert("Data berhasil disimpan!");
-        }
-        window.location.href =
-          masterTransactions.preorderId !== null &&
-          masterTransactions.preorderDetailDTOS !== null
-            ? "/preorder"
-            : "/preorder/tambah";
+        try {
+            // Save transaction
+            let response;
+            if (
+                masterTransactions.preorderId !== null &&
+                masterTransactions.preorderDetailDTOS !== null
+            ) {
+                response = await fetch(
+                    `/api/preorder/edit/${masterTransactions.preorderId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(transactionData),
+                    }
+                );
+            } else {
+                response = await fetch("/api/preorder/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(transactionData),
+                });
+            }
 
-      } catch (error) {
-        alert(`Gagal menyimpan data, ${error.message}.`);
-      }
+            const result = await response.text();
+            if (!response.ok) {
+                throw new Error(`${result}`);
+            }
+
+            const data = {
+                inv_number: result,
+                supplier_name: selectedCustomer.supplierName,
+                tanggal: `${new Date().toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                })} ${new Date().toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                })}`,
+                subtotal: transactionData.subtotal,
+                grandTotal: transactionData.totalPrice,
+                totalDisc: transactionData.totalDisc,
+                preorderDetailDTOS: transactionData.preorderDetailDTOS.map(
+                    (item, index) => ({
+                        no: index + 1,
+                        code: item.code,
+                        name: item.name,
+                        qty: item.qty,
+                        price: item.price.toLocaleString("id-ID"),
+                        discount: item.discAmount.toLocaleString("id-ID"),
+                        total: item.total.toLocaleString("id-ID"),
+                    })
+                ),
+            };
+            const isPrintBill = document.getElementById("printBill");
+
+            if (isPrintBill.checked) {
+                alert("Data berhasil disimpan!");
+                generatePDF(data);
+            } else {
+                alert("Data berhasil disimpan!");
+            }
+            window.location.href =
+                masterTransactions.preorderId !== null &&
+                masterTransactions.preorderDetailDTOS !== null
+                    ? "/preorder"
+                    : "/preorder/tambah";
+
+        } catch (error) {
+            alert(`Gagal menyimpan data, ${error.message}.`);
+        }
     }
 
     function generatePDF(data) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF();
 
-      const pageWidth = doc.internal.pageSize.getWidth();
+        const pageWidth = doc.internal.pageSize.getWidth();
 
-      // --- Header Title ---
-      doc.setFontSize(18); // lebih besar
-      doc.text("Preorder Anugrah Motor", pageWidth / 2, 15, { align: "center" });
+        // --- Header Title ---
+        doc.setFontSize(18); // lebih besar
+        doc.text("Preorder Anugrah Motor", pageWidth / 2, 15, {align: "center"});
 
         // --- Info Supplier (kiri) & Tanggal (kanan) ---
         doc.setFontSize(12);
         doc.text(`Supplier: ${data.supplier_name}`, 10, 30);
 
         doc.setFontSize(10);
-        doc.text(`${data.tanggal}`, pageWidth - 10, 30, { align: "right" });
+        doc.text(`${data.tanggal}`, pageWidth - 10, 30, {align: "right"});
 
 
-      // --- Table with Borders (No, Code, Name, Qty) ---
-      const tableColumn = ["No", "Kode", "Nama Barang", "Qty"];
-      const tableRows = [];
+        // --- Table with Borders (No, Code, Name, Qty) ---
+        const tableColumn = ["No", "Kode", "Nama Barang", "Qty"];
+        const tableRows = [];
 
-      data.preorderDetailDTOS.forEach((item) => {
-        tableRows.push([
-          String(item.no),
-          item.code,
-          item.name,
-          String(item.qty),
-        ]);
-      });
-
-      doc.autoTable({
-          head: [tableColumn],
-          body: tableRows,
-          startY: 50,
-          theme: "grid",
-          styles: {
-            fontSize: 10,
-            lineWidth: 0.2,
-            lineColor: [0, 0, 0]
-          },
-          headStyles: {
-            fillColor: [255, 255, 255],
-            textColor: [0, 0, 0],
-            fontStyle: "bold"
-          },
-          columnStyles: {
-            0: { cellWidth: 15 },               // No
-            1: { cellWidth: 40 },               // Kode
-            2: { cellWidth: 90 },               // Nama Barang
-            3: { cellWidth: 20, halign: "right" } // Qty rata kanan
-          },
-          tableWidth: "wrap",           // 🔹 tabel sesuai isi, bukan full page
-          tableStyles: { halign: "center" } // 🔹 posisi tabel ke tengah halaman
+        data.preorderDetailDTOS.forEach((item) => {
+            tableRows.push([
+                String(item.no),
+                item.code,
+                item.name,
+                String(item.qty),
+            ]);
         });
 
-      // --- Save PDF ---
-      const fileName = `preorder-${data.supplier_name}-${data.tanggal}.pdf`;
-      doc.save(fileName);
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
+                fontStyle: "bold"
+            },
+            columnStyles: {
+                0: {cellWidth: 15},               // No
+                1: {cellWidth: 40},               // Kode
+                2: {cellWidth: 90},               // Nama Barang
+                3: {cellWidth: 20, halign: "right"} // Qty rata kanan
+            },
+            tableWidth: "wrap",           // 🔹 tabel sesuai isi, bukan full page
+            tableStyles: {halign: "center"} // 🔹 posisi tabel ke tengah halaman
+        });
+
+        // --- Save PDF ---
+        const fileName = `preorder-${data.supplier_name}-${data.tanggal}.pdf`;
+        doc.save(fileName);
     }
 
     function cancelTransaction() {
-      location.reload();
+        location.reload();
     }
 
     function updateJam() {
-      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+        transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
     }
 
     function attachNavigationHandlers(row) {
-      const inputs = [...row.querySelectorAll("input:not([readonly])")];
+        const inputs = [...row.querySelectorAll("input:not([readonly])")];
 
-      inputs.forEach((input) => {
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            const currentRow = e.target.closest("tr");
-            const lastRow = sellTableBody.lastElementChild;
+        inputs.forEach((input) => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const currentRow = e.target.closest("tr");
+                    const lastRow = sellTableBody.lastElementChild;
 
-            if (currentRow === lastRow && !isRowEmpty(currentRow)) {
-              maybeAddNewRow();
-            }
+                    if (currentRow === lastRow && !isRowEmpty(currentRow)) {
+                        maybeAddNewRow();
+                    }
 
-            const nextRow = currentRow.nextElementSibling;
-            if (nextRow) {
-              nextRow.querySelector(".code-input").focus();
-            }
-          } else if (
-            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
-              e.key
-            )
-          ) {
-            e.preventDefault();
+                    const nextRow = currentRow.nextElementSibling;
+                    if (nextRow) {
+                        nextRow.querySelector(".code-input").focus();
+                    }
+                } else if (
+                    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+                        e.key
+                    )
+                ) {
+                    e.preventDefault();
 
-            const rows = [...sellTableBody.querySelectorAll("tr")];
-            const currentRowIndex = rows.indexOf(row);
-            const currentInputs = [
-              ...row.querySelectorAll("input:not([readonly])"),
-            ];
-            const currentInputIndex = currentInputs.indexOf(e.target);
+                    const rows = [...sellTableBody.querySelectorAll("tr")];
+                    const currentRowIndex = rows.indexOf(row);
+                    const currentInputs = [
+                        ...row.querySelectorAll("input:not([readonly])"),
+                    ];
+                    const currentInputIndex = currentInputs.indexOf(e.target);
 
-            let nextRowIndex = currentRowIndex;
-            let nextInputIndex = currentInputIndex;
+                    let nextRowIndex = currentRowIndex;
+                    let nextInputIndex = currentInputIndex;
 
-            if (e.key === "ArrowUp")
-              nextRowIndex = Math.max(0, currentRowIndex - 1);
-            if (e.key === "ArrowDown")
-              nextRowIndex = Math.min(rows.length - 1, currentRowIndex + 1);
-            if (e.key === "ArrowLeft")
-              nextInputIndex = Math.max(0, currentInputIndex - 1);
-            if (e.key === "ArrowRight")
-              nextInputIndex = Math.min(
-                currentInputs.length - 1,
-                currentInputIndex + 1
-              );
+                    if (e.key === "ArrowUp")
+                        nextRowIndex = Math.max(0, currentRowIndex - 1);
+                    if (e.key === "ArrowDown")
+                        nextRowIndex = Math.min(rows.length - 1, currentRowIndex + 1);
+                    if (e.key === "ArrowLeft")
+                        nextInputIndex = Math.max(0, currentInputIndex - 1);
+                    if (e.key === "ArrowRight")
+                        nextInputIndex = Math.min(
+                            currentInputs.length - 1,
+                            currentInputIndex + 1
+                        );
 
-            const targetRow = rows[nextRowIndex];
-            const targetInputs = [
-              ...targetRow.querySelectorAll("input:not([readonly])"),
-            ];
-            const targetInput = targetInputs[nextInputIndex];
+                    const targetRow = rows[nextRowIndex];
+                    const targetInputs = [
+                        ...targetRow.querySelectorAll("input:not([readonly])"),
+                    ];
+                    const targetInput = targetInputs[nextInputIndex];
 
-            if (targetInput) {
-              targetInput.focus();
-              if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
-                targetInput.select();
-              }
-            }
-          }
+                    if (targetInput) {
+                        targetInput.focus();
+                        if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+                            targetInput.select();
+                        }
+                    }
+                }
+            });
         });
-      });
     }
 
     function loadTransaction(transaction) {
-      // Clear the current sales table
-      sellTableBody.innerHTML = "";
+        // Clear the current sales table
+        sellTableBody.innerHTML = "";
 
-      // Set the grand total discounts and customer
-      if (transaction.subtotal > 0) {
-        const discountPercent =
-          (transaction.totalDisc / transaction.subtotal) * 100;
-        grandDiscountPercent.value = discountPercent.toFixed(2);
-      } else {
-        grandDiscountPercent.value = "0.00";
-      }
-      grandDiscountAmount.value = transaction.totalDisc;
+        // Set the grand total discounts and customer
+        if (transaction.subtotal > 0) {
+            const discountPercent =
+                (transaction.totalDisc / transaction.subtotal) * 100;
+            grandDiscountPercent.value = discountPercent.toFixed(2);
+        } else {
+            grandDiscountPercent.value = "0.00";
+        }
+        grandDiscountAmount.value = transaction.totalDisc;
 
-      // Set customer if you want
-      if (transaction.supplierDTO.supplierId) {
-        customerSelect.value = transaction.supplierDTO.supplierId;
-      }
+        // Set customer if you want
+        if (transaction.supplierDTO.supplierId) {
+            customerSelect.value = transaction.supplierDTO.supplierId;
+        }
 
-      // Insert no faktur, poDate, jenis pembayaran, poDueDate
-      if (transaction.noFaktur) {
-        document.getElementById("invoiceNumber").value = transaction.noFaktur;
-      }
+        // Insert no faktur, poDate, jenis pembayaran, poDueDate
+        if (transaction.noFaktur) {
+            document.getElementById("invoiceNumber").value = transaction.noFaktur;
+        }
 
-      // Populate the table with transaction details
-      transaction.preorderDetailDTOS.forEach((detail, index) => {
-        const row = document.createElement("tr");
+        // Populate the table with transaction details
+        transaction.preorderDetailDTOS.forEach((detail, index) => {
+            const row = document.createElement("tr");
 
-        row.innerHTML = `
+            row.innerHTML = `
         <td class="row-number">${index + 1}</td>
         <td><input type="text" class="form-control form-control-sm code-input" value="${
-          detail.code
-        }" /></td>
+                detail.code
+            }" /></td>
         <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
-          detail.name
-        }" /></td>
+                detail.name
+            }" /></td>
         <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
-          detail.qty
-        }" /></td>
+                detail.qty
+            }" /></td>
         <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
-          detail.price
-        )}" readonly/></td>
+                detail.price
+            )}" readonly/></td>
         <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-          (detail.discAmount / (detail.total + detail.discAmount)) * 100
-        }" /></td>
+                (detail.discAmount / (detail.total + detail.discAmount)) * 100
+            }" /></td>
         <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
-          detail.discAmount
-        }" /></td>
+                detail.discAmount
+            }" /></td>
         <td class="total-cell">${formatRupiah(detail.total)}</td>
         <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
       `;
 
-        // Reuse handler binding
-        attachNavigationHandlers(row);
+            // Reuse handler binding
+            attachNavigationHandlers(row);
 
-        // Other event bindings (price, qty, discount)
-        const codeInput = row.querySelector(".code-input");
-        const priceInput = row.querySelector(".price-input");
-        const discPercentInput = row.querySelector(".discount-percent-input");
-        const discAmountInput = row.querySelector(".discount-amount-input");
-        const qtyInput = row.querySelector(".qty-input");
+            // Other event bindings (price, qty, discount)
+            const codeInput = row.querySelector(".code-input");
+            const priceInput = row.querySelector(".price-input");
+            const discPercentInput = row.querySelector(".discount-percent-input");
+            const discAmountInput = row.querySelector(".discount-amount-input");
+            const qtyInput = row.querySelector(".qty-input");
 
-        codeInput.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            const code = codeInput.value.trim().toUpperCase();
+            codeInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const code = codeInput.value.trim().toUpperCase();
 
-            if (!code) {
-              selectedRow = row;
-              productModal.show();
-              loadProductTable();
-              return;
-            }
+                    if (!code) {
+                        selectedRow = row;
+                        productModal.show();
+                        loadProductTable();
+                        return;
+                    }
 
-            const product = masterProducts.find((p) => p.shortName === code);
-            if (product) {
-              fillProductRow(row, product);
-              maybeAddNewRow();
-            } else {
-              alert("Product not found");
-              codeInput.value = "";
-              codeInput.focus();
-            }
-          }
+                    const product = masterProducts.find((p) => p.shortName === code);
+                    if (product) {
+                        fillProductRow(row, product);
+                        maybeAddNewRow();
+                    } else {
+                        alert("Product not found");
+                        codeInput.value = "";
+                        codeInput.focus();
+                    }
+                }
+            });
+
+            // tambahkan auto-set 0 on blur
+            [discPercentInput, discAmountInput].forEach((inp) =>
+                ensureZeroOnBlur(inp, 2, row)
+            ); // 0.00 untuk disc/markup
+
+            [priceInput, qtyInput].forEach((inp) =>
+                ensureZeroOnBlur(inp, 0, row)
+            ); // integer → 0
+
+            priceInput.addEventListener("focus", handleFormattedFocus);
+            priceInput.addEventListener("blur", handleFormattedBlur);
+            priceInput.addEventListener("input", () => updateTotalRow(row));
+            qtyInput.addEventListener("input", () => updateTotalRow(row));
+
+            discPercentInput.addEventListener("input", () => {
+                let val = discPercentInput.value;
+                if (val.includes(".")) {
+                    const [intPart, decPart] = val.split(".");
+                    discPercentInput.value = intPart + "." + decPart.slice(0, 2);
+                }
+                const price = parseRupiah(row.querySelector(".price-input").value);
+                const qty = parseInt(qtyInput.value) || 0;
+                const discountPercent = parseFloat(discPercentInput.value) || 0;
+                if (price * qty > 0) {
+                    const discountAmount = price * qty * (discountPercent / 100);
+                    discAmountInput.value = Math.round(discountAmount);
+                } else {
+                    discAmountInput.value = "0";
+                }
+                updateTotalRow(row);
+            });
+
+            discAmountInput.addEventListener("input", () => {
+                const price = parseRupiah(row.querySelector(".price-input").value);
+                const qty = parseInt(qtyInput.value) || 0;
+                const discountAmount = parseFloat(discAmountInput.value) || 0;
+                if (price * qty > 0) {
+                    const discountPercent = (discountAmount / (price * qty)) * 100;
+                    discPercentInput.value = discountPercent.toFixed(2);
+                } else {
+                    discPercentInput.value = "0";
+                }
+                updateTotalRow(row);
+            });
+
+            row.addEventListener("contextmenu", function (e) {
+                e.preventDefault();
+                selectedRow = row;
+                showContextMenu(e.pageX, e.pageY);
+            });
+
+            sellTableBody.appendChild(row);
         });
 
-        // tambahkan auto-set 0 on blur
-        [discPercentInput, discAmountInput].forEach((inp) =>
-          ensureZeroOnBlur(inp, 2, row)
-        ); // 0.00 untuk disc/markup
+        // Add a new empty row for a new item
+        addNewRow();
 
-        [priceInput, qtyInput].forEach((inp) =>
-          ensureZeroOnBlur(inp, 0, row)
-        ); // integer → 0
-
-        priceInput.addEventListener("focus", handleFormattedFocus);
-        priceInput.addEventListener("blur", handleFormattedBlur);
-        priceInput.addEventListener("input", () => updateTotalRow(row));
-        qtyInput.addEventListener("input", () => updateTotalRow(row));
-
-        discPercentInput.addEventListener("input", () => {
-          let val = discPercentInput.value;
-          if (val.includes(".")) {
-            const [intPart, decPart] = val.split(".");
-            discPercentInput.value = intPart + "." + decPart.slice(0, 2);
-          }
-          const price = parseRupiah(row.querySelector(".price-input").value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountPercent = parseFloat(discPercentInput.value) || 0;
-          if (price * qty > 0) {
-            const discountAmount = price * qty * (discountPercent / 100);
-            discAmountInput.value = Math.round(discountAmount);
-          } else {
-            discAmountInput.value = "0";
-          }
-          updateTotalRow(row);
-        });
-
-        discAmountInput.addEventListener("input", () => {
-          const price = parseRupiah(row.querySelector(".price-input").value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountAmount = parseFloat(discAmountInput.value) || 0;
-          if (price * qty > 0) {
-            const discountPercent = (discountAmount / (price * qty)) * 100;
-            discPercentInput.value = discountPercent.toFixed(2);
-          } else {
-            discPercentInput.value = "0";
-          }
-          updateTotalRow(row);
-        });
-
-        row.addEventListener("contextmenu", function (e) {
-          e.preventDefault();
-          selectedRow = row;
-          showContextMenu(e.pageX, e.pageY);
-        });
-
-        sellTableBody.appendChild(row);
-      });
-
-      // Add a new empty row for a new item
-      addNewRow();
-
-      // Recalculate and display the grand total
-      calculateGrandTotal();
+        // Recalculate and display the grand total
+        calculateGrandTotal();
     }
 
     // Init
     loadCustomers();
     if (
-      masterTransactions.preorderId !== null &&
-      masterTransactions.preorderDetailDTOS !== null
+        masterTransactions.preorderId !== null &&
+        masterTransactions.preorderDetailDTOS !== null
     ) {
-      loadTransaction(masterTransactions);
+        loadTransaction(masterTransactions);
     }
     updateJam();
     addNewRow();

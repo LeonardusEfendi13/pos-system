@@ -1,6 +1,8 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.Entity.StockMovementsEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +17,9 @@ public interface StockMovementsRepository extends JpaRepository<StockMovementsEn
 
     // Ambil semua transaksi dalam periode
     List<StockMovementsEntity> findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(Long productId, LocalDateTime startDate);
+
+    Page<StockMovementsEntity> findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
+            Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable
+    );
+
 }

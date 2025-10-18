@@ -10,6 +10,8 @@ import com.pos.posApps.Service.SidebarService;
 import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -26,10 +28,18 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 @Controller
 @RequestMapping("products")
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class ProductController {
+    @Autowired
     private AuthService authService;
+
+    @Autowired
     private ProductService productService;
+
+    @Autowired
     private SupplierService supplierService;
+
+    @Autowired
     private SidebarService sidebarService;
 
     private int safeSize(Integer size) {
@@ -78,6 +88,27 @@ public class ProductController {
         model.addAttribute("totalData", productEntity.getTotalElements());
 
         return "display_products";
+    }
+
+    @GetMapping("/search")
+    @ResponseBody
+    public List<ProductDTO> searchProducts(
+            HttpSession session,
+            @RequestParam String keyword,
+            @RequestParam(required = false) String field // "shortName" atau "fullName"
+    ) {
+
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            AccountEntity accEntity = authService.validateToken(token);
+            Long clientId = accEntity.getClientEntity().getClientId();
+
+            List<ProductDTO> products = productService.searchProductByKeyword(clientId, keyword, field);
+            return products;
+        } catch (Exception e) {
+            e.printStackTrace(); // Log error
+            return List.of(); // Return empty list on error
+        }
     }
 
     @PostMapping("/add")
@@ -164,7 +195,7 @@ public class ProductController {
     }
 
     @GetMapping("/kartu_stok")
-    public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId) {
+    public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         Long clientId;
         boolean isShowDetail = true;
         String token;
@@ -182,17 +213,41 @@ public class ProductController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        List<ProductDTO> productEntity = productService.getProductData(clientId);
-        List<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
+        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size));
+
+        Page<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
-        model.addAttribute("isShowDetail", isShowDetail);
-        model.addAttribute("productData", productEntity);
+
+// 🔹 Pagination info - AMBIL DARI stokData BUKAN productPage
+        int totalPages = stokData.getTotalPages();
+        long totalData = stokData.getTotalElements();
+        int currentPage = page;
+        int startData = (page * size) + 1;
+        int endData = Math.min(startData + size - 1, (int) totalData);
+
+// 🔹 Range pagination
+        int start = Math.max(0, currentPage - 2);
+        int end = Math.min(start + 4, totalPages - 1);
+
+        // ✅ Tambahkan semua ke model
+        model.addAttribute("isShowDetail", true);
+        model.addAttribute("productData", productPage.getContent());
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalData", totalData);
+        model.addAttribute("startData", startData);
+        model.addAttribute("endData", endData);
+        model.addAttribute("start", start);
+        model.addAttribute("end", end);
+        model.addAttribute("size", size);
         model.addAttribute("activePage", "kartuStok");
         model.addAttribute("kartuStok", stokData);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("stockAwal", stockAwal);
         model.addAttribute("selectedItemId", productId);
+
+
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_kartuStok";

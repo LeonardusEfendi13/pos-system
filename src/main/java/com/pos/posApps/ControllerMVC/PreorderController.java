@@ -10,6 +10,8 @@ import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -27,11 +29,21 @@ import static com.pos.posApps.Constants.Constant.authSessionKey;
 @Controller
 @RequestMapping("preorder")
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class PreorderController {
+    @Autowired
     private AuthService authService;
+
+    @Autowired
     private PreorderService preorderService;
+
+    @Autowired
     private SupplierService supplierService;
+
+    @Autowired
     private ProductService productService;
+
+    @Autowired
     private SidebarService sidebarService;
 
     private int safeSize(Integer size) {
@@ -101,14 +113,14 @@ public class PreorderController {
     }
 
     @GetMapping("/tambah")
-    public String addPreorder(HttpSession session, Long preorderId, Model model) {
+    public String addPreorder(HttpSession session, Long preorderId, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
         if (clientData.getClientId() == null) {
             return "redirect:/login";
         }
-        List<ProductDTO> productEntity = productService.getProductData(clientData.getClientId());
+        Page<ProductDTO> productEntity = productService.getProductData(clientData.getClientId(), PageRequest.of(page, size));
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientData.getClientId());
 
         PreorderDTO preorderData = new PreorderDTO();
@@ -117,7 +129,7 @@ public class PreorderController {
         }
         model.addAttribute("preorderData", preorderData);
         model.addAttribute("activePage", "preorderTambah");
-        model.addAttribute("productData", productEntity);
+        model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("supplierData", supplierEntities);
         return "display_kasir_preorder";
     }
