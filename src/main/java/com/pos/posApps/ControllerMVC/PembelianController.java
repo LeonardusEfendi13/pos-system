@@ -35,18 +35,18 @@ public class PembelianController {
     }
 
     @GetMapping
-    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search){
+    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
-        try{
+        try {
             token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-        }catch (Exception e){
+        } catch (Exception e) {
             return "redirect:/login";
         }
 
         startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
-        endDate = (endDate == null || endDate.isBlank())? LocalDate.now().toString() : endDate;
+        endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
@@ -69,10 +69,11 @@ public class PembelianController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("lunas", lunas);
         model.addAttribute("tunai", tunai);
+        model.addAttribute("search", search);
 
-        Long totalElements = pembelianData.getTotalElements();
+        long totalElements = pembelianData.getTotalElements();
 
-        Integer totalPages = pembelianData.getTotalPages();
+        int totalPages = pembelianData.getTotalPages();
         if (totalPages == 0) {
             totalPages = 1;
         }
@@ -82,7 +83,8 @@ public class PembelianController {
         size = safeSize(size);
         model.addAttribute("size", size);
         model.addAttribute("start", start);
-        model.addAttribute("end", end);model.addAttribute("totalData", totalElements);
+        model.addAttribute("end", end);
+        model.addAttribute("totalData", totalElements);
 
         if (totalElements == 0) {
             model.addAttribute("startData", 0);
@@ -100,7 +102,7 @@ public class PembelianController {
     }
 
     @GetMapping("/tambah")
-    public String displayKasir(Model model, HttpSession session, Long pembelianId) {
+    public String displayKasir(Model model, HttpSession session, Long pembelianId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size) {
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -108,7 +110,9 @@ public class PembelianController {
         } catch (Exception e) {
             return "redirect:/login";
         }
-        List<ProductDTO> productEntity = productService.getProductData(clientId);
+
+        Page<ProductDTO> productPage = productService.getProductDataForPembelian(clientId, PageRequest.of(page, size));
+        List<ProductDTO> productEntity = productPage.getContent();
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
 
         PembelianDTO pembelianData = new PembelianDTO();
@@ -123,7 +127,7 @@ public class PembelianController {
     }
 
     @PostMapping("/delete/{purchasingId}")
-    public String deletePurchasing(@PathVariable("purchasingId") Long puchasingId, HttpSession session, RedirectAttributes redirectAttributes){
+    public String deletePurchasing(@PathVariable("purchasingId") Long puchasingId, HttpSession session, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

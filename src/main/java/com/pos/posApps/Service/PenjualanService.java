@@ -39,7 +39,7 @@ public class PenjualanService {
     public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
         return transactionData.stream()
                 .map(TransactionEntity::getTotalPrice)
                 .filter(Objects::nonNull)
@@ -57,11 +57,11 @@ public class PenjualanService {
 
         if (customerId == null) {
             transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                    .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
                             clientId, startDate, endDate);
         } else {
             transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
+                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
                             clientId, customerId, startDate, endDate);
         }
 
@@ -126,7 +126,7 @@ public class PenjualanService {
         List<TransactionEntity> transactionData;
 
         transactionData = transactionRepository
-                .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
                         clientId, startDate, endDate);
 
 
@@ -212,7 +212,7 @@ public class PenjualanService {
 //        For testing only
 //        LocalDateTime startDate = LocalDate.parse("2025-09-13").atStartOfDay();
 //        LocalDateTime endDate = LocalDate.parse("2025-09-13").atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(10).toList();
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(10).toList();
         return transactionData.stream().map(transactions -> new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
@@ -243,9 +243,9 @@ public class PenjualanService {
     public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, Pageable pageable) {
         Page<TransactionEntity> transactionData;
         if (customerId == null) {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate, pageable);
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate, pageable);
         } else {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
         }
         return transactionData.map(this::convertToDTO);
     }

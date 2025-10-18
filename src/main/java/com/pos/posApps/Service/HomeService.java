@@ -40,7 +40,20 @@ public class HomeService {
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
 
         //Fetch all transaction Data by todays date
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+
+        //Extract the shortName
+        Set<String> shortNamesInTransactions = transactionData.stream()
+                .flatMap(t -> t.getTransactionDetailEntities().stream())
+                .map(TransactionDetailEntity::getShortName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        //Fetch ProductData with the extracted shortName
+        List<ProductEntity> relevantProducts = productRepository.findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(clientId, shortNamesInTransactions);
+
+        //Assign the data into productMap
+        Map<String, ProductEntity> productMap = relevantProducts.stream().collect(Collectors.toMap(ProductEntity::getShortName, Function.identity()));
 
         //Count transaction data
         Long transactionCount = (long) transactionData.size();
@@ -49,14 +62,10 @@ public class HomeService {
         BigDecimal totalTransaction = transactionData.stream().map(TransactionEntity::getTotalPrice).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //Get total profit
-        //Step 1. Load all product
-        List<ProductEntity> allProducts = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
-        Map<String, ProductEntity> productMap = allProducts.stream().collect(Collectors.toMap(ProductEntity::getShortName, Function.identity()));
-
-        //Step 2. Initiate total profit
+        //Step 1. Initiate total profit
         BigDecimal totalProfit = BigDecimal.ZERO;
 
-        //Step 3. Calculate total profit
+        //Step 2. Calculate total profit
         for (TransactionEntity transactions : transactionData) {
             for (TransactionDetailEntity details : transactions.getTransactionDetailEntities()) {
                 ProductEntity product = productMap.get(details.getShortName());
@@ -67,7 +76,6 @@ public class HomeService {
                 }
             }
         }
-
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
 
@@ -104,7 +112,7 @@ public class HomeService {
 
     public List<HomeCustomerDTO> getTop5Customer(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
         //Fetch all transactions
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
 
         //Populate totalPrice using customer's Id
         Map<Long, BigDecimal> firstCustomerMap = new HashMap<>();
@@ -241,7 +249,7 @@ public class HomeService {
     }
 
     private Map<String, BigDecimal> getPendapatan(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
+        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
 
         return transactions.stream()
                 .collect(Collectors.groupingBy(
@@ -265,7 +273,7 @@ public class HomeService {
         Map<String, BigDecimal> supplierPrices = productRepository.findAll().stream()
                 .collect(Collectors.toMap(ProductEntity::getShortName, ProductEntity::getSupplierPrice));
 
-        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
+        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
 
         Map<String, BigDecimal> labaMap = new HashMap<>();
 

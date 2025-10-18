@@ -105,7 +105,14 @@ public class ProductService {
     }
 
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-        Page<ProductEntity> productData = productRepository.findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable);
+        return productData.map(this::convertToDTO);
+    }
+
+    public Page<ProductDTO> getProductDataForPembelian(Long clientId, Pageable pageable) {
+        Page<ProductEntity> productData = productRepository
+                .findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId, pageable);
+
         return productData.map(this::convertToDTO);
     }
 
