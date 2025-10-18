@@ -996,6 +996,7 @@
     });
 </script>
 <script>
+    let dynamicProductsCache = [];
     document.addEventListener("DOMContentLoaded", () => {
         const addButton = document.getElementById("add-barang-btn");
         const productModalEl = document.getElementById("barangModal");
@@ -1317,55 +1318,67 @@
 
         if (focus) codeInput.focus();
 
-        codeInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                const code = codeInput.value.trim().toUpperCase();
+        // --- Event untuk kode barang (Enter → cari product)
+        codeInput.addEventListener("keydown", async (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const code = codeInput.value.trim().toUpperCase();
 
-                if (!code) {
-                    selectedRow = row;
-                    productModal.show();
-                    loadProductTable();
-                    return;
-                }
-
-                const product = masterProducts.find((p) => p.shortName === code);
-                if (product) {
-                    const rows = [...sellTableBody.querySelectorAll("tr")];
-                    let existingRow = null;
-                    for (const r of rows) {
-                        if (r === row) continue;
-                        const cInput = r.querySelector(".code-input");
-                        if (cInput.value.trim().toUpperCase() === code) {
-                            existingRow = r;
-                            break;
-                        }
-                    }
-
-                    if (existingRow) {
-                        const qInput = existingRow.querySelector(".qty-input");
-                        qInput.value = parseInt(qInput.value || "0") + 1;
-                        updateTotalRow(existingRow);
-
-                        // Clear the current row and focus
-                        codeInput.value = "";
-                        row.querySelector(".name-input").value = "";
-                        row.querySelector(".price-input").value = "Rp 0";
-                        row.querySelector(".qty-input").value = "1";
-                        row.querySelector(".discount-percent-input").value = "0";
-                        row.querySelector(".discount-amount-input").value = "0";
-                        row.querySelector(".total-cell").textContent = "Rp 0";
-                        codeInput.focus();
-                    } else {
-                        fillProductRow(row, product);
-                        maybeAddNewRow();
-                    }
-                } else {
-                    alert("Product not found");
-                    codeInput.value = ""; // Clear the input field
-                    codeInput.focus();
-                }
+            if (!code) {
+              selectedRow = row;
+              loadProductTable();
+              productModal.show();
+              return;
             }
+
+            // 🔍 Cari produk di masterProducts dulu
+            let product = masterProducts.find((p) => p.shortName === code);
+
+            // 🚀 Kalau belum ada, fetch ke backend
+            if (!product) {
+              try {
+                const res = await fetch(`/products/search?keyword=${encodeURIComponent(code)}&field=shortName`);
+                if (res.ok) {
+                  const result = await res.json();
+                  if (result && result.length > 0) {
+                    product = result[0];
+                    // ✅ Simpan ke cache agar validasi harga jual bisa pakai data B ini
+                    dynamicProductsCache.push(product);
+                  }
+                }
+              } catch (err) {
+                console.error("Error fetching product:", err);
+              }
+            }
+
+            if (product) {
+              // 🔁 Cek apakah produk ini sudah ada di baris lain
+              const existingRow = [...sellTableBody.querySelectorAll("tr")].find((r) => {
+                const existingCode = r.querySelector(".code-input").value.trim().toUpperCase();
+                return existingCode === code;
+              });
+
+              if (existingRow && existingRow !== row) {
+                // ✅ Kalau sudah ada → tambahkan qty dan update total
+                const qtyInput = existingRow.querySelector(".qty-input");
+                qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+                updateTotalRow(existingRow);
+
+                // Kosongkan input baru agar tidak duplikat
+                codeInput.value = "";
+                codeInput.focus();
+                return;
+              }
+
+              // 🔹 Kalau produk baru → isi data ke baris ini
+              fillProductRow(row, product);
+              maybeAddNewRow();
+            } else {
+              alert("Product not found");
+              codeInput.value = "";
+              codeInput.focus();
+            }
+          }
         });
 
         qtyInput.addEventListener("input", () => {
@@ -1614,6 +1627,25 @@
 
             row.addEventListener("dblclick", () => {
                 selectProduct(product);
+            });
+
+            // ⭐ added: Mouse click = behave like arrow key highlight
+            row.addEventListener("click", () => {
+                // remove highlight from all rows
+                rows.forEach((r) => r.classList.remove("table-active"));
+                // highlight clicked row
+                row.classList.add("table-active");
+                // keep index in sync with keyboard navigation
+                currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
+                // focus row (so Enter works naturally)
+                row.focus();
+            });
+
+            // 🔑 Press Enter to select
+            row.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    selectProduct(product);
+                }
             });
 
             productTableBody.appendChild(row);
