@@ -109,7 +109,7 @@ public class KasirService {
             CustomerEntity customerEntity = customerEntityOpt.get();
 
             // Validate transaction
-            Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), transactionId);
+            Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientData.getClientId(), transactionId);
             if (transactionEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data transaksi tidak ditemukan");
             }

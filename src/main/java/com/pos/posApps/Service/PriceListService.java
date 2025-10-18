@@ -38,8 +38,6 @@ public class PriceListService {
 
         if(merk.equalsIgnoreCase("YAMAHA")){
             basicPrice = (hargaJual.subtract(hargaJual.multiply(yamahaPercentageDisc)));
-            System.out.println("Basic price : " + basicPrice);
-            System.out.println("pct : " + yamahaPercentageDisc);
             suggestedPrice = basicPrice.add(basicPrice.multiply(profitPercentage));
         }else if (merk.equalsIgnoreCase("HONDA")){
             basicPrice = (hargaJual.subtract(hargaJual.multiply(hondaPercentageDisc)));

@@ -42,12 +42,7 @@ public class KasirController {
         Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
         List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
-
-        System.out.println("productEntity = " + productEntity);
-        System.out.println("customerEntity: " + customerEntities);
         model.addAttribute("clientSettingData", clientSettingData);
-
-
         PenjualanDTO penjualanData = (transactionId != null)
                 ? penjualanService.getPenjualanDataById(clientId, transactionId)
                 : new PenjualanDTO();
