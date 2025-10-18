@@ -59,20 +59,6 @@ public class ProductService {
         );
     }
 
-
-    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<StockMovementsEntity> stockMovementData = stockMovementsRepository.findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(clientId, productId, startDate, endDate);
-        return stockMovementData.stream().map(data -> new StockMovementsDTO(
-                data.getStockMovementsId(),
-                data.getReferenceNo(),
-                data.getTipeKartuStok(),
-                data.getQtyIn(),
-                data.getQtyOut(),
-                data.getSaldo(),
-                data.getCreatedAt()
-        )).collect(Collectors.toList());
-    }
-
     public Page<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
                 .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
@@ -97,29 +83,6 @@ public class ProductService {
                 .max(Comparator.comparing(StockMovementsEntity::getCreatedAt))
                 .map(StockMovementsEntity::getSaldo)
                 .orElse(0L);
-    }
-
-    public List<ProductDTO> getProductData(Long clientId) {
-        List<ProductEntity> productData = productRepository
-                .findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(clientId);
-
-        return productData.stream().map(product -> new ProductDTO(
-                product.getProductId(),
-                product.getShortName(),
-                product.getFullName(),
-                product.getSupplierPrice(),
-                product.getStock(),
-                product.getProductPricesEntity().stream()
-                        .map(productPrices -> new ProductPricesDTO(
-                                productPrices.getProductPricesId(),
-                                product.getProductId(),
-                                productPrices.getPercentage(),
-                                productPrices.getPrice(),
-                                productPrices.getMaximalCount()
-                        ))
-                        .collect(Collectors.toList()),
-                product.getSupplierEntity().getSupplierId()
-        )).collect(Collectors.toList());
     }
 
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {

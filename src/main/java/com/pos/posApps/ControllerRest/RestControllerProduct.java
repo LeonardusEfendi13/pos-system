@@ -9,6 +9,7 @@ import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -33,7 +34,7 @@ public class RestControllerProduct {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-            return ResponseEntity.ok(productService.getProductData(clientId));
+            return ResponseEntity.ok(productService.getProductData(clientId, PageRequest.of(0, 10)).getContent());
         }catch (Exception e){
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
