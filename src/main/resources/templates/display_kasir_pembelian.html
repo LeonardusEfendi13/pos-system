@@ -548,7 +548,10 @@
                         </table>
                     </div>
                     <div class="modal-footer py-2">
-                        <button type="button" class="btn btn-primary" id="addProductForm">Simpan</button>
+                        <button type="button" class="btn btn-primary" id="addProductForm">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                            <span class="btn-text">Simpan</span>
+                        </button>
                         <button
                                 type="button"
                                 class="btn btn-secondary"
@@ -654,58 +657,76 @@
 <script th:inline="none">
     //Send new product to backend
     document.getElementById("addProductForm").addEventListener("click", async function () {
-      const form = document.getElementById("barangForm");
-      const formData = new FormData(form);
-      const jsonData = {};
+        const button = this;
+        const spinner = button.querySelector(".spinner-border");
+        const buttonText = button.querySelector(".btn-text");
 
-      // Convert FormData to JSON with array handling
-      formData.forEach((value, key) => {
-          const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
-          if (match) {
-            const [, arrName, index, field] = match;
-            jsonData[arrName] = jsonData[arrName] || [];
-            jsonData[arrName][index] = jsonData[arrName][index] || {};
-            jsonData[arrName][index][field] = field === 'price' ? parseRupiah(value) : value;
-          } else {
-            jsonData[key] = key.toLowerCase().includes('price') ? parseRupiah(value) : value;
-          }
+        // Show spinner, disable button
+        spinner.classList.remove("d-none");
+        buttonText.textContent = "Menyimpan...";
+        button.disabled = true;
+
+        const form = document.getElementById("barangForm");
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => {
+            const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+            if (match) {
+                const [, arrName, index, field] = match;
+                jsonData[arrName] = jsonData[arrName] || [];
+                jsonData[arrName][index] = jsonData[arrName][index] || {};
+                jsonData[arrName][index][field] =
+                    field === "price" ? parseRupiah(value) : value;
+            } else {
+                jsonData[key] = key.toLowerCase().includes("price")
+                    ? parseRupiah(value)
+                    : value;
+            }
         });
 
-      try {
-        // 1. Send add product request
-        const response = await fetch("/api/product/add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(jsonData),
-        });
+        try {
+            const response = await fetch("/api/product/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(jsonData),
+            });
 
-        // limit 50/100/150 & query src name code
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Failed to save product");
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "Failed to save product");
+            }
+
+            const fetchResponse = await fetch("/api/product/list");
+            if (!fetchResponse.ok) {
+                throw new Error("Failed to fetch updated product list");
+            }
+
+            const updatedProductList = await fetchResponse.json();
+            masterProducts = updatedProductList;
+            console.log("update product list : ", JSON.stringify(masterProducts, null, 2));
+            loadProductTable(masterProducts);
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
+            modal.hide();
+            form.reset();
+
+            alert("Produk berhasil disimpan dan daftar produk diperbarui.");
+            setTimeout(() => {
+                focusNextEmptyRow(); // baris baru
+                const nextRow = sellTableBody.lastElementChild;
+                const nextCodeInput = nextRow?.querySelector(".code-input");
+                nextCodeInput?.focus(); // langsung fokus ke code-input
+              }, 300);
+        } catch (err) {
+            console.error("Error:", err);
+            alert(err.message);
+        } finally {
+            // Hide spinner, enable button
+            spinner.classList.add("d-none");
+            buttonText.textContent = "Simpan";
+            button.disabled = false;
         }
-
-        // 2. If add succeeded, fetch updated product list
-        const fetchResponse = await fetch("/api/product/list"); // your GET endpoint for full list
-        if (!fetchResponse.ok) {
-          throw new Error("Failed to fetch updated product list");
-        }
-
-        const updatedProductList = await fetchResponse.json();
-
-        // 3. Replace masterProducts with new list
-        masterProducts = updatedProductList;
-        // Close modal and reset form
-        const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
-        modal.hide();
-        form.reset();
-
-        alert("Produk berhasil disimpan dan daftar produk diperbarui.");
-
-      } catch (err) {
-        console.error("Error:", err);
-        alert(err.message);
-      }
     });
     $(document).ready(function () {
         const barangModal = document.getElementById('barangModal');
