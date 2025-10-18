@@ -64,6 +64,7 @@
                     <th scope="col">Kode Part</th>
                     <th scope="col">Nama Barang</th>
                     <th scope="col">Stok</th>
+                    <th scope="col">Harga Beli</th>
                     <th scope="col">Harga Jual</th>
                     <th scope="col">Action</th>
                 </tr>
@@ -74,6 +75,9 @@
                     <td th:text="${product.shortName}">Kode Part</td>
                     <td th:text="${product.fullName}">Nama Barang</td>
                     <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>
+                    <td class="rupiah-price" th:data-price="${product.hargaBeli}"
+                        th:text="${product.hargaBeli}">Harga Beli
+                    </td>
                     <td class="rupiah-price" th:data-price="${product.productPricesDTO[0].price}"
                         th:text="${product.productPricesDTO[0].price}">Harga Jual
                     </td>
