@@ -34,14 +34,19 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     );
 
     @Query("""
-    SELECT DISTINCT p FROM ProductEntity p
-    JOIN p.productPricesEntity prices
-    WHERE p.clientEntity.clientId = :clientId
-      AND p.deletedAt IS NULL
-""")
+                SELECT DISTINCT p FROM ProductEntity p
+                JOIN p.productPricesEntity prices
+                WHERE p.clientEntity.clientId = :clientId
+                  AND p.deletedAt IS NULL
+            """)
     Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
 
     List<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(Long clientId);
+
+    Page<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(
+            Long clientId,
+            Pageable pageable
+    );
 
     ProductEntity findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(String fullName, String shortName, Long productId, Long clientId);
 
@@ -77,5 +82,49 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     BigDecimal sumInventoryValue(@Param("clientId") Long clientId);
 
     List<ProductEntity> findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(Long clientId, Set<String> shortNames);
+
+
+    @Query("""
+    SELECT p FROM ProductEntity p
+    LEFT JOIN FETCH p.productPricesEntity
+    WHERE p.clientEntity.clientId = :clientId
+    AND p.deletedAt IS NULL
+    AND (
+        LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+""")
+    List<ProductEntity> findAllWithPricesByClientId(
+            @Param("clientId") Long clientId,
+            @Param("keyword") String keyword
+    );
+
+
+    // Search by shortName only
+    @Query("""
+    SELECT p FROM ProductEntity p
+    LEFT JOIN FETCH p.productPricesEntity
+    WHERE p.clientEntity.clientId = :clientId
+    AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    AND p.deletedAt IS NULL
+""")
+    List<ProductEntity> findByShortNameContaining(
+            @Param("clientId") Long clientId,
+            @Param("keyword") String keyword
+    );
+
+    // Search by fullName only
+    @Query("""
+    SELECT p FROM ProductEntity p
+    LEFT JOIN FETCH p.productPricesEntity
+    WHERE p.clientEntity.clientId = :clientId
+    AND LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    AND p.deletedAt IS NULL
+""")
+    List<ProductEntity> findByFullNameContaining(
+            @Param("clientId") Long clientId,
+            @Param("keyword") String keyword
+    );
+
 
 }

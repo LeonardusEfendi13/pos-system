@@ -68,7 +68,7 @@
                                readonly
                                th:value="${selectedItemName}"
                                data-id="">
-                        <input type="hidden" id="productId" name="productId" th:value="${selectedItemId}" />
+                        <input type="hidden" id="productId" name="productId" th:value="${selectedItemId}"/>
                         <button class="btn btn-outline-primary" type="button" id="btnCariBarang">
                             Pilih Barang
                         </button>
@@ -82,46 +82,75 @@
 
             <br>
 
-            <div style="max-height: 70vh; overflow-y: auto;">
+            <div style="">
                 <table id="kartuStokTable" class="table table-bordered">
-                <thead class="sticky-top">
-                <tr>
-                    <th scope="col">No</th>
-                    <th scope="col">Tanggal</th>
-                    <th scope="col">No. Faktur</th>
-                    <th scope="col">Tipe</th>
-                    <th scope="col">Masuk</th>
-                    <th scope="col">Keluar</th>
-                    <th scope="col">Saldo Akhir</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${!kartuStok.empty}">
-                    <td>1</td>
-                    <td th:text="${T(java.time.LocalDate).parse(startDate).format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id')))}">Tanggal Jual</td>
-                    <td>-</td>
-                    <td>SALDO AWAL</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td th:text="${stockAwal}">-2</td>
-                </tr>
-                <tr th:each="stok, iterStat : ${kartuStok}" th:if="${!kartuStok.empty}">
-                    <td th:text="${iterStat.count + 1}">2</td>
-                    <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
-                    <td th:text="${stok.referenceNo}">000000</td>
-                    <td th:text="${stok.tipeKartuStok}">Tipe Kartu Stok</td>
-                    <td th:text="${stok.qtyIn}">-2</td>
-                    <td th:text="${stok.qtyOut}">-2</td>
-                    <td th:text="${stok.saldo}">-2</td>
-                </tr>
+                    <thead class="sticky-top">
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Tanggal</th>
+                        <th scope="col">No. Faktur</th>
+                        <th scope="col">Tipe</th>
+                        <th scope="col">Masuk</th>
+                        <th scope="col">Keluar</th>
+                        <th scope="col">Saldo Akhir</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${!#lists.isEmpty(kartuStok) && currentPage == 0}">
+                        <td>1</td>
+                        <td th:text="${T(java.time.LocalDate).parse(startDate).format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id')))}">
+                            Tanggal Jual
+                        </td>
+                        <td>-</td>
+                        <td>SALDO AWAL</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td th:text="${stockAwal}">-2</td>
+                    </tr>
+                    <tr th:each="stok, iterStat : ${kartuStok}" th:if="${!#lists.isEmpty(kartuStok)}">
+                        <td th:text="${(currentPage * size) + iterStat.count + 1}">2</td>
+                        <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
+                            Tanggal Jual
+                        </td>
+                        <td th:text="${stok.referenceNo}">000000</td>
+                        <td th:text="${stok.tipeKartuStok}">Tipe Kartu Stok</td>
+                        <td th:text="${stok.qtyIn}">-2</td>
+                        <td th:text="${stok.qtyOut}">-2</td>
+                        <td th:text="${stok.saldo}">-2</td>
+                    </tr>
 
-                <tr th:if="${kartuStok.empty}">
-                    <td colspan="8" class="text-center text-muted">
-                        Tidak ada data untuk ditampilkan.
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    <tr th:if="${#lists.isEmpty(kartuStok)}">
+                        <td colspan="8" class="text-center text-muted">
+                            Tidak ada data untuk ditampilkan.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!--  Pagination  -->
+                <div class="d-flex justify-content-between align-items-center my-2">
+                    <div>
+                        Menampilkan <span th:text="${startData}">1</span> -
+                        <span th:text="${endData}">10</span> dari
+                        <span th:text="${totalData}">10</span> data
+                    </div>
+
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">‹</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${i}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}" th:text="${i + 1}">1</a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">›</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
@@ -189,133 +218,133 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const productIdInput = document.getElementById("productId");
+        const productIdInput = document.getElementById("productId");
 
-      if (productIdInput && productIdInput.value) {
-        // Optional: lookup name
-        const selectedProduct = masterProducts.find(p => p.productId == productIdInput.value);
-        if (selectedProduct) {
-          document.getElementById("itemName").value = selectedProduct.fullName;
+        if (productIdInput && productIdInput.value) {
+            // Optional: lookup name
+            const selectedProduct = masterProducts.find(p => p.productId == productIdInput.value);
+            if (selectedProduct) {
+                document.getElementById("itemName").value = selectedProduct.fullName;
+            }
         }
-      }
     });
     const productTableBody = document.getElementById("productTableBody");
     const searchCode = document.getElementById("searchCode");
     const searchName = document.getElementById("searchName");
     const productModalEl = document.getElementById("productModal");
     const productModal = new bootstrap.Modal(productModalEl);
-    document.getElementById('btnCariBarang').addEventListener('click', function() {
+    document.getElementById('btnCariBarang').addEventListener('click', function () {
         productModal.show();
         loadProductTable();
     });
 
     productModalEl.addEventListener("shown.bs.modal", () => {
-      searchName.focus();
+        searchName.focus();
     });
 
 
     function loadProductTable(filteredProducts = masterProducts) {
-      productTableBody.innerHTML = "";
-      let rows = [];
+        productTableBody.innerHTML = "";
+        let rows = [];
 
-      filteredProducts.forEach((product, index) => {
-        const row = document.createElement("tr");
-        row.setAttribute("data-index", index);
-        row.tabIndex = 0;
-        row.style.cursor = "pointer";
+        filteredProducts.forEach((product, index) => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-index", index);
+            row.tabIndex = 0;
+            row.style.cursor = "pointer";
 
-        row.innerHTML = `
+            row.innerHTML = `
             <td>${product.shortName}</td>
             <td>${product.fullName}</td>
             <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
             <td>${product.stok}</td>
             `;
 
-        row.addEventListener("dblclick", () => {
-          selectProduct(product);
+            row.addEventListener("dblclick", () => {
+                selectProduct(product);
+            });
+
+            productTableBody.appendChild(row);
+            rows.push(row);
         });
 
-        productTableBody.appendChild(row);
-        rows.push(row);
-      });
+        currentKeyboardIndex = -1;
+        highlightRow(null);
 
-      currentKeyboardIndex = -1;
-      highlightRow(null);
+        document.onkeydown = null;
 
-      document.onkeydown = null;
+        document.onkeydown = function (e) {
+            if (!productModalEl.classList.contains("show")) return;
 
-      document.onkeydown = function (e) {
-        if (!productModalEl.classList.contains("show")) return;
+            const activeElement = document.activeElement;
+            const isInSearch =
+                activeElement === searchCode || activeElement === searchName;
 
-        const activeElement = document.activeElement;
-        const isInSearch =
-          activeElement === searchCode || activeElement === searchName;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-        switch (e.key) {
-          case "ArrowDown":
-            e.preventDefault();
-            if (rows.length === 0) return;
+                    if (isInSearch) {
+                        currentKeyboardIndex = 0;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    } else {
+                        if (currentKeyboardIndex < rows.length - 1)
+                            currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
 
-            if (isInSearch) {
-              currentKeyboardIndex = 0;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
-            } else {
-              if (currentKeyboardIndex < rows.length - 1)
-                currentKeyboardIndex++;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+                case "ArrowUp":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
+
+                    if (!isInSearch) {
+                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
+
+                case "ArrowLeft":
+                    e.preventDefault();
+                    searchCode.focus();
+                    break;
+
+                case "ArrowRight":
+                    e.preventDefault();
+                    searchName.focus();
+                    break;
+
+                case "Enter":
+                    e.preventDefault();
+
+                    if (isInSearch) {
+                        doFilter();
+                    } else {
+                        if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                            const selectedCode = rows[currentKeyboardIndex]
+                                .querySelector("td")
+                                .textContent.trim();
+                            const selected = masterProducts.find(
+                                (p) => p.shortName === selectedCode
+                            );
+                            if (selected) selectProduct(selected);
+                        }
+                    }
+                    break;
             }
-            break;
+        };
 
-          case "ArrowUp":
-            e.preventDefault();
-            if (rows.length === 0) return;
-
-            if (!isInSearch) {
-              if (currentKeyboardIndex > 0) currentKeyboardIndex--;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+        function highlightRow(row) {
+            rows.forEach((r) => r.classList.remove("table-active"));
+            if (row) {
+                row.classList.add("table-active");
+                row.scrollIntoView({block: "nearest", behavior: "smooth"});
             }
-            break;
-
-          case "ArrowLeft":
-            e.preventDefault();
-            searchCode.focus();
-            break;
-
-          case "ArrowRight":
-            e.preventDefault();
-            searchName.focus();
-            break;
-
-          case "Enter":
-            e.preventDefault();
-
-            if (isInSearch) {
-              doFilter();
-            } else {
-              if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
-                const selectedCode = rows[currentKeyboardIndex]
-                  .querySelector("td")
-                  .textContent.trim();
-                const selected = masterProducts.find(
-                  (p) => p.shortName === selectedCode
-                );
-                if (selected) selectProduct(selected);
-              }
-            }
-            break;
         }
-      };
-
-      function highlightRow(row) {
-        rows.forEach((r) => r.classList.remove("table-active"));
-        if (row) {
-          row.classList.add("table-active");
-          row.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
-      }
     }
 
     function selectProduct(product) {
@@ -333,41 +362,72 @@
     }
 
     searchCode.addEventListener("focus", () => {
-      activeSearchField = "shortName";
+        activeSearchField = "shortName";
     });
 
     searchName.addEventListener("focus", () => {
-      activeSearchField = "fullName";
+        activeSearchField = "fullName";
     });
 
-    function doFilter() {
-      if (activeSearchField === "shortName") {
-        const val = searchCode.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.shortName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      } else if (activeSearchField === "fullName") {
-        const val = searchName.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.fullName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      }
+    async function doFilter() {
+        const keyword = activeSearchField === "shortName"
+            ? searchCode.value.trim()
+            : searchName.value.trim();
+
+        if (!keyword) {
+            loadProductTable(masterProducts);
+            return;
+        }
+
+        try {
+            const field = activeSearchField;
+            const response = await fetch(`/products/search?keyword=${encodeURIComponent(keyword)}&field=${field}`);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch products");
+            }
+
+            const filteredProducts = await response.json();
+
+            if (!filteredProducts || filteredProducts.length === 0) {
+                loadProductTable([]);
+                return;
+            }
+
+            loadProductTable(filteredProducts);
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mencari produk: " + err.message);
+            loadProductTable(masterProducts); // fallback ke semua produk
+        }
     }
 
     [searchCode, searchName].forEach((input) => {
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doFilter();
-        }
-      });
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                doFilter();
+            }
+        });
     });
 
     productModalEl.addEventListener("hidden.bs.modal", () => {
-      searchCode.value = "";
-      searchName.value = "";
+        searchCode.value = "";
+        searchName.value = "";
+    });
+
+    $('#kartuStokTable').DataTable({
+        paging: false,
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50],
+        ordering: true,
+        order: [],
+        info: false,
+        searching: false,
+        language: {
+            lengthMenu: "Tampilkan MENU data per halaman",
+            zeroRecords: "Data tidak ditemukan"
+        }
     });
 </script>
 </body>

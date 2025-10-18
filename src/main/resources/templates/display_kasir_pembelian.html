@@ -1814,21 +1814,38 @@
      activeSearchField = "fullName";
    });
 
-   function doFilter() {
-     if (activeSearchField === "shortName") {
-       const val = searchCode.value.trim().toLowerCase();
-       const filtered = masterProducts.filter((p) =>
-         p.shortName.toLowerCase().includes(val)
-       );
-       loadProductTable(filtered);
-     } else if (activeSearchField === "fullName") {
-       const val = searchName.value.trim().toLowerCase();
-       const filtered = masterProducts.filter((p) =>
-         p.fullName.toLowerCase().includes(val)
-       );
-       loadProductTable(filtered);
-     }
-   }
+    async function doFilter() {
+        const keyword = activeSearchField === "shortName"
+            ? searchCode.value.trim()
+            : searchName.value.trim();
+
+        if (!keyword) {
+            loadProductTable(masterProducts);
+            return;
+        }
+
+        try {
+            const field = activeSearchField;
+            const response = await fetch(`/products/search?keyword=${encodeURIComponent(keyword)}&field=${field}`);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch products");
+            }
+
+            const filteredProducts = await response.json();
+
+            if (!filteredProducts || filteredProducts.length === 0) {
+                loadProductTable([]);
+                return;
+            }
+
+            loadProductTable(filteredProducts);
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mencari produk: " + err.message);
+            loadProductTable(masterProducts); // fallback ke semua produk
+        }
+    }
 
    [searchCode, searchName].forEach((input) => {
      input.addEventListener("keydown", (e) => {
