@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>Kasir</title>
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -9,219 +9,235 @@
     />
     <style>
         body {
-          background-color: #f8f9fa;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             "Helvetica Neue", Arial, sans-serif;
         }
+
         .card {
-          border: none;
-          box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
+
         .table-responsive {
-          border-radius: 0.3rem;
+            border-radius: 0.3rem;
         }
+
         .table {
-          margin-bottom: 0;
+            margin-bottom: 0;
         }
+
         .table thead {
-          background-color: #e9ecef;
+            background-color: #e9ecef;
         }
+
         .table td,
         .table th {
-          vertical-align: middle;
-          padding: 0.5rem 0.75rem;
+            vertical-align: middle;
+            padding: 0.5rem 0.75rem;
         }
+
         .form-control-sm,
         .form-select-sm {
-          padding: 0.25rem 0.5rem;
-          font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
         }
+
         .btn {
-          font-size: 0.875rem;
+            font-size: 0.875rem;
         }
 
         #contextMenu {
-          position: absolute;
-          display: none;
-          background-color: white;
-          border: 1px solid #ccc;
-          z-index: 1000;
-          min-width: 150px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-          border-radius: 0.25rem;
+            position: absolute;
+            display: none;
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
         }
+
         #contextMenu ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
+
         #contextMenu li {
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 0.875rem;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.875rem;
         }
+
         #contextMenu li:hover {
-          background-color: #f0f0f0;
+            background-color: #f0f0f0;
         }
 
         /* Custom styles for the scrollable table */
         .scrollable-table {
-          max-height: 50vh;
-          overflow-y: auto;
+            max-height: 50vh;
+            overflow-y: auto;
         }
 
         /* Payment section styling */
         .payment-section-card {
-          background-color: #e9ecef;
-          padding: 1.5rem;
+            background-color: #e9ecef;
+            padding: 1.5rem;
         }
 
         .bottom-right-fixed {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          z-index: 800;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 800;
         }
 
         #productTable th,
         #productTable td {
-          border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+            border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
         }
 
         #productTable th:last-child,
         #productTable td:last-child {
-          border-right: none; /* Remove border on the last column */
+            border-right: none; /* Remove border on the last column */
         }
 
         #productTable thead th {
-          position: sticky;
-          top: 0;
-          background-color: #f8f9fa;
-          z-index: 10;
-          border-right: 1px solid #dee2e6;
-          padding-top: 0.3rem;
-          padding-bottom: 0.3rem;
-          height: 40px; /* fixed height */
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-right: 1px solid #dee2e6;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            height: 40px; /* fixed height */
         }
 
         #productTable thead th:last-child {
-          border-right: none;
+            border-right: none;
         }
 
         #productTable tbody td {
-          border-right: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
         }
 
         #productTable tbody td:last-child {
-          border-right: none;
+            border-right: none;
         }
 
         /* Push the first row down by header height */
         #productTable tbody tr:first-child {
-          padding-top: 40px;
-          display: table-row;
+            padding-top: 40px;
+            display: table-row;
         }
 
         .table-active {
-          background-color: #cce5ff !important; /* light blue highlight */
+            background-color: #cce5ff !important; /* light blue highlight */
         }
 
         /* ✅ General table reset */
         #detailTable {
-          table-layout: fixed;
-          width: 100%;
+            table-layout: fixed;
+            width: 100%;
         }
+
         #detailTable th,
         #detailTable td {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .table-wrapper {
-          max-height: 250px;
-          overflow-y: scroll; /* selalu pakai scroll */
-          overflow-x: hidden; /* kalau mau buang scroll horizontal */
+            max-height: 250px;
+            overflow-y: scroll; /* selalu pakai scroll */
+            overflow-x: hidden; /* kalau mau buang scroll horizontal */
         }
+
         #reprintTable,
         #detailTable {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 0;
-          table-layout: fixed; /* supaya kolom sejajar */
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            table-layout: fixed; /* supaya kolom sejajar */
         }
 
         /* ✅ Fixed header, scrollable tbody */
         #reprintTable thead,
         #detailTable thead {
-          display: table;
-          width: 100%;
-          table-layout: fixed;
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
 
         #reprintTable tbody,
         #detailTable tbody {
-          display: block;
-          height: 250px; /* untuk reprintTable */
-          overflow-y: auto;
-          width: 100%;
+            display: block;
+            height: 250px; /* untuk reprintTable */
+            overflow-y: auto;
+            width: 100%;
         }
 
         #detailTable tbody {
-          height: 150px; /* untuk detailTable */
+            height: 150px; /* untuk detailTable */
         }
 
         #reprintTable tbody tr,
         #detailTable tbody tr {
-          display: table;
-          width: 100%;
-          table-layout: fixed;
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
 
         /* ✅ Custom cell background */
         #reprintTable td.bg-custom {
-          color: white !important;
-          white-space: nowrap;
-          background-clip: padding-box; /* penting biar background keliatan di table-bordered */
+            color: white !important;
+            white-space: nowrap;
+            background-clip: padding-box; /* penting biar background keliatan di table-bordered */
         }
 
         #reprintTable td,
         #detailTable td {
-          vertical-align: middle;
-          padding: 4px 8px;
+            vertical-align: middle;
+            padding: 4px 8px;
         }
+
         .table-divider {
-          border-top: 2px solid #dee2e6; /* lebih tebal biar jelas */
-          margin: 8px 0;
+            border-top: 2px solid #dee2e6; /* lebih tebal biar jelas */
+            margin: 8px 0;
         }
 
         #sellTable input.form-control {
-          border: none; /* hilangkan border bootstrap */
-          box-shadow: none; /* hilangkan shadow fokus */
-          padding: 0 2px; /* rapat kiri kanan */
-          height: 20px; /* perkecil tinggi */
-          font-size: 0.8rem; /* font lebih kecil */
-          line-height: 1.2;
-          margin: 0;
-          border-radius: 0;
+            border: none; /* hilangkan border bootstrap */
+            box-shadow: none; /* hilangkan shadow fokus */
+            padding: 0 2px; /* rapat kiri kanan */
+            height: 20px; /* perkecil tinggi */
+            font-size: 0.8rem; /* font lebih kecil */
+            line-height: 1.2;
+            margin: 0;
+            border-radius: 0;
         }
+
         #sellTable td,
         #sellTable th {
-          padding: 2px 4px; /* default bootstrap 8–12px, ini lebih rapat */
+            padding: 2px 4px; /* default bootstrap 8–12px, ini lebih rapat */
         }
+
         #sellTable input:focus {
-          outline: none; /* supaya pas fokus tidak muncul border biru tebal */
-          background-color: #fff7cc;
+            outline: none; /* supaya pas fokus tidak muncul border biru tebal */
+            background-color: #fff7cc;
         }
+
         #sellTable td:has(input:focus) {
-          background-color: #fff3cd; /* warna highlight cell */
+            background-color: #fff3cd; /* warna highlight cell */
         }
 
         .modalHeader {
-          cursor: pointer;
-          background-color: #f1f1f1;
-          padding: 10px;
-          font-weight: bold;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -384,7 +400,7 @@
                                 min="0"
                         />
                     </div>
-                    <hr class="my-2" />
+                    <hr class="my-2"/>
                     <div
                             class="d-flex justify-content-between align-items-center mb-2"
                     >
@@ -649,9 +665,9 @@
 </script>
 <script>
     $(document).ready(function () {
-      $("#revenueModal").draggable();
-      $("#reprintModal").draggable();
-      $("#productModal").draggable();
+        $("#revenueModal").draggable();
+        $("#reprintModal").draggable();
+        $("#productModal").draggable();
     });
 
     const sellTableBody = document.getElementById("sellTableBody");
@@ -662,15 +678,15 @@
     const productModal = new bootstrap.Modal(productModalEl);
 
     productModalEl.addEventListener("shown.bs.modal", () => {
-      searchName.focus();
+        searchName.focus();
     });
     const subTotalDisplay = document.getElementById("subTotalDisplay");
     const grandTotalDisplay = document.getElementById("grandTotalDisplay");
     const grandDiscountPercent = document.getElementById(
-      "grandDiscountPercent"
+        "grandDiscountPercent"
     );
     const grandDiscountAmount = document.getElementById(
-      "grandDiscountAmount"
+        "grandDiscountAmount"
     );
     const paymentAmountInput = document.getElementById("paymentAmount");
     const returnAmountInput = document.getElementById("returnAmount");
@@ -679,269 +695,269 @@
     let replaceOnNextInput = null; // NEW FLAG
 
     document.addEventListener("keydown", (e) => {
-      // Hanya jalankan jika modal produk tidak terlihat
-      const productModalEl = document.getElementById("productModal");
-      if (productModalEl && productModalEl.classList.contains("show")) {
-        return;
-      }
-
-      // Cek apakah elemen yang aktif adalah salah satu input di tabel penjualan
-      const activeElement = document.activeElement;
-      const isInputInTable = activeElement.closest("#sellTableBody");
-
-      if (e.key === "Enter" && isInputInTable) {
-        e.preventDefault();
-
-        const currentRow = activeElement.closest("tr");
-        const nextRow = currentRow.nextElementSibling;
-
-        if (nextRow) {
-          nextRow.querySelector(".code-input").focus();
-        } else {
-          addNewRow();
-        }
-      }
-
-      if (isInputInTable) {
-        const currentRow = activeElement.closest("tr");
-        const currentRows = [...sellTableBody.querySelectorAll("tr")];
-        const currentRowIndex = currentRows.indexOf(currentRow);
-        const editableInputs = [
-          ...currentRow.querySelectorAll("input:not([readonly])"),
-        ];
-        const currentEditableIndex = editableInputs.indexOf(activeElement);
-
-        let nextRowIndex = currentRowIndex;
-        let nextEditableIndex = currentEditableIndex;
-
-        // Logika Navigasi
-        switch (e.key) {
-          case "ArrowUp":
-            e.preventDefault();
-            nextRowIndex = Math.max(0, currentRowIndex - 1);
-            break;
-          case "ArrowDown":
-            e.preventDefault();
-            nextRowIndex = currentRowIndex + 1;
-            if (nextRowIndex >= currentRows.length) {
-              addNewRow();
-              nextRowIndex = currentRows.length;
-            }
-            break;
-          case "ArrowLeft":
-            e.preventDefault();
-            nextEditableIndex = Math.max(0, currentEditableIndex - 1);
-            break;
-          case "ArrowRight":
-            e.preventDefault();
-            nextEditableIndex = Math.min(
-              editableInputs.length - 1,
-              currentEditableIndex + 1
-            );
-            break;
-          default:
+        // Hanya jalankan jika modal produk tidak terlihat
+        const productModalEl = document.getElementById("productModal");
+        if (productModalEl && productModalEl.classList.contains("show")) {
             return;
         }
 
-        // Fokuskan ke elemen berikutnya
-        const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
-        const targetEditableInputs = [
-          ...targetRow.querySelectorAll("input:not([readonly])"),
-        ];
-        const targetInput = targetEditableInputs[nextEditableIndex];
-        if (targetInput) {
-          targetInput.focus();
-          if (
-            e.key === "ArrowLeft" ||
-            e.key === "ArrowRight" ||
-            e.key === "ArrowUp" ||
-            e.key === "ArrowDown"
-          ) {
-            targetInput.select();
-          }
+        // Cek apakah elemen yang aktif adalah salah satu input di tabel penjualan
+        const activeElement = document.activeElement;
+        const isInputInTable = activeElement.closest("#sellTableBody");
+
+        if (e.key === "Enter" && isInputInTable) {
+            e.preventDefault();
+
+            const currentRow = activeElement.closest("tr");
+            const nextRow = currentRow.nextElementSibling;
+
+            if (nextRow) {
+                nextRow.querySelector(".code-input").focus();
+            } else {
+                addNewRow();
+            }
         }
-      }
+
+        if (isInputInTable) {
+            const currentRow = activeElement.closest("tr");
+            const currentRows = [...sellTableBody.querySelectorAll("tr")];
+            const currentRowIndex = currentRows.indexOf(currentRow);
+            const editableInputs = [
+                ...currentRow.querySelectorAll("input:not([readonly])"),
+            ];
+            const currentEditableIndex = editableInputs.indexOf(activeElement);
+
+            let nextRowIndex = currentRowIndex;
+            let nextEditableIndex = currentEditableIndex;
+
+            // Logika Navigasi
+            switch (e.key) {
+                case "ArrowUp":
+                    e.preventDefault();
+                    nextRowIndex = Math.max(0, currentRowIndex - 1);
+                    break;
+                case "ArrowDown":
+                    e.preventDefault();
+                    nextRowIndex = currentRowIndex + 1;
+                    if (nextRowIndex >= currentRows.length) {
+                        addNewRow();
+                        nextRowIndex = currentRows.length;
+                    }
+                    break;
+                case "ArrowLeft":
+                    e.preventDefault();
+                    nextEditableIndex = Math.max(0, currentEditableIndex - 1);
+                    break;
+                case "ArrowRight":
+                    e.preventDefault();
+                    nextEditableIndex = Math.min(
+                        editableInputs.length - 1,
+                        currentEditableIndex + 1
+                    );
+                    break;
+                default:
+                    return;
+            }
+
+            // Fokuskan ke elemen berikutnya
+            const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
+            const targetEditableInputs = [
+                ...targetRow.querySelectorAll("input:not([readonly])"),
+            ];
+            const targetInput = targetEditableInputs[nextEditableIndex];
+            if (targetInput) {
+                targetInput.focus();
+                if (
+                    e.key === "ArrowLeft" ||
+                    e.key === "ArrowRight" ||
+                    e.key === "ArrowUp" ||
+                    e.key === "ArrowDown"
+                ) {
+                    targetInput.select();
+                }
+            }
+        }
     });
 
     // Listener global untuk mengganti isi saat pertama kali ketik
     document.addEventListener("keydown", (ev) => {
-      if (
-        replaceOnNextInput &&
-        ev.key.length === 1 && // hanya karakter yang bisa diketik
-        !ev.ctrlKey &&
-        !ev.metaKey
-      ) {
-        replaceOnNextInput.value = ev.key; // replace entire value
-        ev.preventDefault();
-        replaceOnNextInput = null; // reset setelah dipakai
-      }
+        if (
+            replaceOnNextInput &&
+            ev.key.length === 1 && // hanya karakter yang bisa diketik
+            !ev.ctrlKey &&
+            !ev.metaKey
+        ) {
+            replaceOnNextInput.value = ev.key; // replace entire value
+            ev.preventDefault();
+            replaceOnNextInput = null; // reset setelah dipakai
+        }
     });
 
     paymentAmountInput.addEventListener("keypress", function (e) {
-      const char = String.fromCharCode(e.which);
+        const char = String.fromCharCode(e.which);
 
-      // Only allow digits
-      if (!/[0-9]/.test(char)) {
-        e.preventDefault();
-      }
+        // Only allow digits
+        if (!/[0-9]/.test(char)) {
+            e.preventDefault();
+        }
     });
 
     async function reprintBill() {
-      try {
-        // ⚡ Fetch 10 transaksi terakhir dari backend
-        const response = await fetch("/api/kasir/transaction/list");
+        try {
+            // ⚡ Fetch 10 transaksi terakhir dari backend
+            const response = await fetch("/api/kasir/transaction/list");
 
-        if (!response.ok) throw new Error("Gagal fetch transaksi");
+            if (!response.ok) throw new Error("Gagal fetch transaksi");
 
-        const transactions = await response.json();
-        showReprintModal(transactions);
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
+            const transactions = await response.json();
+            showReprintModal(transactions);
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
 
-      document.getElementById("contextMenu").style.display = "none";
+        document.getElementById("contextMenu").style.display = "none";
     }
 
     async function getRevenue() {
-      try {
-        const response = await fetch("/api/kasir/transaction/revenue");
-        if (!response.ok) throw new Error("Gagal fetch revenue transaksi");
+        try {
+            const response = await fetch("/api/kasir/transaction/revenue");
+            if (!response.ok) throw new Error("Gagal fetch revenue transaksi");
 
-        const totalRevenue = await response.text();
+            const totalRevenue = await response.text();
 
-        // 💰 Format the revenue (optional)
-        const formatted = new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          minimumFractionDigits: 0,
-        }).format(totalRevenue);
+            // 💰 Format the revenue (optional)
+            const formatted = new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0,
+            }).format(totalRevenue);
 
-        // 🎯 Set the value inside the modal
-        document.getElementById("revenueValue").textContent = formatted;
+            // 🎯 Set the value inside the modal
+            document.getElementById("revenueValue").textContent = formatted;
 
-        // 📦 Show the modal using Bootstrap's JS API
-        const modal = new bootstrap.Modal(
-          document.getElementById("revenueModal")
-        );
-        modal.show();
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
+            // 📦 Show the modal using Bootstrap's JS API
+            const modal = new bootstrap.Modal(
+                document.getElementById("revenueModal")
+            );
+            modal.show();
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
 
-      document.getElementById("contextMenu").style.display = "none";
+        document.getElementById("contextMenu").style.display = "none";
     }
 
     function setupRowSelection() {
-      const tbody = document.querySelector("#reprintTable tbody");
-      const rows = tbody.querySelectorAll("tr");
+        const tbody = document.querySelector("#reprintTable tbody");
+        const rows = tbody.querySelectorAll("tr");
 
-      rows.forEach((row, index) => {
-        row.tabIndex = 0; // Make row focusable via keyboard
+        rows.forEach((row, index) => {
+            row.tabIndex = 0; // Make row focusable via keyboard
 
-        // Handle click to select
-        row.addEventListener("click", () => {
-          clearSelection();
-          row.classList.add("table-active");
-          row.focus();
+            // Handle click to select
+            row.addEventListener("click", () => {
+                clearSelection();
+                row.classList.add("table-active");
+                row.focus();
 
-          // ✅ Load detail data when row is selected
-          const trx = row._transactionData;
-          if (trx && trx.transactionDetailDTOS) {
-            loadDetailTable(trx.transactionDetailDTOS);
-          } else {
-            loadDetailTable([]); // fallback if no items
-          }
+                // ✅ Load detail data when row is selected
+                const trx = row._transactionData;
+                if (trx && trx.transactionDetailDTOS) {
+                    loadDetailTable(trx.transactionDetailDTOS);
+                } else {
+                    loadDetailTable([]); // fallback if no items
+                }
+            });
+
+            // Handle keyboard navigation
+            row.addEventListener("keydown", (e) => {
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    if (rows[index + 1]) {
+                        rows[index + 1].click(); // click triggers focus + detail load
+                    }
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    if (rows[index - 1]) {
+                        rows[index - 1].click(); // click triggers focus + detail load
+                    }
+                }
+            });
         });
-
-        // Handle keyboard navigation
-        row.addEventListener("keydown", (e) => {
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            if (rows[index + 1]) {
-              rows[index + 1].click(); // click triggers focus + detail load
-            }
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            if (rows[index - 1]) {
-              rows[index - 1].click(); // click triggers focus + detail load
-            }
-          }
-        });
-      });
     }
 
     // Clear previously selected row
     function clearSelection() {
-      const selected = document.querySelector(
-        "#reprintTable tbody tr.table-active"
-      );
-      if (selected) selected.classList.remove("table-active");
+        const selected = document.querySelector(
+            "#reprintTable tbody tr.table-active"
+        );
+        if (selected) selected.classList.remove("table-active");
     }
 
     function showReprintModal(transactions) {
-      const tbody = document.querySelector("#reprintTable tbody");
-      tbody.innerHTML = "";
+        const tbody = document.querySelector("#reprintTable tbody");
+        tbody.innerHTML = "";
 
-      if (transactions && transactions.length !== 0) {
-        transactions.forEach((trx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+        if (transactions && transactions.length !== 0) {
+            transactions.forEach((trx) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
           <td style="width:150px;line-height:10px">${
-            trx.transactionNumber
-          }</td>
+                    trx.transactionNumber
+                }</td>
           <td style="text-align:end;">${formatRupiah(
-            trx.totalPrice || 0
-          )}</td>
+                    trx.totalPrice || 0
+                )}</td>
         `;
-          tr.style.cursor = "pointer";
-          tr.style.display = "table";
-          tr.style.width = "100%";
-          tr.style.tableLayout = "fixed";
+                tr.style.cursor = "pointer";
+                tr.style.display = "table";
+                tr.style.width = "100%";
+                tr.style.tableLayout = "fixed";
 
-          tr._transactionData = trx;
+                tr._transactionData = trx;
 
-          tr.addEventListener("dblclick", () => {
-            const isPrintBill = document.getElementById("printBill");
+                tr.addEventListener("dblclick", () => {
+                    const isPrintBill = document.getElementById("printBill");
 
-            if (isPrintBill.checked) {
-              //Assign and convert needed values
-              trx.transactionDetailDTOS = trx.transactionDetailDTOS.map(
-                (item, index) => ({
-                  no: index + 1,
-                  ...item,
-                  price: item.price.toLocaleString("id-ID"),
-                  total: item.total.toLocaleString("id-ID"),
-                })
-              );
-              trx.grandTotal = trx.totalPrice;
-              trx.paymentAmount = formatRupiah(trx.totalPrice);
-              trx.returnAmount = 0;
-              trx.customer_name = trx.customerDTO.customerName;
-              trx.customer_alamat = trx.customerDTO.customerAlamat;
+                    if (isPrintBill.checked) {
+                        //Assign and convert needed values
+                        trx.transactionDetailDTOS = trx.transactionDetailDTOS.map(
+                            (item, index) => ({
+                                no: index + 1,
+                                ...item,
+                                price: item.price.toLocaleString("id-ID"),
+                                total: item.total.toLocaleString("id-ID"),
+                            })
+                        );
+                        trx.grandTotal = trx.totalPrice;
+                        trx.paymentAmount = formatRupiah(trx.totalPrice);
+                        trx.returnAmount = 0;
+                        trx.customer_name = trx.customerDTO.customerName;
+                        trx.customer_alamat = trx.customerDTO.customerAlamat;
 
-              const date = new Date(trx.tanggalJual);
-              const formattedDateTime = `${date.toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })} ${date.toLocaleTimeString("id-ID", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })}`;
+                        const date = new Date(trx.tanggalJual);
+                        const formattedDateTime = `${date.toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                        })} ${date.toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                        })}`;
 
-              trx.tanggal = formattedDateTime;
-              trx.inv_number = trx.transactionNumber;
-              generateReceiptContent(trx); // render content to #receiptContent
+                        trx.tanggal = formattedDateTime;
+                        trx.inv_number = trx.transactionNumber;
+                        generateReceiptContent(trx); // render content to #receiptContent
 
-              // Wait for the DOM to update
-              setTimeout(() => {
-                const originalContent = document.body.innerHTML;
-                const receiptHtml =
-                  document.getElementById("receiptContent").innerHTML;
+                        // Wait for the DOM to update
+                        setTimeout(() => {
+                            const originalContent = document.body.innerHTML;
+                            const receiptHtml =
+                                document.getElementById("receiptContent").innerHTML;
 
-                // Replace the entire body with the receipt
-                document.body.innerHTML = `
+                            // Replace the entire body with the receipt
+                            document.body.innerHTML = `
           <html>
           <head>
             <link
@@ -1021,116 +1037,116 @@
           </html>
           `;
 
-                // Print
-                window.print();
+                            // Print
+                            window.print();
 
-                // Restore original body after print
-                setTimeout(() => {
-                  document.body.innerHTML = originalContent;
-                  alert("Berhasil mencetak nota!");
-                  window.location.href = "/kasir";
-                }, 500); // Delay restore to ensure print dialog completes
-              }, 100); // Short delay to ensure DOM is ready
-            }
-          });
+                            // Restore original body after print
+                            setTimeout(() => {
+                                document.body.innerHTML = originalContent;
+                                alert("Berhasil mencetak nota!");
+                                window.location.href = "/kasir";
+                            }, 500); // Delay restore to ensure print dialog completes
+                        }, 100); // Short delay to ensure DOM is ready
+                    }
+                });
 
-          tbody.appendChild(tr);
-        });
-      } else {
-        const tr = document.createElement("tr");
-        tr.style.display = "table";
-        tr.style.width = "100%";
-        tr.style.tableLayout = "fixed";
+                tbody.appendChild(tr);
+            });
+        } else {
+            const tr = document.createElement("tr");
+            tr.style.display = "table";
+            tr.style.width = "100%";
+            tr.style.tableLayout = "fixed";
 
-        tr.innerHTML = `
+            tr.innerHTML = `
       <td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">
         No data available.
       </td>
     `;
 
-        tbody.appendChild(tr);
-      }
+            tbody.appendChild(tr);
+        }
 
-      setupRowSelection(); // setup click & keyboard navigation
+        setupRowSelection(); // setup click & keyboard navigation
 
-      const modalElement = document.getElementById("reprintModal");
-      const modal = new bootstrap.Modal(modalElement);
+        const modalElement = document.getElementById("reprintModal");
+        const modal = new bootstrap.Modal(modalElement);
 
-      // Show the modal
-      modal.show();
+        // Show the modal
+        modal.show();
 
-      // After modal is fully shown, focus first row
-      modalElement.addEventListener(
-        "shown.bs.modal",
-        () => {
-          const firstRow = tbody.querySelector("tr");
-          if (firstRow) {
-            clearSelection();
-            firstRow.classList.add("table-active");
-            firstRow.focus();
+        // After modal is fully shown, focus first row
+        modalElement.addEventListener(
+            "shown.bs.modal",
+            () => {
+                const firstRow = tbody.querySelector("tr");
+                if (firstRow) {
+                    clearSelection();
+                    firstRow.classList.add("table-active");
+                    firstRow.focus();
 
-            // ✅ Load the detail table immediately for the first row
-            const trx = firstRow._transactionData;
+                    // ✅ Load the detail table immediately for the first row
+                    const trx = firstRow._transactionData;
 
-            if (trx && trx.transactionDetailDTOS) {
-              loadDetailTable(trx.transactionDetailDTOS);
-            } else {
-              loadDetailTable([]);
-            }
-          }
-        },
-        { once: true }
-      );
+                    if (trx && trx.transactionDetailDTOS) {
+                        loadDetailTable(trx.transactionDetailDTOS);
+                    } else {
+                        loadDetailTable([]);
+                    }
+                }
+            },
+            {once: true}
+        );
     }
 
     function loadDetailTable(items) {
-      const detailBody = document.querySelector("#detailTable tbody");
-      detailBody.innerHTML = "";
+        const detailBody = document.querySelector("#detailTable tbody");
+        detailBody.innerHTML = "";
 
-      if (!items || items.length === 0) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        if (!items || items.length === 0) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
       <td colspan="4" style="text-align:center; padding: 20px; font-style: italic;">
         No item data available.
       </td>
     `;
-        detailBody.appendChild(tr);
-        return;
-      }
+            detailBody.appendChild(tr);
+            return;
+        }
 
-      items.forEach((item) => {
-        const tr = document.createElement("tr");
-        tr.style.height = "30px"; // or any fixed value
+        items.forEach((item) => {
+            const tr = document.createElement("tr");
+            tr.style.height = "30px"; // or any fixed value
 
-        tr.innerHTML = `
+            tr.innerHTML = `
       <td style="width: 350px;white-space: nowrap;overflow: hidden;">${
-        item.name
-      }</td>
+                item.name
+            }</td>
       <td style="text-align: center; width: 50px;">${item.qty}</td>
       <td style="text-align: end;width: 150px; ">${formatRupiah(
-        item.price
-      )}</td>
+                item.price
+            )}</td>
       <td style="text-align: end;width: 150px;">${formatRupiah(
-        item.total
-      )}</td>
+                item.total
+            )}</td>
     `;
-        document.querySelector("#detailTable tbody").appendChild(tr);
-      });
+            document.querySelector("#detailTable tbody").appendChild(tr);
+        });
     }
 
     // Hide modal and backdrop
     function hideReprintModal() {
-      document.getElementById("reprintModal").style.display = "none";
-      document.getElementById("reprintModalBackdrop").style.display = "none";
+        document.getElementById("reprintModal").style.display = "none";
+        document.getElementById("reprintModalBackdrop").style.display = "none";
     }
 
     // Button to open modal with transactions
     function openReprint() {
-      showReprintModal(transactions);
+        showReprintModal(transactions);
     }
 
     const transactionNumberDisplay = document.getElementById(
-      "transactionNumberDisplay"
+        "transactionNumberDisplay"
     );
     const customerSelect = document.getElementById("customerSelect");
 
@@ -1139,96 +1155,96 @@
     let activeSearchField = "shortName";
 
     function generateTransactionNumber() {
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 10000);
-      return `#TRX${timestamp}${random}`;
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000);
+        return `#TRX${timestamp}${random}`;
     }
 
     function isRowEmpty(row) {
-      const code = row.querySelector(".code-input").value.trim();
-      return code === "";
+        const code = row.querySelector(".code-input").value.trim();
+        return code === "";
     }
 
     function formatTanggalWaktuIndonesia(date = new Date()) {
-      const hari = new Intl.DateTimeFormat("id-ID", {
-        weekday: "long",
-      }).format(date);
-      const tanggal = new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-      const jam = date.getHours().toString().padStart(2, "0");
-      const menit = date.getMinutes().toString().padStart(2, "0");
-      const detik = date.getSeconds().toString().padStart(2, "0");
+        const hari = new Intl.DateTimeFormat("id-ID", {
+            weekday: "long",
+        }).format(date);
+        const tanggal = new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }).format(date);
+        const jam = date.getHours().toString().padStart(2, "0");
+        const menit = date.getMinutes().toString().padStart(2, "0");
+        const detik = date.getSeconds().toString().padStart(2, "0");
 
-      return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
+        return `${hari}, ${tanggal} - ${jam}:${menit}:${detik}`;
     }
 
     function parseRupiah(rupiahString) {
-      if (!rupiahString) return 0;
-      return parseFloat(
-        rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
-      );
+        if (!rupiahString) return 0;
+        return parseFloat(
+            rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0
+        );
     }
 
     function formatRupiah(number) {
-      return (
-        "Rp " +
-        number.toLocaleString("id-ID", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })
-      );
+        return (
+            "Rp " +
+            number.toLocaleString("id-ID", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            })
+        );
     }
 
     function handleFormattedFocus(event) {
-      let value = parseRupiah(event.target.value);
-      if (value === 0) {
-        event.target.value = "";
-      } else {
-        event.target.value = value;
-      }
+        let value = parseRupiah(event.target.value);
+        if (value === 0) {
+            event.target.value = "";
+        } else {
+            event.target.value = value;
+        }
     }
 
     function handleFormattedBlur(event) {
-      const input = event.target;
-      const row = input.closest("tr");
-      const codeInput = row.querySelector(".code-input");
+        const input = event.target;
+        const row = input.closest("tr");
+        const codeInput = row.querySelector(".code-input");
 
-      // Ambil produk yang sesuai dari masterProducts
-      const product = masterProducts.find(
-        (p) => p.shortName === codeInput.value.trim()
-      );
+        // Ambil produk yang sesuai dari masterProducts
+        const product = masterProducts.find(
+            (p) => p.shortName === codeInput.value.trim()
+        );
 
-      // Pastikan ada produk sebelum melakukan validasi
-      if (product) {
-        const hargaBeli = product.hargaBeli;
-        const parsedValue = parseRupiah(input.value);
+        // Pastikan ada produk sebelum melakukan validasi
+        if (product) {
+            const hargaBeli = product.hargaBeli;
+            const parsedValue = parseRupiah(input.value);
 
-        // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
-        if (parsedValue < hargaBeli && parsedValue > 0) {
-          alert(
-            "Harga tidak boleh lebih rendah dari harga beli: " +
-              formatRupiah(hargaBeli)
-          );
-          input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
-          updateTotalRow(row);
-          return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
+            // Logika validasi: Jika harga yang diinput lebih rendah dari harga beli
+            if (parsedValue < hargaBeli && parsedValue > 0) {
+                alert(
+                    "Harga tidak boleh lebih rendah dari harga beli: " +
+                    formatRupiah(hargaBeli)
+                );
+                input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
+                updateTotalRow(row);
+                return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
+            }
         }
-      }
-      const value = event.target.value.replace(/[^0-9]/g, "");
-      if (value === "" || isNaN(value)) {
-        event.target.value = formatRupiah(0);
-      } else {
-        event.target.value = formatRupiah(parseInt(value));
-      }
+        const value = event.target.value.replace(/[^0-9]/g, "");
+        if (value === "" || isNaN(value)) {
+            event.target.value = formatRupiah(0);
+        } else {
+            event.target.value = formatRupiah(parseInt(value));
+        }
     }
 
     function clearZeroOnFocus(event) {
-      if (event.target.value === "0") {
-        event.target.value = "";
-      }
+        if (event.target.value === "0") {
+            event.target.value = "";
+        }
     }
 
     paymentAmountInput.addEventListener("focus", handleFormattedFocus);
@@ -1236,103 +1252,105 @@
     paymentAmountInput.addEventListener("input", calculateReturnAmount);
 
     function ensureZeroOnBlur(input, decimals = 0, row = null) {
-      input.addEventListener("blur", () => {
-        let val = input.value.trim();
+        input.addEventListener("blur", () => {
+            let val = input.value.trim();
 
-        if (val === "" || isNaN(val)) {
-          if (decimals > 0) {
-            input.value = (0).toFixed(decimals); // misal 0.00
-          } else {
-            input.value = "0";
-          }
-        }
+            if (val === "" || isNaN(val)) {
+                if (decimals > 0) {
+                    input.value = (0).toFixed(decimals); // misal 0.00
+                } else {
+                    input.value = "0";
+                }
+            }
 
-        // ✅ kalau ada row, update subtotal row & grand total
-        if (row) {
-          updateTotalRow(row);
-        } else {
-          calculateGrandTotal();
-        }
-      });
+            // ✅ kalau ada row, update subtotal row & grand total
+            if (row) {
+                updateTotalRow(row);
+            } else {
+                calculateGrandTotal();
+            }
+        });
     }
+
     function ensureOneOnBlur(input, decimals = 0, row = null) {
-      input.addEventListener("blur", () => {
-        let val = input.value.trim();
+        input.addEventListener("blur", () => {
+            let val = input.value.trim();
 
-        if (val === "" || isNaN(val)) {
-          if (decimals > 0) {
-            input.value = (0).toFixed(decimals); // misal 0.00
-          } else {
-            input.value = "1";
-          }
-        }
-        // ✅ kalau ada row, update subtotal row & grand total
-        if (row) {
-          updateTotalRow(row);
-        } else {
-          calculateGrandTotal();
-        }
-      });
+            if (val === "" || isNaN(val)) {
+                if (decimals > 0) {
+                    input.value = (0).toFixed(decimals); // misal 0.00
+                } else {
+                    input.value = "1";
+                }
+            }
+            // ✅ kalau ada row, update subtotal row & grand total
+            if (row) {
+                updateTotalRow(row);
+            } else {
+                calculateGrandTotal();
+            }
+        });
     }
+
     document.addEventListener("keydown", (e) => {
-      if (e.key === "+") {
-        e.preventDefault();
-        const paymentInput = document.getElementById("paymentAmount");
-        if (paymentInput) {
-          paymentInput.focus();
-          paymentInput.select(); // auto select isi lama kalau ada
+        if (e.key === "+") {
+            e.preventDefault();
+            const paymentInput = document.getElementById("paymentAmount");
+            if (paymentInput) {
+                paymentInput.focus();
+                paymentInput.select(); // auto select isi lama kalau ada
+            }
         }
-      }
     });
 
     const paymentInput = document.getElementById("paymentAmount");
     if (paymentInput) {
-      paymentInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
+        paymentInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
 
-          const returnAmountEl = document.getElementById("returnAmount");
-          const returnVal = parseRupiah(
-            returnAmountEl?.value || returnAmountEl?.textContent || "0"
-          );
-          let paymentVal = parseRupiah(paymentInput.value);
+                const returnAmountEl = document.getElementById("returnAmount");
+                const returnVal = parseRupiah(
+                    returnAmountEl?.value || returnAmountEl?.textContent || "0"
+                );
+                let paymentVal = parseRupiah(paymentInput.value);
 
-          if (!paymentVal || paymentVal === 0) {
-            // ✅ skenario 1: kosong → ambil dari returnAmount (tapi positif)
-            if (returnVal < 0) {
-              paymentVal = Math.abs(returnVal); // balik ke positif
-              paymentInput.value = formatRupiah(paymentVal);
+                if (!paymentVal || paymentVal === 0) {
+                    // ✅ skenario 1: kosong → ambil dari returnAmount (tapi positif)
+                    if (returnVal < 0) {
+                        paymentVal = Math.abs(returnVal); // balik ke positif
+                        paymentInput.value = formatRupiah(paymentVal);
 
-              // karena bayar pas, maka return jadi 0
-              if (returnAmountEl) {
-                returnAmountEl.value = formatRupiah(0);
-                returnAmountEl.textContent = formatRupiah(0);
-              }
+                        // karena bayar pas, maka return jadi 0
+                        if (returnAmountEl) {
+                            returnAmountEl.value = formatRupiah(0);
+                            returnAmountEl.textContent = formatRupiah(0);
+                        }
+                    }
+                } else {
+                    // ✅ skenario 2: ada value → langsung simpan
+                    saveTransaction();
+                }
             }
-          } else {
-            // ✅ skenario 2: ada value → langsung simpan
-            saveTransaction();
-          }
-        }
-      });
+        });
     }
 
     function addNewRow(focus = true) {
-      const rows = sellTableBody.querySelectorAll("tr");
-      if (rows.length > 0) {
-        const lastRowCodeInput =
-          rows[rows.length - 1].querySelector(".code-input");
-        if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
-          if (focus) lastRowCodeInput.focus();
-          return;
+        const rows = sellTableBody.querySelectorAll("tr");
+        if (rows.length > 0) {
+            const lastRowCodeInput =
+                rows[rows.length - 1].querySelector(".code-input");
+            if (lastRowCodeInput && lastRowCodeInput.value.trim() === "") {
+                if (focus) lastRowCodeInput.focus();
+                return;
+            }
         }
-      }
 
-      const rowNumber = rows.length + 1;
-      const row = document.createElement("tr");
-      row.style.height = "20px";
+        const rowNumber = rows.length + 1;
+        const row = document.createElement("tr");
+        row.style.height = "20px";
 
-      row.innerHTML = `
+        row.innerHTML = `
   <td class="row-number">${rowNumber}</td>
   <td><input type="text" class="form-control code-input" /></td>
   <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
@@ -1344,739 +1362,758 @@
   <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
 `;
 
-      sellTableBody.appendChild(row);
+        sellTableBody.appendChild(row);
 
-      const codeInput = row.querySelector(".code-input");
-      const nameInput = row.querySelector(".name-input");
-      const priceInput = row.querySelector(".price-input");
-      const qtyInput = row.querySelector(".qty-input");
-      const discPercentInput = row.querySelector(".discount-percent-input");
-      const discAmountInput = row.querySelector(".discount-amount-input");
-      const cekHargaBtn = row.querySelector(".cek-harga-btn");
+        const codeInput = row.querySelector(".code-input");
+        const nameInput = row.querySelector(".name-input");
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+        const discPercentInput = row.querySelector(".discount-percent-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+        const cekHargaBtn = row.querySelector(".cek-harga-btn");
 
-      // --- Tombol cek harga
-      cekHargaBtn.addEventListener("click", async () => {
-        const kodeBarang = codeInput.value.trim();
-        if (!kodeBarang) {
-          alert("Kode barang belum diisi!");
-          return;
-        }
-        cekHargaBtn.style.pointerEvents = "none";
-        cekHargaBtn.textContent = "Loading...";
+        // --- Tombol cek harga
+        cekHargaBtn.addEventListener("click", async () => {
+            const kodeBarang = codeInput.value.trim();
+            if (!kodeBarang) {
+                alert("Kode barang belum diisi!");
+                return;
+            }
+            cekHargaBtn.style.pointerEvents = "none";
+            cekHargaBtn.textContent = "Loading...";
 
-        try {
-          const res = await fetch(
-            `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
-          );
-          if (!res.ok) throw new Error("Gagal fetch harga");
-          const harga = await res.text();
+            try {
+                const res = await fetch(
+                    `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
+                );
+                if (!res.ok) throw new Error("Gagal fetch harga");
+                const harga = await res.text();
 
-          if (harga && harga !== "null") {
-            cekHargaBtn.classList.remove("btn-info");
-            cekHargaBtn.classList.add("btn-success");
-            cekHargaBtn.textContent = formatRupiah(Number(harga));
-          } else {
-            cekHargaBtn.textContent = "Tidak tersedia";
-            cekHargaBtn.disabled = true;
-          }
-        } catch (err) {
-          cekHargaBtn.textContent = "Error";
-          cekHargaBtn.disabled = true;
-          console.error(err);
-        }
-      });
+                if (harga && harga !== "null") {
+                    cekHargaBtn.classList.remove("btn-info");
+                    cekHargaBtn.classList.add("btn-success");
+                    cekHargaBtn.textContent = formatRupiah(Number(harga));
+                } else {
+                    cekHargaBtn.textContent = "Tidak tersedia";
+                    cekHargaBtn.disabled = true;
+                }
+            } catch (err) {
+                cekHargaBtn.textContent = "Error";
+                cekHargaBtn.disabled = true;
+                console.error(err);
+            }
+        });
 
-      // --- Event untuk kode barang (Enter → cari product)
-      codeInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const code = codeInput.value.trim().toUpperCase();
-          if (!code){
+        // --- Event untuk kode barang (Enter → cari product)
+        codeInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const code = codeInput.value.trim().toUpperCase();
+                if (!code) {
+                    selectedRow = row;
+                    loadProductTable();
+                    productModal.show();
+                    return;
+                }
+                ;
+
+                const product = masterProducts.find((p) => p.shortName === code);
+                if (product) {
+                    fillProductRow(row, product);
+                    maybeAddNewRow();
+                } else {
+                    alert("Product not found");
+                    codeInput.value = "";
+                    codeInput.focus();
+                }
+            }
+        });
+
+        codeInput.addEventListener("dblclick", () => {
+            if (!codeInput.value.trim()) {
+                // 🚀 Kalau kosong → buka modal
+                selectedRow = row;
+                loadProductTable();
+                productModal.show();
+            }
+        });
+
+        // --- Event qty
+        qtyInput.addEventListener("input", () => {
+            const qty = parseInt(qtyInput.value) || 0;
+            const code = codeInput.value.trim();
+            const product = masterProducts.find((p) => p.shortName === code);
+
+            if (product) {
+                const newPrice = getPriceByQty(product, qty);
+                priceInput.value = formatRupiah(newPrice);
+            }
+            updateTotalRow(row);
+        });
+
+        // --- Event diskon %
+        discPercentInput.addEventListener("input", () => {
+            const price = parseRupiah(priceInput.value);
+            const qty = parseInt(qtyInput.value) || 0;
+            const discountPercent = parseFloat(discPercentInput.value) || 0;
+            if (price * qty > 0) {
+                const discountAmount = price * qty * (discountPercent / 100);
+                discAmountInput.value = Math.round(discountAmount);
+            }
+            updateTotalRow(row);
+        });
+
+        // --- Event diskon Rp
+        discAmountInput.addEventListener("input", () => {
+            const price = parseRupiah(priceInput.value);
+            const qty = parseInt(qtyInput.value) || 0;
+            const discountAmount = parseFloat(discAmountInput.value) || 0;
+            if (price * qty > 0) {
+                const discountPercent = (discountAmount / (price * qty)) * 100;
+                discPercentInput.value = isFinite(discountPercent)
+                    ? discountPercent.toFixed(2)
+                    : "0";
+            }
+            updateTotalRow(row);
+        });
+
+        row.addEventListener("contextmenu", function (e) {
+            e.preventDefault();
             selectedRow = row;
-            loadProductTable();
-            productModal.show();
-            return;
-          };
+            showContextMenu(e.pageX, e.pageY);
+        });
 
-          const product = masterProducts.find((p) => p.shortName === code);
-          if (product) {
-            fillProductRow(row, product);
-            maybeAddNewRow();
-          } else {
-            alert("Product not found");
-            codeInput.value = "";
-            codeInput.focus();
-          }
-        }
-      });
-
-      codeInput.addEventListener("dblclick", () => {
-        if (!codeInput.value.trim()) {
-          // 🚀 Kalau kosong → buka modal
-          selectedRow = row;
-          loadProductTable();
-          productModal.show();
-        }
-      });
-
-      // --- Event qty
-      qtyInput.addEventListener("input", () => {
-        const qty = parseInt(qtyInput.value) || 0;
-        const code = codeInput.value.trim();
-        const product = masterProducts.find((p) => p.shortName === code);
-
-        if (product) {
-          const newPrice = getPriceByQty(product, qty);
-          priceInput.value = formatRupiah(newPrice);
-        }
-        updateTotalRow(row);
-      });
-
-      // --- Event diskon %
-      discPercentInput.addEventListener("input", () => {
-        const price = parseRupiah(priceInput.value);
-        const qty = parseInt(qtyInput.value) || 0;
-        const discountPercent = parseFloat(discPercentInput.value) || 0;
-        if (price * qty > 0) {
-          const discountAmount = price * qty * (discountPercent / 100);
-          discAmountInput.value = Math.round(discountAmount);
-        }
-        updateTotalRow(row);
-      });
-
-      // --- Event diskon Rp
-      discAmountInput.addEventListener("input", () => {
-        const price = parseRupiah(priceInput.value);
-        const qty = parseInt(qtyInput.value) || 0;
-        const discountAmount = parseFloat(discAmountInput.value) || 0;
-        if (price * qty > 0) {
-          const discountPercent = (discountAmount / (price * qty)) * 100;
-          discPercentInput.value = isFinite(discountPercent)
-            ? discountPercent.toFixed(2)
-            : "0";
-        }
-        updateTotalRow(row);
-      });
-
-      row.addEventListener("contextmenu", function (e) {
-        e.preventDefault();
-        selectedRow = row;
-        showContextMenu(e.pageX, e.pageY);
-      });
-
-      calculateGrandTotal();
-      if (focus) codeInput.focus();
+        calculateGrandTotal();
+        if (focus) codeInput.focus();
     }
 
     function maybeAddNewRow() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
-      const lastRow = rows[rows.length - 1];
-      const codeVal = lastRow.querySelector(".code-input").value.trim();
-      if (codeVal) {
-        addNewRow();
-      }
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        const lastRow = rows[rows.length - 1];
+        const codeVal = lastRow.querySelector(".code-input").value.trim();
+        if (codeVal) {
+            addNewRow();
+        }
     }
+
     function getPriceByQty(product, qty) {
-      let chosenPrice = product.productPricesDTO[0].price; // default first tier
+        let chosenPrice = product.productPricesDTO[0].price; // default first tier
 
-      for (let i = 0; i < product.productPricesDTO.length; i++) {
-        const tier = product.productPricesDTO[i];
+        for (let i = 0; i < product.productPricesDTO.length; i++) {
+            const tier = product.productPricesDTO[i];
 
-        // if qty fits inside this tier, use it and stop
-        if (qty <= tier.maximalCount && tier.price > 0) {
-          chosenPrice = tier.price;
-          return chosenPrice;
+            // if qty fits inside this tier, use it and stop
+            if (qty <= tier.maximalCount && tier.price > 0) {
+                chosenPrice = tier.price;
+                return chosenPrice;
+            }
+
+            // if qty is bigger, keep moving, but always carry forward the latest valid price
+            if (tier.price > 0) {
+                chosenPrice = tier.price;
+            }
         }
 
-        // if qty is bigger, keep moving, but always carry forward the latest valid price
-        if (tier.price > 0) {
-          chosenPrice = tier.price;
-        }
-      }
-
-      return chosenPrice; // at the end, it's the last tier
+        return chosenPrice; // at the end, it's the last tier
     }
 
     function fillProductRow(row, product) {
-      const qty = 1; // default qty
-      const price = getPriceByQty(product, qty);
+        const qty = 1; // default qty
+        const price = getPriceByQty(product, qty);
 
-      row.querySelector(".code-input").value = product.shortName;
-      row.querySelector(".name-input").value = product.fullName;
-      row.querySelector(".price-input").value = formatRupiah(price);
-      row.querySelector(".qty-input").value = qty;
-      row.querySelector(".discount-percent-input").value = 0;
-      row.querySelector(".discount-amount-input").value = 0;
-      updateTotalRow(row);
+        row.querySelector(".code-input").value = product.shortName;
+        row.querySelector(".name-input").value = product.fullName;
+        row.querySelector(".price-input").value = formatRupiah(price);
+        row.querySelector(".qty-input").value = qty;
+        row.querySelector(".discount-percent-input").value = 0;
+        row.querySelector(".discount-amount-input").value = 0;
+        updateTotalRow(row);
     }
 
     function updateTotalRow(r) {
-      const price = parseRupiah(r.querySelector(".price-input").value);
-      const qty = parseInt(r.querySelector(".qty-input").value) || 0;
-      const discAmount =
-        parseFloat(r.querySelector(".discount-amount-input").value) || 0;
-      const subtotal = price * qty;
-      const total = subtotal - discAmount;
-      r.querySelector(".total-cell").textContent =
-        "Rp " + total.toLocaleString("id-ID");
-      calculateGrandTotal();
+        const price = parseRupiah(r.querySelector(".price-input").value);
+        const qty = parseInt(r.querySelector(".qty-input").value) || 0;
+        const discAmount =
+            parseFloat(r.querySelector(".discount-amount-input").value) || 0;
+        const subtotal = price * qty;
+        const total = subtotal - discAmount;
+        r.querySelector(".total-cell").textContent =
+            "Rp " + total.toLocaleString("id-ID");
+        calculateGrandTotal();
     }
 
     function selectProduct(product) {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
+        const rows = [...sellTableBody.querySelectorAll("tr")];
 
-      // ---- First, check if product already exists in any row ----
-      let existingRow = rows.find((r) => {
-        const code = r
-          .querySelector(".code-input")
-          .value.trim()
-          .toUpperCase();
-        return code === product.shortName;
-      });
+        // ---- First, check if product already exists in any row ----
+        let existingRow = rows.find((r) => {
+            const code = r
+                .querySelector(".code-input")
+                .value.trim()
+                .toUpperCase();
+            return code === product.shortName;
+        });
 
-      if (existingRow) {
-        // ✅ Increase qty if already exists
-        const qtyInput = existingRow.querySelector(".qty-input");
-        qtyInput.value = parseInt(qtyInput.value || "0") + 1;
-        updateTotalRow(existingRow);
+        if (existingRow) {
+            // ✅ Increase qty if already exists
+            const qtyInput = existingRow.querySelector(".qty-input");
+            qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+            updateTotalRow(existingRow);
+
+            productModal.hide();
+            selectedRow = null;
+            return; // stop here, no duplicates
+        }
+
+        // ---- If product not already in table ----
+        if (selectedRow) {
+            // ✅ Replace that specific row (from modal click)
+            fillProductRow(selectedRow, product);
+            selectedRow.querySelector(".qty-input").value = 1;
+            selectedRow.querySelector(".discount-percent-input").value = "0";
+            selectedRow.querySelector(".discount-amount-input").value = "0";
+            updateTotalRow(selectedRow);
+
+            productModal.hide();
+            selectedRow = null;
+            return; // stop here
+        }
+
+        // ---- Normal flow (manual typing/scan, new row needed) ----
+        let targetRow = rows.find((r) => {
+            const code = r.querySelector(".code-input").value.trim();
+            return code === "";
+        });
+
+        if (!targetRow) {
+            addNewRow(false);
+            targetRow = sellTableBody.lastElementChild;
+        }
+
+        fillProductRow(targetRow, product);
+        targetRow.querySelector(".qty-input").value = 1;
+        updateTotalRow(targetRow);
+        maybeAddNewRow();
 
         productModal.hide();
-        selectedRow = null;
-        return; // stop here, no duplicates
-      }
 
-      // ---- If product not already in table ----
-      if (selectedRow) {
-        // ✅ Replace that specific row (from modal click)
-        fillProductRow(selectedRow, product);
-        selectedRow.querySelector(".qty-input").value = 1;
-        selectedRow.querySelector(".discount-percent-input").value = "0";
-        selectedRow.querySelector(".discount-amount-input").value = "0";
-        updateTotalRow(selectedRow);
-
-        productModal.hide();
-        selectedRow = null;
-        return; // stop here
-      }
-
-      // ---- Normal flow (manual typing/scan, new row needed) ----
-      let targetRow = rows.find((r) => {
-        const code = r.querySelector(".code-input").value.trim();
-        return code === "";
-      });
-
-      if (!targetRow) {
-        addNewRow(false);
-        targetRow = sellTableBody.lastElementChild;
-      }
-
-      fillProductRow(targetRow, product);
-      targetRow.querySelector(".qty-input").value = 1;
-      updateTotalRow(targetRow);
-      maybeAddNewRow();
-
-      productModal.hide();
-
-      setTimeout(() => {
-        focusNextEmptyRow();
-      }, 200);
+        setTimeout(() => {
+            focusNextEmptyRow();
+        }, 200);
     }
 
     function calculateGrandTotal() {
-      let subtotal = 0;
-      let totalDiscount = 0;
-      const rows = sellTableBody.querySelectorAll("tr");
-      rows.forEach((row) => {
-        const price = parseRupiah(row.querySelector(".price-input").value);
-        const qty = parseInt(row.querySelector(".qty-input").value) || 0;
-        const discAmt =
-          parseFloat(row.querySelector(".discount-amount-input").value) || 0;
-        if (price && qty) {
-          subtotal += price * qty;
-          totalDiscount += discAmt;
+        let subtotal = 0;
+        let totalDiscount = 0;
+        const rows = sellTableBody.querySelectorAll("tr");
+        rows.forEach((row) => {
+            const price = parseRupiah(row.querySelector(".price-input").value);
+            const qty = parseInt(row.querySelector(".qty-input").value) || 0;
+            const discAmt =
+                parseFloat(row.querySelector(".discount-amount-input").value) || 0;
+            if (price && qty) {
+                subtotal += price * qty;
+                totalDiscount += discAmt;
+            }
+        });
+
+        const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
+        const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+
+        let finalDiscount = totalDiscount;
+        if (grandDiscPercent > 0) {
+            finalDiscount += subtotal * (grandDiscPercent / 100);
+        } else {
+            finalDiscount += grandDiscAmount;
         }
-      });
 
-      const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
-      const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+        const grandTotal = subtotal - finalDiscount;
 
-      let finalDiscount = totalDiscount;
-      if (grandDiscPercent > 0) {
-        finalDiscount += subtotal * (grandDiscPercent / 100);
-      } else {
-        finalDiscount += grandDiscAmount;
-      }
+        subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
+        grandTotalDisplay.textContent =
+            "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
 
-      const grandTotal = subtotal - finalDiscount;
-
-      subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
-      grandTotalDisplay.textContent =
-        "Rp " + Math.max(0, grandTotal).toLocaleString("id-ID");
-
-      calculateReturnAmount();
+        calculateReturnAmount();
     }
 
     function calculateReturnAmount() {
-      const grandTotal =
-        parseFloat(
-          grandTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ) || 0;
-      const paymentAmount = parseRupiah(paymentAmountInput.value);
-      const returnAmount = paymentAmount - grandTotal;
+        const grandTotal =
+            parseFloat(
+                grandTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ) || 0;
+        const paymentAmount = parseRupiah(paymentAmountInput.value);
+        const returnAmount = paymentAmount - grandTotal;
 
-      returnAmountInput.value = formatRupiah(returnAmount);
+        returnAmountInput.value = formatRupiah(returnAmount);
 
-      saveButton.disabled = returnAmount <= 0;
-      saveButton.disabled =
-        sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
+        saveButton.disabled = returnAmount <= 0;
+        saveButton.disabled =
+            sellTableBody.querySelectorAll("tr").length === 0 || grandTotal === 0;
     }
 
     grandDiscountPercent.addEventListener("input", () => {
-      updateGrandDiscountAmount();
+        updateGrandDiscountAmount();
     });
 
     grandDiscountAmount.addEventListener("input", () => {
-      updateGrandDiscountPercent();
+        updateGrandDiscountPercent();
     });
 
     function updateGrandDiscountAmount() {
-      const subtotal =
-        parseFloat(
-          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
-        ) || 0;
-      const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
+        const subtotal =
+            parseFloat(
+                subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+            ) || 0;
+        const discountPercent = parseFloat(grandDiscountPercent.value) || 0;
 
-      if (subtotal > 0 && discountPercent >= 0) {
-        const discountAmount = subtotal * (discountPercent / 100);
-        grandDiscountAmount.value = discountAmount.toFixed(0);
-      } else {
-        grandDiscountAmount.value = 0;
-      }
-      calculateGrandTotal();
+        if (subtotal > 0 && discountPercent >= 0) {
+            const discountAmount = subtotal * (discountPercent / 100);
+            grandDiscountAmount.value = discountAmount.toFixed(0);
+        } else {
+            grandDiscountAmount.value = 0;
+        }
+        calculateGrandTotal();
     }
 
     function updateGrandDiscountPercent() {
-      const subtotal =
-        parseFloat(
-          subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
-        ) || 0;
-      const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
+        const subtotal =
+            parseFloat(
+                subTotalDisplay.textContent.replace("Rp ", "").replace(/\./g, "")
+            ) || 0;
+        const discountAmount = parseFloat(grandDiscountAmount.value) || 0;
 
-      if (subtotal > 0 && discountAmount >= 0) {
-        const discountPercent = (discountAmount / subtotal) * 100;
-        grandDiscountPercent.value = discountPercent.toFixed(2);
-      } else {
-        grandDiscountPercent.value = 0;
-      }
-      calculateGrandTotal();
+        if (subtotal > 0 && discountAmount >= 0) {
+            const discountPercent = (discountAmount / subtotal) * 100;
+            grandDiscountPercent.value = discountPercent.toFixed(2);
+        } else {
+            grandDiscountPercent.value = 0;
+        }
+        calculateGrandTotal();
     }
 
     function loadProductTable(filteredProducts = masterProducts) {
 
-      productTableBody.innerHTML = "";
-      let rows = [];
+        productTableBody.innerHTML = "";
+        let rows = [];
 
-      filteredProducts.forEach((product, index) => {
-        const row = document.createElement("tr");
-        row.setAttribute("data-index", index);
-        row.tabIndex = 0;
-        row.style.cursor = "pointer";
+        filteredProducts.forEach((product, index) => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-index", index);
+            row.tabIndex = 0;
+            row.style.cursor = "pointer";
 
-        row.innerHTML = `
+            row.innerHTML = `
       <td>${product.shortName}</td>
       <td>${product.fullName}</td>
       <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
       <td>${product.stok}</td>
       `;
 
-        row.addEventListener("dblclick", () => {
-          selectProduct(product);
+            row.addEventListener("dblclick", () => {
+                selectProduct(product);
+            });
+
+            // ⭐ added: Mouse click = behave like arrow key highlight
+            row.addEventListener("click", () => {
+                // remove highlight from all rows
+                rows.forEach((r) => r.classList.remove("table-active"));
+                // highlight clicked row
+                row.classList.add("table-active");
+                // keep index in sync with keyboard navigation
+                currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
+                // focus row (so Enter works naturally)
+                row.focus();
+            });
+
+            productTableBody.appendChild(row);
+            rows.push(row);
         });
 
-        // ⭐ added: Mouse click = behave like arrow key highlight
-        row.addEventListener("click", () => {
-          // remove highlight from all rows
-          rows.forEach((r) => r.classList.remove("table-active"));
-          // highlight clicked row
-          row.classList.add("table-active");
-          // keep index in sync with keyboard navigation
-          currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
-          // focus row (so Enter works naturally)
-          row.focus();
-        });
+        currentKeyboardIndex = -1;
+        highlightRow(null);
 
-        productTableBody.appendChild(row);
-        rows.push(row);
-      });
+        document.onkeydown = null;
 
-      currentKeyboardIndex = -1;
-      highlightRow(null);
+        document.onkeydown = function (e) {
+            if (!productModalEl.classList.contains("show")) return;
 
-      document.onkeydown = null;
+            const activeElement = document.activeElement;
+            const isInSearch =
+                activeElement === searchCode || activeElement === searchName;
 
-      document.onkeydown = function (e) {
-        if (!productModalEl.classList.contains("show")) return;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-        const activeElement = document.activeElement;
-        const isInSearch =
-          activeElement === searchCode || activeElement === searchName;
+                    if (isInSearch) {
+                        currentKeyboardIndex = 0;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    } else {
+                        if (currentKeyboardIndex < rows.length - 1)
+                            currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
 
-        switch (e.key) {
-          case "ArrowDown":
-            e.preventDefault();
-            if (rows.length === 0) return;
+                case "ArrowUp":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-            if (isInSearch) {
-              currentKeyboardIndex = 0;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
-            } else {
-              if (currentKeyboardIndex < rows.length - 1)
-                currentKeyboardIndex++;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+                    if (!isInSearch) {
+                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
+
+                case "ArrowLeft":
+                    e.preventDefault();
+                    searchCode.focus();
+                    break;
+
+                case "ArrowRight":
+                    e.preventDefault();
+                    searchName.focus();
+                    break;
+
+                case "Enter":
+                    e.preventDefault();
+
+                    if (isInSearch) {
+                        doFilter();
+                    } else {
+                        if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                            const selectedCode = rows[currentKeyboardIndex]
+                                .querySelector("td")
+                                .textContent.trim();
+                            const selected = masterProducts.find(
+                                (p) => p.shortName === selectedCode
+                            );
+                            if (selected) selectProduct(selected);
+                        }
+                    }
+                    break;
             }
-            break;
+        };
 
-          case "ArrowUp":
-            e.preventDefault();
-            if (rows.length === 0) return;
-
-            if (!isInSearch) {
-              if (currentKeyboardIndex > 0) currentKeyboardIndex--;
-              highlightRow(rows[currentKeyboardIndex]);
-              rows[currentKeyboardIndex].focus();
+        function highlightRow(row) {
+            rows.forEach((r) => r.classList.remove("table-active"));
+            if (row) {
+                row.classList.add("table-active");
+                row.scrollIntoView({block: "nearest", behavior: "smooth"});
             }
-            break;
-
-          case "ArrowLeft":
-            e.preventDefault();
-            searchCode.focus();
-            break;
-
-          case "ArrowRight":
-            e.preventDefault();
-            searchName.focus();
-            break;
-
-          case "Enter":
-            e.preventDefault();
-
-            if (isInSearch) {
-              doFilter();
-            } else {
-              if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
-                const selectedCode = rows[currentKeyboardIndex]
-                  .querySelector("td")
-                  .textContent.trim();
-                const selected = masterProducts.find(
-                  (p) => p.shortName === selectedCode
-                );
-                if (selected) selectProduct(selected);
-              }
-            }
-            break;
         }
-      };
-
-      function highlightRow(row) {
-        rows.forEach((r) => r.classList.remove("table-active"));
-        if (row) {
-          row.classList.add("table-active");
-          row.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
-      }
     }
 
     searchCode.addEventListener("focus", () => {
-      activeSearchField = "shortName";
+        activeSearchField = "shortName";
     });
 
     searchName.addEventListener("focus", () => {
-      activeSearchField = "fullName";
+        activeSearchField = "fullName";
     });
 
-    function doFilter() {
-      if (activeSearchField === "shortName") {
-        const val = searchCode.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.shortName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      } else if (activeSearchField === "fullName") {
-        const val = searchName.value.trim().toLowerCase();
-        const filtered = masterProducts.filter((p) =>
-          p.fullName.toLowerCase().includes(val)
-        );
-        loadProductTable(filtered);
-      }
+    async function doFilter() {
+        const keyword = activeSearchField === "shortName"
+            ? searchCode.value.trim()
+            : searchName.value.trim();
+
+        if (!keyword) {
+            loadProductTable(masterProducts);
+            return;
+        }
+
+        try {
+            const field = activeSearchField;
+            const response = await fetch(`/products/search?keyword=${encodeURIComponent(keyword)}&field=${field}`);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch products");
+            }
+
+            const filteredProducts = await response.json();
+
+            if (!filteredProducts || filteredProducts.length === 0) {
+                loadProductTable([]);
+                return;
+            }
+
+            loadProductTable(filteredProducts);
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mencari produk: " + err.message);
+            loadProductTable(masterProducts); // fallback ke semua produk
+        }
     }
 
     [searchCode, searchName].forEach((input) => {
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doFilter();
-        }
-      });
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                doFilter();
+            }
+        });
     });
 
     function showContextMenu(x, y) {
-      const menu = document.getElementById("contextMenu");
-      menu.style.top = `${y}px`;
-      menu.style.left = `${x}px`;
-      menu.style.display = "block";
+        const menu = document.getElementById("contextMenu");
+        menu.style.top = `${y}px`;
+        menu.style.left = `${x}px`;
+        menu.style.display = "block";
     }
 
     function deleteRow() {
-      if (selectedRow) {
-        selectedRow.remove();
-        selectedRow = null;
-        document.getElementById("contextMenu").style.display = "none";
+        if (selectedRow) {
+            selectedRow.remove();
+            selectedRow = null;
+            document.getElementById("contextMenu").style.display = "none";
 
-        reindexRows();
+            reindexRows();
 
-        if (sellTableBody.querySelectorAll("tr").length === 0) {
-          addNewRow();
+            if (sellTableBody.querySelectorAll("tr").length === 0) {
+                addNewRow();
+            }
+            calculateGrandTotal();
         }
-        calculateGrandTotal();
-      }
     }
 
     function reindexRows() {
-      const rows = sellTableBody.querySelectorAll("tr");
-      rows.forEach((row, index) => {
-        // Assuming the first cell (td) contains the row number
-        row.cells[0].textContent = index + 1;
-      });
+        const rows = sellTableBody.querySelectorAll("tr");
+        rows.forEach((row, index) => {
+            // Assuming the first cell (td) contains the row number
+            row.cells[0].textContent = index + 1;
+        });
     }
 
     document.addEventListener("click", () => {
-      document.getElementById("contextMenu").style.display = "none";
+        document.getElementById("contextMenu").style.display = "none";
     });
 
     productModalEl.addEventListener("hidden.bs.modal", () => {
-      searchCode.value = "";
-      searchName.value = "";
-      loadProductTable();
-      focusNextEmptyRow();
+        searchCode.value = "";
+        searchName.value = "";
+        loadProductTable();
+        focusNextEmptyRow();
     });
 
     function focusNextEmptyRow() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
-      for (const row of rows) {
-        const codeInput = row.querySelector(".code-input");
-        const nameInput = row.querySelector(".name-input");
-        if (codeInput.value.trim() === "" && nameInput.value.trim() === "") {
-          codeInput.focus();
-          return;
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        for (const row of rows) {
+            const codeInput = row.querySelector(".code-input");
+            const nameInput = row.querySelector(".name-input");
+            if (codeInput.value.trim() === "" && nameInput.value.trim() === "") {
+                codeInput.focus();
+                return;
+            }
         }
-      }
-      addNewRow(true);
+        addNewRow(true);
     }
 
     function loadCustomers() {
-      customerSelect.innerHTML = "";
-      masterCustomers.forEach((customer) => {
-        const option = document.createElement("option");
-        const isGeneral = customer.name === "UMUM";
-        const selectedAttribute = isGeneral ? "selected" : "";
-        const newOption = `<option value="${customer.customerId}" ${selectedAttribute}>${customer.name}</option>`;
-        customerSelect.insertAdjacentHTML("beforeend", newOption);
-      });
+        customerSelect.innerHTML = "";
+        masterCustomers.forEach((customer) => {
+            const option = document.createElement("option");
+            const isGeneral = customer.name === "UMUM";
+            const selectedAttribute = isGeneral ? "selected" : "";
+            const newOption = `<option value="${customer.customerId}" ${selectedAttribute}>${customer.name}</option>`;
+            customerSelect.insertAdjacentHTML("beforeend", newOption);
+        });
     }
 
     function cleanUpRowsBeforeSave() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
+        const rows = [...sellTableBody.querySelectorAll("tr")];
 
-      rows.forEach((row) => {
-        const codeInput = row.querySelector(".code-input");
-        const nameInput = row.querySelector(".name-input");
-        const priceInput = row.querySelector(".price-input");
-        const qtyInput = row.querySelector(".qty-input");
+        rows.forEach((row) => {
+            const codeInput = row.querySelector(".code-input");
+            const nameInput = row.querySelector(".name-input");
+            const priceInput = row.querySelector(".price-input");
+            const qtyInput = row.querySelector(".qty-input");
 
-        const typedCode = codeInput.value.trim().toUpperCase();
+            const typedCode = codeInput.value.trim().toUpperCase();
 
-        // if user half-typed something
-        if (typedCode !== "") {
-          const product = masterProducts.find(
-            (p) => p.shortName === typedCode
-          );
+            // if user half-typed something
+            if (typedCode !== "") {
+                const product = masterProducts.find(
+                    (p) => p.shortName === typedCode
+                );
 
-          if (!product) {
-            if (row.dataset.originalCode) {
-              // revert to original data
-              codeInput.value = row.dataset.originalCode;
-              nameInput.value = row.dataset.originalName;
-              priceInput.value = row.dataset.originalPrice;
-              qtyInput.value = row.dataset.originalQty;
-              row.querySelector(".discount-percent-input").value =
-                row.dataset.originalDiscountPercent;
-              row.querySelector(".discount-amount-input").value =
-                row.dataset.originalDiscountAmount;
-              row.querySelector(".total-cell").textContent =
-                row.dataset.originalTotal;
+                if (!product) {
+                    if (row.dataset.originalCode) {
+                        // revert to original data
+                        codeInput.value = row.dataset.originalCode;
+                        nameInput.value = row.dataset.originalName;
+                        priceInput.value = row.dataset.originalPrice;
+                        qtyInput.value = row.dataset.originalQty;
+                        row.querySelector(".discount-percent-input").value =
+                            row.dataset.originalDiscountPercent;
+                        row.querySelector(".discount-amount-input").value =
+                            row.dataset.originalDiscountAmount;
+                        row.querySelector(".total-cell").textContent =
+                            row.dataset.originalTotal;
 
-              updateTotalRow(row);
-            } else {
-              // brand new row, clear it
-              codeInput.value = "";
-              nameInput.value = "";
-              priceInput.value = "Rp 0";
-              qtyInput.value = "1";
-              row.querySelector(".discount-percent-input").value = "0";
-              row.querySelector(".discount-amount-input").value = "0";
-              row.querySelector(".total-cell").textContent = "Rp 0";
+                        updateTotalRow(row);
+                    } else {
+                        // brand new row, clear it
+                        codeInput.value = "";
+                        nameInput.value = "";
+                        priceInput.value = "Rp 0";
+                        qtyInput.value = "1";
+                        row.querySelector(".discount-percent-input").value = "0";
+                        row.querySelector(".discount-amount-input").value = "0";
+                        row.querySelector(".total-cell").textContent = "Rp 0";
+                    }
+                }
             }
-          }
-        }
-      });
+        });
     }
 
     async function saveTransaction() {
-      const grandTotal =
-        parseFloat(
-          grandTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ) || 0;
-      const paymentAmount = parseRupiah(paymentAmountInput.value);
+        const grandTotal =
+            parseFloat(
+                grandTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ) || 0;
+        const paymentAmount = parseRupiah(paymentAmountInput.value);
 
-      if (
-        sellTableBody.querySelectorAll("tr").length === 0 ||
-        grandTotal === 0
-      ) {
-        alert("Transaction cannot be saved with no items.");
-        return;
-      }
-
-      if (paymentAmount < grandTotal) {
-        alert("Payment amount is less than the grand total.");
-        return;
-      }
-
-      const selectedCustomerId = customerSelect.value;
-      const selectedCustomer = masterCustomers.find(
-        (c) => c.customerId == selectedCustomerId
-      );
-
-      // ⭐ Clean up half-typed rows before collecting data
-      cleanUpRowsBeforeSave();
-
-      const transactionData = {
-        customerId: selectedCustomer.customerId,
-        transactionDetailDTOS: [],
-        subtotal: parseFloat(
-          subTotalDisplay.textContent
-            .replace("Rp ", "")
-            .replace(/\./g, "")
-            .replace(",", ".")
-        ),
-        totalDisc: parseFloat(grandDiscountAmount.value) || 0,
-        totalPrice: grandTotal,
-      };
-
-      sellTableBody.querySelectorAll("tr").forEach((row) => {
-        const code = row.querySelector(".code-input").value;
-        if (code) {
-          transactionData.transactionDetailDTOS.push({
-            code: code,
-            name: row.querySelector(".name-input").value,
-            price: parseRupiah(row.querySelector(".price-input").value),
-            qty: parseInt(row.querySelector(".qty-input").value),
-            discAmount: parseFloat(
-              row.querySelector(".discount-amount-input").value
-            ),
-            total: parseFloat(
-              row
-                .querySelector(".total-cell")
-                .textContent.replace("Rp ", "")
-                .replace(/\./g, "")
-                .replace(",", ".")
-            ),
-          });
-        }
-      });
-
-      const isPrintBill = document.getElementById("printBill");
-      try {
-        // Save transaction
-        let response;
         if (
-          masterTransactions.transactionId !== null &&
-          masterTransactions.transactionDetailDTOS !== null
+            sellTableBody.querySelectorAll("tr").length === 0 ||
+            grandTotal === 0
         ) {
-          response = await fetch(
-            `api/kasir/edit/${masterTransactions.transactionId}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(transactionData),
-            }
-          );
-        } else {
-          response = await fetch("api/kasir/add", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(transactionData),
-          });
+            alert("Transaction cannot be saved with no items.");
+            return;
         }
 
-        const result = await response.text();
-        if (!response.ok) {
-          throw new Error(`${result}`);
+        if (paymentAmount < grandTotal) {
+            alert("Payment amount is less than the grand total.");
+            return;
         }
-        const data = {
-          inv_number: result,
-          customer_name: selectedCustomer.name,
-          customer_alamat: selectedCustomer.alamat,
-          tanggal: `${new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })} ${new Date().toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}`,
-          subtotal: transactionData.subtotal,
-          grandTotal: transactionData.totalPrice,
-          totalDisc: transactionData.totalDisc,
-          paymentAmount: paymentAmountInput.value,
-          returnAmount: paymentAmount - grandTotal,
-          transactionDetailDTOS: transactionData.transactionDetailDTOS.map(
-            (item, index) => ({
-              no: index + 1,
-              code: item.code,
-              name: item.name,
-              qty: item.qty,
-              price: item.price.toLocaleString("id-ID"),
-              discount: item.discAmount.toLocaleString("id-ID"),
-              total: item.total.toLocaleString("id-ID"),
-            })
-          ),
+
+        const selectedCustomerId = customerSelect.value;
+        const selectedCustomer = masterCustomers.find(
+            (c) => c.customerId == selectedCustomerId
+        );
+
+        // ⭐ Clean up half-typed rows before collecting data
+        cleanUpRowsBeforeSave();
+
+        const transactionData = {
+            customerId: selectedCustomer.customerId,
+            transactionDetailDTOS: [],
+            subtotal: parseFloat(
+                subTotalDisplay.textContent
+                    .replace("Rp ", "")
+                    .replace(/\./g, "")
+                    .replace(",", ".")
+            ),
+            totalDisc: parseFloat(grandDiscountAmount.value) || 0,
+            totalPrice: grandTotal,
         };
+
+        sellTableBody.querySelectorAll("tr").forEach((row) => {
+            const code = row.querySelector(".code-input").value;
+            if (code) {
+                transactionData.transactionDetailDTOS.push({
+                    code: code,
+                    name: row.querySelector(".name-input").value,
+                    price: parseRupiah(row.querySelector(".price-input").value),
+                    qty: parseInt(row.querySelector(".qty-input").value),
+                    discAmount: parseFloat(
+                        row.querySelector(".discount-amount-input").value
+                    ),
+                    total: parseFloat(
+                        row
+                            .querySelector(".total-cell")
+                            .textContent.replace("Rp ", "")
+                            .replace(/\./g, "")
+                            .replace(",", ".")
+                    ),
+                });
+            }
+        });
+
         const isPrintBill = document.getElementById("printBill");
+        try {
+            // Save transaction
+            let response;
+            if (
+                masterTransactions.transactionId !== null &&
+                masterTransactions.transactionDetailDTOS !== null
+            ) {
+                response = await fetch(
+                    `api/kasir/edit/${masterTransactions.transactionId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(transactionData),
+                    }
+                );
+            } else {
+                response = await fetch("api/kasir/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(transactionData),
+                });
+            }
 
-        if (isPrintBill.checked) {
-          generateReceiptContent(data); // render content to #receiptContent
+            const result = await response.text();
+            if (!response.ok) {
+                throw new Error(`${result}`);
+            }
+            const data = {
+                inv_number: result,
+                customer_name: selectedCustomer.name,
+                customer_alamat: selectedCustomer.alamat,
+                tanggal: `${new Date().toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                })} ${new Date().toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                })}`,
+                subtotal: transactionData.subtotal,
+                grandTotal: transactionData.totalPrice,
+                totalDisc: transactionData.totalDisc,
+                paymentAmount: paymentAmountInput.value,
+                returnAmount: paymentAmount - grandTotal,
+                transactionDetailDTOS: transactionData.transactionDetailDTOS.map(
+                    (item, index) => ({
+                        no: index + 1,
+                        code: item.code,
+                        name: item.name,
+                        qty: item.qty,
+                        price: item.price.toLocaleString("id-ID"),
+                        discount: item.discAmount.toLocaleString("id-ID"),
+                        total: item.total.toLocaleString("id-ID"),
+                    })
+                ),
+            };
+            const isPrintBill = document.getElementById("printBill");
 
-          // Wait for the DOM to update
-          setTimeout(() => {
-            const originalContent = document.body.innerHTML;
-            const receiptHtml =
-              document.getElementById("receiptContent").innerHTML;
+            if (isPrintBill.checked) {
+                generateReceiptContent(data); // render content to #receiptContent
 
-            // Replace the entire body with the receipt
-            document.body.innerHTML = `
+                // Wait for the DOM to update
+                setTimeout(() => {
+                    const originalContent = document.body.innerHTML;
+                    const receiptHtml =
+                        document.getElementById("receiptContent").innerHTML;
+
+                    // Replace the entire body with the receipt
+                    document.body.innerHTML = `
 <html>
 <head>
 <link
@@ -2156,195 +2193,196 @@ vertical-align: middle;
 </html>
 `;
 
-            // Print
-            window.print();
+                    // Print
+                    window.print();
 
-            // Restore original body after print
-            setTimeout(() => {
-              document.body.innerHTML = originalContent;
-              alert("Transaction saved successfully!");
+                    // Restore original body after print
+                    setTimeout(() => {
+                        document.body.innerHTML = originalContent;
+                        alert("Transaction saved successfully!");
 
-              // Optional: redirect after printing
-              if (
-                masterTransactions.transactionId !== null &&
-                masterTransactions.transactionDetailDTOS !== null
-              ) {
-                window.location.href = "/penjualan";
-              } else {
-                window.location.href = "/kasir";
-              }
-            }, 500); // Delay restore to ensure print dialog completes
-          }, 100); // Short delay to ensure DOM is ready
-        } else {
-          alert("Transaction saved successfully!");
-          window.location.href =
-            masterTransactions.transactionId !== null &&
-            masterTransactions.transactionDetailDTOS !== null
-              ? "/penjualan"
-              : "/kasir";
+                        // Optional: redirect after printing
+                        if (
+                            masterTransactions.transactionId !== null &&
+                            masterTransactions.transactionDetailDTOS !== null
+                        ) {
+                            window.location.href = "/penjualan";
+                        } else {
+                            window.location.href = "/kasir";
+                        }
+                    }, 500); // Delay restore to ensure print dialog completes
+                }, 100); // Short delay to ensure DOM is ready
+            } else {
+                alert("Transaction saved successfully!");
+                window.location.href =
+                    masterTransactions.transactionId !== null &&
+                    masterTransactions.transactionDetailDTOS !== null
+                        ? "/penjualan"
+                        : "/kasir";
+            }
+        } catch (error) {
+            console.error("Failed to save transaction:", error.message);
+            alert(`Gagal menyimpan data, ${error.message}.`);
         }
-      } catch (error) {
-        console.error("Failed to save transaction:", error.message);
-        alert(`Gagal menyimpan data, ${error.message}.`);
-      }
     }
 
     function cancelTransaction() {
-      sellTableBody.innerHTML = "";
-      grandDiscountPercent.value = 0;
-      grandDiscountAmount.value = 0;
-      paymentAmountInput.value = "Rp 0";
-      returnAmountInput.value = "Rp 0";
-      document.getElementById("printBill").checked = true;
+        sellTableBody.innerHTML = "";
+        grandDiscountPercent.value = 0;
+        grandDiscountAmount.value = 0;
+        paymentAmountInput.value = "Rp 0";
+        returnAmountInput.value = "Rp 0";
+        document.getElementById("printBill").checked = true;
 
-      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
-      const customerUmum = masterCustomers.find(
-        (c) => c.customerId == 1
-      ).customerId;
-      customerSelect.value = customerUmum;
-      addNewRow();
-      calculateGrandTotal();
+        transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+        const customerUmum = masterCustomers.find(
+            (c) => c.customerId == 1
+        ).customerId;
+        customerSelect.value = customerUmum;
+        addNewRow();
+        calculateGrandTotal();
     }
 
     function updateJam() {
-      transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
+        transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
     }
 
     function loadTransaction(transaction) {
-      sellTableBody.innerHTML = "";
+        sellTableBody.innerHTML = "";
 
-      if (transaction.subtotal > 0) {
-        const discountPercent =
-          (transaction.totalDisc / transaction.subtotal) * 100;
-        grandDiscountPercent.value = discountPercent.toFixed(2);
-      } else {
-        grandDiscountPercent.value = "0.00";
-      }
-      grandDiscountAmount.value = transaction.totalDisc;
+        if (transaction.subtotal > 0) {
+            const discountPercent =
+                (transaction.totalDisc / transaction.subtotal) * 100;
+            grandDiscountPercent.value = discountPercent.toFixed(2);
+        } else {
+            grandDiscountPercent.value = "0.00";
+        }
+        grandDiscountAmount.value = transaction.totalDisc;
 
-      if (transaction.customerDTO.customerId) {
-        customerSelect.value = transaction.customerDTO.customerId;
-      }
+        if (transaction.customerDTO.customerId) {
+            customerSelect.value = transaction.customerDTO.customerId;
+        }
 
-      transaction.transactionDetailDTOS.forEach((detail, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
+        transaction.transactionDetailDTOS.forEach((detail, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
     <td class="row-number">${index + 1}</td>
     <td><input type="text" class="form-control form-control-sm code-input" value="${
-      detail.code
-    }" /></td>
+                detail.code
+            }" /></td>
     <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
-      detail.name
-    }" /></td>
+                detail.name
+            }" /></td>
     <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${
-      detail.qty
-    }" /></td>
+                detail.qty
+            }" /></td>
     <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
-      detail.price
-    )}" /></td>
+                detail.price
+            )}" /></td>
     <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-      (detail.discAmount / (detail.total + detail.discAmount)) * 100
-    }" /></td>
+                (detail.discAmount / (detail.total + detail.discAmount)) * 100
+            }" /></td>
     <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
-      detail.discAmount
-    }" /></td>
+                detail.discAmount
+            }" /></td>
     <td class="total-cell">${formatRupiah(detail.total)}</td>
     <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
   `;
-        sellTableBody.appendChild(row);
+            sellTableBody.appendChild(row);
 
-        const codeInput = row.querySelector(".code-input");
-        const qtyInput = row.querySelector(".qty-input");
-        const priceInput = row.querySelector(".price-input");
-        const discPercentInput = row.querySelector(".discount-percent-input");
-        const discAmountInput = row.querySelector(".discount-amount-input");
-        const cekHargaBtn = row.querySelector(".cek-harga-btn");
+            const codeInput = row.querySelector(".code-input");
+            const qtyInput = row.querySelector(".qty-input");
+            const priceInput = row.querySelector(".price-input");
+            const discPercentInput = row.querySelector(".discount-percent-input");
+            const discAmountInput = row.querySelector(".discount-amount-input");
+            const cekHargaBtn = row.querySelector(".cek-harga-btn");
 
-        // --- Tombol cek harga
-        cekHargaBtn.addEventListener("click", async () => {
-          const kodeBarang = codeInput.value.trim();
-          if (!kodeBarang) {
-            alert("Kode barang belum diisi!");
-            return;
-          }
-          cekHargaBtn.style.pointerEvents = "none";
+            // --- Tombol cek harga
+            cekHargaBtn.addEventListener("click", async () => {
+                const kodeBarang = codeInput.value.trim();
+                if (!kodeBarang) {
+                    alert("Kode barang belum diisi!");
+                    return;
+                }
+                cekHargaBtn.style.pointerEvents = "none";
 
-          cekHargaBtn.textContent = "Loading...";
-          try {
-            const res = await fetch(
-              `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
-            );
-            if (!res.ok) throw new Error("Gagal fetch harga");
-            const harga = await res.text();
-            if (harga && harga !== "null") {
-              cekHargaBtn.classList.remove("btn-info");
-              cekHargaBtn.classList.add("btn-success");
-              cekHargaBtn.textContent = formatRupiah(Number(harga));;
-            } else {
-              cekHargaBtn.textContent = "Tidak tersedia";
-              cekHargaBtn.disabled = true;
-            }
-          } catch (err) {
-            cekHargaBtn.textContent = "Error";
-            cekHargaBtn.disabled = true;
-            console.error(err);
-          }
+                cekHargaBtn.textContent = "Loading...";
+                try {
+                    const res = await fetch(
+                        `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
+                    );
+                    if (!res.ok) throw new Error("Gagal fetch harga");
+                    const harga = await res.text();
+                    if (harga && harga !== "null") {
+                        cekHargaBtn.classList.remove("btn-info");
+                        cekHargaBtn.classList.add("btn-success");
+                        cekHargaBtn.textContent = formatRupiah(Number(harga));
+                        ;
+                    } else {
+                        cekHargaBtn.textContent = "Tidak tersedia";
+                        cekHargaBtn.disabled = true;
+                    }
+                } catch (err) {
+                    cekHargaBtn.textContent = "Error";
+                    cekHargaBtn.disabled = true;
+                    console.error(err);
+                }
+            });
+
+            // --- Event qty
+            qtyInput.addEventListener("input", () => {
+                const qty = parseInt(qtyInput.value) || 0;
+                const code = codeInput.value.trim();
+                const product = masterProducts.find((p) => p.shortName === code);
+                if (product) {
+                    const newPrice = getPriceByQty(product, qty);
+                    priceInput.value = formatRupiah(newPrice);
+                }
+                updateTotalRow(row);
+            });
+
+            // --- Event diskon
+            discPercentInput.addEventListener("input", () => {
+                const price = parseRupiah(priceInput.value);
+                const qty = parseInt(qtyInput.value) || 0;
+                const discountPercent = parseFloat(discPercentInput.value) || 0;
+                if (price * qty > 0) {
+                    const discountAmount = price * qty * (discountPercent / 100);
+                    discAmountInput.value = Math.round(discountAmount);
+                }
+                updateTotalRow(row);
+            });
+
+            discAmountInput.addEventListener("input", () => {
+                const price = parseRupiah(priceInput.value);
+                const qty = parseInt(qtyInput.value) || 0;
+                const discountAmount = parseFloat(discAmountInput.value) || 0;
+                if (price * qty > 0) {
+                    const discountPercent = (discountAmount / (price * qty)) * 100;
+                    discPercentInput.value = isFinite(discountPercent)
+                        ? discountPercent.toFixed(2)
+                        : "0";
+                }
+                updateTotalRow(row);
+            });
+
+            row.addEventListener("contextmenu", function (e) {
+                e.preventDefault();
+                selectedRow = row;
+                showContextMenu(e.pageX, e.pageY);
+            });
         });
 
-        // --- Event qty
-        qtyInput.addEventListener("input", () => {
-          const qty = parseInt(qtyInput.value) || 0;
-          const code = codeInput.value.trim();
-          const product = masterProducts.find((p) => p.shortName === code);
-          if (product) {
-            const newPrice = getPriceByQty(product, qty);
-            priceInput.value = formatRupiah(newPrice);
-          }
-          updateTotalRow(row);
-        });
-
-        // --- Event diskon
-        discPercentInput.addEventListener("input", () => {
-          const price = parseRupiah(priceInput.value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountPercent = parseFloat(discPercentInput.value) || 0;
-          if (price * qty > 0) {
-            const discountAmount = price * qty * (discountPercent / 100);
-            discAmountInput.value = Math.round(discountAmount);
-          }
-          updateTotalRow(row);
-        });
-
-        discAmountInput.addEventListener("input", () => {
-          const price = parseRupiah(priceInput.value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountAmount = parseFloat(discAmountInput.value) || 0;
-          if (price * qty > 0) {
-            const discountPercent = (discountAmount / (price * qty)) * 100;
-            discPercentInput.value = isFinite(discountPercent)
-              ? discountPercent.toFixed(2)
-              : "0";
-          }
-          updateTotalRow(row);
-        });
-
-        row.addEventListener("contextmenu", function (e) {
-          e.preventDefault();
-          selectedRow = row;
-          showContextMenu(e.pageX, e.pageY);
-        });
-      });
-
-      calculateGrandTotal();
+        calculateGrandTotal();
     }
 
     // Init
     loadCustomers();
     if (
-      masterTransactions.transactionId !== null &&
-      masterTransactions.transactionDetailDTOS !== null
+        masterTransactions.transactionId !== null &&
+        masterTransactions.transactionDetailDTOS !== null
     ) {
-      loadTransaction(masterTransactions);
+        loadTransaction(masterTransactions);
     }
     updateJam();
     addNewRow();
@@ -2353,109 +2391,111 @@ vertical-align: middle;
 </script>
 <script>
     function formatByFourDigits(input) {
-      // Remove all non-digit characters (optional)
-      input = input.replace(/\D/g, "");
+        // Remove all non-digit characters (optional)
+        input = input.replace(/\D/g, "");
 
-      // Split into chunks of 4
-      return input.match(/.{1,4}/g)?.join("-") || "";
+        // Split into chunks of 4
+        return input.match(/.{1,4}/g)?.join("-") || "";
     }
+
     function toTerbilang(number) {
-      const satuan = [
-        "",
-        "Satu",
-        "Dua",
-        "Tiga",
-        "Empat",
-        "Lima",
-        "Enam",
-        "Tujuh",
-        "Delapan",
-        "Sembilan",
-        "Sepuluh",
-        "Sebelas",
-      ];
+        const satuan = [
+            "",
+            "Satu",
+            "Dua",
+            "Tiga",
+            "Empat",
+            "Lima",
+            "Enam",
+            "Tujuh",
+            "Delapan",
+            "Sembilan",
+            "Sepuluh",
+            "Sebelas",
+        ];
 
-      function convert(n) {
-        n = Math.floor(n);
-        if (n < 12) {
-          return satuan[n];
-        } else if (n < 20) {
-          return convert(n - 10) + " Belas";
-        } else if (n < 100) {
-          return convert(Math.floor(n / 10)) + " Puluh " + convert(n % 10);
-        } else if (n < 200) {
-          return "Seratus " + convert(n - 100);
-        } else if (n < 1000) {
-          return convert(Math.floor(n / 100)) + " Ratus " + convert(n % 100);
-        } else if (n < 2000) {
-          return "Seribu " + convert(n - 1000);
-        } else if (n < 1000000) {
-          return convert(Math.floor(n / 1000)) + " Ribu " + convert(n % 1000);
-        } else if (n < 1000000000) {
-          return (
-            convert(Math.floor(n / 1000000)) + " Juta " + convert(n % 1000000)
-          );
-        } else if (n < 1000000000000) {
-          return (
-            convert(Math.floor(n / 1000000000)) +
-            " Miliar " +
-            convert(n % 1000000000)
-          );
-        } else {
-          return "Angka terlalu besar";
+        function convert(n) {
+            n = Math.floor(n);
+            if (n < 12) {
+                return satuan[n];
+            } else if (n < 20) {
+                return convert(n - 10) + " Belas";
+            } else if (n < 100) {
+                return convert(Math.floor(n / 10)) + " Puluh " + convert(n % 10);
+            } else if (n < 200) {
+                return "Seratus " + convert(n - 100);
+            } else if (n < 1000) {
+                return convert(Math.floor(n / 100)) + " Ratus " + convert(n % 100);
+            } else if (n < 2000) {
+                return "Seribu " + convert(n - 1000);
+            } else if (n < 1000000) {
+                return convert(Math.floor(n / 1000)) + " Ribu " + convert(n % 1000);
+            } else if (n < 1000000000) {
+                return (
+                    convert(Math.floor(n / 1000000)) + " Juta " + convert(n % 1000000)
+                );
+            } else if (n < 1000000000000) {
+                return (
+                    convert(Math.floor(n / 1000000000)) +
+                    " Miliar " +
+                    convert(n % 1000000000)
+                );
+            } else {
+                return "Angka terlalu besar";
+            }
         }
-      }
 
-      const cleanNumber =
-        typeof number === "string"
-          ? parseInt(number.replace(/[^\d]/g, ""), 10)
-          : number;
+        const cleanNumber =
+            typeof number === "string"
+                ? parseInt(number.replace(/[^\d]/g, ""), 10)
+                : number;
 
-      if (isNaN(cleanNumber)) return "Nol Rupiah";
+        if (isNaN(cleanNumber)) return "Nol Rupiah";
 
-      return (convert(cleanNumber).trim() + " Rupiah").replace(/\s+/g, " ");
+        return (convert(cleanNumber).trim() + " Rupiah").replace(/\s+/g, " ");
     }
+
     function generateReceiptContent(data) {
-      const totalRowsPerPage = 13;
+        const totalRowsPerPage = 13;
 
-      const columns = [
-        { width: "25px", align: "center", field: "no", label: "No" },
-        { width: "120px", align: "left", field: "code", label: "Kode" },
-        {
-          width: "300px",
-          align: "left",
-          field: "name",
-          label: "Nama Barang",
-        },
-        { width: "30px", align: "right", field: "qty", label: "Qty" },
-        { width: "80px", align: "right", field: "price", label: "Harga" },
-        {
-          width: "60px",
-          align: "center",
-          field: "discount",
-          label: "Disc Rp",
-        },
-        { width: "auto", align: "right", field: "total", label: "Total" },
-      ];
+        const columns = [
+            {width: "25px", align: "center", field: "no", label: "No"},
+            {width: "120px", align: "left", field: "code", label: "Kode"},
+            {
+                width: "300px",
+                align: "left",
+                field: "name",
+                label: "Nama Barang",
+            },
+            {width: "30px", align: "right", field: "qty", label: "Qty"},
+            {width: "80px", align: "right", field: "price", label: "Harga"},
+            {
+                width: "60px",
+                align: "center",
+                field: "discount",
+                label: "Disc Rp",
+            },
+            {width: "auto", align: "right", field: "total", label: "Total"},
+        ];
 
-      const chunkArray = (arr, size) => {
-        const result = [];
-        for (let i = 0; i < arr.length; i += size) {
-          result.push(arr.slice(i, i + size));
-        }
-        return result;
-      };
+        const chunkArray = (arr, size) => {
+            const result = [];
+            for (let i = 0; i < arr.length; i += size) {
+                result.push(arr.slice(i, i + size));
+            }
+            return result;
+        };
 
-      const detailData = data.transactionDetailDTOS; // 👈 extract details here
-      const pages = chunkArray(detailData, totalRowsPerPage);
-      const root = document.getElementById("receiptContent");
-      root.innerHTML = "";
-      pages.forEach((pageData) => {
-        const pageDiv = document.createElement("div");
-        pageDiv.className = "print-page container-fluid";
+        const detailData = data.transactionDetailDTOS; // 👈 extract details here
+        const pages = chunkArray(detailData, totalRowsPerPage);
+        const root = document.getElementById("receiptContent");
+        root.innerHTML = "";
+        pages.forEach((pageData) => {
+            const pageDiv = document.createElement("div");
+            pageDiv.className = "print-page container-fluid";
 
-        // Header and transaction info remain the same
-        pageDiv.innerHTML = `
+            // Header and transaction info remain the same
+            pageDiv.innerHTML = `
 <div class="row" style="align-items: flex-start">
 <div class="col">
   <span class="client-name" style="font-weight: bold"></span><br />
@@ -2483,75 +2523,75 @@ vertical-align: middle;
 <thead>
 <tr>
 <th style="width:145px; text-align:left;border-top:1px solid black;"><span style="font-size:13px !important">INV : ${
-            data.inv_number
-        }</span></th>
+                data.inv_number
+            }</span></th>
 <th style="width:300px; text-align:left;border-top:1px solid black">Tanggal : ${
-            data.tanggal
-        }</th>
+                data.tanggal
+            }</th>
 <th style="border-top:1px solid black"></th>
 </tr>
 </thead>
 </table>
 `;
 
-        // Populate the fields
-        pageDiv.querySelector(".client-name").textContent =
-          masterSettings.name;
-        pageDiv.querySelector(".client-alamat").textContent =
-          masterSettings.alamat;
-        pageDiv.querySelector(".client-kota").textContent =
-          masterSettings.kota;
-        pageDiv.querySelector(".client-telp").textContent =
-          formatByFourDigits(masterSettings.noTelp);
-        // Create the table
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
+            // Populate the fields
+            pageDiv.querySelector(".client-name").textContent =
+                masterSettings.name;
+            pageDiv.querySelector(".client-alamat").textContent =
+                masterSettings.alamat;
+            pageDiv.querySelector(".client-kota").textContent =
+                masterSettings.kota;
+            pageDiv.querySelector(".client-telp").textContent =
+                formatByFourDigits(masterSettings.noTelp);
+            // Create the table
+            const table = document.createElement("table");
+            const thead = document.createElement("thead");
+            const tbody = document.createElement("tbody");
 
-        // Create table header row
-        const headerRow = document.createElement("tr");
-        columns.forEach((col) => {
-          const th = document.createElement("th");
-          th.textContent = col.label;
-          if (col.width) {
-            th.style.width = col.width;
-          }
-          headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
+            // Create table header row
+            const headerRow = document.createElement("tr");
+            columns.forEach((col) => {
+                const th = document.createElement("th");
+                th.textContent = col.label;
+                if (col.width) {
+                    th.style.width = col.width;
+                }
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
 
-        // Populate table with data
-        pageData.forEach((rowData) => {
-          const tr = document.createElement("tr");
-          columns.forEach((col) => {
-            const td = document.createElement("td");
-            td.textContent = rowData[col.field] || "";
-            td.style.textAlign = col.align;
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
+            // Populate table with data
+            pageData.forEach((rowData) => {
+                const tr = document.createElement("tr");
+                columns.forEach((col) => {
+                    const td = document.createElement("td");
+                    td.textContent = rowData[col.field] || "";
+                    td.style.textAlign = col.align;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
 
-        // Add empty rows to fill the page
-        const emptyRowsToAdd = totalRowsPerPage - pageData.length;
-        for (let i = 0; i < emptyRowsToAdd; i++) {
-          const tr = document.createElement("tr");
-          columns.forEach((col) => {
-            const td = document.createElement("td");
-            td.textContent = "";
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        }
+            // Add empty rows to fill the page
+            const emptyRowsToAdd = totalRowsPerPage - pageData.length;
+            for (let i = 0; i < emptyRowsToAdd; i++) {
+                const tr = document.createElement("tr");
+                columns.forEach((col) => {
+                    const td = document.createElement("td");
+                    td.textContent = "";
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
 
-        table.appendChild(tbody);
-        pageDiv.appendChild(table);
+            table.appendChild(tbody);
+            pageDiv.appendChild(table);
 
-        // Grand Total section remains the same
-        const grandTotal = document.createElement("div");
-        grandTotal.className = "row";
-        grandTotal.innerHTML = `
+            // Grand Total section remains the same
+            const grandTotal = document.createElement("div");
+            grandTotal.className = "row";
+            grandTotal.innerHTML = `
 <!-- Left side: text and signatures -->
 <div class="col-7">
   <div class="row">
@@ -2571,26 +2611,26 @@ vertical-align: middle;
 <!-- Right side: totals box -->
 <div class="col-3" style="width:283px !important;border: 1px solid black; border-top: none; font-size: 13px; padding: 5px;margin-left:19px">
 <div class="row"><div class="col-6">Total</div><div class="col-6 text-end">${data.subtotal.toLocaleString(
-          "id-ID"
-        )}</div></div>
+                "id-ID"
+            )}</div></div>
 <div class="row"><div class="col-6">Discount</div><div class="col-6 text-end">${data.totalDisc.toLocaleString(
-          "id-ID"
-        )}</div></div>
+                "id-ID"
+            )}</div></div>
 <div class="row"><div class="col-6">Grand Total</div><div class="col-6 text-end">${data.grandTotal.toLocaleString(
-          "id-ID"
-        )}</div></div>
+                "id-ID"
+            )}</div></div>
 <div class="row"><div class="col-6">Bayar</div><div class="col-6 text-end">${parseRupiah(
-          data.paymentAmount
-        ).toLocaleString("id-ID")}</div></div>
+                data.paymentAmount
+            ).toLocaleString("id-ID")}</div></div>
 <div class="row"><div class="col-6">Kembali</div><div class="col-6 text-end">${data.returnAmount.toLocaleString(
-          "id-ID"
-        )}</div></div>
+                "id-ID"
+            )}</div></div>
 </div>
 `;
 
-        pageDiv.appendChild(grandTotal);
-        root.appendChild(pageDiv);
-      });
+            pageDiv.appendChild(grandTotal);
+            root.appendChild(pageDiv);
+        });
     }
 </script>
 </body>
