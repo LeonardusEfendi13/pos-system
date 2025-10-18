@@ -44,7 +44,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     ProductEntity findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(String fullName, String shortName, Long productId, Long clientId);
 
-    ProductEntity findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
+    ProductEntity findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
     Optional<ProductEntity> findFirstByOrderByProductIdDesc();
 

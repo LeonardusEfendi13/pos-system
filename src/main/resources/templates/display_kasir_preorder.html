@@ -1384,8 +1384,6 @@
         qtyInput.addEventListener("input", () => {
             const qty = parseInt(qtyInput.value) || 0;
             const code = codeInput.value.trim();
-            const product = masterProducts.find((p) => p.shortName === code);
-
             updateTotalRow(row);
         });
 

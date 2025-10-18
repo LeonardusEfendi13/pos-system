@@ -8,7 +8,6 @@ import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -163,7 +162,7 @@ public class PembelianService {
         //Restore stock from old purchasing detail
         List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
         for(PurchasingDetailEntity old : oldTransactions){
-            ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
+            ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
             if(product != null){
                 Long restoredStock = product.getStock() - old.getQty();
                 product.setStock(restoredStock);
@@ -232,7 +231,7 @@ public class PembelianService {
             Long newPurchasingDetailId = Generator.generateId(lastTransactionDetailId);
 
             for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
-                ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
 
                 PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
                 purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
@@ -363,7 +362,7 @@ public class PembelianService {
             Map<String, PurchasingDetailEntity> oldProductMap = new HashMap<>();
 
             for (PurchasingDetailEntity old : oldTransactions) {
-                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
+                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
                         old.getFullName(), old.getShortName(), clientData.getClientId()
                 );
                 if (product != null) {
@@ -409,7 +408,7 @@ public class PembelianService {
             for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
                 if (dto == null) continue;
 
-                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
+                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
                         dto.getName(), dto.getCode(), clientData.getClientId()
                 );
                 if (product == null) continue;
