@@ -186,7 +186,7 @@ public class ProductController {
                 redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");
                 return "redirect:/products";
-            }
+        }
             redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/products";
@@ -218,35 +218,39 @@ public class ProductController {
         Page<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
 
-// 🔹 Pagination info - AMBIL DARI stokData BUKAN productPage
-        int totalPages = stokData.getTotalPages();
-        long totalData = stokData.getTotalElements();
-        int currentPage = page;
-        int startData = (page * size) + 1;
-        int endData = Math.min(startData + size - 1, (int) totalData);
+        Long totalElements = stokData.getTotalElements();
 
-// 🔹 Range pagination
-        int start = Math.max(0, currentPage - 2);
-        int end = Math.min(start + 4, totalPages - 1);
+        Integer totalPages = stokData.getTotalPages();
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
 
-        // ✅ Tambahkan semua ke model
-        model.addAttribute("isShowDetail", true);
-        model.addAttribute("productData", productPage.getContent());
-        model.addAttribute("currentPage", currentPage);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("totalData", totalData);
-        model.addAttribute("startData", startData);
-        model.addAttribute("endData", endData);
+        Integer start = Math.max(0, page - 2);
+        Integer end = Math.min(totalPages - 1, page + 2);
+        size = safeSize(size);
+        model.addAttribute("size", size);
         model.addAttribute("start", start);
         model.addAttribute("end", end);
-        model.addAttribute("size", size);
+        model.addAttribute("totalData", totalElements);
+
+        if (totalElements == 0) {
+            model.addAttribute("startData", 0);
+            model.addAttribute("endData", 0);
+        } else {
+            model.addAttribute("startData", page * size + 1);
+            model.addAttribute("endData", page * size + stokData.getNumberOfElements());
+        }
+
+        model.addAttribute("isShowDetail", true);
+        model.addAttribute("productData", productPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
         model.addAttribute("activePage", "kartuStok");
         model.addAttribute("kartuStok", stokData);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("stockAwal", stockAwal);
         model.addAttribute("selectedItemId", productId);
-
 
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);

@@ -108,7 +108,7 @@
                         <td th:text="${stockAwal}">-2</td>
                     </tr>
                     <tr th:each="stok, iterStat : ${kartuStok}" th:if="${!#lists.isEmpty(kartuStok)}">
-                        <td th:text="${iterStat.count + 1}">2</td>
+                        <td th:text="${(currentPage * size) + iterStat.count + 1}">2</td>
                         <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
                             Tanggal Jual
                         </td>
@@ -127,39 +127,30 @@
                     </tbody>
                 </table>
 
-                <!-- Pagination -->
+                <!--  Pagination  -->
                 <div class="d-flex justify-content-between align-items-center my-2">
                     <div>
-                        Menampilkan <span th:text="${startData}">1</span>-
+                        Menampilkan <span th:text="${startData}">1</span> -
                         <span th:text="${endData}">10</span> dari
-                        <span th:text="${totalData}">0</span> data
+                        <span th:text="${totalData}">10</span> data
                     </div>
 
                     <nav aria-label="Page navigation example">
                         <ul class="pagination mb-0">
                             <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                <a class="page-link"
-                                   th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">
-                                    Prev
-                                </a>
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">‹</a>
                             </li>
-                            <li class="page-item"
-                                th:each="i : ${#numbers.sequence(start, end)}"
+                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
                                 th:classappend="${i == currentPage} ? 'active'">
-                                <a class="page-link"
-                                   th:href="@{/products/kartu_stok(page=${i}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}"
-                                   th:text="${i + 1}">1</a>
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${i}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}" th:text="${i + 1}">1</a>
                             </li>
+
                             <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                                <a class="page-link"
-                                   th:href="@{/products/kartu_stok(page=${currentPage + 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">
-                                    Next
-                                </a>
+                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">›</a>
                             </li>
                         </ul>
                     </nav>
                 </div>
-
             </div>
         </div>
     </div>
@@ -432,6 +423,7 @@
         ordering: true,
         order: [],
         info: false,
+        searching: false,
         language: {
             lengthMenu: "Tampilkan MENU data per halaman",
             zeroRecords: "Data tidak ditemukan"

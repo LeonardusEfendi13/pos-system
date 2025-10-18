@@ -82,7 +82,8 @@ public class PenjualanController {
         size = safeSize(size);
         model.addAttribute("size", size);
         model.addAttribute("start", start);
-        model.addAttribute("end", end);model.addAttribute("totalData", totalElements);
+        model.addAttribute("end", end);
+        model.addAttribute("totalData", totalElements);
 
         if (totalElements == 0) {
             model.addAttribute("startData", 0);
