@@ -74,7 +74,7 @@ public class KasirService {
                 newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 //Update product stock
-                ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 Long newStock = productEntity.getStock() - dtos.getQty();
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
@@ -135,7 +135,7 @@ public class KasirService {
             Map<String, TransactionDetailEntity> oldProductMap = new HashMap<>();
 
             for (TransactionDetailEntity old : oldTransactions) {
-                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
+                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
                 if (product != null) {
                     String key = old.getShortName();
                     Long newQty = newQtyMap.getOrDefault(key, null);
@@ -197,7 +197,7 @@ public class KasirService {
                 newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 // Update stock
-                ProductEntity product = productRepository.findFirstByFullNameOrShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
+                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
                 if (product == null) continue;
 
                 Long updatedStock = product.getStock() - dto.getQty();

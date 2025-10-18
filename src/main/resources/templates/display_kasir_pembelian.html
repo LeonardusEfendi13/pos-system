@@ -256,7 +256,7 @@
         <!-- TOMBOL KEMBALI -->
         <div class="d-flex align-items-start">
             <a
-                    th:href="${pembelianData.pembelianId == null and pembelianData.pembelianDetailDTOS == null} ? '/home' : '/pembelian'"
+                    th:href="@{/pembelian}"
                     class="btn btn-warning"
                     onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >Kembali
@@ -881,6 +881,8 @@
     });
 </script>
 <script>
+    let dynamicProductsCache = [];
+
     //Cek no faktur
     function cekNoFaktur(noFaktur){
         const supplierId = document.getElementById("customerSelect").value;
@@ -1332,62 +1334,72 @@
         });
 
      if (focus) codeInput.focus();
+        codeInput.addEventListener("keydown", async (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const code = codeInput.value.trim().toUpperCase();
 
-     codeInput.addEventListener("keydown", (e) => {
-       if (e.key === "Enter") {
-         e.preventDefault();
-         const code = codeInput.value.trim().toUpperCase();
+            if (!code) {
+              selectedRow = row;
+              loadProductTable();
+              productModal.show();
+              return;
+            }
 
-         if (!code) {
-           selectedRow = row;
-           productModal.show();
-           loadProductTable();
-           return;
-         }
+            // 🔍 Cari produk di masterProducts dulu
+            let product = masterProducts.find((p) => p.shortName === code);
 
-         const product = masterProducts.find((p) => p.shortName === code);
-         if (product) {
-           const rows = [...sellTableBody.querySelectorAll("tr")];
-           let existingRow = null;
-           for (const r of rows) {
-             if (r === row) continue;
-             const cInput = r.querySelector(".code-input");
-             if (cInput.value.trim().toUpperCase() === code) {
-               existingRow = r;
-               break;
-             }
-           }
+            // 🚀 Kalau belum ada, fetch ke backend
+            if (!product) {
+              try {
+                const res = await fetch(`/products/search?keyword=${encodeURIComponent(code)}&field=shortName`);
+                if (res.ok) {
+                  const result = await res.json();
+                  if (result && result.length > 0) {
+                    product = result[0];
+                    // ✅ Simpan ke cache agar validasi harga jual bisa pakai data B ini
+                    dynamicProductsCache.push(product);
+                  }
+                }
+              } catch (err) {
+                console.error("Error fetching product:", err);
+              }
+            }
 
-           if (existingRow) {
-             const qInput = existingRow.querySelector(".qty-input");
-             qInput.value = parseInt(qInput.value || "0") + 1;
-             updateTotalRow(existingRow);
+            if (product) {
+              // 🔁 Cek apakah produk ini sudah ada di baris lain
+              const existingRow = [...sellTableBody.querySelectorAll("tr")].find((r) => {
+                const existingCode = r.querySelector(".code-input").value.trim().toUpperCase();
+                return existingCode === code;
+              });
 
-             // Clear the current row and focus
-             codeInput.value = "";
-             row.querySelector(".name-input").value = "";
-             row.querySelector(".price-input").value = "Rp 0";
-             row.querySelector(".qty-input").value = "1";
-             row.querySelector(".discount-percent-input").value = "0";
-             row.querySelector(".discount-amount-input").value = "0";
-             row.querySelector(".total-cell").textContent = "Rp 0";
-             codeInput.focus();
-           } else {
-             fillProductRow(row, product);
-             maybeAddNewRow();
-           }
-         } else {
-           alert("Product not found");
-           codeInput.value = ""; // Clear the input field
-           codeInput.focus();
-         }
-       }
-     });
+              if (existingRow && existingRow !== row) {
+                // ✅ Kalau sudah ada → tambahkan qty dan update total
+                const qtyInput = existingRow.querySelector(".qty-input");
+                qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+                updateTotalRow(existingRow);
+
+                // Kosongkan input baru agar tidak duplikat
+                codeInput.value = "";
+                codeInput.focus();
+                return;
+              }
+
+              // 🔹 Kalau produk baru → isi data ke baris ini
+              fillProductRow(row, product);
+              maybeAddNewRow();
+            } else {
+              alert("Product not found");
+              codeInput.value = "";
+              codeInput.focus();
+            }
+          }
+        });
 
      qtyInput.addEventListener("input", () => {
        const qty = parseInt(qtyInput.value) || 0;
        const code = codeInput.value.trim();
-       const product = masterProducts.find((p) => p.shortName === code);
+<!--       const product = masterProducts.find((p) => p.shortName === code);-->
 
        updateTotalRow(row);
      });
@@ -1519,6 +1531,7 @@
    }
 
    function fillProductRow(row, product) {
+        console.log("product : ", product);
       const qty = 1; // default qty
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
@@ -1742,6 +1755,13 @@
           row.focus();
         });
 
+        // 🔑 Press Enter to select
+        row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                selectProduct(product);
+            }
+        });
+
        productTableBody.appendChild(row);
        rows.push(row);
      });
@@ -1937,46 +1957,22 @@
        customerSelect.insertAdjacentHTML("beforeend", newOption);
      });
    }
+
    function cleanUpRowsBeforeSave() {
-      const rows = [...sellTableBody.querySelectorAll("tr")];
+        const rows = [...sellTableBody.querySelectorAll("tr")];
 
-      rows.forEach(row => {
-        const codeInput = row.querySelector(".code-input");
-        const nameInput = row.querySelector(".name-input");
-        const priceInput = row.querySelector(".price-input");
-        const qtyInput = row.querySelector(".qty-input");
+        rows.forEach((row) => {
+            const code = row.querySelector(".code-input")?.value.trim();
+            const name = row.querySelector(".name-input")?.value.trim();
+            const qty = row.querySelector(".qty-input")?.value.trim();
 
-        const typedCode = codeInput.value.trim().toUpperCase();
-
-        // if user half-typed something
-        if (typedCode !== "") {
-          const product = masterProducts.find(p => p.shortName === typedCode);
-
-          if (!product) {
-              if (row.dataset.originalCode) {
-                // revert to original data
-                codeInput.value = row.dataset.originalCode;
-                nameInput.value = row.dataset.originalName;
-                priceInput.value = row.dataset.originalPrice;
-                qtyInput.value = row.dataset.originalQty;
-                row.querySelector(".discount-percent-input").value = row.dataset.originalDiscountPercent;
-                row.querySelector(".discount-amount-input").value = row.dataset.originalDiscountAmount;
-                row.querySelector(".total-cell").textContent = row.dataset.originalTotal;
-
-                updateTotalRow(row);
-              } else {
-                // brand new row, clear it
-                codeInput.value = "";
-                nameInput.value = "";
-                priceInput.value = "Rp 0";
-                qtyInput.value = "1";
-                row.querySelector(".discount-percent-input").value = "0";
-                row.querySelector(".discount-amount-input").value = "0";
-                row.querySelector(".total-cell").textContent = "Rp 0";
-              }
+            const isFullyFilled = code && name && qty;
+            console.log("valid : ", isFullyFilled);
+            if (!isFullyFilled) {
+                // Hapus baris yang tidak lengkap
+                row.remove();
             }
-        }
-      });
+        });
     }
 
     function validateMarkups() {
@@ -2077,10 +2073,10 @@
 
      sellTableBody.querySelectorAll("tr").forEach((row) => {
        const code = row.querySelector(".code-input").value;
-       const product = masterProducts.find(p => p.shortName === code);
-       if (!code || !product) {
-         return;
-       }
+<!--       const product = masterProducts.find(p => p.shortName === code);-->
+<!--       if (!code || !product) {-->
+<!--         return;-->
+<!--       }-->
        if (code) {
          transactionData.pembelianDetailDTOS.push({
            code: code,
@@ -2107,6 +2103,7 @@
        }
      });
      try {
+      console.log("transaction data : ", JSON.stringify(transactionData, null, 2));
       let response;
       if (
         masterTransactions.pembelianId !== null &&
@@ -2275,14 +2272,16 @@
     }
 
 
-   function loadTransaction(transaction) {
+   async function loadTransaction(transaction) {
+     while (sellTableBody.firstChild) {
+        sellTableBody.removeChild(sellTableBody.firstChild);
+      }
       // Clear the current sales table
       sellTableBody.innerHTML = "";
 
       // Set the grand total discounts and customer
       if (transaction.subtotal > 0) {
-        const discountPercent =
-          (transaction.totalDisc / transaction.subtotal) * 100;
+        const discountPercent = (transaction.totalDisc / transaction.subtotal) * 100;
         grandDiscountPercent.value = discountPercent.toFixed(2);
       } else {
         grandDiscountPercent.value = "0.00";
@@ -2311,22 +2310,20 @@
           document.getElementById("paymentType").value = "kredit";
           document.getElementById("dueDateContainer").style.display = "block";
           if (transaction.tanggalTempo) {
-            document.getElementById("poDueDate").value =
-              transaction.tanggalTempo.split("T")[0];
+            document.getElementById("poDueDate").value = transaction.tanggalTempo.split("T")[0];
           }
         }
 
         if (transaction.isCash === false) {
-          document.getElementById("poDueDate").value =
-            transaction.tanggalTempo.split("T")[0];
+          document.getElementById("poDueDate").value = transaction.tanggalTempo.split("T")[0];
         }
       });
 
-      // Populate the table with transaction details
-      transaction.pembelianDetailDTOS.forEach((detail, index) => {
+      // ✅ Ganti forEach → for...of agar bisa pakai await
+      for (const [index, detail] of transaction.pembelianDetailDTOS.entries()) {
         const row = document.createElement("tr");
 
-        //save original data
+        // Simpan data original
         row.dataset.originalCode = detail.code;
         row.dataset.originalName = detail.name;
         row.dataset.originalPrice = detail.price;
@@ -2354,13 +2351,39 @@
           <td><input type="text" class="form-control form-control-sm harga-jual-3-input" value="${formatRupiah(detail.hargaJual3 ?? 0)}"/></td>
         `;
 
-        // ✅ Disable field sesuai productPricesDTO dari masterProducts
-        const product = masterProducts.find(p => p.shortName === detail.code);
+        const priceInput = row.querySelector(".price-input");
+        const qtyInput = row.querySelector(".qty-input");
+
+        priceInput.addEventListener("focus", handleFormattedFocus);
+        priceInput.addEventListener("blur", handleFormattedBlur);
+        priceInput.addEventListener("input", () => updateTotalRow(row));
+        qtyInput.addEventListener("input", () => updateTotalRow(row));
+
+        // ✅ Ambil product (bisa dari masterProducts atau fetch)
+        let product = masterProducts.find(p => p.shortName === detail.code);
+
+        if (!product) {
+          try {
+            const res = await fetch(`/products/search?keyword=${encodeURIComponent(detail.code)}&field=shortName`);
+            if (res.ok) {
+              const result = await res.json();
+              if (result && result.length > 0) {
+                product = result[0];
+                dynamicProductsCache.push(product);
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching product:", err);
+          }
+        }
+
+        // ✅ Sekarang aman, karena fetch sudah selesai sebelum lanjut
         if (product) {
-          const tiers = product.productPricesDTO;
+          const tiers = product.productPricesDTO || [];
           tiers.forEach((tier, i) => {
             const markupInput = row.querySelector(`.markup-${i+1}-input`);
             const hargaInput = row.querySelector(`.harga-jual-${i+1}-input`);
+
             if (tier && tier.price > 0) {
               markupInput.disabled = false;
               hargaInput.disabled = false;
@@ -2371,124 +2394,22 @@
           });
         }
 
-        // Reuse handler binding
+        // 🔁 lanjut binding handler
         attachNavigationHandlers(row);
         attachMarkupHandlers(row);
 
-        // Other event bindings (price, qty, discount)
-        const codeInput = row.querySelector(".code-input");
-        const priceInput = row.querySelector(".price-input");
-        const discPercentInput = row.querySelector(".discount-percent-input");
-        const discAmountInput = row.querySelector(".discount-amount-input");
-        const markUp1Input = row.querySelector(".markup-1-input");
-        const markUp2Input = row.querySelector(".markup-2-input");
-        const markUp3Input = row.querySelector(".markup-3-input");
-        const hargaJual1Input = row.querySelector(".harga-jual-1-input");
-        const hargaJual2Input = row.querySelector(".harga-jual-2-input");
-        const hargaJual3Input = row.querySelector(".harga-jual-3-input");
-
-        // Optional: also allow double-click on codeInput itself
-        codeInput.addEventListener("dblclick", () => {
-          selectedRow = row;
-          productModal.show();
-          loadProductTable();
-        });
-
-        codeInput.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            const code = codeInput.value.trim().toUpperCase();
-
-            if (!code) {
-              selectedRow = row;
-              productModal.show();
-              loadProductTable();
-              return;
-            }
-
-            const product = masterProducts.find((p) => p.shortName === code);
-            if (product) {
-              fillProductRow(row, product);
-              maybeAddNewRow();
-            } else {
-              alert("Product not found");
-              codeInput.value = "";
-              codeInput.focus();
-            }
-          }
-        });
-        // tambahkan auto-set 0 on blur
-        [discPercentInput, discAmountInput, markUp1Input, markUp2Input, markUp3Input]
-          .forEach(inp => ensureZeroOnBlur(inp, 2, row));  // 0.00 untuk disc/markup
-
-        [priceInput, hargaJual1Input, hargaJual2Input, hargaJual3Input]
-          .forEach(inp => {
-            ensureZeroOnBlur(inp, 0, row);
-          });
-
-        const qtyInput = row.querySelector(".qty-input");
-
-        [qtyInput].forEach(inp => ensureOneOnBlur(inp, 0, row));
-        hargaJual1Input.addEventListener("focus", handleFormattedFocus);
-        hargaJual1Input.addEventListener("blur", handleFormattedBlur);
-        hargaJual2Input.addEventListener("focus", handleFormattedFocus);
-        hargaJual2Input.addEventListener("blur", handleFormattedBlur);
-        hargaJual3Input.addEventListener("focus", handleFormattedFocus);
-        hargaJual3Input.addEventListener("blur", handleFormattedBlur);
-        priceInput.addEventListener("focus", handleFormattedFocus);
-        priceInput.addEventListener("blur", handleFormattedBlur);
-        priceInput.addEventListener("input", () => {
-            updateMarkups(row)
-            updateTotalRow(row)
-        });
-        qtyInput.addEventListener("input", () => updateTotalRow(row));
-
-        discPercentInput.addEventListener("input", () => {
-          let val = discPercentInput.value;
-          if (val.includes(".")) {
-            const [intPart, decPart] = val.split(".");
-            discPercentInput.value = intPart + "." + decPart.slice(0, 2);
-          }
-          const price = parseRupiah(row.querySelector(".price-input").value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountPercent = parseFloat(discPercentInput.value) || 0;
-          if (price * qty > 0) {
-            const discountAmount = price * qty * (discountPercent / 100);
-            discAmountInput.value = Math.round(discountAmount);
-          } else {
-            discAmountInput.value = "0";
-          }
-          updateTotalRow(row);
-        });
-
-        discAmountInput.addEventListener("input", () => {
-          const price = parseRupiah(row.querySelector(".price-input").value);
-          const qty = parseInt(qtyInput.value) || 0;
-          const discountAmount = parseFloat(discAmountInput.value) || 0;
-          if (price * qty > 0) {
-            const discountPercent = (discountAmount / (price * qty)) * 100;
-            discPercentInput.value = discountPercent.toFixed(2);
-          } else {
-            discPercentInput.value = "0";
-          }
-          updateTotalRow(row);
-        });
-
-        row.addEventListener("contextmenu", function (e) {
-          e.preventDefault();
-          selectedRow = row;
-          showContextMenu(e.pageX, e.pageY);
-        });
-
+        // (lanjut semua event listener & append row)
         sellTableBody.appendChild(row);
-      });
+      }
 
-      // Add a new empty row for a new item
+      // Add a new empty row
+      await Promise.resolve(); // tunggu microtask async selesai
       addNewRow();
 
       // Recalculate and display the grand total
       calculateGrandTotal();
     }
+
 
    // Init
    loadCustomers();
@@ -2497,9 +2418,10 @@
      masterTransactions.pembelianDetailDTOS !== null
    ) {
      loadTransaction(masterTransactions);
-   }
+   }else{
+      addNewRow();
+    }
    updateJam();
-   addNewRow();
    calculateGrandTotal();
    setInterval(updateJam, 1000);
 </script>

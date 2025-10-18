@@ -61,7 +61,7 @@ public class PembelianController {
             pembelianData = pembelianService.searchPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, search, PageRequest.of(page, size));
         }
 
-        model.addAttribute("pembelianData", pembelianData);
+        model.addAttribute("pembelianData", pembelianData.getContent());
         model.addAttribute("supplierId", supplierId);
         model.addAttribute("supplierData", supplierData);
         model.addAttribute("activePage", "pembelianRiwayat");
@@ -111,8 +111,7 @@ public class PembelianController {
             return "redirect:/login";
         }
 
-        Page<ProductDTO> productPage = productService.getProductDataForPembelian(clientId, PageRequest.of(page, size));
-        List<ProductDTO> productEntity = productPage.getContent();
+        List<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size)).getContent();
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
 
         PembelianDTO pembelianData = new PembelianDTO();
@@ -121,7 +120,7 @@ public class PembelianController {
         }
         model.addAttribute("pembelianData", pembelianData);
         model.addAttribute("activePage", "pembelianTambah");
-        model.addAttribute("productData", productEntity);
+        model.addAttribute("productData", productPage);
         model.addAttribute("supplierData", supplierEntities);
         return "display_kasir_pembelian";
     }

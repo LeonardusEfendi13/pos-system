@@ -97,7 +97,7 @@ public class ProductController {
             @RequestParam String keyword,
             @RequestParam(required = false) String field // "shortName" atau "fullName"
     ) {
-
+        System.out.println("Enter search");
         try {
             String token = (String) session.getAttribute(authSessionKey);
             AccountEntity accEntity = authService.validateToken(token);
