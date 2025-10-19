@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -108,6 +110,25 @@ public class ProductController {
         } catch (Exception e) {
             e.printStackTrace(); // Log error
             return List.of(); // Return empty list on error
+        }
+    }
+
+    @GetMapping("/find")
+    @ResponseBody
+    public ResponseEntity<ProductDTO> findProduct(
+            HttpSession session,
+            @RequestParam String keyword
+    ) {
+        System.out.println("Enter find");
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            AccountEntity accEntity = authService.validateToken(token);
+            Long clientId = accEntity.getClientEntity().getClientId();
+            ProductDTO data = productService.findProductByCode(clientId, keyword.toUpperCase());
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Return empty list on error
         }
     }
 

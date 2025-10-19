@@ -37,11 +37,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             """)
     Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
 
-    Page<ProductEntity> findAllByClientEntity_ClientIdAndProductPricesEntityIsNotNullAndDeletedAtIsNullOrderByProductIdDesc(
-            Long clientId,
-            Pageable pageable
-    );
-
     ProductEntity findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(String fullName, String shortName, Long productId, Long clientId);
 
     ProductEntity findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
@@ -119,6 +114,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @Param("clientId") Long clientId,
             @Param("keyword") String keyword
     );
+
+    ProductEntity findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(String shortName, Long clientId);
 
 
 }

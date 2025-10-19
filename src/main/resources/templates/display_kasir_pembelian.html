@@ -1352,11 +1352,11 @@
             // 🚀 Kalau belum ada, fetch ke backend
             if (!product) {
               try {
-                const res = await fetch(`/products/search?keyword=${encodeURIComponent(code)}&field=shortName`);
+                const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}`);
                 if (res.ok) {
                   const result = await res.json();
-                  if (result && result.length > 0) {
-                    product = result[0];
+                  if (result) {
+                    product = result;
                     // ✅ Simpan ke cache agar validasi harga jual bisa pakai data B ini
                     dynamicProductsCache.push(product);
                   }
