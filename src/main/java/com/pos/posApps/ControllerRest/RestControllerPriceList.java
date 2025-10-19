@@ -1,5 +1,6 @@
 package com.pos.posApps.ControllerRest;
 
+import com.pos.posApps.DTO.Dtos.SuggestedPricesDTO;
 import com.pos.posApps.Service.PriceListService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +14,8 @@ public class RestControllerPriceList {
     private PriceListService priceListService;
 
     @GetMapping("/cek")
-    public ResponseEntity<String> cekNewPrice(@RequestParam("kode") String partNumber){
-        String newPrice = priceListService.getSuggestedPriceByPartNumber(partNumber);
-        return ResponseEntity.ok(newPrice);
+    public ResponseEntity<SuggestedPricesDTO> cekNewPrice(@RequestParam("kode") String partNumber){
+        SuggestedPricesDTO suggestedPriceData = priceListService.getSuggestedPriceByPartNumber(partNumber);
+        return ResponseEntity.ok(suggestedPriceData);
     }
 }

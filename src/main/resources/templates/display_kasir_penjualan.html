@@ -14,6 +14,11 @@
             "Helvetica Neue", Arial, sans-serif;
         }
 
+        .pct-suggest-input{
+            font-size:15px !important;
+            font-weight: bolder;
+        }
+
         .card {
             border: none;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -279,7 +284,7 @@
                 </th>
                 <th
                         style="
-                  width: 15%;
+                  width: 13%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -364,6 +369,17 @@
                 "
                 >
                     Saran Harga
+                </th>
+                <th
+                        style="
+                  width: 2%;
+                  position: sticky;
+                  top: 0;
+                  background-color: white;
+                  z-index: 1;
+                "
+                >
+                    Persentase
                 </th>
             </tr>
             </thead>
@@ -664,6 +680,7 @@
     const masterSettings = /*[[${settingData}]]*/ [];
 </script>
 <script>
+    let basicPriceFromSuggested = 0;
     let dynamicProductsCache = [];
 
     $(document).ready(function () {
@@ -1337,6 +1354,39 @@
         });
     }
 
+    function recalculateProfitPercentage(priceInputEl, basicPrice) {
+        if (!priceInputEl || !basicPrice) return;
+
+        const row = priceInputEl.closest("tr");
+        const pctInput = row.querySelector(".pct-suggest-input");
+
+        // Kalkulasi awal saat fetch berhasil
+        const sellingPrice = parseRupiah(priceInputEl.value);
+        if (basicPrice > 0) {
+            const pct = ((sellingPrice - basicPrice) / basicPrice) * 100;
+            pctInput.value = pct.toFixed(2) + "%";
+        } else {
+            pctInput.value = "0%";
+        }
+
+        // Pastikan tidak dobel listener (hapus listener lama dulu)
+        priceInputEl.removeEventListener("input", priceInputEl._recalcListener);
+
+        // Tambahkan listener baru hanya jika basicPrice tersedia
+        const listener = () => {
+            const newSelling = parseRupiah(priceInputEl.value);
+            if (!isNaN(newSelling) && basicPrice > 0) {
+                const pct = ((newSelling - basicPrice) / basicPrice) * 100;
+                pctInput.value = pct.toFixed(2) + "%";
+            } else {
+                pctInput.value = "0%";
+            }
+        };
+
+        priceInputEl.addEventListener("input", listener);
+        priceInputEl._recalcListener = listener;
+    }
+
     function addNewRow(focus = true) {
         const rows = sellTableBody.querySelectorAll("tr");
         if (rows.length > 0) {
@@ -1362,7 +1412,8 @@
   <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
   <td class="total-cell">Rp 0</td>
   <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
-`;
+  <td><input type="text" class="form-control form-control-sm pct-suggest-input" readonly/></td>
+  `;
 
         sellTableBody.appendChild(row);
 
@@ -1431,6 +1482,7 @@
         const discPercentInput = row.querySelector(".discount-percent-input");
         const discAmountInput = row.querySelector(".discount-amount-input");
         const cekHargaBtn = row.querySelector(".cek-harga-btn");
+        const pctSuggestInput = row.querySelector(".pct-suggest-input");
 
         // --- Tombol cek harga
         cekHargaBtn.addEventListener("click", async () => {
@@ -1447,7 +1499,17 @@
                     `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
                 );
                 if (!res.ok) throw new Error("Gagal fetch harga");
-                const harga = await res.text();
+                const text = await res.text();
+                  if (!text) {
+                    console.warn("Empty response from server");
+                    return;
+                  }
+
+                const response = JSON.parse(text);
+                console.log("Result:", response);
+                const harga = response.sellingPrice;
+                basicPriceFromSuggested = response.basicPrice;
+                recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
 
                 if (harga && harga !== "null") {
                     cekHargaBtn.classList.remove("btn-info");

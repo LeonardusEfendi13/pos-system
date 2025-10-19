@@ -1,5 +1,6 @@
 package com.pos.posApps.Service;
 
+import com.pos.posApps.DTO.Dtos.SuggestedPricesDTO;
 import com.pos.posApps.Entity.PriceListEntity;
 import com.pos.posApps.Repository.PriceListRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +16,18 @@ public class PriceListService {
     @Autowired
     PriceListRepository priceListRepository;
 
-    public String getSuggestedPriceByPartNumber(String partNumber){
+    public SuggestedPricesDTO getSuggestedPriceByPartNumber(String partNumber){
         //Clean the part number
         partNumber = partNumber.trim().toUpperCase();
         Optional<PriceListEntity> priceListEntityOpt = priceListRepository.findAllByPartNumber(partNumber);
         if(priceListEntityOpt.isEmpty()){
-            return null;
+            return new SuggestedPricesDTO();
         }
 
         PriceListEntity priceListEntity = priceListEntityOpt.get();
         //Initiate Suggested price
         BigDecimal suggestedPrice = null;
-        BigDecimal basicPrice;
+        BigDecimal basicPrice = null;
 
 
         //Get Merk
@@ -44,8 +45,8 @@ public class PriceListService {
             suggestedPrice = basicPrice.add(basicPrice.multiply(profitPercentage));
         }
         if(suggestedPrice != null){
-            return suggestedPrice.stripTrailingZeros().toPlainString();
+            return new SuggestedPricesDTO(suggestedPrice.stripTrailingZeros().toPlainString(), basicPrice.stripTrailingZeros().toPlainString());
         }
-        return null;
+        return new SuggestedPricesDTO();
     }
 }
