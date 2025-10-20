@@ -2406,6 +2406,13 @@
       await Promise.resolve(); // tunggu microtask async selesai
       addNewRow();
 
+
+      row.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        selectedRow = row;
+        showContextMenu(e.pageX, e.pageY);
+      });
+
       // Recalculate and display the grand total
       calculateGrandTotal();
     }
@@ -2424,6 +2431,14 @@
    updateJam();
    calculateGrandTotal();
    setInterval(updateJam, 1000);
+    sellTableBody.addEventListener("contextmenu", function (e) {
+      const row = e.target.closest("tr");
+      if (row && sellTableBody.contains(row)) {
+        e.preventDefault();
+        selectedRow = row;
+        showContextMenu(e.pageX, e.pageY);
+      }
+    });
 </script>
 </body>
 </html>
