@@ -96,6 +96,7 @@
                     </tr>
                     </thead>
                     <tbody>
+                    <!-- When kartuStok is not empty -->
                     <tr th:if="${!#lists.isEmpty(kartuStok) && currentPage == 0}">
                         <td>1</td>
                         <td th:text="${T(java.time.LocalDate).parse(startDate).format(T(java.time.format.DateTimeFormatter).ofPattern('dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id')))}">
@@ -107,11 +108,10 @@
                         <td>0</td>
                         <td th:text="${stockAwal}">-2</td>
                     </tr>
-                    <tr th:each="stok, iterStat : ${kartuStok}" th:if="${!#lists.isEmpty(kartuStok)}">
+
+                    <tr th:each="stok, iterStat : ${kartuStok}">
                         <td th:text="${(currentPage * size) + iterStat.count + 1}">2</td>
-                        <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
-                            Tanggal Jual
-                        </td>
+                        <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
                         <td th:text="${stok.referenceNo}">000000</td>
                         <td th:text="${stok.tipeKartuStok}">Tipe Kartu Stok</td>
                         <td th:text="${stok.qtyIn}">-2</td>
@@ -119,8 +119,9 @@
                         <td th:text="${stok.saldo}">-2</td>
                     </tr>
 
+                    <!-- When kartuStok is empty -->
                     <tr th:if="${#lists.isEmpty(kartuStok)}">
-                        <td colspan="8" class="text-center text-muted">
+                        <td colspan="7" class="text-center text-muted">
                             Tidak ada data untuk ditampilkan.
                         </td>
                     </tr>
@@ -254,14 +255,22 @@
             row.style.cursor = "pointer";
 
             row.innerHTML = `
-            <td>${product.shortName}</td>
-            <td>${product.fullName}</td>
-            <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-            <td>${product.stok}</td>
+                <td>${product.shortName}</td>
+                <td>${product.fullName}</td>
+                <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+                <td>${product.stok}</td>
             `;
 
+            // Double-click selects product
             row.addEventListener("dblclick", () => {
                 selectProduct(product);
+            });
+
+            // Click highlights row
+            row.addEventListener("click", () => {
+                currentKeyboardIndex = index;
+                highlightRow(row);
+                row.focus();
             });
 
             productTableBody.appendChild(row);
@@ -287,25 +296,24 @@
 
                     if (isInSearch) {
                         currentKeyboardIndex = 0;
-                        highlightRow(rows[currentKeyboardIndex]);
-                        rows[currentKeyboardIndex].focus();
-                    } else {
-                        if (currentKeyboardIndex < rows.length - 1)
-                            currentKeyboardIndex++;
-                        highlightRow(rows[currentKeyboardIndex]);
-                        rows[currentKeyboardIndex].focus();
+                    } else if (currentKeyboardIndex < rows.length - 1) {
+                        currentKeyboardIndex++;
                     }
+
+                    highlightRow(rows[currentKeyboardIndex]);
+                    rows[currentKeyboardIndex]?.focus();
                     break;
 
                 case "ArrowUp":
                     e.preventDefault();
                     if (rows.length === 0) return;
 
-                    if (!isInSearch) {
-                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
-                        highlightRow(rows[currentKeyboardIndex]);
-                        rows[currentKeyboardIndex].focus();
+                    if (!isInSearch && currentKeyboardIndex > 0) {
+                        currentKeyboardIndex--;
                     }
+
+                    highlightRow(rows[currentKeyboardIndex]);
+                    rows[currentKeyboardIndex]?.focus();
                     break;
 
                 case "ArrowLeft":
@@ -320,15 +328,15 @@
 
                 case "Enter":
                     e.preventDefault();
-
                     if (isInSearch) {
                         doFilter();
                     } else {
                         if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
-                            const selectedCode = rows[currentKeyboardIndex]
+                            const selectedRow = rows[currentKeyboardIndex];
+                            const selectedCode = selectedRow
                                 .querySelector("td")
                                 .textContent.trim();
-                            const selected = masterProducts.find(
+                            const selected = filteredProducts.find(
                                 (p) => p.shortName === selectedCode
                             );
                             if (selected) selectProduct(selected);
@@ -342,10 +350,12 @@
             rows.forEach((r) => r.classList.remove("table-active"));
             if (row) {
                 row.classList.add("table-active");
-                row.scrollIntoView({block: "nearest", behavior: "smooth"});
+                row.scrollIntoView({ block: "nearest", behavior: "smooth" });
             }
         }
     }
+
+
 
     function selectProduct(product) {
         // Set the product name in the visible input
@@ -400,6 +410,15 @@
             alert("Gagal mencari produk: " + err.message);
             loadProductTable(masterProducts); // fallback ke semua produk
         }
+
+        setTimeout(() => {
+            const firstRow = document.querySelector("#productTableBody tr");
+            if (firstRow) {
+                firstRow.classList.add("table-active");
+                firstRow.focus();
+                currentKeyboardIndex = 0;
+            }
+        }, 100);
     }
 
     [searchCode, searchName].forEach((input) => {
@@ -414,20 +433,6 @@
     productModalEl.addEventListener("hidden.bs.modal", () => {
         searchCode.value = "";
         searchName.value = "";
-    });
-
-    $('#kartuStokTable').DataTable({
-        paging: false,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50],
-        ordering: true,
-        order: [],
-        info: false,
-        searching: false,
-        language: {
-            lengthMenu: "Tampilkan MENU data per halaman",
-            zeroRecords: "Data tidak ditemukan"
-        }
     });
 </script>
 </body>

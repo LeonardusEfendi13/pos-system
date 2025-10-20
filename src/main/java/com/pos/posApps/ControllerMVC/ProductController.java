@@ -23,6 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -235,13 +236,22 @@ public class ProductController {
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
         Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size));
-
-        Page<StockMovementsDTO> stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
+        List<StockMovementsDTO> stokData = Collections.emptyList();
+        long totalElements = 0L;
+        int totalPages = 0;
+        int numberElement = 0;
+        if(productId != null){
+            Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
+            totalElements = pageStokData.getTotalElements();
+            stokData = pageStokData.getContent();
+            totalPages = pageStokData.getTotalPages();
+            numberElement = pageStokData.getNumberOfElements();
+        }
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
 
-        Long totalElements = stokData.getTotalElements();
+//        Long totalElements = stokData.getTotalElements();
 
-        Integer totalPages = stokData.getTotalPages();
+//        Integer totalPages = stokData.getTotalPages();
         if (totalPages == 0) {
             totalPages = 1;
         }
@@ -259,7 +269,7 @@ public class ProductController {
             model.addAttribute("endData", 0);
         } else {
             model.addAttribute("startData", page * size + 1);
-            model.addAttribute("endData", page * size + stokData.getNumberOfElements());
+            model.addAttribute("endData", page * size + numberElement);
         }
 
         model.addAttribute("isShowDetail", true);
