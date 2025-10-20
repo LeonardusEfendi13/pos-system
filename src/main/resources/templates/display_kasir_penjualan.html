@@ -2558,13 +2558,85 @@ vertical-align: middle;
                 }
             });
 
+            codeInput.addEventListener("keydown", async (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const code = codeInput.value.trim().toUpperCase();
+
+                if (!code) {
+                  selectedRow = row;
+                  loadProductTable();
+                  productModal.show();
+                  return;
+                }
+
+                // 🔍 Cari produk di masterProducts dulu
+                let product = masterProducts.find((p) => p.shortName === code);
+
+                // 🚀 Kalau belum ada, fetch ke backend
+                if (!product) {
+                  try {
+                    const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}`);
+                    if (res.ok) {
+                      const result = await res.json();
+                      if (result) {
+                        product = result;
+                        // ✅ Simpan ke cache agar validasi harga jual bisa pakai data B ini
+                        dynamicProductsCache.push(product);
+                      }
+                    }
+                  } catch (err) {
+                    console.error("Error fetching product:", err);
+                  }
+                }
+
+                if (product) {
+                  // 🔁 Cek apakah produk ini sudah ada di baris lain
+                  const existingRow = [...sellTableBody.querySelectorAll("tr")].find((r) => {
+                    const existingCode = r.querySelector(".code-input").value.trim().toUpperCase();
+                    return existingCode === code;
+                  });
+
+                  if (existingRow && existingRow !== row) {
+                    // ✅ Kalau sudah ada → tambahkan qty dan update total
+                    const qtyInput = existingRow.querySelector(".qty-input");
+                    qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+                    updateTotalRow(existingRow);
+
+                    // Kosongkan input baru agar tidak duplikat
+                    codeInput.value = "";
+                    codeInput.focus();
+                    return;
+                  }
+
+                  // 🔹 Kalau produk baru → isi data ke baris ini
+                  fillProductRow(row, product);
+                  maybeAddNewRow();
+                } else {
+                  alert("Product not found");
+                  codeInput.value = "";
+                  codeInput.focus();
+                }
+              }
+            });
+
+            codeInput.addEventListener("dblclick", () => {
+                if (!codeInput.value.trim()) {
+                    // 🚀 Kalau kosong → buka modal
+                    selectedRow = row;
+                    loadProductTable();
+                    productModal.show();
+                }
+            });
+
             // --- Event qty
             qtyInput.addEventListener("input", () => {
                 const qty = parseInt(qtyInput.value) || 0;
                 const code = codeInput.value.trim();
                 const product =
                   masterProducts.find((p) => p.shortName === code) ||
-                  dynamicProductsCache.find((p) => p.shortName === code);                if (product) {
+                  dynamicProductsCache.find((p) => p.shortName === code);
+                  if (product) {
                     const newPrice = getPriceByQty(product, qty);
                     priceInput.value = formatRupiah(newPrice);
                 }
@@ -2618,6 +2690,33 @@ vertical-align: middle;
     addNewRow();
     calculateGrandTotal();
     setInterval(updateJam, 1000);
+
+    // ============================
+    // 🔁 Restore old code value on blur (lose focus)
+    // ============================
+    sellTableBody.addEventListener("focusin", (e) => {
+      // When focusing into a code-input, remember its old value
+      if (e.target.classList.contains("code-input")) {
+        const input = e.target;
+        input.dataset.oldValue = input.value; // store old value temporarily
+      }
+    });
+
+    sellTableBody.addEventListener("focusout", (e) => {
+      // When leaving a code-input, restore if empty
+      if (e.target.classList.contains("code-input")) {
+        const input = e.target;
+        const oldValue = input.dataset.oldValue || "";
+
+        // if input is empty, restore old value
+        if (!input.value.trim() && oldValue) {
+          input.value = oldValue;
+        }
+
+        // cleanup
+        delete input.dataset.oldValue;
+      }
+    });
 </script>
 <script>
     function formatByFourDigits(input) {
