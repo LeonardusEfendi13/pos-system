@@ -113,7 +113,7 @@ public class PreorderController {
     }
 
     @GetMapping("/tambah")
-    public String addPreorder(HttpSession session, Long preorderId, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
+    public String addPreorder(HttpSession session, Long preorderId, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();

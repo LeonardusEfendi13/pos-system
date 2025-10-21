@@ -244,6 +244,24 @@
             padding: 10px;
             font-weight: bold;
         }
+
+        #sellTableBody td{
+            padding-top: 0px !important;
+            padding-bottom: 0px !imporant;
+        }
+        .total-cell{
+            font-size:18px !important;
+            font-weight:500
+        }
+        #sellTableBody input {
+            font-size: 18px !important;
+            padding: 0px !important;
+            font-weight:500;
+        }
+        .cek-harga-btn{
+            font-size: 14px !important;
+            font-weight: 400;
+        }
     </style>
 </head>
 <body class="p-3">
@@ -502,11 +520,11 @@
                 <h5 class="modal-title">Select Product</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="padding: 5px">
+            <div class="modal-body" style="padding: 5px;">
                 <!-- Sticky Search Inputs -->
                 <div class="sticky-top bg-white pb-2">
                     <div class="row mb-2">
-                        <div class="col">
+                        <div class="col-5">
                             <input
                                     type="text"
                                     id="searchCode"
@@ -514,7 +532,7 @@
                                     placeholder="Search by Code"
                             />
                         </div>
-                        <div class="col">
+                        <div class="col-7">
                             <input
                                     type="text"
                                     id="searchName"
@@ -527,7 +545,7 @@
 
                 <!-- Scrollable Table Body -->
                 <div
-                        style="max-height: 400px; overflow-y: auto; padding-bottom: 10px"
+                        style="height: 600px; overflow-y: auto; padding-bottom: 10px;"
                 >
                     <table class="table table-sm table-hover mb-0" id="productTable">
                         <thead class="table-light">
