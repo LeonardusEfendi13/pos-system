@@ -48,7 +48,7 @@
                 <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addBarangModal"
                         id="add-barang-btn">Add Product
                 </button>
-                <form method="get" action="/products" class="d-flex align-items-end">
+                <form method="get" action="/products" class="d-flex align-items-end" autocomplete="off">
                     <div class="input-group">
                         <input type="text" class="form-control rounded rounded-end-0" name="search" id="searchInput" placeholder="Cari produk..."
                                th:value="${search != null ? search : ''}">
@@ -159,7 +159,7 @@
                 aria-hidden="true"
         >
             <div class="modal-dialog modal-lg">
-                <form th:action="@{/products/add}" method="post" id="barangForm">
+                <form th:action="@{/products/add}" method="post" id="barangForm" autocomplete="off">
                     <div class="modal-content">
                         <div class="modal-header py-2 modalHeader">
                             <h5 class="modal-title" id="editBarangLabel">
@@ -173,6 +173,7 @@
                             ></button>
                         </div>
                         <div class="modal-body">
+                            <input type="hidden" id="searchKey" name="search"/>
                             <input type="hidden" id="productId" name="productId"/>
                             <!-- Kode -->
                             <div class="mb-3 row">
@@ -603,21 +604,11 @@
         const $searchInput = $('#searchInput');
         const baseUrl = '/products';
 
-        $searchInput.on('input', function() {
-            if ($(this).val().trim() === '') {
-                const currentUrl = new URL(window.location.href);
-                const hasSearchParam = currentUrl.searchParams.has('search');
-
-                if (hasSearchParam) {
-                    window.location.href = baseUrl;
-                }
-            }
-        });
+        document.getElementById("searchKey").value = $searchInput.val();
 
         $('#searchButton').on('click', function(e) {
             if ($searchInput.val().trim() === '') {
                 e.preventDefault();
-
                 window.location.href = baseUrl;
             }
         });

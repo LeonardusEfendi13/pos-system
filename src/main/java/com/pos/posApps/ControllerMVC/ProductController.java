@@ -20,7 +20,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -50,7 +52,13 @@ public class ProductController {
     }
 
     @GetMapping("")
-    public String showListProducts(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
+    public String showListProducts(
+            HttpSession session,
+            Model model,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "15") Integer size,
+            @RequestParam(required = false) String search
+    ) {
         Long clientId;
         String token;
         try {
@@ -134,7 +142,7 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes) {
+    public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes, String search) {
         AccountEntity accEntity;
         ClientEntity clientData;
         try {
@@ -149,16 +157,19 @@ public class ProductController {
         } catch (Exception e) {
             return "redirect:/login";
         }
+        String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted.isStatus()) {
                 redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Created");
-                return "redirect:/products";
+                redirectAttributes.addFlashAttribute("search", search);
+                return "redirect:/products?search=" + encodedSearch;
             }
             redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
-            return "redirect:/products";
+            redirectAttributes.addFlashAttribute("search", search);
+            return "redirect:/products?search=" + encodedSearch;
         }
         redirectAttributes.addFlashAttribute("status", true);
         redirectAttributes.addFlashAttribute("message", "Session Expired");
@@ -166,7 +177,7 @@ public class ProductController {
     }
 
     @PostMapping("/edit")
-    public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes) {
+    public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes, String search) {
         AccountEntity accEntity;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -179,17 +190,19 @@ public class ProductController {
         } catch (Exception e) {
             return "redirect:/login";
         }
+        String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             boolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
             if (isEdited) {
                 redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Edited");
-                return "redirect:/products";
+                return "redirect:/products?search=" + encodedSearch;
             }
             redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to edit data");
-            return "redirect:/products";
+            redirectAttributes.addFlashAttribute("search", search);
+            return "redirect:/products?search=" + encodedSearch;
         }
         return "redirect:/login";
     }
