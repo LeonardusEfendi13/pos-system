@@ -55,7 +55,8 @@ public class ProductService {
                                 productPrices.getMaximalCount()
                         ))
                         .collect(Collectors.toList()),
-                product.getSupplierEntity().getSupplierId()
+                product.getSupplierEntity().getSupplierId(),
+                product.getMinimumStock()
         );
     }
 
@@ -133,6 +134,7 @@ public class ProductService {
             newProduct.setSupplierPrice(req.getSupplierPrice());
             newProduct.setSupplierEntity(supplierEntity);
             newProduct.setStock(req.getStock());
+            newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
 
@@ -173,6 +175,7 @@ public class ProductService {
 
     @Transactional
     public boolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
+        System.out.println("Edit req : " + req);
         Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
         if (productEntityOpt.isEmpty()) {
             return false;
@@ -214,6 +217,7 @@ public class ProductService {
         productEntity.setSupplierPrice(req.getSupplierPrice());
         productEntity.setSupplierEntity(supplierEntity);
         productEntity.setStock(req.getStock());
+        productEntity.setMinimumStock(req.getMinimumStock());
         productRepository.save(productEntity);
 
         //Delete all product prices related to product id
@@ -274,5 +278,8 @@ public class ProductService {
         return convertToDTO(productData);
     }
 
-
+    public List<ProductDTO> getUnderstockProductData(Long clientId){
+        List<ProductEntity> productData = productRepository.getUnderstockProductData(clientId);
+        return productData.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
 }

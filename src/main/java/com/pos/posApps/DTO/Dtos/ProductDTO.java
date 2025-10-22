@@ -1,7 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
 
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,4 +19,5 @@ public class ProductDTO {
     private Long stok;
     private List<ProductPricesDTO> productPricesDTO;
     private Long supplierId;
+    private Long minimumStock;
 }

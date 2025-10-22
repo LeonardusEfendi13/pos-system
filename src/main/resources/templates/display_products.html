@@ -63,6 +63,7 @@
                     <th scope="col">No</th>
                     <th scope="col">Kode Part</th>
                     <th scope="col">Nama Barang</th>
+                    <th scope="col">Minimum Stok</th>
                     <th scope="col">Stok</th>
                     <th scope="col">Harga Beli</th>
                     <th scope="col">Harga Jual</th>
@@ -74,6 +75,7 @@
                     <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
                     <td th:text="${product.shortName}">Kode Part</td>
                     <td th:text="${product.fullName}">Nama Barang</td>
+                    <td th:text="${product.minimumStock == null ? 0 : product.minimumStock}">Minimum Stok</td>
                     <td th:text="${product.stok == null ? 0 : product.stok}">Stok</td>
                     <td class="rupiah-price" th:data-price="${product.hargaBeli}"
                         th:text="${product.hargaBeli}">Harga Beli
@@ -94,6 +96,7 @@
                                     data-fullname=${product.fullName},
                                     data-supplierid=${product.supplierId},
                                     data-stok=${product.stok},
+                                    data-minimumstock=${product.minimumStock},
                                     data-hargabeli=${product.hargaBeli},
                                     data-hargajual1=${product.productPricesDTO[0].price},
                                     data-hargajual2=${product.productPricesDTO[1].price},
@@ -214,7 +217,21 @@
                                 </div>
                             </div>
 
-                            <!-- Nama Barang -->
+                            <!-- Stok -->
+                            <div class="mb-3 row">
+                                <label class="col-sm-2 col-form-label" for="stok">Minimum Stok</label>
+                                <div class="col-sm-2">
+                                    <input
+                                            type="number"
+                                            class="form-control"
+                                            id="minimumStock"
+                                            name="minimumStock"
+                                            value="0"
+                                            required
+                                    />
+                                </div>
+                            </div>
+
                             <div class="mb-3 row">
                                 <label class="col-sm-2 col-form-label" for="stok">Stok</label>
                                 <div class="col-sm-2">
@@ -235,7 +252,6 @@
                             <div class="mb-3">
                                 <h6>Harga Beli</h6>
                                 <div class="row mb-2">
-                                    <label class="col-sm-3 col-form-label" for="supplierPrice">Harga Beli Satuan</label>
                                     <div class="col-sm-3">
                                         <input
                                                 type="text"
@@ -472,6 +488,7 @@
             $('#fullName').val(data.fullname);
             $('#supplierId').val(data.supplierid);
             $('#stok').val(data.stok);
+            $('#minimumStock').val(data.minimumstock);
             $('#supplierPrice').val(rupiahFormatter.format(data.hargabeli));
 
             // Populate harga jual and pct fields
