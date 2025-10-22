@@ -133,4 +133,24 @@ public class PreorderController {
         model.addAttribute("supplierData", supplierEntities);
         return "display_kasir_preorder";
     }
+
+    @GetMapping("/understock")
+    public String getUnderstokData(HttpSession session, String startDate, String endDate, Model model){
+        Long clientId;
+        String token;
+        try {
+            token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+        List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
+        List<ProductDTO> productData = productService.getUnderstockProductData(clientId);
+        model.addAttribute("productData", productData);
+        model.addAttribute("supplierData", supplierEntities);
+        model.addAttribute("activePage", "preorderUnderstock");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
+        return "display_understock";
+    }
 }

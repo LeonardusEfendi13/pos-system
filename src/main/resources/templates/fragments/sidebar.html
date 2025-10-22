@@ -78,26 +78,33 @@
                 <!-- Preorder -->
                 <li class="nav-item dropdown"
                     th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
-                    th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat') ? ' active' : ''">
+                    th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat' or ${activePage} == 'preorderUnderstock') ? ' active' : ''">
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-preorder"
                        data-bs-toggle="collapse"
                        role="button"
                        aria-expanded="false"
                        aria-controls="sidebar-preorder"
-                       th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat') ? '' : ' collapsed'">
+                       th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat' or ${activePage} == 'preorderUnderstock') ? '' : ' collapsed'">
                         <span class="nav-link-title">Preorder</span>
                     </a>
 
                     <div class="collapse"
                          id="sidebar-preorder"
-                         th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat') ? ' show' : ''">
+                         th:classappend="(${activePage} == 'preorderTambah' or ${activePage} == 'preorderRiwayat' or ${activePage} == 'preorderUnderstock') ? ' show' : ''">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
                                 <a class="nav-link"
                                    href="/preorder/tambah"
                                    th:classappend="${activePage} == 'preorderTambah' ? ' active' : ''">
                                     Tambah Preorder
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/preorder/understock"
+                                   th:classappend="${activePage} == 'preorderUnderstock' ? ' active' : ''">
+                                    Barang Under Stock
                                 </a>
                             </li>
                             <li class="nav-item">

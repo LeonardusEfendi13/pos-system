@@ -29,6 +29,9 @@ public class EditProductRequest {
     @NotBlank
     private Long stock;
 
+    @NotBlank
+    private Long minimumStock;
+
     private List<ProductPricesDTO> productPricesDTO;
 
 }

@@ -27,6 +27,9 @@ public class CreateProductRequest {
     private Long stock;
 
     @NotBlank
+    private Long minimumStock;
+
+    @NotBlank
     private List<ProductPricesDTO> productPricesDTO;
 
 }

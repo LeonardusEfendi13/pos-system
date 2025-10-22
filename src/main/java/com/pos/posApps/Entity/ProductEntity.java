@@ -48,4 +48,7 @@ public class ProductEntity {
     @ManyToOne
     @JoinColumn(name = "client_id")
     private ClientEntity clientEntity;
+
+    @Column(name = "minimum_stock")
+    private Long minimumStock;
 }
