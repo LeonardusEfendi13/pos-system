@@ -24,6 +24,9 @@ public class ClientEntity {
     @Column(name = "kota")
     private String kota;
 
+    @Column(name = "catatan")
+    private String catatan;
+
     @Column(name = "no_telp")
     private String noTelp;
 

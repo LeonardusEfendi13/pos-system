@@ -2822,7 +2822,7 @@ vertical-align: middle;
     }
 
     function generateReceiptContent(data) {
-        const totalRowsPerPage = 13;
+        const totalRowsPerPage = 12;
 
         const columns = [
             {width: "25px", align: "center", field: "no", label: "No"},
@@ -2974,6 +2974,7 @@ vertical-align: middle;
   </div>
 </div>
 
+
 <!-- Right side: totals box -->
 <div class="col-3" style="width:283px !important;border: 1px solid black; border-top: none; font-size: 13px; padding: 5px;margin-left:19px">
 <div class="row"><div class="col-6">Total</div><div class="col-6 text-end">${data.subtotal.toLocaleString(
@@ -2992,6 +2993,10 @@ vertical-align: middle;
                 "id-ID"
             )}</div></div>
 </div>
+    <!-- Notes section -->
+  <div class="row mt-3" style="text-align:center;font-size: 12px;color:red">
+    <strong><span>${masterSettings.catatan}</span></strong>
+  </div>
 `;
 
             pageDiv.appendChild(grandTotal);
