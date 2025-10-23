@@ -9,4 +9,5 @@ public class EditClientRequest {
     private String alamat;
     private String kota;
     private String noTelp;
+    private String catatan;
 }

@@ -45,6 +45,7 @@ public class ClientController {
         clientSettings.put("ALAMAT", clientData.getAlamat());
         clientSettings.put("KOTA", clientData.getKota());
         clientSettings.put("NOMOR HP", clientData.getNoTelp());
+        clientSettings.put("CATATAN", clientData.getCatatan());
 
         model.addAttribute("settingData", clientSettings);
         model.addAttribute("activePage", "setting");

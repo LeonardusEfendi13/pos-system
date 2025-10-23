@@ -33,7 +33,8 @@ public class ClientService {
                     clientEntity.getName(),
                     clientEntity.getAlamat(),
                     clientEntity.getKota(),
-                    clientEntity.getNoTelp()
+                    clientEntity.getNoTelp(),
+                    clientEntity.getCatatan()
             );
 
         } catch (Exception e) {
@@ -55,6 +56,7 @@ public class ClientService {
                 case "ALAMAT" -> client.setAlamat(fieldValue);
                 case "KOTA" -> client.setKota(fieldValue);
                 case "NOMOR HP" -> client.setNoTelp(fieldValue);
+                case "CATATAN" -> client.setCatatan(fieldValue);
                 // You may want to block editing "Created At" and others
                 default -> throw new IllegalArgumentException("Invalid field key: " + fieldKey);
             }
@@ -97,6 +99,7 @@ public class ClientService {
             clientEntity.setAlamat(req.getAlamat());
             clientEntity.setNoTelp(req.getNoTelp());
             clientEntity.setKota(req.getKota());
+            clientEntity.setCatatan(req.getCatatan());
             clientRepository.save(clientEntity);
             return true;
         } catch (Exception e) {
