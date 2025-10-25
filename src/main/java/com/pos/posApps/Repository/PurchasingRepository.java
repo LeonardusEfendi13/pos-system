@@ -38,10 +38,26 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             Pageable pageable
     );
 
-    Page<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-
-    Page<PurchasingEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-
+    @Query("""
+    SELECT p FROM PurchasingEntity p
+    WHERE p.clientEntity.clientId = :clientId
+      AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+      AND (:lunas IS NULL OR p.isPaid = :lunas)
+      AND (:tunai IS NULL OR p.isCash = :tunai)
+      AND p.purchasingDetailEntities IS NOT EMPTY
+      AND p.deletedAt IS NULL
+      AND p.createdAt BETWEEN :startDate AND :endDate
+    ORDER BY p.purchasingId DESC
+""")
+    Page<PurchasingEntity> findPurchasingData(
+            @Param("clientId") Long clientId,
+            @Param("supplierId") Long supplierId,
+            @Param("lunas") Boolean lunas,
+            @Param("tunai") Boolean tunai,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
     List<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate);
 
     List<PurchasingEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate);
