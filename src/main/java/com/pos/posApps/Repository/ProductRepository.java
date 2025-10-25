@@ -34,6 +34,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
                 JOIN p.productPricesEntity prices
                 WHERE p.clientEntity.clientId = :clientId
                   AND p.deletedAt IS NULL
+                 ORDER BY p.fullName
             """)
     Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
 

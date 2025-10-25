@@ -55,6 +55,9 @@ public class PembelianController {
         Page<PembelianDTO> pembelianData;
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
 
+        System.out.println("Value lunas : " + lunas);
+        System.out.println("Value paid : " + tunai);
+
         if (search == null || search.isEmpty()) {
             pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, PageRequest.of(page, size));
         } else {

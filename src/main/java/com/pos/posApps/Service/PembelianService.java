@@ -10,8 +10,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -39,13 +45,31 @@ public class PembelianService {
     @Autowired
     ProductPricesRepository productPricesRepository;
 
-    public Page<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, Pageable pageable) {
-        Page<PurchasingEntity> purchasingData;
-        if(supplierId == null){
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate, pageable);
-        }else{
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate, pageable);
-        }
+    @Autowired
+    BuktiBayarRepository buktiBayarRepository;
+
+    //    public Page<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, Pageable pageable) {
+//        Page<PurchasingEntity> purchasingData;
+//        if(supplierId == null){
+//            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate, pageable);
+//        }else{
+//            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate, pageable);
+//        }
+//        return purchasingData.map(this::convertToDTO);
+//    }
+    public Page<PembelianDTO> getPembelianData(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long supplierId,
+            Boolean lunas,
+            Boolean tunai,
+            Pageable pageable) {
+
+        Page<PurchasingEntity> purchasingData = purchasingRepository.findPurchasingData(
+                clientId, supplierId, lunas, tunai, startDate, endDate, pageable
+        );
+
         return purchasingData.map(this::convertToDTO);
     }
 
@@ -106,14 +130,14 @@ public class PembelianService {
         );
     }
 
-    public boolean checkNoFaktur(String noFaktur, ClientEntity clientData, Long supplierId){
+    public boolean checkNoFaktur(String noFaktur, ClientEntity clientData, Long supplierId) {
         Optional<PurchasingEntity> purchasingsOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingNumberAndSupplierEntity_SupplierId(clientData.getClientId(), noFaktur, supplierId);
         return purchasingsOpt.isEmpty();
     }
 
     public PembelianDTO getPembelianDataById(Long clientId, Long pembelianId) {
         Optional<PurchasingEntity> purchasingsOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, pembelianId);
-        if(purchasingsOpt.isEmpty()){
+        if (purchasingsOpt.isEmpty()) {
             return null;
         }
         PurchasingEntity purchasings = purchasingsOpt.get();
@@ -152,18 +176,18 @@ public class PembelianService {
     }
 
     @Transactional
-    public boolean deletePurchasing(Long purchasingId, ClientEntity clientData){
+    public boolean deletePurchasing(Long purchasingId, ClientEntity clientData) {
         Optional<PurchasingEntity> transactionEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientData.getClientId(), purchasingId);
-        if(transactionEntityOpt.isEmpty()){
+        if (transactionEntityOpt.isEmpty()) {
             return false;
         }
         PurchasingEntity transactionEntity = transactionEntityOpt.get();
 
         //Restore stock from old purchasing detail
         List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
-        for(PurchasingDetailEntity old : oldTransactions){
+        for (PurchasingDetailEntity old : oldTransactions) {
             ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
-            if(product != null){
+            if (product != null) {
                 Long restoredStock = product.getStock() - old.getQty();
                 product.setStock(restoredStock);
                 productRepository.save(product);
@@ -192,16 +216,16 @@ public class PembelianService {
     }
 
     @Transactional
-    public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData){
+    public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData) {
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
-        if(pembelian.isPresent()){
+        if (pembelian.isPresent()) {
             return new ResponseInBoolean(false, "Nomor Faktur Sudah Ada");
         }
-        try{
+        try {
             //Get Supplier Entity
             Optional<SupplierEntity> supplierEntity = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
-            if (supplierEntity.isEmpty()){
+            if (supplierEntity.isEmpty()) {
                 return new ResponseInBoolean(false, "Supplier Tidak ada");
             }
             //Get last Transaction id
@@ -216,7 +240,7 @@ public class PembelianService {
             purchasingEntity.setTotalPrice(req.getTotalPrice());
             purchasingEntity.setTotalDiscount(req.getTotalDisc());
             purchasingEntity.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
-            if(!req.isCash()){
+            if (!req.isCash()) {
                 purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
             }
             purchasingEntity.setCash(req.isCash());
@@ -230,7 +254,7 @@ public class PembelianService {
             Long lastTransactionDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
             Long newPurchasingDetailId = Generator.generateId(lastTransactionDetailId);
 
-            for(PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()){
+            for (PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()) {
                 ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
 
                 PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
@@ -244,16 +268,16 @@ public class PembelianService {
                 purchasingDetailEntity.setPurchasingEntity(purchasingEntity);
 
                 int counter = 0;
-                for(ProductPricesEntity productPriceData : productEntity.getProductPricesEntity()){
+                for (ProductPricesEntity productPriceData : productEntity.getProductPricesEntity()) {
                     counter++;
-                    if(productPriceData.getPrice() != null && productPriceData.getPrice().compareTo(BigDecimal.ZERO) > 0){
-                        if(counter == 1){
+                    if (productPriceData.getPrice() != null && productPriceData.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                        if (counter == 1) {
                             purchasingDetailEntity.setMarkup1(dtos.getMarkup1());
                             purchasingDetailEntity.setHargaJual1(dtos.getHargaJual1());
-                        }else if(counter == 2){
+                        } else if (counter == 2) {
                             purchasingDetailEntity.setMarkup2(dtos.getMarkup2());
                             purchasingDetailEntity.setHargaJual2(dtos.getHargaJual2());
-                        }else if(counter == 3){
+                        } else if (counter == 3) {
                             purchasingDetailEntity.setMarkup3(dtos.getMarkup3());
                             purchasingDetailEntity.setHargaJual3(dtos.getHargaJual3());
                         }
@@ -271,14 +295,14 @@ public class PembelianService {
                 //Update Product Prices
                 List<ProductPricesEntity> productPricesList = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(productEntity.getProductId());
                 int index = 0;
-                for(ProductPricesEntity data : productPricesList){
-                    if(index == 0 && dtos.getHargaJual1() != null){
+                for (ProductPricesEntity data : productPricesList) {
+                    if (index == 0 && dtos.getHargaJual1() != null) {
                         data.setPrice(dtos.getHargaJual1());
                         data.setPercentage(dtos.getMarkup1());
-                    } else if(index == 1 && dtos.getHargaJual2() != null){
+                    } else if (index == 1 && dtos.getHargaJual2() != null) {
                         data.setPrice(dtos.getHargaJual2());
                         data.setPercentage(dtos.getMarkup2());
-                    }else if (index == 2 && dtos.getHargaJual3() != null){
+                    } else if (index == 2 && dtos.getHargaJual3() != null) {
                         data.setPrice(dtos.getHargaJual3());
                         data.setPercentage(dtos.getMarkup3());
                     }
@@ -301,7 +325,7 @@ public class PembelianService {
                 }
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return new ResponseInBoolean(false, e.getMessage());
         }
@@ -453,14 +477,14 @@ public class PembelianService {
                 //Update Product Prices
                 List<ProductPricesEntity> productPricesList = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(product.getProductId());
                 int index = 0;
-                for(ProductPricesEntity data : productPricesList){
-                    if(index == 0 && dto.getHargaJual1() != null){
+                for (ProductPricesEntity data : productPricesList) {
+                    if (index == 0 && dto.getHargaJual1() != null) {
                         data.setPrice(dto.getHargaJual1());
                         data.setPercentage(dto.getMarkup1());
-                    } else if(index == 1 && dto.getHargaJual2() != null){
+                    } else if (index == 1 && dto.getHargaJual2() != null) {
                         data.setPrice(dto.getHargaJual2());
                         data.setPercentage(dto.getMarkup2());
-                    }else if (index == 2 && dto.getHargaJual3() != null){
+                    } else if (index == 2 && dto.getHargaJual3() != null) {
                         data.setPrice(dto.getHargaJual3());
                         data.setPercentage(dto.getMarkup3());
                     }
@@ -497,20 +521,87 @@ public class PembelianService {
     }
 
     @Transactional
-    public boolean payFaktur(Long clientId, Long pembelianId){
-        try{
-            Optional<PurchasingEntity> purchasingEntity = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, pembelianId);
-            if(purchasingEntity.isEmpty()){
-                return false;
+    public ResponseInBoolean payFaktur(Long clientId, LunaskanPembelianDTO req) {
+        try {
+            // Validation for transfer payments
+            if ("transfer".equalsIgnoreCase(req.getJenisPembayaran())) {
+                if (req.getBuktiPembayaran() == null || req.getBuktiPembayaran().isEmpty()) {
+                    return new ResponseInBoolean(false, "Harap unggah bukti pembayaran");
+                }
             }
-            PurchasingEntity purchasingData = purchasingEntity.get();
-            purchasingData.setPaid(true);
-            purchasingRepository.save(purchasingData);
-            return true;
-        }catch (Exception e){
+
+            // Find target purchasing entity
+            Optional<PurchasingEntity> optional = purchasingRepository
+                    .findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
+                            clientId, req.getPembelianId());
+
+            if (optional.isEmpty()) {
+                return new ResponseInBoolean(false, "Data pembelian tidak ditemukan");
+            }
+
+            PurchasingEntity purchasingEntity = optional.get();
+
+            // ===== Handle File Upload =====
+            String filePath = null;
+            String originalName = null;
+
+            if ("transfer".equalsIgnoreCase(req.getJenisPembayaran()) && req.getBuktiPembayaran() != null && !req.getBuktiPembayaran().isEmpty()) {
+                MultipartFile file = req.getBuktiPembayaran();
+                originalName = file.getOriginalFilename();
+
+                // Folder path (can use clientId for separation)
+                String uploadDir = "uploads/bukti/" + clientId + "/";
+                File dir = new File(uploadDir);
+                if (!dir.exists()) dir.mkdirs();
+
+                // Unique file name
+                String fileName = System.currentTimeMillis() + "_" + originalName;
+                Path path = Paths.get(uploadDir + fileName);
+
+                // Save file locally
+                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+                filePath = uploadDir + fileName;
+            }
+
+            // ===== Update purchasing & save bukti =====
+            purchasingEntity.setPaid(true);
+            purchasingRepository.save(purchasingEntity);
+
+            // Save Bukti Bayar record if transfer
+            BuktiBayarEntity bukti = new BuktiBayarEntity();
+            bukti.setOriginalName(originalName);
+            bukti.setFilePath(filePath);
+            bukti.setPurchasingEntity(purchasingEntity);
+            bukti.setRekeningAsal(req.getRekeningAsal());
+            bukti.setRekeningTujuan(req.getRekeningTujuan());
+            bukti.setJenisBayar(req.getJenisPembayaran());
+            buktiBayarRepository.save(bukti);
+
+            return new ResponseInBoolean(true, "Faktur berhasil dilunaskan");
+
+        } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return new ResponseInBoolean(false, "Terjadi kesalahan: " + e.getMessage());
         }
+    }
+
+    public BuktiBayarDTO getBuktiPembayaran(Long pembelianId) {
+        Optional<BuktiBayarEntity> opt = buktiBayarRepository.findByPurchasingEntity_PurchasingId(pembelianId);
+        if (opt.isEmpty()) {
+            return new BuktiBayarDTO();
+        }
+
+        BuktiBayarEntity data = opt.get();
+        BuktiBayarDTO result = new BuktiBayarDTO();
+        result.setBuktiBayarId(data.getBuktiBayarId());
+        result.setOriginalName(data.getOriginalName());
+        result.setFilePath(data.getFilePath());
+        result.setJenisBayar(data.getJenisBayar());
+        result.setRekeningAsal(data.getRekeningAsal());
+        result.setRekeningTujuan(data.getRekeningTujuan());
+        result.setTanggalBayar(data.getCreatedAt());
+        return result;
     }
 
 }

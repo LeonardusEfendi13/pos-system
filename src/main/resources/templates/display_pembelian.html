@@ -112,6 +112,26 @@
         #userTable tbody tr.previewing-row td {
           background-color: #FFA500 !important;
         }
+        .filepond--drop-label {
+            color: #4c4e53;
+        }
+
+        .filepond--label-action {
+            text-decoration-color: #babdc0;
+        }
+
+        .filepond--panel-root {
+            border-radius: 2em;
+            background-color: #edf0f4;
+        }
+
+        .filepond--item-panel {
+            background-color: #595e68;
+        }
+
+        .filepond--drip-blob {
+            background-color: #7f8a9a;
+        }
     </style>
 </head>
 <body>
@@ -229,6 +249,12 @@
                                         th:data-id="${pembelian.pembelianId}">
                                     Preview
                                 </button>
+                                <!-- Bukti Bayar Button -->
+                                <button type="button" class="btn btn-sm btn-success bukti-btn"
+                                        th:data-id="${pembelian.pembelianId}"
+                                        th:if="${pembelian.isPaid}">
+                                    Bukti Bayar
+                                </button>
                             </td>
                         </tr>
                         </tbody>
@@ -278,14 +304,80 @@
         </div>
     </div>
     <div id="contextMenu" class="dropdown-menu" style="position:absolute; display:none; z-index:10000;">
-        <a class="dropdown-item" href="#" id="contextLunaskan">Lunaskan Kredit</a>
+        <a class="dropdown-item" href="#" id="contextLunaskan">
+            Lunaskan Kredit
+        </a>
     </div>
 </div>
+
+<!-- Bukti Lunas Modal -->
+<div
+        class="modal fade"
+        id="lunaskanModal"
+        tabindex="-1"
+        aria-labelledby="lunaskanModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modalHeader">
+                <h5 class="modal-title" id="lunaskanModalLabel">
+                    Bukti Pelunasan
+                </h5>
+            </div>
+            <form class="dropzone" id="lunaskanForm" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group" id="tanggalBayarField">
+                        <label for="tanggalBayar">Tanggal Bayar</label>
+                        <input type="datetime-local" class="form-control" id="tanggalBayar" name="tanggalBayar">
+                    </div>
+                    <br>
+                    <input type="hidden" id="selectedPembelianId" name="pembelianId" />
+                    <div class="form-group">
+                        <label for="jenisPembayaran">Jenis Pembayaran</label>
+                        <select class="form-control" id="jenisPembayaran" name="jenisPembayaran" required>
+                            <option value="">Pilih Jenis Pembayaran</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="cash">Tunai</option>
+                        </select>
+                    </div>
+                    <div id="transferFields" style="display: none;">
+                        <div class="form-group mt-3">
+                            <label for="rekeningAsal">Rekening Asal</label>
+                            <input type="text" class="form-control" id="rekeningAsal" name="rekeningAsal" placeholder="Nomor Rekening Asal"/>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="rekeningTujuan">Rekening Tujuan</label>
+                            <input type="text" class="form-control" id="rekeningTujuan" name="rekeningTujuan" placeholder="Nomor Rekening Tujuan"/>
+                        </div>
+                        <br>
+                        <label for="buktiPembayaran">Bukti Pembayaran</label>
+                        <input type="file" class="filepond" id="buktiPembayaran" name="buktiPembayaran"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="simpanButton" disabled>Simpan</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <!-- Scripts -->
 <script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- FilePond core -->
+<link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet" />
+<script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
+
+<!-- FilePond image preview plugin -->
+<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet" />
+<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.js"></script>
 
 <script th:inline="javascript">
     var pembelianData = /*[[${pembelianData}]]*/ [];
@@ -295,236 +387,386 @@
       detailsMap[p.pembelianId] = p.pembelianDetailDTOS;
     });
 </script>
+<!--Populate Bukti Bayar-->
 <script>
-    function formatCurrency(amount) {
-        if (amount == null) return "-";
-        return new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          minimumFractionDigits: 0,
-        }).format(amount);
-      }
+<!--    function setLocalDateTimeInput(inputEl, dateTimeString) {-->
+<!--        // Create a Date object, but treat it as local, not UTC-->
+<!--        const d = new Date(dateTimeString);-->
 
-    $(document).ready(function () {
-       const $contextMenu = $('#contextMenu');
-       const $menuItem = $('#contextLunaskan');
-       let selectedPembelianId = null;
+<!--        // Offset adjustment: reverse the timezone shift-->
+<!--        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)-->
+<!--            .toISOString()-->
+<!--            .slice(0, 16); // YYYY-MM-DDTHH:mm-->
 
-       $('#userTable tbody').on('contextmenu', 'tr', function (e) {
-           e.preventDefault();
+<!--        inputEl.value = local;-->
+<!--    }-->
+    document.addEventListener("DOMContentLoaded", function () {
 
-           const isKredit = $(this).data('iskredit');
-           const isLunas = $(this).data('islunas');
-           selectedPembelianId = $(this).data('id');
+        // ==========================
+        // 🔧 FilePond Setup
+        // ==========================
+        FilePond.registerPlugin(FilePondPluginImagePreview);
+        const pond = FilePond.create(document.querySelector('#buktiPembayaran'));
 
-           // Update menu item state
-           if (isKredit && !isLunas) {
-               $menuItem.removeClass('disabled');
-           } else {
-               $menuItem.addClass('disabled');
-           }
+        // ==========================
+        // 🌐 DOM Elements
+        // ==========================
+        const jenisPembayaran = document.getElementById("jenisPembayaran");
+        const transferFields = document.getElementById("transferFields");
+        const simpanButton = document.getElementById("simpanButton");
+        const rekeningAsal = document.getElementById("rekeningAsal");
+        const rekeningTujuan = document.getElementById("rekeningTujuan");
+        const tanggalBayar = document.getElementById("tanggalBayar");
+        const tanggalBayarField = document.getElementById("tanggalBayarField");
+        const $contextMenu = $('#contextMenu');
+        const $menuItem = $('#contextLunaskan');
+        const modalEl = document.getElementById("lunaskanModal");
 
-           // Show menu at cursor position
-           $contextMenu.css({
-               display: 'block',
-               left: e.pageX,
-               top: e.pageY
-           });
-       });
+        let selectedPembelianId = null;
 
-       // Hide context menu on click anywhere else
-       $(document).on('click', function () {
-           $contextMenu.hide();
-       });
+        // Initial UI state
+        transferFields.style.display = "none";
+        simpanButton.disabled = true;
+        tanggalBayarField.style.display = "none";
 
-       // Handle "Lunaskan Kredit" click
-       $('#contextLunaskan').on('click', function (e) {
-           e.preventDefault();
-           $contextMenu.hide();
+        // ==========================
+        // 🧩 Helper Functions
+        // ==========================
+        function setFormReadOnly(isReadOnly) {
+            $("#jenisPembayaran").prop("disabled", isReadOnly);
+            $("#rekeningAsal").prop("readonly", isReadOnly);
+            $("#rekeningTujuan").prop("readonly", isReadOnly);
+            $("#tanggalBayar").prop("readonly", true); // always readonly
 
-           if ($(this).hasClass('disabled')) return;
+            if (isReadOnly) {
+                $("#simpanButton").hide();
+                pond.setOptions({ allowReplace: false, allowRemove: false, allowBrowse: false });
+            } else {
+                $("#simpanButton").show();
+                pond.setOptions({ allowReplace: true, allowRemove: true, allowBrowse: true });
+            }
+        }
 
-           if (confirm("Yakin ingin melunaskan kredit ini?")) {
-               const token = $('input[name="_csrf"]').val();
-                fetch(`/api/pembelian/lunaskan/${selectedPembelianId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token && { 'X-CSRF-TOKEN': token }) // Spring Security reads this header
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Terjadi kesalahan saat memproses permintaan.");
-                    return response.text();
+        function resetForm() {
+            $("#jenisPembayaran").val("");
+            $("#rekeningAsal").val("");
+            $("#rekeningTujuan").val("");
+            $("#tanggalBayar").val("");
+            pond.removeFiles();
+            $("#transferFields").hide();
+            $("#simpanButton").prop("disabled", true);
+            tanggalBayarField.style.display = "none";
+        }
+
+        // ==========================
+        // 💳 Jenis Pembayaran Change
+        // ==========================
+        jenisPembayaran.addEventListener("change", function () {
+            const type = this.value;
+
+            if (type === "transfer") {
+                transferFields.style.display = "block";
+                simpanButton.disabled = false;
+                rekeningAsal.required = true;
+                rekeningTujuan.required = true;
+            } else if (type === "cash") {
+                transferFields.style.display = "none";
+                simpanButton.disabled = false;
+                rekeningAsal.value = "";
+                rekeningTujuan.value = "";
+                pond.removeFiles();
+                rekeningAsal.required = false;
+                rekeningTujuan.required = false;
+            } else {
+                transferFields.style.display = "none";
+                simpanButton.disabled = true;
+                rekeningAsal.required = false;
+                rekeningTujuan.required = false;
+            }
+        });
+
+        // ==========================
+        // 📎 Bukti Bayar Button (READ-ONLY)
+        // ==========================
+        $(document).on("click", ".bukti-btn", function () {
+            selectedPembelianId = $(this).data("id");
+            $("#selectedPembelianId").val(selectedPembelianId);
+
+            resetForm();
+            setFormReadOnly(true);
+
+            fetch(`/api/pembelian/bukti/${selectedPembelianId}`)
+                .then(res => {
+                    if (!res.ok) throw new Error("Gagal mengambil data bukti pembayaran.");
+                    return res.json();
                 })
                 .then(data => {
-                    alert(data.message || "Kredit berhasil dilunaskan.");
+                    $("#jenisPembayaran").val(data.jenisBayar || "").trigger("change");
 
-                    // Reload current page with existing parameters
-                    const currentParams = new URLSearchParams(window.location.search);
-                    window.location.href = window.location.pathname + '?' + currentParams.toString();
+                    if (data.jenisBayar === "transfer") {
+                        $("#transferFields").show();
+                        $("#rekeningAsal").val(data.rekeningAsal || "");
+                        $("#rekeningTujuan").val(data.rekeningTujuan || "");
+
+                        if (data.filePath) {
+                            pond.removeFiles();
+                            pond.addFile("/" + data.filePath);
+                        }
+                    }
+
+                    // 🕓 Show tanggal bayar if exists
+                    if (data.tanggalBayar) {
+                        const d = new Date(data.tanggalBayar);
+                        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                                        .toISOString()
+                                        .slice(0, 16);
+                        $("#tanggalBayar").val(local);
+                        tanggalBayarField.style.display = "block";
+                    }
                 })
-                .catch(error => {
-                    alert("Gagal: " + error.message);
+                .catch(err => alert(err.message))
+                .finally(() => {
+                    new bootstrap.Modal(modalEl).show();
                 });
+        });
+
+        // ==========================
+        // 🖱️ Right-click Context Menu
+        // ==========================
+        $('#userTable tbody').on('contextmenu', 'tr', function (e) {
+            e.preventDefault();
+            selectedPembelianId = $(this).data('id');
+            const isKredit = $(this).data('iskredit');
+            const isLunas = $(this).data('islunas');
+
+            $menuItem.toggleClass('disabled', !(isKredit && !isLunas));
+            $contextMenu.css({ display: 'block', left: e.pageX, top: e.pageY });
+        });
+
+        $(document).on('click', function () {
+            $contextMenu.hide();
+        });
+
+        // ==========================
+        // 💰 Context Menu: Lunaskan Kredit
+        // ==========================
+        $menuItem.on("click", function (e) {
+            e.preventDefault();
+            $contextMenu.hide();
+            if ($(this).hasClass("disabled")) return;
+
+            resetForm();
+            setFormReadOnly(false); // enable edit
+            tanggalBayarField.style.display = "block";
+
+            // Auto-fill current datetime (local)
+            const now = new Date();
+            const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                .toISOString().slice(0, 16);
+            $("#tanggalBayar").val(local);
+
+            $("#selectedPembelianId").val(selectedPembelianId);
+            new bootstrap.Modal(modalEl).show();
+        });
+
+        // ==========================
+        // 💾 Form Submission
+        // ==========================
+        $('#lunaskanForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('pembelianId', $('#selectedPembelianId').val());
+            formData.append('jenisPembayaran', jenisPembayaran.value);
+            formData.append('rekeningAsal', rekeningAsal.value || '');
+            formData.append('rekeningTujuan', rekeningTujuan.value || '');
+            formData.append('tanggalBayar', tanggalBayar.value || '');
+
+            const file = pond.getFile();
+            if (file) formData.append('buktiPembayaran', file.file);
+
+            fetch('/api/pembelian/lunaskan', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Terjadi kesalahan saat mengirim data.');
+                return res.text();
+            })
+            .then(msg => {
+                alert(msg || 'Kredit berhasil dilunaskan.');
+                window.location.reload();
+            })
+            .catch(err => alert('Gagal: ' + err.message));
+        });
+    });
+</script>
+
+<script>
+   function formatCurrency(amount) {
+       if (amount == null) return "-";
+       return new Intl.NumberFormat("id-ID", {
+         style: "currency",
+         currency: "IDR",
+         minimumFractionDigits: 0,
+       }).format(amount);
+     }
+
+  $(document).ready(function () {
+      // Format currency
+      document.querySelectorAll('td span').forEach(el => {
+          const number = parseFloat(el.textContent);
+          el.textContent = new Intl.NumberFormat('id-ID', {
+              style: 'currency',
+              currency: 'IDR',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0
+          }).format(number);
+      });
+
+      // Register custom sort type
+      jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
+          "tsc-pre": function (data) {
+              return parseInt(data.replace(/\D/g, ''), 10);
+          },
+          "tsc-asc": function (a, b) {
+              return a - b;
+          },
+          "tsc-desc": function (a, b) {
+              return b - a;
+          }
+      });
+
+      const table = $('#userTable').DataTable({
+          columnDefs: [{
+              targets: 1, // No. Faktur
+              type: 'tsc'
+          }],
+          paging: false,
+          pageLength: 10,
+          lengthMenu: [5, 10, 25, 50],
+          ordering: true,
+          order: [],
+          info: false,
+          searching: false,
+          scrollX: true,
+          language: {
+              lengthMenu: "Tampilkan _MENU_ data per halaman",
+              zeroRecords: "Data tidak ditemukan",
+              info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+              paginate: {
+                  first: "Awal",
+                  last: "Akhir",
+                  next: "›",
+                  previous: "‹"
+              }
+          },
+          scrollCollapse: true,
+      });
+
+      function format(details) {
+           if (!details || details.length === 0) {
+             return "<div class='p-2 text-muted'>Tidak ada detail produk</div>";
            }
-       });
-   });
-   $(document).ready(function () {
-       // Format currency
-       document.querySelectorAll('td span').forEach(el => {
-           const number = parseFloat(el.textContent);
-           el.textContent = new Intl.NumberFormat('id-ID', {
-               style: 'currency',
-               currency: 'IDR',
-               minimumFractionDigits: 0,
-               maximumFractionDigits: 0
-           }).format(number);
+
+           let html = `
+             <table class="table table-sm table-bordered mb-0">
+               <thead class="table-light">
+                 <tr>
+                   <th>Kode</th>
+                   <th>Nama Barang</th>
+                   <th>Qty</th>
+                   <th>Harga Beli</th>
+                   <th>Diskon (Rp)</th>
+                   <th>Total</th>
+                   <th>Markup 1</th>
+                   <th>Harga Jual 1</th>
+                   <th>Markup 2</th>
+                   <th>Harga Jual 2</th>
+                   <th>Markup 3</th>
+                   <th>Harga Jual 3</th>
+                 </tr>
+               </thead>
+               <tbody>`;
+
+           details.forEach((d) => {
+             html += `
+               <tr>
+                 <td>${d.code}</td>
+                 <td>${d.name}</td>
+                 <td>${d.qty}</td>
+                 <td>${formatCurrency(d.price)}</td>
+                 <td>${formatCurrency(d.discAmount)}</td>
+                 <td>${formatCurrency(d.total)}</td>
+                 <td>${d.markup1 || "-"}</td>
+                 <td>${d.hargaJual1 ? formatCurrency(d.hargaJual1) : "-"}</td>
+                 <td>${d.markup2 || "-"}</td>
+                 <td>${d.hargaJual2 ? formatCurrency(d.hargaJual2) : "-"}</td>
+                 <td>${d.markup3 || "-"}</td>
+                 <td>${d.hargaJual3 ? formatCurrency(d.hargaJual3) : "-"}</td>
+               </tr>`;
+           });
+
+           html += `</tbody></table>`;
+           return html;
+         }
+
+       // Preview
+         // Preview button handler
+       $("#userTable tbody").on("click", ".preview-btn", function () {
+         const pembelianId = $(this).data("id");
+         const details = detailsMap[pembelianId] || [];
+         const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
+
+         $("#detailTitle").text("Detail Pembelian (" + noFaktur + ")");
+         $("#userTable tbody tr").removeClass("previewing-row");
+         $(this).closest("tr").addClass("previewing-row");
+
+         // Pastikan ada data
+         if (details.length === 0) {
+           $("#detailContent").html("<p class='text-muted'>Tidak ada detail pembelian.</p>");
+         } else {
+           $("#detailContent").html(format(details));
+         }
+
+         $("#detailContainer").show().css("height", "40%");
+         $("#tableWrapper").css("height", "60%");
        });
 
-       // Register custom sort type
-       jQuery.extend(jQuery.fn.dataTable.ext.type.order, {
-           "tsc-pre": function (data) {
-               return parseInt(data.replace(/\D/g, ''), 10);
-           },
-           "tsc-asc": function (a, b) {
-               return a - b;
-           },
-           "tsc-desc": function (a, b) {
-               return b - a;
-           }
+       // Tutup detail
+       $("#closeDetail").on("click", function () {
+         $("#detailContainer").hide();
+         $("#tableWrapper").css("height", "100%");
+
+         // Reset judul
+         $("#detailTitle").text("Detail Pembelian");
+
+         // Hapus highlight row
+         $("#userTable tbody tr").removeClass("previewing-row");
        });
 
-       const table = $('#userTable').DataTable({
-           columnDefs: [{
-               targets: 1, // No. Faktur
-               type: 'tsc'
-           }],
-           paging: false,
-           pageLength: 10,
-           lengthMenu: [5, 10, 25, 50],
-           ordering: true,
-           order: [],
-           info: false,
-           searching: false,
-           scrollX: true,
-           language: {
-               lengthMenu: "Tampilkan _MENU_ data per halaman",
-               zeroRecords: "Data tidak ditemukan",
-               info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-               paginate: {
-                   first: "Awal",
-                   last: "Akhir",
-                   next: "›",
-                   previous: "‹"
+       const $searchInput = $('#searchInput');
+       const baseUrl = '/pembelian';
+
+       $searchInput.on('input', function() {
+           if ($(this).val().trim() === '') {
+               const currentUrl = new URL(window.location.href);
+               const hasSearchParam = currentUrl.searchParams.has('search');
+
+               if (hasSearchParam) {
+                   window.location.href = baseUrl;
                }
-           },
-           scrollCollapse: true,
+           }
        });
 
-       function format(details) {
-            if (!details || details.length === 0) {
-              return "<div class='p-2 text-muted'>Tidak ada detail produk</div>";
-            }
+       $('#searchButton').on('click', function(e) {
+           if ($searchInput.val().trim() === '') {
+               e.preventDefault();
 
-            let html = `
-              <table class="table table-sm table-bordered mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Kode</th>
-                    <th>Nama Barang</th>
-                    <th>Qty</th>
-                    <th>Harga Beli</th>
-                    <th>Diskon (Rp)</th>
-                    <th>Total</th>
-                    <th>Markup 1</th>
-                    <th>Harga Jual 1</th>
-                    <th>Markup 2</th>
-                    <th>Harga Jual 2</th>
-                    <th>Markup 3</th>
-                    <th>Harga Jual 3</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-
-            details.forEach((d) => {
-              html += `
-                <tr>
-                  <td>${d.code}</td>
-                  <td>${d.name}</td>
-                  <td>${d.qty}</td>
-                  <td>${formatCurrency(d.price)}</td>
-                  <td>${formatCurrency(d.discAmount)}</td>
-                  <td>${formatCurrency(d.total)}</td>
-                  <td>${d.markup1 || "-"}</td>
-                  <td>${d.hargaJual1 ? formatCurrency(d.hargaJual1) : "-"}</td>
-                  <td>${d.markup2 || "-"}</td>
-                  <td>${d.hargaJual2 ? formatCurrency(d.hargaJual2) : "-"}</td>
-                  <td>${d.markup3 || "-"}</td>
-                  <td>${d.hargaJual3 ? formatCurrency(d.hargaJual3) : "-"}</td>
-                </tr>`;
-            });
-
-            html += `</tbody></table>`;
-            return html;
-          }
-
-        // Preview
-          // Preview button handler
-        $("#userTable tbody").on("click", ".preview-btn", function () {
-          const pembelianId = $(this).data("id");
-          const details = detailsMap[pembelianId] || [];
-          const noFaktur = $(this).closest("tr").find("td:eq(1)").text();
-
-          $("#detailTitle").text("Detail Pembelian (" + noFaktur + ")");
-          $("#userTable tbody tr").removeClass("previewing-row");
-          $(this).closest("tr").addClass("previewing-row");
-
-          // Pastikan ada data
-          if (details.length === 0) {
-            $("#detailContent").html("<p class='text-muted'>Tidak ada detail pembelian.</p>");
-          } else {
-            $("#detailContent").html(format(details));
-          }
-
-          $("#detailContainer").show().css("height", "40%");
-          $("#tableWrapper").css("height", "60%");
-        });
-
-        // Tutup detail
-        $("#closeDetail").on("click", function () {
-          $("#detailContainer").hide();
-          $("#tableWrapper").css("height", "100%");
-
-          // Reset judul
-          $("#detailTitle").text("Detail Pembelian");
-
-          // Hapus highlight row
-          $("#userTable tbody tr").removeClass("previewing-row");
-        });
-
-        const $searchInput = $('#searchInput');
-        const baseUrl = '/pembelian';
-
-        $searchInput.on('input', function() {
-            if ($(this).val().trim() === '') {
-                const currentUrl = new URL(window.location.href);
-                const hasSearchParam = currentUrl.searchParams.has('search');
-
-                if (hasSearchParam) {
-                    window.location.href = baseUrl;
-                }
-            }
-        });
-
-        $('#searchButton').on('click', function(e) {
-            if ($searchInput.val().trim() === '') {
-                e.preventDefault();
-
-                window.location.href = baseUrl;
-            }
-        });
-   });
+               window.location.href = baseUrl;
+           }
+       });
+  });
 </script>
 </body>
 </html>
