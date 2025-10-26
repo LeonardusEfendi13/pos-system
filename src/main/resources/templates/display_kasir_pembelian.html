@@ -200,6 +200,32 @@
             font-size: 14px !important;
             font-weight: 400;
         }
+        /* Apply blue background to Harga Lama and columns after it */
+        table td:nth-child(n+10) {
+          background-color: #dceeff;
+          border-left: none;
+          vertical-align: middle;
+        }
+
+        /* 🔹 Add the divider line before the first column in that group */
+        table td:nth-child(10) {
+          border-left: 3px solid #007bff;
+        }
+
+        /* 🔹 Make input elements inside those columns share the same background */
+        table td:nth-child(n+10) input {
+          background-color: #dceeff;
+          border: 1px solid #bcdcff;
+          color: #000;
+        }
+
+        /* Optional: tweak hover or focus state to keep color consistent */
+        table td:nth-child(n+10) input:focus {
+          background-color: #e5f3ff;
+          outline: none;
+          border-color: #66b2ff;
+          box-shadow: 0 0 3px #66b2ff;
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -290,17 +316,18 @@
                 <th style="width: 550px;font-weight:bold;background-color:white;color:black">Nama</th>
                 <th style="width: 80px;font-weight:bold;background-color:white;color:black">Qty</th>
                 <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Beli</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Disc (%)</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Total Harga</th>
+                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Disc (%)</th>
+                <th style="width: 100px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>
+                <th style="width: 100px;font-weight:bold;background-color:white;color:black">Total Harga</th>
                 <th style="width: 80px;font-weight:bold;background-color:white;color:black">Stok Lama</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Lama</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 1 (%)</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 1</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 2 (%)</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 2</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Markup 3 (%)</th>
-                <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Jual Baru 3</th>
+                <!-- Start visually separated group -->
+                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black; border-left: 3px solid #007bff;">Harga Lama</th>
+                <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 1</th>
+                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 1</th>
+                <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 2</th>
+                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 2</th>
+                <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 3</th>
+                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 3</th>
             </tr>
             </thead>
             <tbody id="sellTableBody"></tbody>
@@ -365,7 +392,7 @@
     </div>
     <!-- Edit & Add Barang Modal -->
     <div
-            class="modal fade"
+            class="modal"
             id="barangModal"
             tabindex="-1"
             aria-labelledby="editBarangLabel"
@@ -603,7 +630,7 @@
     </ul>
 </div>
 
-<div class="modal fade" id="productModal" tabindex="-1">
+<div class="modal" id="productModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header modalHeader">
@@ -1424,7 +1451,16 @@
 
               // 🔹 Kalau produk baru → isi data ke baris ini
               fillProductRow(row, product);
+
+              // 👇 Tambahkan baris baru *tapi jangan pindah fokus dulu*
               maybeAddNewRow();
+
+              // 🎯 Fokus langsung ke kolom QTY
+              const qtyInput = row.querySelector(".qty-input");
+              if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+              }
             } else {
               alert("Product not found");
               codeInput.value = "";
@@ -1647,38 +1683,45 @@
    function selectProduct(product) {
       const rows = [...sellTableBody.querySelectorAll("tr")];
 
-      // ---- First, check if product already exists in any row ----
+      // ---- Cek apakah produk sudah ada ----
       let existingRow = rows.find(r => {
         const code = r.querySelector(".code-input").value.trim().toUpperCase();
         return code === product.shortName;
       });
 
       if (existingRow) {
-        // ✅ Increase qty if already exists
         const qtyInput = existingRow.querySelector(".qty-input");
         qtyInput.value = parseInt(qtyInput.value || "0") + 1;
         updateTotalRow(existingRow);
-
         productModal.hide();
         selectedRow = null;
-        return; // stop here, no duplicates
+        return;
       }
 
-      // ---- If product not already in table ----
+      // ---- Jika baris dipilih (dari modal click) ----
       if (selectedRow) {
-        // ✅ Replace that specific row (from modal click)
         fillProductRow(selectedRow, product);
         selectedRow.querySelector(".qty-input").value = 1;
         selectedRow.querySelector(".discount-percent-input").value = "0";
         selectedRow.querySelector(".discount-amount-input").value = "0";
         updateTotalRow(selectedRow);
-
         productModal.hide();
-        selectedRow = null;
-        return; // stop here
+
+        // 🎯 Fokus ke qty-input setelah modal benar-benar hilang
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            const qtyInput = selectedRow.querySelector(".qty-input");
+            if (qtyInput) {
+              qtyInput.focus();
+              qtyInput.select();
+            }
+            selectedRow = null;
+          });
+        }, 50); // sesuai durasi fade modal bootstrap (default 300ms)
+        return;
       }
 
-      // ---- Normal flow (manual typing/scan, new row needed) ----
+      // ---- Flow normal (row kosong) ----
       let targetRow = rows.find(r => {
         const code = r.querySelector(".code-input").value.trim();
         return code === "";
@@ -1693,12 +1736,12 @@
       targetRow.querySelector(".qty-input").value = 1;
       updateTotalRow(targetRow);
       maybeAddNewRow();
-
       productModal.hide();
-
-      setTimeout(() => {
-        focusNextEmptyRow();
-      }, 200);
+        const qtyInput = targetRow.querySelector(".qty-input");
+        if (qtyInput) {
+          qtyInput.focus();  // Might not work reliably
+          qtyInput.select();
+        }
     }
 
    function calculateGrandTotal() {
@@ -2511,7 +2554,16 @@
 
               // 🔹 Kalau produk baru → isi data ke baris ini
               fillProductRow(row, product);
+
+              // 👇 Tambahkan baris baru *tapi jangan pindah fokus dulu*
               maybeAddNewRow();
+
+              // 🎯 Fokus langsung ke kolom QTY
+              const qtyInput = row.querySelector(".qty-input");
+              if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+              }
             } else {
               alert("Product not found");
               codeInput.value = "";
@@ -2520,8 +2572,6 @@
           }
         });
 
-        // 🔁 lanjut binding handler
-<!--        attachNavigationHandlers(row);-->
         attachMarkupHandlers(row);
 
         // (lanjut semua event listener & append row)

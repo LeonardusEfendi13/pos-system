@@ -444,7 +444,7 @@
     </div>
     <!-- Edit & Add Barang Modal -->
     <div
-            class="modal fade"
+            class="modal"
             id="barangModal"
             tabindex="-1"
             aria-labelledby="editBarangLabel"
@@ -700,7 +700,7 @@
     </ul>
 </div>
 
-<div class="modal fade" id="productModal" tabindex="-1">
+<div class="modal" id="productModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header modalHeader">
@@ -1410,7 +1410,16 @@
 
               // 🔹 Kalau produk baru → isi data ke baris ini
               fillProductRow(row, product);
+
+              // 👇 Tambahkan baris baru *tapi jangan pindah fokus dulu*
               maybeAddNewRow();
+
+              // 🎯 Fokus langsung ke kolom QTY
+              const qtyInput = row.querySelector(".qty-input");
+              if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+              }
             } else {
               alert("Product not found");
               codeInput.value = "";
@@ -1536,90 +1545,48 @@
             "Rp " + total.toLocaleString("id-ID");
         calculateGrandTotal();
     }
-
-<!--    function selectProduct(product) {-->
-<!--        const rows = [...sellTableBody.querySelectorAll("tr")];-->
-<!--        let targetRow = rows.find((r) => {-->
-<!--            const code = r.querySelector(".code-input").value.trim();-->
-<!--            return code === "";-->
-<!--        });-->
-<!--        if (!targetRow) {-->
-<!--            addNewRow(false);-->
-<!--            targetRow = sellTableBody.lastElementChild;-->
-<!--        }-->
-
-<!--        let existingRow = null;-->
-<!--        for (const r of rows) {-->
-<!--            const code = r-->
-<!--                .querySelector(".code-input")-->
-<!--                .value.trim()-->
-<!--                .toUpperCase();-->
-<!--            if (code === product.shortName) {-->
-<!--                existingRow = r;-->
-<!--                break;-->
-<!--            }-->
-<!--        }-->
-
-<!--        if (existingRow) {-->
-<!--            const qtyInput = existingRow.querySelector(".qty-input");-->
-<!--            qtyInput.value = parseInt(qtyInput.value || "0") + 1;-->
-<!--            updateTotalRow(existingRow);-->
-
-<!--            if (targetRow) {-->
-<!--                targetRow.querySelector(".code-input").value = "";-->
-<!--                targetRow.querySelector(".name-input").value = "";-->
-<!--                targetRow.querySelector(".price-input").value = "Rp 0";-->
-<!--                targetRow.querySelector(".qty-input").value = "1";-->
-<!--                targetRow.querySelector(".discount-percent-input").value = "0";-->
-<!--                targetRow.querySelector(".discount-amount-input").value = "0";-->
-<!--                targetRow.querySelector(".total-cell").textContent = "Rp 0";-->
-<!--            }-->
-<!--        } else {-->
-<!--            fillProductRow(targetRow, product);-->
-<!--            maybeAddNewRow();-->
-<!--        }-->
-
-<!--        productModal.hide();-->
-
-<!--        setTimeout(() => {-->
-<!--            focusNextEmptyRow();-->
-<!--        }, 200);-->
-<!--    }-->
-function selectProduct(product) {
+    function selectProduct(product) {
       const rows = [...sellTableBody.querySelectorAll("tr")];
 
-      // ---- First, check if product already exists in any row ----
+      // ---- Cek apakah produk sudah ada ----
       let existingRow = rows.find(r => {
         const code = r.querySelector(".code-input").value.trim().toUpperCase();
         return code === product.shortName;
       });
 
       if (existingRow) {
-        // ✅ Increase qty if already exists
         const qtyInput = existingRow.querySelector(".qty-input");
         qtyInput.value = parseInt(qtyInput.value || "0") + 1;
         updateTotalRow(existingRow);
-
         productModal.hide();
         selectedRow = null;
-        return; // stop here, no duplicates
+        return;
       }
 
-      // ---- If product not already in table ----
+      // ---- Jika baris dipilih (dari modal click) ----
       if (selectedRow) {
-        // ✅ Replace that specific row (from modal click)
         fillProductRow(selectedRow, product);
         selectedRow.querySelector(".qty-input").value = 1;
         selectedRow.querySelector(".discount-percent-input").value = "0";
         selectedRow.querySelector(".discount-amount-input").value = "0";
         updateTotalRow(selectedRow);
-
         productModal.hide();
-        selectedRow = null;
-        return; // stop here
+
+        // 🎯 Fokus ke qty-input setelah modal benar-benar hilang
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            const qtyInput = selectedRow.querySelector(".qty-input");
+            if (qtyInput) {
+              qtyInput.focus();
+              qtyInput.select();
+            }
+            selectedRow = null;
+          });
+        }, 50); // sesuai durasi fade modal bootstrap (default 300ms)
+        return;
       }
 
-      // ---- Normal flow (manual typing/scan, new row needed) ----
+      // ---- Flow normal (row kosong) ----
       let targetRow = rows.find(r => {
         const code = r.querySelector(".code-input").value.trim();
         return code === "";
@@ -1634,13 +1601,14 @@ function selectProduct(product) {
       targetRow.querySelector(".qty-input").value = 1;
       updateTotalRow(targetRow);
       maybeAddNewRow();
-
       productModal.hide();
-
-      setTimeout(() => {
-        focusNextEmptyRow();
-      }, 200);
+        const qtyInput = targetRow.querySelector(".qty-input");
+        if (qtyInput) {
+          qtyInput.focus();  // Might not work reliably
+          qtyInput.select();
+        }
     }
+
 
     function calculateGrandTotal() {
         let subtotal = 0;
@@ -2288,7 +2256,16 @@ function selectProduct(product) {
 
                   // 🔹 Kalau produk baru → isi data ke baris ini
                   fillProductRow(row, product);
+
+                  // 👇 Tambahkan baris baru *tapi jangan pindah fokus dulu*
                   maybeAddNewRow();
+
+                  // 🎯 Fokus langsung ke kolom QTY
+                  const qtyInput = row.querySelector(".qty-input");
+                  if (qtyInput) {
+                    qtyInput.focus();
+                    qtyInput.select();
+                  }
                 } else {
                   alert("Product not found");
                   codeInput.value = "";
