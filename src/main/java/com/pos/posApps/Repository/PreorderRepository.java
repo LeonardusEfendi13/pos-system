@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -32,6 +31,8 @@ public interface PreorderRepository extends JpaRepository<PreorderEntity, Long> 
             @Param("search") String search,
             Pageable pageable
     );
+
+    Optional<PreorderEntity> findFirstByClientEntity_ClientIdAndPreorderIdAndDeletedAtIsNull(Long clientId, Long preorderId);
 
     Page<PreorderEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Page<PreorderEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByPreorderIdDesc(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);

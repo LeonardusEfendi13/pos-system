@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+
 @Service
 public class PreorderService {
     @Autowired
@@ -183,5 +185,19 @@ public class PreorderService {
         }catch (Exception e){
             return new ResponseInBoolean(false, e.getMessage());
         }
+    }
+
+    @Transactional
+    public boolean deletePreorder(Long purchasingId, ClientEntity clientData) {
+        Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndDeletedAtIsNull(clientData.getClientId(), purchasingId);
+        if (preorderEntityOpt.isEmpty()) {
+            return false;
+        }
+        PreorderEntity preorderEntity = preorderEntityOpt.get();
+
+        preorderEntity.setDeletedAt(getCurrentTimestamp());
+        preorderRepository.save(preorderEntity);
+
+        return true;
     }
 }

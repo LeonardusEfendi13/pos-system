@@ -16,9 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -152,5 +151,27 @@ public class PreorderController {
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_understock";
+    }
+
+    @PostMapping("/delete/{preorderId}")
+    public String deletePurchasing(@PathVariable("preorderId") Long preorderId, HttpSession session, RedirectAttributes redirectAttributes) {
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accEntity = authService.validateToken(token);
+        ClientEntity clientData = accEntity.getClientEntity();
+        if (clientData.getClientId() == null) {
+            return "redirect:/login";
+        }
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            boolean isDeleted = preorderService.deletePreorder(preorderId, clientData);
+            if (isDeleted) {
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Deleted");
+                return "redirect:/preorder";
+            }
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to delete data");
+            return "redirect:/preorder";
+        }
+        return "redirect:/login";
     }
 }
