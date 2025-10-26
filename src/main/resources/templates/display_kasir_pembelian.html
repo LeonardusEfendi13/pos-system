@@ -1433,13 +1433,41 @@
           }
         });
 
-     qtyInput.addEventListener("input", () => {
-       const qty = parseInt(qtyInput.value) || 0;
-       const code = codeInput.value.trim();
-<!--       const product = masterProducts.find((p) => p.shortName === code);-->
+         qtyInput.addEventListener("input", () => {
+          let qty = parseInt(qtyInput.value);
 
-       updateTotalRow(row);
-     });
+          // 🚫 Cegah nilai kosong, nol, atau negatif
+          if (isNaN(qty) || qty <= 0) {
+            qty = 1;
+            qtyInput.value = 1;
+          }
+
+          const code = codeInput.value.trim();
+          updateTotalRow(row);
+        });
+
+     qtyInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+
+            const rows = [...sellTableBody.querySelectorAll("tr")];
+            const lastRow = rows[rows.length - 1];
+
+            // kalau baris terakhir sudah terisi, tambahkan baris baru
+            if (!isRowEmpty(lastRow)) {
+              maybeAddNewRow();
+            }
+
+            // cari baris kosong paling bawah dan fokuskan ke kolom kode
+            const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+            if (emptyRow) {
+              const codeInput = emptyRow.querySelector(".code-input");
+              codeInput.focus();
+              codeInput.select();
+            }
+          }
+        });
+
 
       markUp1Input.addEventListener("input", () => {
           let val = markUp1Input.value;
@@ -2395,7 +2423,39 @@
         priceInput.addEventListener("focus", handleFormattedFocus);
         priceInput.addEventListener("blur", handleFormattedBlur);
         priceInput.addEventListener("input", () => updateTotalRow(row));
-        qtyInput.addEventListener("input", () => updateTotalRow(row));
+        qtyInput.addEventListener("input", () => {
+          let qty = parseInt(qtyInput.value);
+
+          // 🚫 Jika kosong, nol, atau negatif → ubah jadi 1
+          if (isNaN(qty) || qty <= 0) {
+            qty = 1;
+            qtyInput.value = 1;
+          }
+
+          updateTotalRow(row);
+        });
+
+        qtyInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+
+            const rows = [...sellTableBody.querySelectorAll("tr")];
+            const lastRow = rows[rows.length - 1];
+
+            // kalau baris terakhir sudah terisi, tambahkan baris baru
+            if (!isRowEmpty(lastRow)) {
+              maybeAddNewRow();
+            }
+
+            // cari baris kosong paling bawah dan fokuskan ke kolom kode
+            const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+            if (emptyRow) {
+              const codeInput = emptyRow.querySelector(".code-input");
+              codeInput.focus();
+              codeInput.select();
+            }
+          }
+        });
 
         if (focus) codeInput.focus();
         codeInput.addEventListener("keydown", async (e) => {

@@ -1630,17 +1630,48 @@
 
         // --- Event qty
         qtyInput.addEventListener("input", () => {
-            const qty = parseInt(qtyInput.value) || 0;
-            const code = codeInput.value.trim();
-            const product =
-              masterProducts.find((p) => p.shortName === code) ||
-              dynamicProductsCache.find((p) => p.shortName === code);
+          let qty = parseInt(qtyInput.value);
 
-            if (product) {
-                const newPrice = getPriceByQty(product, qty);
-                priceInput.value = formatRupiah(newPrice);
+          // 🚫 Prevent blank, NaN, negative, or zero qty
+          if (isNaN(qty) || qty <= 0) {
+            qty = 1;
+            qtyInput.value = 1;
+          }
+
+          const code = codeInput.value.trim();
+          const product =
+            masterProducts.find((p) => p.shortName === code) ||
+            dynamicProductsCache.find((p) => p.shortName === code);
+
+          if (product) {
+            const newPrice = getPriceByQty(product, qty);
+            priceInput.value = formatRupiah(newPrice);
+          }
+
+          updateTotalRow(row);
+        });
+
+        qtyInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            console.log("Entering qty input keydown");
+
+            const rows = [...sellTableBody.querySelectorAll("tr")];
+            const lastRow = rows[rows.length - 1];
+
+            // kalau baris terakhir sudah terisi, tambahkan baris baru
+            if (!isRowEmpty(lastRow)) {
+              maybeAddNewRow();
             }
-            updateTotalRow(row);
+
+            // cari baris kosong paling bawah dan fokuskan ke kolom kode
+            const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+            if (emptyRow) {
+              const codeInput = emptyRow.querySelector(".code-input");
+              codeInput.focus();
+              codeInput.select();
+            }
+          }
         });
 
         // --- Event diskon %
@@ -2668,16 +2699,48 @@ vertical-align: middle;
 
             // --- Event qty
             qtyInput.addEventListener("input", () => {
-                const qty = parseInt(qtyInput.value) || 0;
-                const code = codeInput.value.trim();
-                const product =
-                  masterProducts.find((p) => p.shortName === code) ||
-                  dynamicProductsCache.find((p) => p.shortName === code);
-                  if (product) {
-                    const newPrice = getPriceByQty(product, qty);
-                    priceInput.value = formatRupiah(newPrice);
+              let qty = parseInt(qtyInput.value);
+
+              // 🚫 Prevent blank, NaN, negative, or zero qty
+              if (isNaN(qty) || qty <= 0) {
+                qty = 1;
+                qtyInput.value = 1;
+              }
+
+              const code = codeInput.value.trim();
+              const product =
+                masterProducts.find((p) => p.shortName === code) ||
+                dynamicProductsCache.find((p) => p.shortName === code);
+
+              if (product) {
+                const newPrice = getPriceByQty(product, qty);
+                priceInput.value = formatRupiah(newPrice);
+              }
+
+              updateTotalRow(row);
+            });
+
+            qtyInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                console.log("Entering qty input keydown");
+
+                const rows = [...sellTableBody.querySelectorAll("tr")];
+                const lastRow = rows[rows.length - 1];
+
+                // kalau baris terakhir sudah terisi, tambahkan baris baru
+                if (!isRowEmpty(lastRow)) {
+                  maybeAddNewRow();
                 }
-                updateTotalRow(row);
+
+                // cari baris kosong paling bawah dan fokuskan ke kolom kode
+                const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+                if (emptyRow) {
+                  const codeInput = emptyRow.querySelector(".code-input");
+                  codeInput.focus();
+                  codeInput.select();
+                }
+              }
             });
 
             // --- Event diskon

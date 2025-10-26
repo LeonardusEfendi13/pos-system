@@ -1420,9 +1420,38 @@
         });
 
         qtyInput.addEventListener("input", () => {
-            const qty = parseInt(qtyInput.value) || 0;
-            const code = codeInput.value.trim();
-            updateTotalRow(row);
+          let qty = parseInt(qtyInput.value);
+
+          // 🚫 Cegah nilai kosong, nol, atau negatif
+          if (isNaN(qty) || qty <= 0) {
+            qty = 1;
+            qtyInput.value = 1;
+          }
+
+          const code = codeInput.value.trim();
+          updateTotalRow(row);
+        });
+
+        qtyInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+
+            const rows = [...sellTableBody.querySelectorAll("tr")];
+            const lastRow = rows[rows.length - 1];
+
+            // kalau baris terakhir sudah terisi, tambahkan baris baru
+            if (!isRowEmpty(lastRow)) {
+              maybeAddNewRow();
+            }
+
+            // cari baris kosong paling bawah dan fokuskan ke kolom kode
+            const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+            if (emptyRow) {
+              const codeInput = emptyRow.querySelector(".code-input");
+              codeInput.focus();
+              codeInput.select();
+            }
+          }
         });
 
         discPercentInput.addEventListener("input", () => {
@@ -2147,70 +2176,6 @@ function selectProduct(product) {
         transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
     }
 
-    function attachNavigationHandlers(row) {
-        const inputs = [...row.querySelectorAll("input:not([readonly])")];
-
-        inputs.forEach((input) => {
-            input.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    const currentRow = e.target.closest("tr");
-                    const lastRow = sellTableBody.lastElementChild;
-
-                    if (currentRow === lastRow && !isRowEmpty(currentRow)) {
-                        maybeAddNewRow();
-                    }
-
-                    const nextRow = currentRow.nextElementSibling;
-                    if (nextRow) {
-                        nextRow.querySelector(".code-input").focus();
-                    }
-                } else if (
-                    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
-                        e.key
-                    )
-                ) {
-                    e.preventDefault();
-
-                    const rows = [...sellTableBody.querySelectorAll("tr")];
-                    const currentRowIndex = rows.indexOf(row);
-                    const currentInputs = [
-                        ...row.querySelectorAll("input:not([readonly])"),
-                    ];
-                    const currentInputIndex = currentInputs.indexOf(e.target);
-
-                    let nextRowIndex = currentRowIndex;
-                    let nextInputIndex = currentInputIndex;
-
-                    if (e.key === "ArrowUp")
-                        nextRowIndex = Math.max(0, currentRowIndex - 1);
-                    if (e.key === "ArrowDown")
-                        nextRowIndex = Math.min(rows.length - 1, currentRowIndex + 1);
-                    if (e.key === "ArrowLeft")
-                        nextInputIndex = Math.max(0, currentInputIndex - 1);
-                    if (e.key === "ArrowRight")
-                        nextInputIndex = Math.min(
-                            currentInputs.length - 1,
-                            currentInputIndex + 1
-                        );
-
-                    const targetRow = rows[nextRowIndex];
-                    const targetInputs = [
-                        ...targetRow.querySelectorAll("input:not([readonly])"),
-                    ];
-                    const targetInput = targetInputs[nextInputIndex];
-
-                    if (targetInput) {
-                        targetInput.focus();
-                        if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
-                            targetInput.select();
-                        }
-                    }
-                }
-            });
-        });
-    }
-
     function loadTransaction(transaction) {
         // Clear the current sales table
         sellTableBody.innerHTML = "";
@@ -2262,9 +2227,6 @@ function selectProduct(product) {
         <td class="total-cell">${formatRupiah(detail.total)}</td>
         <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
       `;
-
-            // Reuse handler binding
-<!--            attachNavigationHandlers(row);-->
 
             // Other event bindings (price, qty, discount)
             const codeInput = row.querySelector(".code-input");
@@ -2347,7 +2309,38 @@ function selectProduct(product) {
             priceInput.addEventListener("focus", handleFormattedFocus);
             priceInput.addEventListener("blur", handleFormattedBlur);
             priceInput.addEventListener("input", () => updateTotalRow(row));
-            qtyInput.addEventListener("input", () => updateTotalRow(row));
+            qtyInput.addEventListener("input", () => {
+              let qty = parseInt(qtyInput.value);
+
+              // 🚫 Jika kosong, nol, atau negatif → ubah jadi 1
+              if (isNaN(qty) || qty <= 0) {
+                qty = 1;
+                qtyInput.value = 1;
+              }
+
+              updateTotalRow(row);
+            });
+            qtyInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+
+                const rows = [...sellTableBody.querySelectorAll("tr")];
+                const lastRow = rows[rows.length - 1];
+
+                // kalau baris terakhir sudah terisi, tambahkan baris baru
+                if (!isRowEmpty(lastRow)) {
+                  maybeAddNewRow();
+                }
+
+                // cari baris kosong paling bawah dan fokuskan ke kolom kode
+                const emptyRow = [...sellTableBody.querySelectorAll("tr")].find(isRowEmpty);
+                if (emptyRow) {
+                  const codeInput = emptyRow.querySelector(".code-input");
+                  codeInput.focus();
+                  codeInput.select();
+                }
+              }
+            });
 
             discPercentInput.addEventListener("input", () => {
                 let val = discPercentInput.value;
