@@ -944,13 +944,9 @@
             transactions.forEach((trx) => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-          <td style="width:150px;line-height:10px">${
-                    trx.transactionNumber
-                }</td>
-          <td style="text-align:end;">${formatRupiah(
-                    trx.totalPrice || 0
-                )}</td>
-        `;
+                    <td style="width:150px;line-height:10px">${trx.transactionNumber}</td>
+                    <td style="text-align:end;">${formatRupiah(trx.totalPrice || 0)}</td>
+                `;
                 tr.style.cursor = "pointer";
                 tr.style.display = "table";
                 tr.style.width = "100%";
@@ -959,143 +955,129 @@
                 tr._transactionData = trx;
 
                 tr.addEventListener("dblclick", () => {
-                    const isPrintBill = document.getElementById("printBill");
+                    // Assign and convert needed values
+                    trx.transactionDetailDTOS = trx.transactionDetailDTOS.map((item, index) => ({
+                        no: index + 1,
+                        ...item,
+                        price: item.price.toLocaleString("id-ID"),
+                        total: item.total.toLocaleString("id-ID"),
+                    }));
 
-<!--                    if (isPrintBill.checked) {-->
-                        //Assign and convert needed values
-                        trx.transactionDetailDTOS = trx.transactionDetailDTOS.map(
-                            (item, index) => ({
-                                no: index + 1,
-                                ...item,
-                                price: item.price.toLocaleString("id-ID"),
-                                total: item.total.toLocaleString("id-ID"),
-                            })
-                        );
-                        trx.grandTotal = trx.totalPrice;
-                        trx.paymentAmount = formatRupiah(trx.totalPrice);
-                        trx.returnAmount = 0;
-                        trx.customer_name = trx.customerDTO.customerName;
-                        trx.customer_alamat = trx.customerDTO.customerAlamat;
+                    trx.grandTotal = trx.totalPrice;
+                    trx.paymentAmount = formatRupiah(trx.totalPrice);
+                    trx.returnAmount = 0;
+                    trx.customer_name = trx.customerDTO.customerName;
+                    trx.customer_alamat = trx.customerDTO.customerAlamat;
 
-                        const date = new Date(trx.tanggalJual);
-                        const formattedDateTime = `${date.toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                        })} ${date.toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                        })}`;
+                    const date = new Date(trx.tanggalJual);
+                    const formattedDateTime = `${date.toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                    })} ${date.toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                    })}`;
 
-                        trx.tanggal = formattedDateTime;
-                        trx.inv_number = trx.transactionNumber;
-                        generateReceiptContent(trx); // render content to #receiptContent
+                    trx.tanggal = formattedDateTime;
+                    trx.inv_number = trx.transactionNumber;
 
-                        // Wait for the DOM to update
+                    generateReceiptContent(trx); // render content to #receiptContent
+
+                    // Wait for the DOM to update
+                    setTimeout(() => {
+                        const originalContent = document.body.innerHTML;
+                        const receiptHtml = document.getElementById("receiptContent").innerHTML;
+
+                        // Replace the entire body with the receipt
+                        document.body.innerHTML = `
+                            <html>
+                            <head>
+                                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+                                <style>
+                                    @page {
+                                        size: A5 landscape;
+                                        margin: 0mm;
+                                    }
+
+                                    @media print {
+                                        * {
+                                            font-size: 13px !important;
+                                        }
+
+                                        body {
+                                            margin: 0 !important;
+                                            padding: 0 !important;
+                                        }
+
+                                        .print-page {
+                                            page-break-after: always;
+                                            padding-top: 10mm;
+                                        }
+                                        .print-page:first-of-type {
+                                            margin-top: -6mm !important;
+                                        }
+                                        .print-page:last-child {
+                                            page-break-after: auto;
+                                        }
+                                    }
+
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        font-size: 11px !important;
+                                        margin: 10px !important;
+                                    }
+
+                                    table {
+                                        width: 100% !important;
+                                        border-collapse: collapse;
+                                        table-layout: fixed;
+                                        border: 1px solid black;
+                                        border-top: none;
+                                    }
+
+                                    th, td {
+                                        border-top: none;
+                                        border-bottom: none;
+                                        border-left: 1px solid black;
+                                        border-right: 1px solid black;
+                                        padding: 1px 4px;
+                                        font-size: 10px;
+                                        height: 18px !important;
+                                        line-height: 12px;
+                                        vertical-align: middle;
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: clip;
+                                        margin: 0;
+                                    }
+
+                                    table thead tr {
+                                        border-bottom: 1px solid #000;
+                                    }
+
+                                    th {
+                                        font-weight: bold;
+                                        text-align: center;
+                                        vertical-align: middle;
+                                    }
+                                </style>
+                            </head>
+                            <body>${receiptHtml}</body>
+                            </html>
+                        `;
+
+                        // Print
+                        window.print();
+
+                        // Restore original body after print
                         setTimeout(() => {
-                            const originalContent = document.body.innerHTML;
-                            const receiptHtml =
-                                document.getElementById("receiptContent").innerHTML;
-
-                            // Replace the entire body with the receipt
-                            document.body.innerHTML = `
-          <html>
-          <head>
-            <link
-              href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-              rel="stylesheet"
-            />
-            <style>
-                @page {
-                  size: A5 landscape;
-                  margin: 0mm;
-                }
-
-                @media print {
-                  * {
-                    font-size: 13px !important;
-                  }
-
-                  body {
-                    margin: 0 !important;
-                    padding: 0 !important;
-                  }
-
-                  .print-page {
-                    page-break-after: always;
-                    padding-top: 10mm; /* mimic top margin */
-                  }
-                  .print-page:first-of-type {
-                    /* Pull up slightly to visually align with later pages */
-                    margin-top: -6mm !important;
-                  }
-
-                  .print-page:last-child {
-                    page-break-after: auto;
-                  }
-                }
-
-          body {
-          font-family: Arial, sans-serif;
-          font-size: 11px !important;
-          margin: 10px !important;
-          }
-
-          table {
-          width: 100% !important;
-          border-collapse: collapse;
-          table-layout: fixed; /* Ensures columns are sized by their width */
-          border: 1px solid black;
-          border-top: none;
-          }
-
-          th,
-          td {
-          border-top: none;
-          border-bottom: none;
-          border-left: 1px solid black;
-          border-right: 1px solid black;
-          padding-top: 1px;
-          padding-bottom: 1px;
-          padding-left: 4px;
-          padding-right: 4px;
-          font-size: 10px;
-          height: 18px !important;
-          line-height: 12px;
-          vertical-align: middle;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: clip;
-          margin: 0;
-          }
-
-          table thead tr {
-          border-bottom: 1px solid #000; /* Optional: keep header row line */
-          }
-
-          th {
-          font-weight: bold;
-          text-align: center;
-          vertical-align: middle;
-          }
-          </style>
-          </head>
-          <body>${receiptHtml}</body>
-          </html>
-          `;
-
-                            // Print
-                            window.print();
-
-                            // Restore original body after print
-                            setTimeout(() => {
-                                document.body.innerHTML = originalContent;
-                                alert("Berhasil mencetak nota!");
-                                window.location.href = "/kasir";
-                            }, 500); // Delay restore to ensure print dialog completes
-                        }, 100); // Short delay to ensure DOM is ready
-                    }
+                            document.body.innerHTML = originalContent;
+                            alert("Berhasil mencetak nota!");
+                            window.location.href = "/kasir";
+                        }, 500);
+                    }, 100);
                 });
 
                 tbody.appendChild(tr);
@@ -1105,15 +1087,13 @@
             tr.style.display = "table";
             tr.style.width = "100%";
             tr.style.tableLayout = "fixed";
-
             tr.innerHTML = `
-      <td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">
-        No data available.
-      </td>
-    `;
-
+                <td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">
+                    No data available.
+                </td>
+            `;
             tbody.appendChild(tr);
-<!--        }-->
+        }
 
         setupRowSelection(); // setup click & keyboard navigation
 
@@ -1143,9 +1123,10 @@
                     }
                 }
             },
-            {once: true}
+            { once: true }
         );
     }
+
 
     function loadDetailTable(items) {
         const detailBody = document.querySelector("#detailTable tbody");
@@ -1872,13 +1853,19 @@
 
         const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
         const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
+        console.log("grand disc pct : ", grandDiscPercent);
+        console.log("grand disc amt : ", grandDiscAmount);
         let finalDiscount = totalDiscount;
-        if (grandDiscPercent > 0) {
-            const percentDiscount = Math.round(subtotal * (grandDiscPercent / 100));
-            finalDiscount += percentDiscount;
-        } else {
-            finalDiscount += grandDiscAmount;
-        }
+        finalDiscount += grandDiscAmount;
+<!--        if (grandDiscPercent > 0) {-->
+<!--            const percentDiscount = Math.round(subtotal * (grandDiscPercent / 100));-->
+<!--            console.log("percent discount  : ", percentDiscount);-->
+<!--            finalDiscount += percentDiscount;-->
+<!--            console.log("final discount 1 : ", finalDiscount);-->
+<!--        } else {-->
+<!--            finalDiscount += grandDiscAmount;-->
+<!--            console.log("final discount 2 : ", finalDiscount);-->
+<!--        }-->
 
         const grandTotal = subtotal - finalDiscount;
 
