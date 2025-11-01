@@ -277,7 +277,7 @@
             </div>
         </div>
         <a
-                th:href="${penjualanData.transactionId == null and penjualanData.transactionDetailDTOS == null} ? '/home' : '/penjualan'"
+                th:href="@{/penjualan}"
                 class="btn btn-warning d-flex align-items-center"
                 onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
         >
