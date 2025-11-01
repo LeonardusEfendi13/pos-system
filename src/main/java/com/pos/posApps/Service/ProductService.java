@@ -174,69 +174,75 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
-        System.out.println("Edit req : " + req);
-        Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
-        if (productEntityOpt.isEmpty()) {
-            return false;
-        }
+    public ResponseInBoolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
+        try {
 
-        ProductEntity productEntity = productEntityOpt.get();
 
-        boolean isDuplicate =
-                productRepository.existsByFullNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getFullName(), clientEntity.getClientId(), req.getProductId())
-                        || productRepository.existsByShortNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getShortName(), clientEntity.getClientId(), req.getProductId())
-                        || productRepository.existsByProductIdAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getProductId(), clientEntity.getClientId(), req.getProductId());
-        if (isDuplicate) {
-            return false;
-        }
-
-        if (!Objects.equals(req.getStock(), productEntity.getStock())) {
-            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                    productEntity,
-                    "-",
-                    TipeKartuStok.PENYESUAIAN,
-                    0L,
-                    0L,
-                    req.getStock(),
-                    clientEntity
-            ));
-            if (!isAdjusted) {
-                return false;
+            System.out.println("Edit req : " + req);
+            Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
+            if (productEntityOpt.isEmpty()) {
+                return new ResponseInBoolean(false, "Data barang belum ketemu");
             }
+
+            ProductEntity productEntity = productEntityOpt.get();
+
+            boolean isDuplicate =
+                    productRepository.existsByFullNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getFullName(), clientEntity.getClientId(), req.getProductId())
+                            || productRepository.existsByShortNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getShortName(), clientEntity.getClientId(), req.getProductId())
+                            || productRepository.existsByProductIdAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(req.getProductId(), clientEntity.getClientId(), req.getProductId());
+            if (isDuplicate) {
+                return new ResponseInBoolean(false, "Kode barang sudah ada");
+            }
+
+            if (!Objects.equals(req.getStock(), productEntity.getStock())) {
+                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        productEntity,
+                        "-",
+                        TipeKartuStok.PENYESUAIAN,
+                        0L,
+                        0L,
+                        req.getStock(),
+                        clientEntity
+                ));
+                if (!isAdjusted) {
+                    return new ResponseInBoolean(false, "Gagal Adjust kartu stok");
+                }
+            }
+
+            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
+            if (supplierEntityOpt.isEmpty()) {
+                return new ResponseInBoolean(false, "Data supplier tidak ditemukan");
+            }
+            SupplierEntity supplierEntity = supplierEntityOpt.get();
+
+            productEntity.setShortName(req.getShortName());
+            productEntity.setFullName(req.getFullName());
+            productEntity.setSupplierPrice(req.getSupplierPrice());
+            productEntity.setSupplierEntity(supplierEntity);
+            productEntity.setStock(req.getStock());
+            productEntity.setMinimumStock(req.getMinimumStock());
+            productRepository.save(productEntity);
+
+            //Delete all product prices related to product id
+            productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
+
+            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
+            Long newProductPricesId = Generator.generateId(lastProductPricesId);
+
+            for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
+                ProductPricesEntity newProductPrices = new ProductPricesEntity();
+                newProductPrices.setProductPricesId(newProductPricesId);
+                newProductPrices.setProductEntity(productEntity);
+                newProductPrices.setPrice(productPricesData.getPrice());
+                newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
+                newProductPrices.setPercentage(productPricesData.getPercentage());
+                newProductPricesId = Generator.generateId(newProductPricesId);
+                productPricesRepository.save(newProductPrices);
+            }
+            return new ResponseInBoolean(true, "Berhasil Edit Data");
+        } catch (Exception e) {
+            return new ResponseInBoolean(false, e.getMessage());
         }
-
-        Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
-        if (supplierEntityOpt.isEmpty()) {
-            return false;
-        }
-        SupplierEntity supplierEntity = supplierEntityOpt.get();
-
-        productEntity.setShortName(req.getShortName());
-        productEntity.setFullName(req.getFullName());
-        productEntity.setSupplierPrice(req.getSupplierPrice());
-        productEntity.setSupplierEntity(supplierEntity);
-        productEntity.setStock(req.getStock());
-        productEntity.setMinimumStock(req.getMinimumStock());
-        productRepository.save(productEntity);
-
-        //Delete all product prices related to product id
-        productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
-
-        Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
-        Long newProductPricesId = Generator.generateId(lastProductPricesId);
-
-        for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
-            ProductPricesEntity newProductPrices = new ProductPricesEntity();
-            newProductPrices.setProductPricesId(newProductPricesId);
-            newProductPrices.setProductEntity(productEntity);
-            newProductPrices.setPrice(productPricesData.getPrice());
-            newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
-            newProductPrices.setPercentage(productPricesData.getPercentage());
-            newProductPricesId = Generator.generateId(newProductPricesId);
-            productPricesRepository.save(newProductPrices);
-        }
-        return true;
     }
 
     @Transactional
@@ -273,12 +279,12 @@ public class ProductService {
         return products.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    public ProductDTO findProductByCode(Long clientId, String keyword){
+    public ProductDTO findProductByCode(Long clientId, String keyword) {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
         return convertToDTO(productData);
     }
 
-    public List<ProductDTO> getUnderstockProductData(Long clientId){
+    public List<ProductDTO> getUnderstockProductData(Long clientId) {
         List<ProductEntity> productData = productRepository.getUnderstockProductData(clientId);
         return productData.stream().map(this::convertToDTO).collect(Collectors.toList());
     }

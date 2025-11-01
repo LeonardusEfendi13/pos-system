@@ -193,15 +193,9 @@ public class ProductController {
         String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
-            if (isEdited) {
-                redirectAttributes.addFlashAttribute("status", true);
-                redirectAttributes.addFlashAttribute("message", "Data Edited");
-                return "redirect:/products?search=" + encodedSearch;
-            }
+            ResponseInBoolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
             redirectAttributes.addFlashAttribute("status", true);
-            redirectAttributes.addFlashAttribute("message", "Failed to edit data");
-            redirectAttributes.addFlashAttribute("search", search);
+            redirectAttributes.addFlashAttribute("message", isEdited.getMessage());
             return "redirect:/products?search=" + encodedSearch;
         }
         return "redirect:/login";
