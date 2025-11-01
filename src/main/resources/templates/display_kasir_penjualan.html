@@ -481,7 +481,6 @@
                                     class="form-check-input me-1"
                                     type="checkbox"
                                     id="printBill"
-                                    checked
                             />
                             <label class="form-check-label" for="printBill"
                             >Print Bill</label
@@ -962,7 +961,7 @@
                 tr.addEventListener("dblclick", () => {
                     const isPrintBill = document.getElementById("printBill");
 
-                    if (isPrintBill.checked) {
+<!--                    if (isPrintBill.checked) {-->
                         //Assign and convert needed values
                         trx.transactionDetailDTOS = trx.transactionDetailDTOS.map(
                             (item, index) => ({
@@ -1114,7 +1113,7 @@
     `;
 
             tbody.appendChild(tr);
-        }
+<!--        }-->
 
         setupRowSelection(); // setup click & keyboard navigation
 
@@ -1873,10 +1872,10 @@
 
         const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
         const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
-
         let finalDiscount = totalDiscount;
         if (grandDiscPercent > 0) {
-            finalDiscount += subtotal * (grandDiscPercent / 100);
+            const percentDiscount = Math.round(subtotal * (grandDiscPercent / 100));
+            finalDiscount += percentDiscount;
         } else {
             finalDiscount += grandDiscAmount;
         }
@@ -2471,7 +2470,7 @@ vertical-align: middle;
         grandDiscountAmount.value = 0;
         paymentAmountInput.value = "Rp 0";
         returnAmountInput.value = "Rp 0";
-        document.getElementById("printBill").checked = true;
+        document.getElementById("printBill").checked = false;
 
         transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
         const customerUmum = masterCustomers.find(
