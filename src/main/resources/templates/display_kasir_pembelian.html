@@ -1761,13 +1761,14 @@
 
      const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
      const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
-
      let finalDiscount = totalDiscount;
-     if (grandDiscPercent > 0) {
-       finalDiscount += subtotal * (grandDiscPercent / 100);
-     } else {
-       finalDiscount += grandDiscAmount;
-     }
+      finalDiscount += grandDiscAmount;
+
+<!--     if (grandDiscPercent > 0) {-->
+<!--       finalDiscount += subtotal * (grandDiscPercent / 100);-->
+<!--     } else {-->
+<!--       finalDiscount += grandDiscAmount;-->
+<!--     }-->
 
      const grandTotal = subtotal - finalDiscount;
 
