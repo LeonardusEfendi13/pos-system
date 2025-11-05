@@ -2192,11 +2192,16 @@
         });
     }
 
+    let isSaving = false; // <-- global or outer-scope flag
+
     async function saveTransaction() {
+        if (isSaving) return; // 🔒 Prevent double-submit
+        isSaving = true;
+
         console.log("Otw save transaction, disable button save");
         const saveBtn = document.getElementById("saveTransactionBtn");
         saveBtn.disabled=true;
-        savebtn.innerText = 'Saving..';
+        saveBtn.innerText = 'Saving..';
         const grandTotal =
             parseFloat(
                 grandTotalDisplay.textContent
