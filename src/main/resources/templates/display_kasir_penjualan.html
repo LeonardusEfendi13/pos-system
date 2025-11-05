@@ -1593,6 +1593,11 @@
                 // ✅ Kalau sudah ada → tambahkan qty dan update total
                 const qtyInput = existingRow.querySelector(".qty-input");
                 qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+                 // 🧮 Jalankan tiering ulang setelah qty bertambah
+                const priceInput = existingRow.querySelector(".price-input");
+                const qty = parseInt(qtyInput.value || "1", 10);
+                const newPrice = getPriceByQty(product, qty);
+                priceInput.value = formatRupiah(newPrice);
                 updateTotalRow(existingRow);
 
                 // Kosongkan input baru agar tidak duplikat
@@ -2735,6 +2740,13 @@ vertical-align: middle;
                     // ✅ Kalau sudah ada → tambahkan qty dan update total
                     const qtyInput = existingRow.querySelector(".qty-input");
                     qtyInput.value = parseInt(qtyInput.value || "0") + 1;
+
+                     // 🧮 Jalankan tiering ulang setelah qty bertambah
+                    const priceInput = existingRow.querySelector(".price-input");
+                    const qty = parseInt(qtyInput.value || "1", 10);
+                    const newPrice = getPriceByQty(product, qty);
+                    priceInput.value = formatRupiah(newPrice);
+
                     updateTotalRow(existingRow);
 
                     // Kosongkan input baru agar tidak duplikat
