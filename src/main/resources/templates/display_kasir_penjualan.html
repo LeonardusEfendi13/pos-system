@@ -2028,6 +2028,10 @@
                         // Go to searchCode and select all
                         searchCode.focus();
                         searchCode.select();
+                    } else {
+                        // If currently focused on a product row → go to searchCode
+                        searchCode.focus();
+                        searchCode.select();
                     }
                     break;
 
@@ -2041,6 +2045,10 @@
                         // Move cursor to end
                         const len = searchName.value.length;
                         searchName.setSelectionRange(len, len);
+                    } else {
+                        // If currently focused on a product row → go to searchName
+                        searchName.focus();
+                        searchName.select();
                     }
                     break;
 
