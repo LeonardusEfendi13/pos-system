@@ -2493,6 +2493,7 @@ vertical-align: middle;
         } catch (error) {
             console.error("Failed to save transaction:", error.message);
             alert(`Gagal menyimpan data, ${error.message}.`);
+            window.location.href="/kasir";
         }
     }
 
