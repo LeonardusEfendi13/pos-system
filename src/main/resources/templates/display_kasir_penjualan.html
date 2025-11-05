@@ -1621,31 +1621,65 @@
             }
         });
 
-        // --- Event qty
+        let qtyForceFocus = false;
+
         qtyInput.addEventListener("input", () => {
-          let qty = parseInt(qtyInput.value);
+            const code = codeInput.value.trim();
+            const product =
+                masterProducts.find((p) => p.shortName === code) ||
+                dynamicProductsCache.find((p) => p.shortName === code);
 
-          // 🚫 Prevent blank, NaN, negative, or zero qty
-          if (isNaN(qty) || qty <= 0) {
-            qty = 1;
-            qtyInput.value = 1;
-          }
+            let qty = parseInt(qtyInput.value);
+            if (product && qty > 0) {
+                priceInput.value = formatRupiah(getPriceByQty(product, qty));
+            }
 
-          const code = codeInput.value.trim();
-          const product =
-            masterProducts.find((p) => p.shortName === code) ||
-            dynamicProductsCache.find((p) => p.shortName === code);
-
-          if (product) {
-            const newPrice = getPriceByQty(product, qty);
-            priceInput.value = formatRupiah(newPrice);
-          }
-
-          updateTotalRow(row);
+            updateTotalRow(row);
         });
+
+        qtyInput.addEventListener("blur", () => {
+            let qty = qtyInput.value.trim();
+
+            // ❌ skip only the blur triggered by our own focus()
+            if (qtyForceFocus) {
+                qtyForceFocus = false;
+                return;
+            }
+
+            if (qty === "" || isNaN(qty) || qty <= 0) {
+                alert("Qty harus diisi!");
+
+                // we will cause another blur due to focus(), PREVENT that one
+                qtyForceFocus = true;
+
+                setTimeout(() => {
+                    qtyInput.focus();
+                    qtyInput.select();
+                }, 0);
+
+                return;
+            }
+
+            updateTotalRow(row);
+        });
+
 
         qtyInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
+            let qty = qtyInput.value.trim();
+
+            if (qty === "" || isNaN(qty) || qty <= 0) {
+                e.preventDefault();
+                alert("Qty harus diisi!");
+                qtyForceFocus = true;
+
+                setTimeout(() => {
+                    qtyInput.focus();
+                    qtyInput.select();
+                }, 0);
+
+                return;
+            }
             e.preventDefault();
             console.log("Entering qty input keydown");
 
@@ -2729,31 +2763,64 @@ vertical-align: middle;
                 }
             });
 
-            // --- Event qty
+            let qtyForceFocus = false;
+
             qtyInput.addEventListener("input", () => {
-              let qty = parseInt(qtyInput.value);
+                const code = codeInput.value.trim();
+                const product =
+                    masterProducts.find((p) => p.shortName === code) ||
+                    dynamicProductsCache.find((p) => p.shortName === code);
 
-              // 🚫 Prevent blank, NaN, negative, or zero qty
-              if (isNaN(qty) || qty <= 0) {
-                qty = 1;
-                qtyInput.value = 1;
-              }
+                let qty = parseInt(qtyInput.value);
+                if (product && qty > 0) {
+                    priceInput.value = formatRupiah(getPriceByQty(product, qty));
+                }
 
-              const code = codeInput.value.trim();
-              const product =
-                masterProducts.find((p) => p.shortName === code) ||
-                dynamicProductsCache.find((p) => p.shortName === code);
+                updateTotalRow(row);
+            });
 
-              if (product) {
-                const newPrice = getPriceByQty(product, qty);
-                priceInput.value = formatRupiah(newPrice);
-              }
+            qtyInput.addEventListener("blur", () => {
+                let qty = qtyInput.value.trim();
 
-              updateTotalRow(row);
+                // ❌ skip only the blur triggered by our own focus()
+                if (qtyForceFocus) {
+                    qtyForceFocus = false;
+                    return;
+                }
+
+                if (qty === "" || isNaN(qty) || qty <= 0) {
+                    alert("Qty harus diisi!");
+
+                    // we will cause another blur due to focus(), PREVENT that one
+                    qtyForceFocus = true;
+
+                    setTimeout(() => {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }, 0);
+
+                    return;
+                }
+
+                updateTotalRow(row);
             });
 
             qtyInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
+                let qty = qtyInput.value.trim();
+
+                if (qty === "" || isNaN(qty) || qty <= 0) {
+                    e.preventDefault();
+                    alert("Qty harus diisi!");
+                    qtyForceFocus = true;
+
+                    setTimeout(() => {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }, 0);
+
+                    return;
+                }
                 e.preventDefault();
                 console.log("Entering qty input keydown");
 
