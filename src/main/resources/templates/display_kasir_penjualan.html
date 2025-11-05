@@ -313,7 +313,7 @@
                 </th>
                 <th
                         style="
-                  width: 35%;
+                  width: 30%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -324,7 +324,7 @@
                 </th>
                 <th
                         style="
-                  width: 5%;
+                  width: 3%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -346,7 +346,7 @@
                 </th>
                 <th
                         style="
-                  width: 5%;
+                  width: 4%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -368,7 +368,7 @@
                 </th>
                 <th
                         style="
-                  width: 12%;
+                  width: 10%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -379,7 +379,18 @@
                 </th>
                 <th
                         style="
-                  width: 9%;
+                  width: 3%;
+                  position: sticky;
+                  top: 0;
+                  background-color: white;
+                  z-index: 1;
+                "
+                >
+                    Stok
+                </th>
+                <th
+                        style="
+                  width: 8%;
                   position: sticky;
                   top: 0;
                   background-color: white;
@@ -1422,6 +1433,7 @@
   <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" autocomplete="off"/></td>
   <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" autocomplete="off"/></td>
   <td class="total-cell">Rp 0</td>
+  <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" value="0" autocomplete="off" disabled/></td>
   <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
   <td><input type="text" class="form-control form-control-sm pct-suggest-input" readonly /></td>
   `;
@@ -1723,6 +1735,7 @@
 
     function fillProductRow(row, product) {
         const qty = 1; // default qty
+        console.log("product : ", product);
         const price = getPriceByQty(product, qty);
 
         row.querySelector(".code-input").value = product.shortName;
@@ -1731,6 +1744,7 @@
         row.querySelector(".qty-input").value = qty;
         row.querySelector(".discount-percent-input").value = 0;
         row.querySelector(".discount-amount-input").value = 0;
+        row.querySelector(".stok-input").value = product.stok;
         updateTotalRow(row);
     }
 
