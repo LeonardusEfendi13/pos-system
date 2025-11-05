@@ -1458,6 +1458,10 @@
           }
         });
 
+        priceInput.addEventListener("click", () => {
+            priceInput.select();
+        });
+
         // ✅ Bersihkan leading zero (contoh: 00050 → 50) saat input berubah
         priceInput.addEventListener("input", () => {
           priceInput.value = priceInput.value.replace(/^0+(?=\d)/, ""); // hapus nol di depan
@@ -1617,6 +1621,12 @@
           }
         });
 
+        codeInput.addEventListener("click", () => {
+            if(codeInput.value.trim()){
+                codeInput.select();
+            }
+        });
+
         codeInput.addEventListener("dblclick", () => {
             if (!codeInput.value.trim()) {
                 // 🚀 Kalau kosong → buka modal
@@ -1668,6 +1678,9 @@
             updateTotalRow(row);
         });
 
+        qtyInput.addEventListener("click", () => {
+            qtyInput.select();
+        });
 
         qtyInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
@@ -2600,12 +2613,7 @@ vertical-align: middle;
     <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
   `;
             sellTableBody.appendChild(row);
-            const stokInput = row.querySelector(".stok-input");
-            let product = dynamicProductsCache.find(p => p.shortName === code);
-            console.log("product : ", product);
-            if (product && stokInput) {
-              stokInput.textContent = product.stok;
-            }
+
             const codeInput = row.querySelector(".code-input");
             const qtyInput = row.querySelector(".qty-input");
             const priceInput = row.querySelector(".price-input");
@@ -2622,6 +2630,10 @@ vertical-align: middle;
               if (currentValue === "" && char === "0") {
                 e.preventDefault();
               }
+            });
+
+            priceInput.addEventListener("click", () => {
+                priceInput.select();
             });
 
             // ✅ Bersihkan leading zero (contoh: 00050 → 50) saat input berubah
@@ -2772,6 +2784,12 @@ vertical-align: middle;
               }
             });
 
+            codeInput.addEventListener("click", () => {
+                if(codeInput.value.trim()){
+                    codeInput.select();
+                }
+            });
+
             codeInput.addEventListener("dblclick", () => {
                 if (!codeInput.value.trim()) {
                     // 🚀 Kalau kosong → buka modal
@@ -2821,6 +2839,10 @@ vertical-align: middle;
                 }
 
                 updateTotalRow(row);
+            });
+
+            qtyInput.addEventListener("click", () => {
+                qtyInput.select();
             });
 
             qtyInput.addEventListener("keydown", (e) => {
