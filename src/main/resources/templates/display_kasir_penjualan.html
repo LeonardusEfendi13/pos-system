@@ -489,6 +489,7 @@
 
                         <div>
                             <button
+                                    id="saveTransactionBtn"
                                     class="btn btn-primary btn-sm me-2"
                                     onclick="saveTransaction()"
                             >
@@ -1988,21 +1989,20 @@
             if (!productModalEl.classList.contains("show")) return;
 
             const activeElement = document.activeElement;
-            const isInSearch =
-                activeElement === searchCode || activeElement === searchName;
+            const isInSearchCode = activeElement === searchCode;
+            const isInSearchName = activeElement === searchName;
 
             switch (e.key) {
                 case "ArrowDown":
                     e.preventDefault();
                     if (rows.length === 0) return;
 
-                    if (isInSearch) {
+                    if (isInSearchCode || isInSearchName) {
                         currentKeyboardIndex = 0;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     } else {
-                        if (currentKeyboardIndex < rows.length - 1)
-                            currentKeyboardIndex++;
+                        if (currentKeyboardIndex < rows.length - 1) currentKeyboardIndex++;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     }
@@ -2012,7 +2012,7 @@
                     e.preventDefault();
                     if (rows.length === 0) return;
 
-                    if (!isInSearch) {
+                    if (!isInSearchCode && !isInSearchName) {
                         if (currentKeyboardIndex > 0) currentKeyboardIndex--;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
@@ -2021,18 +2021,32 @@
 
                 case "ArrowLeft":
                     e.preventDefault();
-                    searchCode.focus();
+                    if (isInSearchCode) {
+                        // Move cursor to start
+                        searchCode.setSelectionRange(0, 0);
+                    } else if (isInSearchName) {
+                        // Go to searchCode and select all
+                        searchCode.focus();
+                        searchCode.select();
+                    }
                     break;
 
                 case "ArrowRight":
                     e.preventDefault();
-                    searchName.focus();
+                    if (isInSearchCode) {
+                        // Go to searchName and select all
+                        searchName.focus();
+                        searchName.select();
+                    } else if (isInSearchName) {
+                        // Move cursor to end
+                        const len = searchName.value.length;
+                        searchName.setSelectionRange(len, len);
+                    }
                     break;
 
                 case "Enter":
                     e.preventDefault();
-
-                    if (isInSearch) {
+                    if (isInSearchCode || isInSearchName) {
                         doFilter();
                     } else {
                         if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
@@ -2191,7 +2205,16 @@
         });
     }
 
+    let isSaving = false; // <-- global or outer-scope flag
+
     async function saveTransaction() {
+        if (isSaving) return; // 🔒 Prevent double-submit
+        isSaving = true;
+
+        console.log("Otw save transaction, disable button save");
+        const saveBtn = document.getElementById("saveTransactionBtn");
+        saveBtn.disabled=true;
+        saveBtn.innerText = 'Saving..';
         const grandTotal =
             parseFloat(
                 grandTotalDisplay.textContent
