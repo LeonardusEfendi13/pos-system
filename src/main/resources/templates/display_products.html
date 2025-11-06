@@ -182,8 +182,13 @@
                             <div class="mb-3 row">
                                 <label class="col-sm-2 col-form-label" for="shortName">Kode Part</label>
                                 <div class="col-sm-4">
-                                    <input type="text" id="shortName" class="form-control" name="shortName"
-                                           oninput="this.value = this.value.toUpperCase();" required/>
+                                    <input
+                                            type="text"
+                                            id="shortName"
+                                            class="form-control"
+                                            name="shortName"
+                                            style="text-transform: uppercase;"
+                                            required/>
                                 </div>
                             </div>
 
@@ -196,7 +201,7 @@
                                             class="form-control"
                                             id="fullName"
                                             name="fullName"
-                                            oninput="this.value = this.value.toUpperCase();"
+                                            style="text-transform: uppercase;"
                                             required
                                     />
                                 </div>
@@ -546,22 +551,28 @@
 
         // Form submission listener to clean up Rupiah values before submission.
         document.getElementById("addProductForm").addEventListener("click", function (e) {
-            const form = document.getElementById("barangForm");
-            const formData = new FormData(form);
-
             e.preventDefault();
-            rupiahInputs.forEach(input => {
-                // Validate input value before cleaning
-                if (typeof input?.value === "undefined" || input.value === null || input.value.trim() === "") {
-                    return; // skip this input
-                }
 
+            const form = document.getElementById("barangForm");
+
+            // 1️⃣ Convert all text inputs to uppercase
+            form.querySelectorAll("input[type='text']").forEach(input => {
+                if (input.value && input.value.trim() !== "") {
+                    input.value = input.value.toUpperCase();
+                }
+            });
+
+            // 2️⃣ Clean Rupiah values before submitting
+            rupiahInputs.forEach(input => {
+                if (!input?.value || input.value.trim() === "") return;
                 const cleaned = cleanRupiahToNumber(input.value);
                 input.value = cleaned;
             });
 
-            document.getElementById("barangForm").submit();
+            // 3️⃣ Submit form
+            form.submit();
         });
+
 
         <!--        Handle maxqty-->
         const dirtyFlags = {
