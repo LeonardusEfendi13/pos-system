@@ -179,7 +179,7 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan")
-    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
+    public String laporanNilaiPersediaan(HttpSession session, Model model, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
         Long clientId;
         String token;
         try {

@@ -77,17 +77,17 @@
                     <label for="endDate" class="form-label">End Date</label>
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}">
                 </div>
-                <div class="col-md-2">
-                    <label for="customerId" class="form-label">Supplier</label>
-                    <select id="customerId" name="customerId" class="form-select">
-                        <option value="">-- Semua Supplier --</option>
-                        <option th:each="customer : ${customerData}"
-                                th:value="${customer.customerId}"
-                                th:text="${customer.name}"
-                                th:selected="${customer.customerId == customerId}">
-                        </option>
-                    </select>
-                </div>
+<!--                <div class="col-md-2">-->
+<!--                    <label for="customerId" class="form-label">Supplier</label>-->
+<!--                    <select id="customerId" name="customerId" class="form-select">-->
+<!--                        <option value="">&#45;&#45; Semua Supplier &#45;&#45;</option>-->
+<!--                        <option th:each="customer : ${customerData}"-->
+<!--                                th:value="${customer.customerId}"-->
+<!--                                th:text="${customer.name}"-->
+<!--                                th:selected="${customer.customerId == customerId}">-->
+<!--                        </option>-->
+<!--                    </select>-->
+<!--                </div>-->
                 <div class="col-md-2">
                     <label for="filterOptions" class="form-label">Filter Per</label>
                     <select id="filterOptions" name="filterOptions" class="form-select">
