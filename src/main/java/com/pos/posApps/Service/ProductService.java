@@ -60,6 +60,15 @@ public class ProductService {
         );
     }
 
+    public ProductDTO findProductById(Long productId){
+        Optional<ProductEntity> dataOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
+        if(dataOpt.isEmpty()){
+            return new ProductDTO();
+        }
+        ProductEntity productEntity = dataOpt.get();
+        return convertToDTO(productEntity);
+    }
+
     public Page<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
                 .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(

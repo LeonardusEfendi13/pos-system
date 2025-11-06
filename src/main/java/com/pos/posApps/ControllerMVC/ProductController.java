@@ -246,7 +246,9 @@ public class ProductController {
         long totalElements = 0L;
         int totalPages = 0;
         int numberElement = 0;
+        String productName = "";
         if(productId != null){
+            productName = productService.findProductById(productId).getFullName();
             Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
             totalElements = pageStokData.getTotalElements();
             stokData = pageStokData.getContent();
@@ -254,10 +256,6 @@ public class ProductController {
             numberElement = pageStokData.getNumberOfElements();
         }
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
-
-//        Long totalElements = stokData.getTotalElements();
-
-//        Integer totalPages = stokData.getTotalPages();
         if (totalPages == 0) {
             totalPages = 1;
         }
@@ -287,7 +285,7 @@ public class ProductController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("stockAwal", stockAwal);
-        model.addAttribute("selectedItemId", productId);
+        model.addAttribute("selectedItemName", productName);
 
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
