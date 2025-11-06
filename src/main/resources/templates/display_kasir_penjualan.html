@@ -461,7 +461,7 @@
                                 for="paymentAmount"
                                 class="form-label"
                                 style="font-weight: bold"
-                        >Payment Amount</label
+                        >Jumlah Bayar</label
                         >
                         <input
                                 type="text"
@@ -469,6 +469,7 @@
                                 class="form-control form-control-sm"
                                 min="Rp 0"
                                 autocomplete="off"
+                                style="font-size:20px;font-weight:bold"
                         />
                     </div>
                     <div class="mb-3">
@@ -476,7 +477,7 @@
                                 for="returnAmount"
                                 class="form-label"
                                 style="font-weight: bold"
-                        >Return Amount</label
+                        >Kembali</label
                         >
                         <input
                                 type="text"
@@ -484,6 +485,7 @@
                                 class="form-control form-control-sm"
                                 readonly
                                 autocomplete="off"
+                                style="font-size:20px;font-weight:bold"
                         />
                     </div>
                     <div class="d-flex justify-content-between">
@@ -494,7 +496,7 @@
                                     id="printBill"
                             />
                             <label class="form-check-label" for="printBill"
-                            >Print Bill</label
+                            >Cetak Nota</label
                             >
                         </div>
 
@@ -1924,16 +1926,6 @@
         console.log("grand disc amt : ", grandDiscAmount);
         let finalDiscount = totalDiscount;
         finalDiscount += grandDiscAmount;
-<!--        if (grandDiscPercent > 0) {-->
-<!--            const percentDiscount = Math.round(subtotal * (grandDiscPercent / 100));-->
-<!--            console.log("percent discount  : ", percentDiscount);-->
-<!--            finalDiscount += percentDiscount;-->
-<!--            console.log("final discount 1 : ", finalDiscount);-->
-<!--        } else {-->
-<!--            finalDiscount += grandDiscAmount;-->
-<!--            console.log("final discount 2 : ", finalDiscount);-->
-<!--        }-->
-
         const grandTotal = subtotal - finalDiscount;
 
         subTotalDisplay.textContent = "Rp " + subtotal.toLocaleString("id-ID");
@@ -2287,8 +2279,14 @@
 
         console.log("Otw save transaction, disable button save");
         const saveBtn = document.getElementById("saveTransactionBtn");
-        saveBtn.disabled=true;
-        saveBtn.innerText = 'Saving..';
+        if(isSaving){
+            saveBtn.disabled=true;
+            saveBtn.innerText = 'Saving..';
+        }else{
+            saveBtn.disabled = false;
+            saveBtn.innerText='Simpan';
+        }
+
         const grandTotal =
             parseFloat(
                 grandTotalDisplay.textContent
@@ -2303,11 +2301,17 @@
             grandTotal === 0
         ) {
             alert("Transaction cannot be saved with no items.");
+            saveBtn.disabled = false;
+            saveBtn.innerText='Simpan';
+            isSaving = false;
             return;
         }
 
         if (paymentAmount < grandTotal) {
-            alert("Payment amount is less than the grand total.");
+            alert("Jumlah bayar kurang dari Grand Total.");
+            saveBtn.disabled = false;
+            saveBtn.innerText='Simpan';
+            isSaving = false;
             return;
         }
 
