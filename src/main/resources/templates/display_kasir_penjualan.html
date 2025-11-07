@@ -262,6 +262,21 @@
             font-size: 14px !important;
             font-weight: 400;
         }
+        /* Apply blue background to Saran harga Lama and columns after it */
+        table td:nth-child(n+9) {
+          background-color: #dceeff;
+          border-left: none;
+          vertical-align: middle;
+        }
+        table td:nth-child(n+9) input {
+          background-color: #dceeff;
+          border: 1px solid #bcdcff;
+          color: #000;
+        }
+        /* 🔹 Add the divider line before the first column in that group */
+        table td:nth-child(10) {
+          border-left: 3px solid #007bff;
+        }
     </style>
 </head>
 <body class="p-3">
@@ -395,6 +410,8 @@
                   top: 0;
                   background-color: white;
                   z-index: 1;
+                  background-color: #dceeff;
+                  border-left: 3px solid #007bff;
                 "
                 >
                     Saran Harga
@@ -406,6 +423,8 @@
                   top: 0;
                   background-color: white;
                   z-index: 1;
+                  background-color: #dceeff
+
                 "
                 >
                     Persentase
@@ -1438,7 +1457,10 @@
   <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" autocomplete="off"/></td>
   <td class="total-cell">Rp 0</td>
   <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" value="0" autocomplete="off" disabled/></td>
-  <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
+<td>
+  <button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button>
+  <span class="harga-text ms-2" style="font-weight:bold"; ></span>
+</td>
   <td><input type="text" class="form-control form-control-sm pct-suggest-input" readonly /></td>
   `;
 
@@ -1516,45 +1538,49 @@
         const pctSuggestInput = row.querySelector(".pct-suggest-input");
 
         // --- Tombol cek harga
-        cekHargaBtn.addEventListener("click", async () => {
-            const kodeBarang = codeInput.value.trim();
-            if (!kodeBarang) {
-                alert("Kode barang belum diisi!");
-                return;
+       cekHargaBtn.addEventListener("click", async () => {
+          const kodeBarang = codeInput.value.trim();
+          const hargaText = cekHargaBtn.parentElement.querySelector(".harga-text");
+
+          if (!kodeBarang) {
+            alert("Kode barang belum diisi!");
+            return;
+          }
+
+          // Optionally, show loading text before hiding the button
+          hargaText.textContent = "Loading...";
+
+          try {
+            const res = await fetch(`/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`);
+            if (!res.ok) throw new Error("Gagal fetch harga");
+
+            const text = await res.text();
+            if (!text) {
+              console.warn("Empty response from server");
+              hargaText.textContent = "Tidak ada data";
+              cekHargaBtn.remove(); // hide button even if no data
+              return;
             }
-            cekHargaBtn.style.pointerEvents = "none";
-            cekHargaBtn.textContent = "Loading...";
 
-            try {
-                const res = await fetch(
-                    `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
-                );
-                if (!res.ok) throw new Error("Gagal fetch harga");
-                const text = await res.text();
-                  if (!text) {
-                    console.warn("Empty response from server");
-                    return;
-                  }
+            const response = JSON.parse(text);
+            const harga = response.sellingPrice;
+            basicPriceFromSuggested = response.basicPrice;
+            recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
 
-                const response = JSON.parse(text);
-                const harga = response.sellingPrice;
-                basicPriceFromSuggested = response.basicPrice;
-                recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
-
-                if (harga && harga !== "null") {
-                    cekHargaBtn.classList.remove("btn-info");
-                    cekHargaBtn.classList.add("btn-success");
-                    cekHargaBtn.textContent = formatRupiah(Number(harga));
-                } else {
-                    cekHargaBtn.textContent = "Tidak tersedia";
-                    cekHargaBtn.disabled = true;
-                }
-            } catch (err) {
-                cekHargaBtn.textContent = "Error";
-                cekHargaBtn.disabled = true;
-                console.error(err);
+            if (harga && harga !== "null") {
+              hargaText.textContent = formatRupiah(Number(harga));
+            } else {
+              hargaText.textContent = "Tidak tersedia";
             }
-        });
+
+            cekHargaBtn.remove(); // remove the button after click
+          } catch (err) {
+            hargaText.textContent = "Error mengambil harga";
+            console.error(err);
+            cekHargaBtn.remove(); // still remove the button on error
+          }
+       });
+
 
         // --- Event untuk kode barang (Enter → cari product)
         codeInput.addEventListener("keydown", async (e) => {
@@ -2608,7 +2634,10 @@ vertical-align: middle;
             }" autocomplete="off"></td>
     <td class="total-cell">${formatRupiah(detail.total)}</td>
     <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" value="N/A" autocomplete="off" disabled/></td>
-    <td><button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button></td>
+    <td>
+      <button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button>
+      <span class="harga-text ms-2" style="font-weight:bold"; ></span>
+    </td>
   `;
             sellTableBody.appendChild(row);
 
@@ -2683,35 +2712,47 @@ vertical-align: middle;
 
             // --- Tombol cek harga
             cekHargaBtn.addEventListener("click", async () => {
-                const kodeBarang = codeInput.value.trim();
-                if (!kodeBarang) {
-                    alert("Kode barang belum diisi!");
-                    return;
-                }
-                cekHargaBtn.style.pointerEvents = "none";
+              const kodeBarang = codeInput.value.trim();
+              const hargaText = cekHargaBtn.parentElement.querySelector(".harga-text");
 
-                cekHargaBtn.textContent = "Loading...";
-                try {
-                    const res = await fetch(
-                        `/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`
-                    );
-                    if (!res.ok) throw new Error("Gagal fetch harga");
-                    const harga = await res.text();
-                    if (harga && harga !== "null") {
-                        cekHargaBtn.classList.remove("btn-info");
-                        cekHargaBtn.classList.add("btn-success");
-                        cekHargaBtn.textContent = formatRupiah(Number(harga));
-                        ;
-                    } else {
-                        cekHargaBtn.textContent = "Tidak tersedia";
-                        cekHargaBtn.disabled = true;
-                    }
-                } catch (err) {
-                    cekHargaBtn.textContent = "Error";
-                    cekHargaBtn.disabled = true;
-                    console.error(err);
+              if (!kodeBarang) {
+                alert("Kode barang belum diisi!");
+                return;
+              }
+
+              // Optionally, show loading text before hiding the button
+              hargaText.textContent = "Loading...";
+
+              try {
+                const res = await fetch(`/api/price-list/cek?kode=${encodeURIComponent(kodeBarang)}`);
+                if (!res.ok) throw new Error("Gagal fetch harga");
+
+                const text = await res.text();
+                if (!text) {
+                  console.warn("Empty response from server");
+                  hargaText.textContent = "Tidak ada data";
+                  cekHargaBtn.remove(); // hide button even if no data
+                  return;
                 }
-            });
+
+                const response = JSON.parse(text);
+                const harga = response.sellingPrice;
+                basicPriceFromSuggested = response.basicPrice;
+                recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
+
+                if (harga && harga !== "null") {
+                  hargaText.textContent = formatRupiah(Number(harga));
+                } else {
+                  hargaText.textContent = "Tidak tersedia";
+                }
+
+                cekHargaBtn.remove(); // remove the button after click
+              } catch (err) {
+                hargaText.textContent = "Error mengambil harga";
+                console.error(err);
+                cekHargaBtn.remove(); // still remove the button on error
+              }
+           });
 
             codeInput.addEventListener("keydown", async (e) => {
               if (e.key === "Enter") {
