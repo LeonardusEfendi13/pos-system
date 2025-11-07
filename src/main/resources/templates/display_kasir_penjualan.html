@@ -2954,13 +2954,13 @@ vertical-align: middle;
     });
 </script>
 <script>
-    function formatByFourDigits(input) {
-        // Remove all non-digit characters (optional)
-        input = input.replace(/\D/g, "");
+<!--    function formatByFourDigits(input) {-->
+<!--        // Remove all non-digit characters (optional)-->
+<!--        input = input.replace(/\D/g, "");-->
 
-        // Split into chunks of 4
-        return input.match(/.{1,4}/g)?.join("-") || "";
-    }
+<!--        // Split into chunks of 4-->
+<!--        return input.match(/.{1,4}/g)?.join("-") || "";-->
+<!--    }-->
 
     function toTerbilang(number) {
         const satuan = [
@@ -3106,7 +3106,7 @@ vertical-align: middle;
             pageDiv.querySelector(".client-kota").textContent =
                 masterSettings.kota;
             pageDiv.querySelector(".client-telp").textContent =
-                formatByFourDigits(masterSettings.noTelp);
+                masterSettings.noTelp;
             // Create the table
             const table = document.createElement("table");
             const thead = document.createElement("thead");
