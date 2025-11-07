@@ -1537,7 +1537,6 @@
                   }
 
                 const response = JSON.parse(text);
-                console.log("Result:", response);
                 const harga = response.sellingPrice;
                 basicPriceFromSuggested = response.basicPrice;
                 recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
@@ -1703,8 +1702,6 @@
                 return;
             }
             e.preventDefault();
-            console.log("Entering qty input keydown");
-
             const rows = [...sellTableBody.querySelectorAll("tr")];
             const lastRow = rows[rows.length - 1];
 
@@ -1791,7 +1788,6 @@
 
     function fillProductRow(row, product) {
         const qty = 1; // default qty
-        console.log("product : ", product);
         const price = getPriceByQty(product, qty);
 
         row.querySelector(".code-input").value = product.shortName;
@@ -1924,8 +1920,6 @@
 
         const grandDiscPercent = parseFloat(grandDiscountPercent.value) || 0;
         const grandDiscAmount = parseFloat(grandDiscountAmount.value) || 0;
-        console.log("grand disc pct : ", grandDiscPercent);
-        console.log("grand disc amt : ", grandDiscAmount);
         let finalDiscount = totalDiscount;
         finalDiscount += grandDiscAmount;
         const grandTotal = subtotal - finalDiscount;
@@ -2278,8 +2272,6 @@
     async function saveTransaction() {
         if (isSaving) return; // 🔒 Prevent double-submit
         isSaving = true;
-
-        console.log("Otw save transaction, disable button save");
         const saveBtn = document.getElementById("saveTransactionBtn");
         if(isSaving){
             saveBtn.disabled=true;
@@ -2868,8 +2860,6 @@ vertical-align: middle;
                     return;
                 }
                 e.preventDefault();
-                console.log("Entering qty input keydown");
-
                 const rows = [...sellTableBody.querySelectorAll("tr")];
                 const lastRow = rows[rows.length - 1];
 
