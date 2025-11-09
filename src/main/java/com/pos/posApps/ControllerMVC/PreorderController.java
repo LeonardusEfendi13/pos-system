@@ -134,7 +134,7 @@ public class PreorderController {
     }
 
     @GetMapping("/understock")
-    public String getUnderstokData(HttpSession session, String startDate, String endDate, Model model){
+    public String getUnderstokData(HttpSession session, Model model, Long supplierId){
         Long clientId;
         String token;
         try {
@@ -144,10 +144,13 @@ public class PreorderController {
             return "redirect:/login";
         }
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
-        List<ProductDTO> productData = productService.getUnderstockProductData(clientId);
+        String supplierName = supplierService.getSupplierDataById(supplierId, clientId);
+        List<ProductDTO> productData = productService.getUnderstockProductData(clientId, supplierId);
         model.addAttribute("productData", productData);
         model.addAttribute("supplierData", supplierEntities);
         model.addAttribute("activePage", "preorderUnderstock");
+        model.addAttribute("supplierId", supplierId);
+        model.addAttribute("supplierName", supplierName);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_understock";

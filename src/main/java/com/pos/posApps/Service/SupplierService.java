@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -16,6 +17,14 @@ import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 public class SupplierService {
     @Autowired
     SupplierRepository supplierRepository;
+
+    public String getSupplierDataById(Long supplierId, Long clientId){
+        Optional<SupplierEntity> supplierOpt =  supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(supplierId, clientId);
+        if(supplierOpt.isEmpty()){
+            return "INVALID";
+        }
+        return supplierOpt.get().getSupplierName();
+    }
 
     public List<SupplierEntity> getSupplierList(Long clientId){
         return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(clientId);

@@ -119,12 +119,12 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     ProductEntity findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(String shortName, Long clientId);
 
     @Query("""
-        SELECT p FROM ProductEntity p
-        WHERE p.clientEntity.clientId = :clientId
-        AND p.minimumStock > 0
-        AND p.stock <= p.minimumStock
-        AND p.deletedAt IS NULL
-    """)
-    List<ProductEntity> getUnderstockProductData(Long clientId);
-
+    SELECT p FROM ProductEntity p
+    WHERE p.clientEntity.clientId = :clientId
+    AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+    AND p.minimumStock > 0
+    AND p.stock <= p.minimumStock
+    AND p.deletedAt IS NULL
+""")
+    List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
 }
