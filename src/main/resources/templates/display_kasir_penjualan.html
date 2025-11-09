@@ -1356,7 +1356,7 @@
         });
     }
 
-    document.addEventListener("keydown", (e) => {
+    function plusHandler(e){
         if (e.key === "+") {
             e.preventDefault();
             const paymentInput = document.getElementById("paymentAmount");
@@ -1365,6 +1365,26 @@
                 paymentInput.select(); // auto select isi lama kalau ada
             }
         }
+    }
+
+    document.addEventListener("keydown", plusHandler);
+
+    //remove "+" handler on searchByCode / searchByName
+    searchCode.addEventListener("focus", () => {
+        document.removeEventListener("keydown", plusHandler);
+    });
+
+    searchCode.addEventListener("blur", () => {
+        document.addEventListener("keydown", plusHandler);
+    });
+
+
+    searchName.addEventListener("focus", () => {
+        document.removeEventListener("keydown", plusHandler);
+    });
+
+    searchName.addEventListener("blur", () => {
+        document.addEventListener("keydown", plusHandler);
     });
 
     const paymentInput = document.getElementById("paymentAmount");
