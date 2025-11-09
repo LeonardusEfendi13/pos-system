@@ -43,7 +43,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
     <div class="page-wrapper">
         <div class="container">
-            <h1 style="text-align:center;padding-top:10px">Kartu Stok</h1>
+            <h1 style="text-align:center;padding-top:10px">Kartu Stok <span th:text="${selectedItemName == null ? '' : (selectedItemName)}">"ulaula</span></h1>
 
             <!-- Filter Form with Date Range and Customer Name -->
             <form method="get" action="/products/kartu_stok" class="row filter-container">

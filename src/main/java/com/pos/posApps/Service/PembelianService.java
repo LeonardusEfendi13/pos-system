@@ -48,15 +48,6 @@ public class PembelianService {
     @Autowired
     BuktiBayarRepository buktiBayarRepository;
 
-    //    public Page<PembelianDTO> getPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, Pageable pageable) {
-//        Page<PurchasingEntity> purchasingData;
-//        if(supplierId == null){
-//            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate, pageable);
-//        }else{
-//            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate, pageable);
-//        }
-//        return purchasingData.map(this::convertToDTO);
-//    }
     public Page<PembelianDTO> getPembelianData(
             Long clientId,
             LocalDateTime startDate,
