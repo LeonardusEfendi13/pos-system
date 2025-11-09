@@ -293,8 +293,8 @@ public class ProductService {
         return convertToDTO(productData);
     }
 
-    public List<ProductDTO> getUnderstockProductData(Long clientId) {
-        List<ProductEntity> productData = productRepository.getUnderstockProductData(clientId);
+    public List<ProductDTO> getUnderstockProductData(Long clientId, Long supplierId) {
+        List<ProductEntity> productData = productRepository.getUnderstockProductData(clientId, supplierId);
         return productData.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 }
