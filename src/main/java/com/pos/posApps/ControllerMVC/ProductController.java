@@ -160,14 +160,8 @@ public class ProductController {
         String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
-            if (isInserted.isStatus()) {
-                redirectAttributes.addFlashAttribute("status", true);
-                redirectAttributes.addFlashAttribute("message", "Data Created");
-                redirectAttributes.addFlashAttribute("search", search);
-                return "redirect:/products?search=" + encodedSearch;
-            }
             redirectAttributes.addFlashAttribute("status", true);
-            redirectAttributes.addFlashAttribute("message", "Failed to Create Data");
+            redirectAttributes.addFlashAttribute("message", isInserted.getMessage());
             redirectAttributes.addFlashAttribute("search", search);
             return "redirect:/products?search=" + encodedSearch;
         }

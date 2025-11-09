@@ -120,7 +120,7 @@ public class ProductService {
     @Transactional
     public ResponseInBoolean insertProducts(CreateProductRequest req, ClientEntity clientData) {
         try {
-            ProductEntity productEntity = productRepository.findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
+            ProductEntity productEntity = productRepository.findFirstActiveProduct(req.getFullName(), req.getShortName(), req.getProductId(), clientData.getClientId());
             if (productEntity != null) {
                 return new ResponseInBoolean(false, "Barang sudah ada");
             }

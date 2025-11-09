@@ -37,8 +37,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
                  ORDER BY p.fullName
             """)
     Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
-
-    ProductEntity findFirstByFullNameOrShortNameOrProductIdAndClientEntity_ClientIdAndDeletedAtIsNull(String fullName, String shortName, Long productId, Long clientId);
+    @Query("""
+    SELECT p FROM ProductEntity p
+    WHERE (p.fullName = :fullName OR p.shortName = :shortName OR p.productId = :productId)
+      AND p.clientEntity.clientId = :clientId
+      AND p.deletedAt IS NULL
+""")
+    ProductEntity findFirstActiveProduct(String fullName, String shortName, Long productId, Long clientId);
 
     ProductEntity findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
