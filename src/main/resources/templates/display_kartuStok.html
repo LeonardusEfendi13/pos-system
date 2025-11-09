@@ -36,6 +36,44 @@
         .add-product-btn {
             margin-bottom: 15px;
         }
+        #productTable th,
+        #productTable td {
+          border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+        }
+
+        #productTable th:last-child,
+        #productTable td:last-child {
+          border-right: none; /* Remove border on the last column */
+        }
+
+        #productTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-right: 1px solid #dee2e6;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            height: 40px; /* fixed height */
+        }
+
+        #productTable thead th:last-child {
+            border-right: none;
+        }
+
+        #productTable tbody td {
+            border-right: 1px solid #dee2e6;
+        }
+
+        #productTable tbody td:last-child {
+            border-right: none;
+        }
+
+        /* Push the first row down by header height */
+        #productTable tbody tr:first-child {
+            padding-top: 40px;
+            display: table-row;
+        }
     </style>
 </head>
 <body>
@@ -160,28 +198,28 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Select Product</h5>
+                    <h5 class="modal-title">Pilih Barang</h5>
                     <button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding: 5px">
                     <!-- Sticky Search Inputs -->
                     <div class="sticky-top bg-white pb-2">
                         <div class="row mb-2">
-                            <div class="col">
+                            <div class="col-5">
                                 <input
                                         type="text"
                                         id="searchCode"
                                         class="form-control form-control-sm"
-                                        placeholder="Search by Code"
+                                        placeholder="Cari berdasarkan kode"
                                         autocomplete="off"
                                 />
                             </div>
-                            <div class="col">
+                            <div class="col-7">
                                 <input
                                         type="text"
                                         id="searchName"
                                         class="form-control form-control-sm"
-                                        placeholder="Search by Name"
+                                        placeholder="Cari berdasarkan nama"
                                         autocomplete="off"
                                 />
                             </div>
@@ -190,13 +228,13 @@
 
                     <!-- Scrollable Table Body -->
                     <div style="height: 600px; overflow-y: auto; padding-bottom: 10px;">
-                        <table class="table table-sm table-hover mb-0" id="productTable">
+                        <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                             <thead class="table-light">
                             <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Stok</th>
+                                <th style="width:30%;white-space: nowrap;overflow: hidden;">Kode</th>
+                                <th style="width:48%;white-space: nowrap;overflow: hidden;">Nama</th>
+                                <th style="width:15%;white-space: nowrap;overflow: hidden;">Harga</th>
+                                <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">Stok</th>
                             </tr>
                             </thead>
                             <tbody id="productTableBody"></tbody>
@@ -257,10 +295,10 @@
             row.style.cursor = "pointer";
 
             row.innerHTML = `
-                <td>${product.shortName}</td>
-                <td>${product.fullName}</td>
-                <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-                <td>${product.stok}</td>
+                <td style="width:30%;white-space: nowrap;overflow: hidden;">${product.shortName}</td>
+                <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
+                <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+                <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
             `;
 
             // Double-click selects product
