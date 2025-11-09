@@ -246,7 +246,7 @@
                     <br>
 
                     <button class="btn btn-success add-product-btn" data-bs-toggle="modal"
-                            data-bs-target="#addBarangModal" id="add-barang-btn">Tambah Product
+                            data-bs-target="#addBarangModal" id="add-barang-btn">Tambah Barang
                     </button>
 
                 </div>
@@ -634,7 +634,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header modalHeader">
-                <h5 class="modal-title">Select Product</h5>
+                <h5 class="modal-title">Pilih Barang</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding: 5px;">
@@ -647,7 +647,7 @@
                                     type="text"
                                     id="searchCode"
                                     class="form-control form-control-sm"
-                                    placeholder="Search by Code"
+                                    placeholder="Cari berdasarkan kode"
                                     autocomplete="off"
                             />
                         </div>
@@ -656,7 +656,7 @@
                                     type="text"
                                     id="searchName"
                                     class="form-control form-control-sm"
-                                    placeholder="Search by Name"
+                                    placeholder="Cari berdasarkan nama"
                                     autocomplete="off"
                             />
                         </div>
@@ -665,13 +665,13 @@
 
                 <!-- Scrollable Table Body -->
                 <div style="height: 600px; overflow-y: auto;padding-bottom:10px">
-                    <table class="table table-sm table-hover mb-0" id="productTable">
+                    <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
-                            <th>Code</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Stok</th>
+                            <th style="width:30%;white-space: nowrap;overflow: hidden;">Kode</th>
+                            <th style="width:48%;white-space: nowrap;overflow: hidden;">Nama</th>
+                            <th style="width:15%;white-space: nowrap;overflow: hidden;">Harga</th>
+                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">Stok</th>
                         </tr>
                         </thead>
                         <tbody id="productTableBody"></tbody>
@@ -1841,12 +1841,12 @@
        row.tabIndex = 0;
        row.style.cursor = "pointer";
 
-       row.innerHTML = `
- <td>${product.shortName}</td>
- <td>${product.fullName}</td>
- <td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
- <td>${product.stok}</td>
-`;
+        row.innerHTML = `
+            <td style="width:30%;white-space: nowrap;overflow: hidden;">${product.shortName}</td>
+            <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
+            <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+            <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
+        `;
 
        row.addEventListener("dblclick", () => {
          selectProduct(product);
