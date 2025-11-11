@@ -212,7 +212,7 @@ public class PenjualanService {
 //        For testing only
 //        LocalDateTime startDate = LocalDate.parse("2025-09-13").atStartOfDay();
 //        LocalDateTime endDate = LocalDate.parse("2025-09-13").atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(10).toList();
+        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(20).toList();
         return transactionData.stream().map(transactions -> new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
