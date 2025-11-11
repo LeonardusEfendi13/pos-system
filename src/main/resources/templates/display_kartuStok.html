@@ -120,7 +120,7 @@
 
             <br>
 
-            <div style="">
+            <div style="padding-bottom:50px">
                 <table id="kartuStokTable" class="table table-bordered">
                     <thead class="sticky-top">
                     <tr>
@@ -167,29 +167,29 @@
                 </table>
 
                 <!--  Pagination  -->
-                <div class="d-flex justify-content-between align-items-center my-2">
-                    <div>
-                        Menampilkan <span th:text="${startData}">1</span> -
-                        <span th:text="${endData}">10</span> dari
-                        <span th:text="${totalData}">10</span> data
-                    </div>
+<!--                <div class="d-flex justify-content-between align-items-center my-2">-->
+<!--                    <div>-->
+<!--                        Menampilkan <span th:text="${startData}">1</span> - -->
+<!--                        <span th:text="${endData}">10</span> dari-->
+<!--                        <span th:text="${totalData}">10</span> data-->
+<!--                    </div>-->
 
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination mb-0">
-                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">‹</a>
-                            </li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
-                                th:classappend="${i == currentPage} ? 'active'">
-                                <a class="page-link" th:href="@{/products/kartu_stok(page=${i}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}" th:text="${i + 1}">1</a>
-                            </li>
+<!--                    <nav aria-label="Page navigation example">-->
+<!--                        <ul class="pagination mb-0">-->
+<!--                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">-->
+<!--                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${selectedItemId})}">‹</a>-->
+<!--                            </li>-->
+<!--                            <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"-->
+<!--                                th:classappend="${i == currentPage} ? 'active'">-->
+<!--                                <a class="page-link" th:href="@{/products/kartu_stok(page=${i}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${selectedItemId})}" th:text="${i + 1}">1</a>-->
+<!--                            </li>-->
 
-                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${productId})}">›</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+<!--                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">-->
+<!--                                <a class="page-link" th:href="@{/products/kartu_stok(page=${currentPage - 1}, size=${size}, startDate=${startDate}, endDate=${endDate}, productId=${selectedItemId})}">›</a>-->
+<!--                            </li>-->
+<!--                        </ul>-->
+<!--                    </nav>-->
+<!--                </div>-->
             </div>
         </div>
     </div>

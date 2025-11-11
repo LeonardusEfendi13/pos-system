@@ -243,11 +243,12 @@ public class ProductController {
         String productName = "";
         if(productId != null){
             productName = productService.findProductById(productId).getFullName();
-            Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
-            totalElements = pageStokData.getTotalElements();
-            stokData = pageStokData.getContent();
-            totalPages = pageStokData.getTotalPages();
-            numberElement = pageStokData.getNumberOfElements();
+//            Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
+            stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
+//            totalElements = pageStokData.getTotalElements();
+//            stokData = pageStokData.getContent();
+//            totalPages = pageStokData.getTotalPages();
+//            numberElement = pageStokData.getNumberOfElements();
         }
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
         if (totalPages == 0) {
@@ -280,6 +281,7 @@ public class ProductController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("stockAwal", stockAwal);
         model.addAttribute("selectedItemName", productName);
+        model.addAttribute("selectedItemId", productId);
 
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
