@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
@@ -145,8 +146,12 @@ public class PreorderController {
         }
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
         String supplierName = supplierService.getSupplierDataById(supplierId, clientId);
-        List<ProductDTO> productData = productService.getUnderstockProductData(clientId, supplierId);
+        List<ProductDTO> productData = Collections.emptyList();
+        if(supplierId != null){
+            productData = productService.getUnderstockProductData(clientId, supplierId);
+        }
         model.addAttribute("productData", productData);
+        System.out.println("prod data : " + productData);
         model.addAttribute("supplierData", supplierEntities);
         model.addAttribute("activePage", "preorderUnderstock");
         model.addAttribute("supplierId", supplierId);
