@@ -266,7 +266,7 @@
         <!-- TOMBOL KEMBALI -->
         <div class="d-flex align-items-start">
             <a
-                    th:href="${preorderData.preorderId == null and preorderData.preorderDetailDTOS == null} ? '/home' : '/preorder'"
+                    th:href="@{/preorder}"
                     class="btn btn-warning"
                     onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >Kembali

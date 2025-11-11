@@ -5,6 +5,7 @@ import com.pos.posApps.Repository.LoginTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -24,9 +25,8 @@ public class LoginTokenService {
             loginTokenRepository.save(loginTokenEntity);
             return true;
         }catch (Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return false;
         }
-
-
     }
 }
