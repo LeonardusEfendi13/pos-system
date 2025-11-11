@@ -18,6 +18,11 @@
         body {
             background-color: #f8f9fc;
         }
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+            color: #e0e7ff;
+            padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+        }
         .page-content {
             padding: 25px;
         }
@@ -57,14 +62,14 @@
                     <h4 class="section-title">
                         Barang Understock
                         <br>
-                        <span class="small text-muted" th:text="${supplierId == null ? 'Semua Supplier' : (supplierName)}"></span>
+                        <span class="small text-muted" th:text="${supplierId == null ? '--Pilih Supplier--' : (supplierName)}"></span>
                     </h4>
 
                     <form method="get" action="/preorder/understock" class="row g-3">
                         <div class="col-md-6">
                             <label for="supplierId" class="form-label">Supplier</label>
                             <select id="supplierId" name="supplierId" class="form-select">
-                                <option value="">Semua Supplier</option>
+                                <option value="">Pilih Supplier</option>
                                 <option th:each="supplier : ${supplierData}"
                                         th:value="${supplier.supplierId}"
                                         th:text="${supplier.supplierName}"
@@ -116,13 +121,20 @@
                             <input type="checkbox" name="selectedProducts"
                                    th:value="${product.productId}"
                                    th:attr="
-                                        data-shortname=${product.shortName},
-                                        data-fullname=${product.fullName},
-                                        data-hargabeli=${product.hargaBeli},
-                                        data-stok=${product.stok},
-                                        data-minimumstock=${product.minimumStock}
-                                   "
+                        data-shortname=${product.shortName},
+                        data-fullname=${product.fullName},
+                        data-hargabeli=${product.hargaBeli},
+                        data-stok=${product.stok},
+                        data-minimumstock=${product.minimumStock}
+                   "
                                    class="product-checkbox" />
+                        </td>
+                    </tr>
+
+                    <!-- Show this row if the list is empty -->
+                    <tr th:if="${#lists.isEmpty(productData)}">
+                        <td colspan="6" style="text-align:center; font-style:italic; color:gray;">
+                            Data tidak ditemukan. Harap pilih supplier
                         </td>
                     </tr>
                     </tbody>
@@ -200,24 +212,6 @@
 
 <script>
     $(document).ready(function () {
-        $('#userTable').DataTable({
-            paging: false,         // aktifkan paging
-            ordering: true,       // aktifkan sorting
-            order: [],            // default: tidak ada sort
-            language: {
-                search: "Cari: ",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Data tidak ditemukan",
-                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "›",
-                    previous: "‹"
-                }
-            }
-        });
-
         // Event Edit User Modal
         $('.edit-user-btn').on('click', function () {
             const userId = $(this).data('userid');
