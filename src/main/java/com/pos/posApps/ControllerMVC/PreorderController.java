@@ -151,7 +151,6 @@ public class PreorderController {
             productData = productService.getUnderstockProductData(clientId, supplierId);
         }
         model.addAttribute("productData", productData);
-        System.out.println("prod data : " + productData);
         model.addAttribute("supplierData", supplierEntities);
         model.addAttribute("activePage", "preorderUnderstock");
         model.addAttribute("supplierId", supplierId);

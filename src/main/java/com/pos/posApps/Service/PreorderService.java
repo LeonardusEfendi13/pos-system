@@ -12,9 +12,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -110,6 +114,11 @@ public class PreorderService {
             preorderEntity.setTotalDiscount(req.getTotalDisc());
             preorderRepository.save(preorderEntity);
 
+            // ✅ Sort preorder details alphabetically by name (A–Z)
+            if (req.getPreorderDetailDTOS() != null && !req.getPreorderDetailDTOS().isEmpty()) {
+                req.getPreorderDetailDTOS().sort(Comparator.comparing(PreorderDetailDTO::getName, String.CASE_INSENSITIVE_ORDER));
+            }
+
             //Insert all the transaction details
             Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
             Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
@@ -130,6 +139,7 @@ public class PreorderService {
             }
             return new ResponseInBoolean(true, "Preorder berhasil dibuat");
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
@@ -162,6 +172,11 @@ public class PreorderService {
             //Delete all product prices related to product id
             preorderDetailRepository.deleteAllByPreorderEntity_PreorderId(preorderId);
 
+            // ✅ Sort preorder details alphabetically by name (A–Z)
+            if (req.getPreorderDetailDTOS() != null && !req.getPreorderDetailDTOS().isEmpty()) {
+                req.getPreorderDetailDTOS().sort(Comparator.comparing(PreorderDetailDTO::getName, String.CASE_INSENSITIVE_ORDER));
+            }
+
             //Insert all the transaction details
             Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
             Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
@@ -183,6 +198,7 @@ public class PreorderService {
             }
             return new ResponseInBoolean(true, "Data berhasil disimpan");
         }catch (Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, e.getMessage());
         }
     }

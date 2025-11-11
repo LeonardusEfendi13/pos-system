@@ -7,6 +7,7 @@ import com.pos.posApps.Util.Generator;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 @Service
 public class StockMovementService {
@@ -32,6 +33,7 @@ public class StockMovementService {
             stockMovementsRepository.save(stockMovementsEntity);
             return true;
         }catch (Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return false;
         }
     }

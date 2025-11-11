@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -205,6 +206,7 @@ public class ProductService {
 
             return new ResponseInBoolean(true, "Berhasil tambah produk baru");
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, "Gagal insert produk, hubungi admin!");
         }
 
@@ -213,9 +215,6 @@ public class ProductService {
     @Transactional
     public ResponseInBoolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
         try {
-
-
-            System.out.println("Edit req : " + req);
             Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
             if (productEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data barang belum ketemu");
@@ -278,6 +277,7 @@ public class ProductService {
             }
             return new ResponseInBoolean(true, "Berhasil Edit Data");
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, e.getMessage());
         }
     }

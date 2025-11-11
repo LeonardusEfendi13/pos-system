@@ -231,6 +231,7 @@ public class KasirService {
             return new ResponseInBoolean(true, transactionEntity.getTransactionNumber());
 
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
