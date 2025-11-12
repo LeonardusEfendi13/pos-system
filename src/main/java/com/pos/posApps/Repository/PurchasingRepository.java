@@ -18,7 +18,7 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             "WHERE p.clientEntity.clientId = :clientId " +
             "AND p.purchasingDetailEntities IS NOT EMPTY " +
             "AND p.deletedAt IS NULL " +
-            "AND p.createdAt BETWEEN :startDate AND :endDate " +
+            "AND p.poDate BETWEEN :startDate AND :endDate " +
             "AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId) " +
             "AND (:lunas IS NULL OR p.isPaid = :lunas) " +
             "AND (:tunai IS NULL OR p.isCash = :tunai) " +
@@ -46,7 +46,7 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
       AND (:tunai IS NULL OR p.isCash = :tunai)
       AND p.purchasingDetailEntities IS NOT EMPTY
       AND p.deletedAt IS NULL
-      AND p.createdAt BETWEEN :startDate AND :endDate
+      AND p.poDate BETWEEN :startDate AND :endDate
     ORDER BY p.purchasingId DESC
 """)
     Page<PurchasingEntity> findPurchasingData(
