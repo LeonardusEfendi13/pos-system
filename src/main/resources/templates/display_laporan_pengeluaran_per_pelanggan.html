@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Laporan Pembelian Per Pelanggan</title>
+    <title>Laporan Pembelian Per Supplier</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
@@ -63,7 +63,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
     <div class="page-wrapper">
         <div class="container-fluid">
-            <h2 style="text-align:center; padding-top:10px">Laporan Pembelian Per Pelanggan</h2>
+            <h2 style="text-align:center; padding-top:10px">Laporan Pembelian Per Supplier</h2>
 
             <!-- Date range filters -->
             <form method="get" action="/laporan/pengeluaran/pelanggan" class="row filter-container align-items-end">
@@ -224,7 +224,7 @@
 
         // Initialize DataTables with pagination
         const table = $('#userTable').DataTable({
-            paging: true,
+            paging: false,
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
             ordering: true,
