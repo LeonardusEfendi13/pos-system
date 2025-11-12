@@ -35,7 +35,7 @@ public class PembelianController {
     }
 
     @GetMapping
-    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
+    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -54,9 +54,6 @@ public class PembelianController {
 
         Page<PembelianDTO> pembelianData;
         List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
-
-        System.out.println("Value lunas : " + lunas);
-        System.out.println("Value paid : " + tunai);
 
         if (search == null || search.isEmpty()) {
             pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, PageRequest.of(page, size));

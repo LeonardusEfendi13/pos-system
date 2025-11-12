@@ -26,7 +26,7 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             "    LOWER(p.purchasingNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "    OR LOWER(p.supplierEntity.supplierName) LIKE LOWER(CONCAT('%', :search, '%'))" +
             ") " +
-            "ORDER BY p.purchasingId DESC")
+            "ORDER BY p.poDate DESC")
     Page<PurchasingEntity> searchPurchasings(
             @Param("clientId") Long clientId,
             @Param("startDate") LocalDateTime startDate,
@@ -47,7 +47,7 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
       AND p.purchasingDetailEntities IS NOT EMPTY
       AND p.deletedAt IS NULL
       AND p.poDate BETWEEN :startDate AND :endDate
-    ORDER BY p.purchasingId DESC
+    ORDER BY p.poDate DESC
 """)
     Page<PurchasingEntity> findPurchasingData(
             @Param("clientId") Long clientId,
@@ -58,9 +58,9 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable
     );
-    List<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate);
+    List<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate);
 
-    List<PurchasingEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate);
+    List<PurchasingEntity> findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(Long clientId, Long supplierId, LocalDateTime startDate, LocalDateTime endDate);
 
     Optional<PurchasingEntity> findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(Long clientId, Long purchasingId);
 

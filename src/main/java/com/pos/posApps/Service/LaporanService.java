@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import static java.awt.Color.LIGHT_GRAY;
 
 @Service
@@ -48,7 +49,7 @@ public class LaporanService {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
-    public String getTotalAsset(long clientId){
+    public String getTotalAsset(long clientId) {
         return formatRupiah(productRepository.sumInventoryValue(clientId));
 
     }
@@ -151,54 +152,55 @@ public class LaporanService {
             Long supplierId,
             String filterOptions
     ) {
+        // 1️⃣ Ambil data dari repository
         List<PurchasingEntity> purchasingData;
         if (supplierId == null) {
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate);
+            purchasingData = purchasingRepository
+                    .findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(
+                            clientId, startDate, endDate);
         } else {
-            purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, supplierId, startDate, endDate);
+            purchasingData = purchasingRepository
+                    .findAllByClientEntity_ClientIdAndSupplierEntity_SupplierIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(
+                            clientId, supplierId, startDate, endDate);
         }
 
+        // 2️⃣ Tentukan format periode (harian / bulanan / tahunan)
         DateTimeFormatter formatter = switch (filterOptions != null ? filterOptions.toLowerCase() : "") {
             case "year" -> DateTimeFormatter.ofPattern("yyyy");
             case "month" -> DateTimeFormatter.ofPattern("yyyy-MM");
             default -> DateTimeFormatter.ofPattern("yyyy-MM-dd");
         };
 
-        // Generate all periods between start and end
+        // 3️⃣ Generate semua periode agar hasil tetap lengkap (termasuk yg kosong)
         List<String> allPeriods = generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filterOptions);
 
-        // Preload semua produk (asumsikan shortName unik)
-        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
-
-        // Grouping by actual data
+        // 4️⃣ Group berdasarkan periode (pakai totalPrice langsung dari PurchasingEntity)
         Map<String, LaporanPembelianPerWaktuDTO> groupedMap = purchasingData.stream()
-                .flatMap(trx -> trx.getPurchasingDetailEntities().stream()
-                                .filter(detail -> detail.getDeletedAt() == null)
-                                .map(detail -> {
-                                    String period = trx.getCreatedAt().format(formatter);
-//                            BigDecimal hargaJual = detail.getPrice();
-                                    BigDecimal totalPrice = detail.getTotalPrice();
-//                            Long qty = detail.getQty();
+                .map(trx -> {
+                    BigDecimal totalPembelian = trx.getTotalPrice() != null ? trx.getTotalPrice() : BigDecimal.ZERO;
+                    String period = trx.getPoDate().format(formatter);
 
-                                    ProductEntity product = productMap.get(detail.getShortName());
-                                    BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
-//                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
-
-                                    return Map.entry(period, new LaporanPembelianPerWaktuDTO(period, totalPrice));
-                                })
-                )
+                    System.out.println("tgl pembelian : " + trx.getPoDate() + " | total pembelian : " + totalPembelian);
+                    return Map.entry(period, new LaporanPembelianPerWaktuDTO(period, totalPembelian));
+                })
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (existing, incoming) -> new LaporanPembelianPerWaktuDTO(
-                                existing.getPeriod(),
-                                existing.getTotalHargaPembelian().add(incoming.getTotalHargaPembelian())
-                        )
+                        (existing, incoming) -> {
+                            BigDecimal newTotal = existing.getTotalHargaPembelian()
+                                    .add(incoming.getTotalHargaPembelian());
+
+                            System.out.println("Merging period " + existing.getPeriod() +
+                                    " => " + existing.getTotalHargaPembelian() +
+                                    " + " + incoming.getTotalHargaPembelian() +
+                                    " = " + newTotal);
+
+                            return new LaporanPembelianPerWaktuDTO(existing.getPeriod(), newTotal);
+                        }
                 ));
 
-        // Ensure all periods are present in the final map, even if zero
-        Map<String, LaporanPembelianPerWaktuDTO> finalMap = new TreeMap<>(); // TreeMap to ensure natural ordering
+        // 5️⃣ Pastikan semua periode ada di hasil akhir (termasuk nol)
+        Map<String, LaporanPembelianPerWaktuDTO> finalMap = new TreeMap<>(Collections.reverseOrder());
         for (String period : allPeriods) {
             LaporanPembelianPerWaktuDTO data = groupedMap.getOrDefault(
                     period,
@@ -207,6 +209,14 @@ public class LaporanService {
             finalMap.put(period, data);
         }
 
+        // 6️⃣ Cetak hasil akhir di console
+        System.out.println("\n===== LAPORAN PEMBELIAN FINAL =====");
+        finalMap.values().forEach(dto ->
+                System.out.println("Periode: " + dto.getPeriod() + " | Total Pembelian: " + dto.getTotalHargaPembelian())
+        );
+        System.out.println("===================================\n");
+
+        // 7️⃣ Return hasil laporan
         return new ArrayList<>(finalMap.values());
     }
 
@@ -267,48 +277,28 @@ public class LaporanService {
             LocalDateTime startDate,
             LocalDateTime endDate
     ) {
-        List<PurchasingEntity> purchasingData;
+        // Ambil semua data purchasing milik client dalam rentang tanggal
+        List<PurchasingEntity> purchasingData = purchasingRepository
+                .findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(
+                        clientId, startDate, endDate
+                );
 
-        purchasingData = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, startDate, endDate);
-
-//        transactionData = transactionRepository
-//                .findAllByClientEntity_ClientIdAndTransactionDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
-//                        clientId, startDate, endDate);
-
-
-        // Preload all products (assuming shortName is unique)
-        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
-
-        // Group by customer name
+        // Group by supplier dan jumlahkan totalPrice
         Map<String, LaporanPembelianPerPelangganDTO> groupedByCustomer = purchasingData.stream()
-                .flatMap(trx -> trx.getPurchasingDetailEntities().stream()
-                                .filter(detail -> detail.getDeletedAt() == null)
-                                .map(detail -> {
-                                    String supplierName = trx.getSupplierEntity() != null
-                                            ? trx.getSupplierEntity().getSupplierName()
-                                            : "Unknown Supplier";
-
-//                            BigDecimal hargaJual = detail.getPrice();
-                                    BigDecimal totalPrice = detail.getTotalPrice();
-//                            Long qty = detail.getQty();
-
-//                            ProductEntity product = productMap.get(detail.getShortName());
-//                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
-
-                                    return Map.entry(supplierName,
-                                            new LaporanPembelianPerPelangganDTO(supplierName, totalPrice));
-                                })
-                )
+                .filter(trx -> trx.getSupplierEntity() != null)
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
+                        trx -> trx.getSupplierEntity().getSupplierName(),
+                        trx -> new LaporanPembelianPerPelangganDTO(
+                                trx.getSupplierEntity().getSupplierName(),
+                                trx.getTotalPrice() != null ? trx.getTotalPrice() : BigDecimal.ZERO
+                        ),
                         (existing, incoming) -> new LaporanPembelianPerPelangganDTO(
                                 existing.getSupplierName(),
                                 existing.getTotalHargaPembelian().add(incoming.getTotalHargaPembelian())
                         )
                 ));
 
+        // Urutkan hasil berdasarkan nama supplier
         return groupedByCustomer.values().stream()
                 .sorted(Comparator.comparing(LaporanPembelianPerPelangganDTO::getSupplierName))
                 .collect(Collectors.toList());
@@ -378,7 +368,7 @@ public class LaporanService {
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
 
-            Paragraph clientInfo = new Paragraph("Total Nilai Barang : "+ formatRupiah(totalAsset));
+            Paragraph clientInfo = new Paragraph("Total Nilai Barang : " + formatRupiah(totalAsset));
             clientInfo.setAlignment(Element.ALIGN_CENTER);
             document.add(clientInfo);
             document.add(Chunk.NEWLINE);
@@ -447,6 +437,7 @@ public class LaporanService {
             throw new RuntimeException("Gagal generate PDF streaming", e);
         }
     }
+
     private PdfPCell createCell(String content, int alignment) {
         return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 10), alignment, null);
     }

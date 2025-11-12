@@ -259,7 +259,7 @@ public class HomeService {
     }
 
     private Map<String, BigDecimal> getPengeluaran(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<PurchasingEntity> purchases = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndCreatedAtBetweenOrderByPurchasingIdDesc(clientId, start, end);
+        List<PurchasingEntity> purchases = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(clientId, start, end);
 
         return purchases.stream()
                 .collect(Collectors.groupingBy(
