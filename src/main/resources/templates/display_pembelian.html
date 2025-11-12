@@ -276,15 +276,15 @@
                         <nav aria-label="Page navigation example">
                             <ul class="pagination mb-0">
                                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/pembelian(page=${currentPage - 1}, search=${search})}">‹</a>
+                                    <a class="page-link" th:href="@{/pembelian(page=${currentPage - 1}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}">‹</a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
                                     th:classappend="${i == currentPage} ? 'active'">
-                                    <a class="page-link" th:href="@{/pembelian(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+                                    <a class="page-link" th:href="@{/pembelian(page=${i}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}" th:text="${i + 1}">1</a>
                                 </li>
 
                                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/pembelian(page=${currentPage + 1}, search=${search})}">›</a>
+                                    <a class="page-link" th:href="@{/pembelian(page=${currentPage + 1}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}">›</a>
                                 </li>
                             </ul>
                         </nav>

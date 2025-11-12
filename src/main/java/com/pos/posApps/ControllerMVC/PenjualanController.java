@@ -37,7 +37,7 @@ public class PenjualanController {
     }
 
     @GetMapping
-    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size, @RequestParam(required = false) String search) {
+    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {

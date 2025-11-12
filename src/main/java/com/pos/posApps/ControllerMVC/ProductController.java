@@ -56,7 +56,7 @@ public class ProductController {
             HttpSession session,
             Model model,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "15") Integer size,
+            @RequestParam(defaultValue = "200") Integer size,
             @RequestParam(required = false) String search
     ) {
         Long clientId;
@@ -218,7 +218,7 @@ public class ProductController {
     }
 
     @GetMapping("/kartu_stok")
-    public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "30") Integer size) {
+    public String showKartuStokPage(HttpSession session, Model model, String startDate, String endDate, Long productId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size) {
         Long clientId;
         String token;
         try {
