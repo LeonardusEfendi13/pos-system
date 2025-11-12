@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.util.Optional;
+
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -17,10 +19,12 @@ public class LoginTokenService {
     @Transactional
     public boolean deleteToken(String token){
         try{
-            LoginTokenEntity loginTokenEntity = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
-            if(loginTokenEntity == null){
+            Optional<LoginTokenEntity> loginTokenEntityOptional = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
+            if(loginTokenEntityOptional.isEmpty()){
                 return false;
             }
+
+            LoginTokenEntity loginTokenEntity = loginTokenEntityOptional.get();
             loginTokenEntity.setDeletedAt(getCurrentTimestamp());
             loginTokenRepository.save(loginTokenEntity);
             return true;

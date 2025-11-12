@@ -11,5 +11,5 @@ public interface LoginTokenRepository extends JpaRepository<LoginTokenEntity, Lo
 
     Optional<LoginTokenEntity> findFirstByOrderByTokenIdDesc();
 
-    LoginTokenEntity findByTokenAndDeletedAtIsNull(String token);
+    Optional<LoginTokenEntity> findByTokenAndDeletedAtIsNull(String token);
 }
