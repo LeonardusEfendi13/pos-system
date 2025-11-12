@@ -5,6 +5,7 @@ import com.pos.posApps.DTO.Dtos.RegisterRequest;
 import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
 import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.LoginTokenRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
@@ -85,9 +87,14 @@ public class AccountService {
                 user.getRole()
         )).toList();
     }
-
     public UserDTO getCurrentLoggedInUser(String token){
-        Long userId = loginTokenRepository.findByTokenAndDeletedAtIsNull(token).getAccountEntity().getAccountId();
+        Optional<LoginTokenEntity> loginTokenEntityOptional = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
+        if(loginTokenEntityOptional.isEmpty()){
+            return null;
+        }
+
+        LoginTokenEntity loginTokenEntity = loginTokenEntityOptional.get();
+        Long userId = loginTokenEntity.getAccountEntity().getAccountId();
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
         return new UserDTO(
                 accountEntity.getAccountId(),

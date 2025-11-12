@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -64,10 +66,12 @@ public class AuthService {
     }
 
     public AccountEntity validateToken(String token) {
-        LoginTokenEntity loginTokenEntity = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
-        if(loginTokenEntity == null) {
+        Optional<LoginTokenEntity> loginTokenEntityOpt = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
+        if(loginTokenEntityOpt.isEmpty()) {
             return null;
         }
+
+        LoginTokenEntity loginTokenEntity = loginTokenEntityOpt.get();
         return loginTokenEntity.getAccountEntity();
     }
 

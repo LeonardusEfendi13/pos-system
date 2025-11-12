@@ -40,11 +40,16 @@ public class AuthController {
         String token = (String) session.getAttribute(authSessionKey);
         if(token != null){
             UserDTO userData = accountService.getCurrentLoggedInUser(token);
-            if(userData.getRole().equals(Roles.SUPER_ADMIN)){
-                return "redirect:/home";
+            if(userData == null){
+                return "login";
             }else{
-                return "redirect:/kasir";
+                if(userData.getRole().equals(Roles.SUPER_ADMIN)){
+                    return "redirect:/home";
+                }else{
+                    return "redirect:/kasir";
+                }
             }
+
         }
         return "login";
     }
