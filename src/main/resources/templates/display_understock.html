@@ -378,55 +378,70 @@
 
 </script>
 <script th:inline="none">
-    function generateSimplePDF(items, supplierName) {
+    function generateSimplePDF(preorderDetailDTOS, supplierName) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
 
+        // --- Header Title ---
+        doc.setFontSize(18);
+        doc.text("Preorder Anugrah Motor", pageWidth / 2, 15, { align: "center" });
+
+        // --- Supplier & Date Info ---
         const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-        const displayDate = today.toLocaleDateString('id-ID');
-
-        // Format supplier name for filename
-        const cleanSupplier = supplierName.replace(/\s+/g, '').replace(/[^\w\-]/g, '');
-        const fileName = `preorder-${cleanSupplier}-${dateStr}.pdf`;
-
-        // Header (Supplier + Date)
-        doc.setFontSize(11);
-        doc.text(`Supplier: ${supplierName}`, 10, 10);
-        doc.text(`Date: ${displayDate}`, 200, 10, { align: 'right' });
-
-        // Build table body
-        const tableBody = items.map((item, index) => [
-            index + 1,
-            item.name,
-            item.qty
-        ]);
-
-        // AutoTable
-        doc.autoTable({
-            head: [['No', 'Nama', 'Qty']],
-            body: tableBody,
-            startY: 20,
-            styles: {
-                fontSize: 9,          // Slightly smaller font
-                cellPadding: 2        // Reduced padding (default is 5)
-            },
-            headStyles: {
-                fillColor: [52, 73, 94],
-                textColor: [255, 255, 255],
-                fontStyle: 'bold',
-                cellPadding: 2        // Match reduced padding for headers
-            },
-            columnStyles: {
-                0: { halign: 'auto', cellWidth: 15 },
-                1: { cellWidth: 'auto' },
-                2: { halign: 'auto', cellWidth: 30 }
-            }
+        const formattedDate = today.toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
         });
 
+        doc.setFontSize(12);
+        doc.text(`Supplier: ${supplierName}`, 10, 30);
+        doc.setFontSize(10);
+        doc.text(`${formattedDate}`, pageWidth - 10, 30, { align: "right" });
+
+        // --- Table Columns (only 4) ---
+        const tableColumn = ["No", "Kode", "Nama Barang", "Qty"];
+        const tableRows = [];
+
+        preorderDetailDTOS.forEach((item, index) => {
+            tableRows.push([
+                String(index + 1),
+                item.code,
+                item.name,
+                String(item.qty)
+            ]);
+        });
+
+        // --- Table ---
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
+                fontStyle: "bold"
+            },
+            columnStyles: {
+                0: { cellWidth: 15 },               // No
+                1: { cellWidth: 40 },               // Kode
+                2: { cellWidth: 90 },               // Nama Barang
+                3: { cellWidth: 20, halign: "right" } // Qty (right aligned)
+            },
+            tableWidth: "wrap"
+        });
+
+        // --- Save File ---
+        const fileName = `preorder-${supplierName}-${formattedDate}.pdf`;
         doc.save(fileName);
     }
-
 </script>
 </body>
 </html>
