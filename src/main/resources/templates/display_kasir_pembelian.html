@@ -2382,6 +2382,7 @@
 
 
    async function loadTransaction(transaction) {
+    console.log("Entering load Transaction");
      while (sellTableBody.firstChild) {
         sellTableBody.removeChild(sellTableBody.firstChild);
       }
@@ -2500,6 +2501,29 @@
             }
           }
         });
+
+        for (let i = 1; i <= 3; i++) {
+          const markupInput = row.querySelector(`.markup-${i}-input`);
+          const hargaInput = row.querySelector(`.harga-jual-${i}-input`);
+          const hargaValue = detail[`hargaJual${i}`];
+
+          if (hargaValue && hargaValue > 0) {
+            // ✅ Tier exists → enable inputs and set markup correctly
+            markupInput.disabled = false;
+            hargaInput.disabled = false;
+            markupInput.value = (detail[`markup${i}`] ?? 0).toFixed(2);
+            hargaInput.value = formatRupiah(hargaValue);
+          } else {
+            // ❌ Tier not available → disable inputs
+            markupInput.disabled = true;
+            hargaInput.disabled = true;
+            markupInput.value = 0;
+            hargaInput.value = formatRupiah(0);
+          }
+        }
+
+        // now append the row
+        sellTableBody.appendChild(row);
 
         if (focus) codeInput.focus();
         codeInput.addEventListener("keydown", async (e) => {
