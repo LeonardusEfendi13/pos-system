@@ -85,7 +85,6 @@ public class RestControllerPembelian {
             @RequestPart(required = false) MultipartFile buktiPembayaran,
             HttpSession session
     ) {
-        System.out.println("Entering lunaskan");
         LunaskanPembelianDTO req = new LunaskanPembelianDTO();
         req.setPembelianId(pembelianId);
         req.setJenisPembayaran(jenisPembayaran);

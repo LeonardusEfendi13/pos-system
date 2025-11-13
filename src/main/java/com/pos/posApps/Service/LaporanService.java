@@ -179,8 +179,6 @@ public class LaporanService {
                 .map(trx -> {
                     BigDecimal totalPembelian = trx.getTotalPrice() != null ? trx.getTotalPrice() : BigDecimal.ZERO;
                     String period = trx.getPoDate().format(formatter);
-
-                    System.out.println("tgl pembelian : " + trx.getPoDate() + " | total pembelian : " + totalPembelian);
                     return Map.entry(period, new LaporanPembelianPerWaktuDTO(period, totalPembelian));
                 })
                 .collect(Collectors.toMap(
@@ -189,12 +187,6 @@ public class LaporanService {
                         (existing, incoming) -> {
                             BigDecimal newTotal = existing.getTotalHargaPembelian()
                                     .add(incoming.getTotalHargaPembelian());
-
-                            System.out.println("Merging period " + existing.getPeriod() +
-                                    " => " + existing.getTotalHargaPembelian() +
-                                    " + " + incoming.getTotalHargaPembelian() +
-                                    " = " + newTotal);
-
                             return new LaporanPembelianPerWaktuDTO(existing.getPeriod(), newTotal);
                         }
                 ));
@@ -208,13 +200,6 @@ public class LaporanService {
             );
             finalMap.put(period, data);
         }
-
-        // 6️⃣ Cetak hasil akhir di console
-        System.out.println("\n===== LAPORAN PEMBELIAN FINAL =====");
-        finalMap.values().forEach(dto ->
-                System.out.println("Periode: " + dto.getPeriod() + " | Total Pembelian: " + dto.getTotalHargaPembelian())
-        );
-        System.out.println("===================================\n");
 
         // 7️⃣ Return hasil laporan
         return new ArrayList<>(finalMap.values());
