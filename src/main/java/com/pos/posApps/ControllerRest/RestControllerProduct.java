@@ -34,7 +34,7 @@ public class RestControllerProduct {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             clientId = authService.validateToken(token).getClientEntity().getClientId();
-            return ResponseEntity.ok(productService.getProductData(clientId, PageRequest.of(0, 10)).getContent());
+            return ResponseEntity.ok(productService.getProductData(clientId, PageRequest.of(0, 10), null).getContent());
         }catch (Exception e){
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }

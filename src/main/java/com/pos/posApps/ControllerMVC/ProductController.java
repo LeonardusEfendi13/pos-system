@@ -56,8 +56,9 @@ public class ProductController {
             HttpSession session,
             Model model,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "200") Integer size,
-            @RequestParam(required = false) String search
+            @RequestParam(defaultValue = "500") Integer size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long supplierIdFilter
     ) {
         Long clientId;
         String token;
@@ -75,9 +76,9 @@ public class ProductController {
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
 
         if (search == null || search.isEmpty()) {
-            productEntity = productService.getProductData(clientId, PageRequest.of(page, size));
+            productEntity = productService.getProductData(clientId, PageRequest.of(page, size), supplierIdFilter);
         } else {
-            productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size));
+            productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
 
         model.addAttribute("productData", productEntity.getContent());
@@ -86,6 +87,7 @@ public class ProductController {
         model.addAttribute("supplierData", supplierEntity);
         model.addAttribute("search", search);
         model.addAttribute("activePage", "masterBarang");
+        model.addAttribute("supplierId", supplierIdFilter);
 
         Integer totalPages = productEntity.getTotalPages();
         Integer start = Math.max(0, page - 2);
@@ -233,7 +235,7 @@ public class ProductController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size));
+        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null);
         List<StockMovementsDTO> stokData = Collections.emptyList();
         long totalElements = 0L;
         int totalPages = 0;

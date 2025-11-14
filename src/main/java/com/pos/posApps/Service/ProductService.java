@@ -124,23 +124,24 @@ public class ProductService {
                 .orElse(0L);
     }
 
-    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable) {
-        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable);
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId) {
+        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
         return productData.map(this::convertToDTO);
     }
 
-    public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable) {
+    public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable, Long supplierIdFilter) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
         if (trimmedSearch.isEmpty()) {
-            return getProductData(clientId, pageable);
+            return getProductData(clientId, pageable, supplierIdFilter);
         }
 
         Page<ProductEntity> productData = productRepository
                 .searchProducts(
                         clientId,
                         trimmedSearch,
-                        pageable
+                        pageable,
+                        supplierIdFilter
                 );
 
         return productData.map(this::convertToDTO);
