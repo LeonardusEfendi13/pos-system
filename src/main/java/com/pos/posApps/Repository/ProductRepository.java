@@ -18,6 +18,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     @Query("SELECT p FROM ProductEntity p " +
             "WHERE p.clientEntity.clientId = :clientId " +
             "AND p.deletedAt IS NULL " +
+            "AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)" +
             "AND (" +
             "    LOWER(p.shortName) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "    OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%'))" +
@@ -26,17 +27,20 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Page<ProductEntity> searchProducts(
             @Param("clientId") Long clientId,
             @Param("search") String search,
-            Pageable pageable
+            Pageable pageable,
+            @Param("supplierId") Long supplierId
     );
 
     @Query("""
-                SELECT DISTINCT p FROM ProductEntity p
-                JOIN p.productPricesEntity prices
-                WHERE p.clientEntity.clientId = :clientId
-                  AND p.deletedAt IS NULL
-                 ORDER BY p.fullName
-            """)
-    Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable);
+            SELECT DISTINCT p FROM ProductEntity p
+            JOIN p.productPricesEntity prices
+            WHERE p.clientEntity.clientId = :clientId
+              AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+              AND p.deletedAt IS NULL
+            ORDER BY p.fullName
+        """)
+    Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable, @Param("supplierId") Long supplierId);
+
     @Query("""
     SELECT p FROM ProductEntity p
     WHERE (p.fullName = :fullName OR p.shortName = :shortName OR p.productId = :productId)

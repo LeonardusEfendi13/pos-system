@@ -111,7 +111,7 @@ public class PembelianController {
             return "redirect:/login";
         }
 
-        List<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size)).getContent();
+        List<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null).getContent();
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientId);
 
         PembelianDTO pembelianData = new PembelianDTO();
