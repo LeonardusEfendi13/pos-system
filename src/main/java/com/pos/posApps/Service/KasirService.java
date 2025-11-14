@@ -10,9 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
-
-import static com.pos.posApps.Util.Generator.*;
 
 @Service
 public class KasirService {
@@ -31,6 +30,34 @@ public class KasirService {
     @Autowired
     StockMovementService stockMovementService;
 
+    public String generateTodayNota(Long clientId) {
+
+        String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
+
+        // Find last nota of today
+        Optional<TransactionEntity> lastToday = transactionRepository
+                .findFirstByClientEntity_ClientIdAndDeletedAtIsNullAndTransactionNumberStartingWithOrderByTransactionNumberDesc(
+                        clientId,
+                        today
+                );
+
+        long counter;
+
+        if (lastToday.isEmpty()) {
+            // No nota today → start from 1
+            counter = 1L;
+        } else {
+            // Get last nota number (e.g., "20251114012")
+            String lastNota = lastToday.get().getTransactionNumber();
+
+            // Extract last 3 digits → counter
+            String counterPart = lastNota.substring(8); // after yyyyMMdd
+            counter = Long.parseLong(counterPart) + 1;
+        }
+
+        return today + String.format("%03d", counter);
+    }
+
     @Transactional
     public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData) {
         try {
@@ -44,7 +71,9 @@ public class KasirService {
             //Get last Transaction id
             Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
             Long newTransactionId = Generator.generateId(lastTransactionId);
-            String generatedNotaNumber = generateNotaNumber(newTransactionId);
+
+//            String generatedNotaNumber = generateNotaNumber(newTransactionId);
+            String generatedNotaNumber = generateTodayNota(clientData.getClientId());
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
