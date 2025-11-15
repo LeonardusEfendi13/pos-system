@@ -75,7 +75,7 @@
 
         /* Custom styles for the scrollable table */
         .scrollable-table {
-          max-height: 50vh;
+          height: 0vh;
           overflow-y: auto;
         }
 
@@ -90,7 +90,7 @@
         }
         .table-responsive {
           border-radius: 0.3rem;
-          height: 100%;
+          height: calc(100vh - 440px); /* Sesuaikan offset */
           max-width:100%;
           overflow-y: auto; /* kalau banyak data scroll di tabel aja */
           overflow-x:auto;
@@ -313,21 +313,21 @@
             <tr>
                 <th style="width: 30px;font-weight:bold;background-color:white;color:black">No.</th>
                 <th style="width: 200px;font-weight:bold;background-color:white;color:black">Kode</th>
-                <th style="width: 550px;font-weight:bold;background-color:white;color:black">Nama</th>
-                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Qty</th>
+                <th style="width: 520px;font-weight:bold;background-color:white;color:black">Nama</th>
+                <th style="width: 60px;font-weight:bold;background-color:white;color:black">Qty</th>
                 <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Beli</th>
                 <th style="width: 80px;font-weight:bold;background-color:white;color:black">Disc (%)</th>
-                <th style="width: 100px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>
+<!--                <th style="width: 100px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>-->
                 <th style="width: 100px;font-weight:bold;background-color:white;color:black">Total Harga</th>
-                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Stok Lama</th>
+                <th style="width: 60px;font-weight:bold;background-color:white;color:black">Stok</th>
                 <!-- Start visually separated group -->
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black; border-left: 3px solid #007bff;">Harga Lama</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black; border-left: 3px solid #007bff;">Harga Lama</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 1</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 1</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 1</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 2</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 2</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 2</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 3</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 3</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 3</th>
             </tr>
             </thead>
             <tbody id="sellTableBody"></tbody>
@@ -639,6 +639,7 @@
             </div>
             <div class="modal-body" style="padding: 5px;">
 
+
                 <!-- Sticky Search Inputs -->
                 <div class="sticky-top bg-white pb-2">
                     <div class="row mb-2">
@@ -649,6 +650,7 @@
                                     class="form-control form-control-sm"
                                     placeholder="Cari berdasarkan kode"
                                     autocomplete="off"
+                                    style="font-size:18px"
                             />
                         </div>
                         <div class="col-7">
@@ -658,6 +660,7 @@
                                     class="form-control form-control-sm"
                                     placeholder="Cari berdasarkan nama"
                                     autocomplete="off"
+                                    style="font-size:18px"
                             />
                         </div>
                     </div>
@@ -668,10 +671,10 @@
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
-                            <th style="width:30%;white-space: nowrap;overflow: hidden;">Kode</th>
-                            <th style="width:48%;white-space: nowrap;overflow: hidden;">Nama</th>
-                            <th style="width:15%;white-space: nowrap;overflow: hidden;">Harga</th>
-                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">Stok</th>
+                            <th style="width:30%;white-space: nowrap;overflow: hidden;font-weight:bold">Kode</th>
+                            <th style="width:48%;white-space: nowrap;overflow: hidden;font-weight:bold">Nama</th>
+                            <th style="width:15%;white-space: nowrap;overflow: hidden;font-weight:bold">Harga</th>
+                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center;font-weight:bold">Stok</th>
                         </tr>
                         </thead>
                         <tbody id="productTableBody"></tbody>
@@ -690,6 +693,43 @@
     $(document).ready(function () {
       $("#barangModal").draggable();
       $("#productModal").draggable();
+    });
+</script>
+<script>
+    document.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        const isInSellTable = activeEl.closest("#sellTableBody");
+        if (!isInSellTable) return;
+
+        // ❌ Kalau tekan Enter di code-input → jangan override behaviour
+        if (activeEl.classList.contains("code-input")) return;
+
+        // Prevent behavior default (supaya tidak pindah cell/submit)
+        e.preventDefault();
+
+        // ➕ Tambah row baru jika belum ada row kosong
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        const lastRow = rows[rows.length - 1];
+
+        const lastCode = lastRow.querySelector(".code-input").value.trim();
+
+        if (lastCode !== "") {
+        addNewRow(false); // tambah baris, tanpa auto-focus
+        }
+
+        // 🎯 Fokus ke code-input baris kosong paling bawah
+        const emptyRow = [...sellTableBody.querySelectorAll("tr")]
+        .find(r => r.querySelector(".code-input").value.trim() === "");
+
+        if (emptyRow) {
+        const codeInput = emptyRow.querySelector(".code-input");
+        codeInput.focus();
+        codeInput.select();
+        }
     });
 </script>
 <script th:inline="javascript">
@@ -1327,7 +1367,7 @@
 <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
 <td><input type="text" class="form-control form-control-sm price-input" /></td>
 <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
-<td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" /></td>
+<input type="hidden" class="form-control form-control-sm discount-amount-input" min="0" value="0" />
 <td class="total-cell">Rp 0</td>
 <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
 <td><input type="text" class="form-control form-control-sm harga-jual-lama" value="0" readonly/></td>
@@ -2449,7 +2489,7 @@
           <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${detail.qty}" /></td>
           <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(detail.price)}" /></td>
           <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${(detail.discAmount / (detail.total + detail.discAmount)) * 100}" /></td>
-          <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${detail.discAmount}" /></td>
+          <input type="hidden" class="form-control form-control-sm discount-amount-input" min="0" value="${detail.discAmount}" />
           <td class="total-cell">${formatRupiah(detail.total)}</td>
           <td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
           <td><input type="text" class="form-control form-control-sm harga-jual-lama" value="${formatRupiah(detail.hargaJual1 ?? 0)}" readonly/></td>
