@@ -45,7 +45,7 @@ public class LaporanController {
         }
 
         // Default dates
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDate parsedStart = LocalDate.parse(startDate);
@@ -83,7 +83,7 @@ public class LaporanController {
         }
 
         // Default dates
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDate parsedStart = LocalDate.parse(startDate);
@@ -118,7 +118,7 @@ public class LaporanController {
         }
 
         // Default dates
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDate parsedStart = LocalDate.parse(startDate);
@@ -156,7 +156,7 @@ public class LaporanController {
         }
 
         // Default dates
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDate parsedStart = LocalDate.parse(startDate);
