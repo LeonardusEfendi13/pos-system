@@ -313,21 +313,21 @@
             <tr>
                 <th style="width: 30px;font-weight:bold;background-color:white;color:black">No.</th>
                 <th style="width: 200px;font-weight:bold;background-color:white;color:black">Kode</th>
-                <th style="width: 550px;font-weight:bold;background-color:white;color:black">Nama</th>
-                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Qty</th>
+                <th style="width: 520px;font-weight:bold;background-color:white;color:black">Nama</th>
+                <th style="width: 60px;font-weight:bold;background-color:white;color:black">Qty</th>
                 <th style="width: 150px;font-weight:bold;background-color:white;color:black">Harga Beli</th>
                 <th style="width: 80px;font-weight:bold;background-color:white;color:black">Disc (%)</th>
 <!--                <th style="width: 100px;font-weight:bold;background-color:white;color:black">Disc (Rp)</th>-->
                 <th style="width: 100px;font-weight:bold;background-color:white;color:black">Total Harga</th>
-                <th style="width: 80px;font-weight:bold;background-color:white;color:black">Stok Lama</th>
+                <th style="width: 60px;font-weight:bold;background-color:white;color:black">Stok</th>
                 <!-- Start visually separated group -->
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black; border-left: 3px solid #007bff;">Harga Lama</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black; border-left: 3px solid #007bff;">Harga Lama</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 1</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 1</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 1</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 2</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 2</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 2</th>
                 <th style="width: 80px; font-weight: bold; background-color: #dceeff; color: black;">Markup 3</th>
-                <th style="width: 100px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 3</th>
+                <th style="width: 150px; font-weight: bold; background-color: #dceeff; color: black;">Harga Jual 3</th>
             </tr>
             </thead>
             <tbody id="sellTableBody"></tbody>
@@ -639,6 +639,7 @@
             </div>
             <div class="modal-body" style="padding: 5px;">
 
+
                 <!-- Sticky Search Inputs -->
                 <div class="sticky-top bg-white pb-2">
                     <div class="row mb-2">
@@ -649,6 +650,7 @@
                                     class="form-control form-control-sm"
                                     placeholder="Cari berdasarkan kode"
                                     autocomplete="off"
+                                    style="font-size:18px"
                             />
                         </div>
                         <div class="col-7">
@@ -658,6 +660,7 @@
                                     class="form-control form-control-sm"
                                     placeholder="Cari berdasarkan nama"
                                     autocomplete="off"
+                                    style="font-size:18px"
                             />
                         </div>
                     </div>
@@ -668,10 +671,10 @@
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
-                            <th style="width:30%;white-space: nowrap;overflow: hidden;">Kode</th>
-                            <th style="width:48%;white-space: nowrap;overflow: hidden;">Nama</th>
-                            <th style="width:15%;white-space: nowrap;overflow: hidden;">Harga</th>
-                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">Stok</th>
+                            <th style="width:30%;white-space: nowrap;overflow: hidden;font-weight:bold">Kode</th>
+                            <th style="width:48%;white-space: nowrap;overflow: hidden;font-weight:bold">Nama</th>
+                            <th style="width:15%;white-space: nowrap;overflow: hidden;font-weight:bold">Harga</th>
+                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center;font-weight:bold">Stok</th>
                         </tr>
                         </thead>
                         <tbody id="productTableBody"></tbody>
