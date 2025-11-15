@@ -738,6 +738,53 @@
     const masterSettings = /*[[${settingData}]]*/ [];
 </script>
 <script>
+    document.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        const isInSellTable = activeEl.closest("#sellTableBody");
+        if (!isInSellTable) return;
+
+        // ❌ Kalau tekan Enter di code-input → jangan override behaviour
+        if (activeEl.classList.contains("code-input")) return;
+
+        // Prevent behavior default (supaya tidak pindah cell/submit)
+        e.preventDefault();
+
+        // ➕ Tambah row baru jika belum ada row kosong
+        const rows = [...sellTableBody.querySelectorAll("tr")];
+        const lastRow = rows[rows.length - 1];
+
+        const lastCode = lastRow.querySelector(".code-input").value.trim();
+
+        if (lastCode !== "") {
+        addNewRow(false); // tambah baris, tanpa auto-focus
+        }
+
+        // 🎯 Fokus ke code-input baris kosong paling bawah
+        const emptyRow = [...sellTableBody.querySelectorAll("tr")]
+        .find(r => r.querySelector(".code-input").value.trim() === "");
+
+        if (emptyRow) {
+        const codeInput = emptyRow.querySelector(".code-input");
+        codeInput.focus();
+        codeInput.select();
+        }
+    });
+
+    //Auto select for all input
+    const inputs = document.querySelectorAll('input');
+
+    document.addEventListener("focusin", function(e) {
+        if (e.target.tagName === "INPUT") {
+            e.target.select();
+        }
+    });
+</script>
+
+<script>
     let basicPriceFromSuggested = 0;
     let dynamicProductsCache = [];
 
@@ -1487,12 +1534,12 @@
   <td class="row-number">${rowNumber}</td>
   <td><input type="text" class="form-control code-input" autocomplete="off"/></td>
   <td><input type="text" class="form-control form-control-sm name-input" readonly autocomplete="off"/></td>
-  <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" autocomplete="off"/></td>
+  <td><input type="number" class="form-control form-control-sm qty-input" min="1" autocomplete="off"/></td>
   <td><input type="text" class="form-control form-control-sm price-input" autocomplete="off"/></td>
-  <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" autocomplete="off"/></td>
-  <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="0" autocomplete="off"/></td>
-  <td class="total-cell">Rp 0</td>
-  <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" value="0" autocomplete="off" disabled/></td>
+  <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" autocomplete="off"/></td>
+  <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" autocomplete="off"/></td>
+  <td class="total-cell"></td>
+  <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" autocomplete="off" disabled/></td>
 <td>
   <button class="btn btn-sm btn-info cek-harga-btn">Cek Harga</button>
   <span class="harga-text ms-2" style="font-weight:bold"; ></span>
@@ -1678,6 +1725,12 @@
               // 🔹 Kalau produk baru → isi data ke baris ini
               fillProductRow(row, product);
               maybeAddNewRow();
+
+             const qtyInput = row.querySelector(".qty-input");
+              if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+              }
             } else {
               alert("Product not found");
               codeInput.value = "";
@@ -1905,10 +1958,12 @@
       if (selectedRow) {
         // ✅ Replace that specific row (from modal click)
         fillProductRow(selectedRow, product);
-        const qtyInput = selectedRow.querySelector(".qty-input");
+        selectedRow.querySelector(".qty-input").value = 1;
+
+<!--        const qtyInput = selectedRow.querySelector(".qty-input");-->
         const priceInput = selectedRow.querySelector(".price-input");
 
-        qtyInput.value = 1;
+<!--        qtyInput.value = 1;-->
         selectedRow.querySelector(".discount-percent-input").value = "0";
         selectedRow.querySelector(".discount-amount-input").value = "0";
 
@@ -1924,7 +1979,16 @@
         }
 
         productModal.hide();
-        selectedRow = null;
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            const qtyInput = selectedRow.querySelector(".qty-input");
+            if (qtyInput) {
+              qtyInput.focus();
+              qtyInput.select();
+            }
+            selectedRow = null;
+          });
+        }, 50); // sesuai durasi fade modal bootstrap (default 300ms)
         return; // stop here
       }
 
@@ -1959,6 +2023,11 @@
       }
 
       productModal.hide();
+
+        if (qtyInput) {
+          qtyInput.focus();  // Might not work reliably
+          qtyInput.select();
+        }
 
       setTimeout(() => {
         focusNextEmptyRow();
@@ -2857,6 +2926,12 @@
                   // 🔹 Kalau produk baru → isi data ke baris ini
                   fillProductRow(row, product);
                   maybeAddNewRow();
+
+                  const qtyInput = row.querySelector(".qty-input");
+                  if (qtyInput) {
+                    qtyInput.focus();
+                    qtyInput.select();
+                  }
                 } else {
                   alert("Product not found");
                   codeInput.value = "";

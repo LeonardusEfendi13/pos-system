@@ -19,6 +19,10 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
+        #sellTable input::selection {
+            background: rgba(0, 123, 255, 0.4) !important; /* biru tebal */
+            color: black;
+        }
         body {
           background-color: #f8f9fa;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -695,6 +699,29 @@
       $("#productModal").draggable();
     });
 </script>
+<script th:inline="javascript">
+    let masterProducts = /*[[${productData}]]*/ [];
+    const masterSuppliers = /*[[${supplierData}]]*/ [];
+    const masterTransactions = /*[[${pembelianData}]]*/ [];
+  function populateSupplierOptions() {
+    const select = document.getElementById("supplierId");
+    // Clear all options except the first placeholder
+    select.length = 1;
+
+    masterSuppliers.forEach((supplier) => {
+      const option = document.createElement("option");
+      option.value = supplier.supplierId;
+      option.textContent = supplier.supplierName;
+      select.appendChild(option);
+    });
+  }
+
+  // Run after DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    populateSupplierOptions();
+  });
+</script>
+
 <script>
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
@@ -731,29 +758,15 @@
         codeInput.select();
         }
     });
-</script>
-<script th:inline="javascript">
-    let masterProducts = /*[[${productData}]]*/ [];
-    const masterSuppliers = /*[[${supplierData}]]*/ [];
-    const masterTransactions = /*[[${pembelianData}]]*/ [];
-  function populateSupplierOptions() {
-    const select = document.getElementById("supplierId");
-    // Clear all options except the first placeholder
-    select.length = 1;
 
-    masterSuppliers.forEach((supplier) => {
-      const option = document.createElement("option");
-      option.value = supplier.supplierId;
-      option.textContent = supplier.supplierName;
-      select.appendChild(option);
+    document.addEventListener("focusin", function(e) {
+        if (e.target.tagName === "INPUT") {
+            e.target.select();
+        }
     });
-  }
-
-  // Run after DOM is loaded
-  document.addEventListener("DOMContentLoaded", () => {
-    populateSupplierOptions();
-  });
 </script>
+
+
 <script th:inline="none">
     //Send new product to backend
     document.getElementById("addProductForm").addEventListener("click", async function () {
@@ -1364,19 +1377,19 @@
 <td class="row-number">${rowNumber}</td>
 <td><input type="text" class="form-control form-control-sm code-input" /></td>
 <td><input type="text" class="form-control form-control-sm name-input" readonly /></td>
-<td><input type="number" class="form-control form-control-sm qty-input" min="1" value="1" /></td>
+<td><input type="number" class="form-control form-control-sm qty-input" min="1"/></td>
 <td><input type="text" class="form-control form-control-sm price-input" /></td>
-<td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="0" /></td>
-<input type="hidden" class="form-control form-control-sm discount-amount-input" min="0" value="0" />
-<td class="total-cell">Rp 0</td>
-<td><input type="number" class="form-control form-control-sm stok-input" value="0" readonly/></td>
-<td><input type="text" class="form-control form-control-sm harga-jual-lama" value="0" readonly/></td>
-<td><input type="number" class="form-control form-control-sm markup-1-input" value="0" /></td>
-<td><input type="text" class="form-control form-control-sm harga-jual-1-input" value="${formatRupiah(0)}"/></td>
-<td><input type="number" class="form-control form-control-sm markup-2-input" value="0" /></td>
-<td><input type="text" class="form-control form-control-sm harga-jual-2-input" value="${formatRupiah(0)}" /></td>
-<td><input type="number" class="form-control form-control-sm markup-3-input" value="0"/></td>
-<td><input type="text" class="form-control form-control-sm harga-jual-3-input" value="${formatRupiah(0)}"/></td>
+<td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100"/></td>
+<input type="hidden" class="form-control form-control-sm discount-amount-input" min="0" />
+<td class="total-cell"></td>
+<td><input type="number" class="form-control form-control-sm stok-input" readonly/></td>
+<td><input type="text" class="form-control form-control-sm harga-jual-lama" readonly/></td>
+<td><input type="number" class="form-control form-control-sm markup-1-input" /></td>
+<td><input type="text" class="form-control form-control-sm harga-jual-1-input"/></td>
+<td><input type="number" class="form-control form-control-sm markup-2-input" /></td>
+<td><input type="text" class="form-control form-control-sm harga-jual-2-input" /></td>
+<td><input type="number" class="form-control form-control-sm markup-3-input" /></td>
+<td><input type="text" class="form-control form-control-sm harga-jual-3-input" /></td>
 `;
 
      sellTableBody.appendChild(row);
