@@ -194,6 +194,7 @@ public class PembelianService {
                         clientData
                 ));
                 if (!isAdjusted) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return false;
                 }
             }
@@ -313,6 +314,7 @@ public class PembelianService {
                         clientData
                 ));
                 if (!isAdjusted) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(false, "Gagal adjust di create pembelian");
                 }
             }
@@ -407,6 +409,7 @@ public class PembelianService {
                             clientData
                     ));
                     if (!isAdjusted) {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                         return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore)");
                     }
 
@@ -502,6 +505,7 @@ public class PembelianService {
                         clientData
                 ));
                 if (!isAdjusted) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail pembelian");
                 }
             }

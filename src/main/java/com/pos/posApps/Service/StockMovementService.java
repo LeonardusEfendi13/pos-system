@@ -14,7 +14,6 @@ public class StockMovementService {
     @Autowired
     private StockMovementsRepository stockMovementsRepository;
 
-    @Transactional
     public boolean insertKartuStok(AdjustStockDTO adjustStockDTO) {
         try{
             Long lastStockMovementId = stockMovementsRepository.findFirstByDeletedAtIsNullOrderByStockMovementsIdDesc().map(StockMovementsEntity::getStockMovementsId).orElse(0L);
@@ -33,7 +32,6 @@ public class StockMovementService {
             stockMovementsRepository.save(stockMovementsEntity);
             return true;
         }catch (Exception e){
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return false;
         }
     }

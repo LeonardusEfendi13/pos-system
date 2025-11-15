@@ -191,6 +191,7 @@ public class ProductService {
                     clientData
             ));
             if (!isAdjusted) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                 return new ResponseInBoolean(false, "Gagal insert kartu stok");
             }
 
@@ -242,6 +243,7 @@ public class ProductService {
                         clientEntity
                 ));
                 if (!isAdjusted) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(false, "Gagal Adjust kartu stok");
                 }
             }
