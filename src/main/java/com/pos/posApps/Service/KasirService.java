@@ -60,6 +60,7 @@ public class KasirService {
 
         @Transactional
         public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData) {
+            String lastProduct = "Tanya Leon";
             try {
                 //Get Customer Entity
                 Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
@@ -89,6 +90,7 @@ public class KasirService {
                 Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
                 for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
+                    lastProduct = dtos.getCode();
                     TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                     transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                     transactionDetailEntity.setShortName(dtos.getCode());
@@ -118,18 +120,19 @@ public class KasirService {
                     ));
                     if (!isAdjusted) {
                         TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(false, "Gagal adjust di create transaction");
+                        return new ResponseInBoolean(false, "Gagal adjust di create transaction, ERROR karena : " + lastProduct);
                     }
                 }
                 return new ResponseInBoolean(true, generatedNotaNumber);
             } catch (Exception e) {
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                return new ResponseInBoolean(false, e.getMessage());
+                return new ResponseInBoolean(false, e.getMessage() +". ERROR KARENA : " + lastProduct);
             }
         }
 
     @Transactional
     public ResponseInBoolean editTransaction(Long transactionId, CreateTransactionRequest req, ClientEntity clientData) {
+        String lastProduct = "Tanya Leon";
         try {
             // Validate customer
             Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
@@ -216,6 +219,7 @@ public class KasirService {
 
                 // Save new transaction detail
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                lastProduct = dto.getCode();
                 transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dto.getCode());
                 transactionDetailEntity.setFullName(dto.getName());
@@ -254,7 +258,7 @@ public class KasirService {
                 ));
                 if (!isAdjusted) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail");
+                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail. ERROR karena : " + lastProduct);
                 }
             }
 
@@ -262,7 +266,7 @@ public class KasirService {
 
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage());
+            return new ResponseInBoolean(false, e.getMessage() +". ERROR karena : " + lastProduct);
         }
     }
 }

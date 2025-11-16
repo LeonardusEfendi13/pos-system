@@ -210,6 +210,7 @@ public class PembelianService {
 
     @Transactional
     public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData) {
+        String lastProduct = "Tanya Leon";
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
         if (pembelian.isPresent()) {
@@ -251,6 +252,7 @@ public class PembelianService {
                 ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
 
                 PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
+                lastProduct = dtos.getCode();
                 purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
                 purchasingDetailEntity.setShortName(dtos.getCode());
                 purchasingDetailEntity.setFullName(dtos.getName());
@@ -315,19 +317,20 @@ public class PembelianService {
                 ));
                 if (!isAdjusted) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal adjust di create pembelian");
+                    return new ResponseInBoolean(false, "Gagal adjust di create pembelian. Errro karena  : " + lastProduct);
                 }
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage());
+            return new ResponseInBoolean(false, e.getMessage() + ". Error karena : " + lastProduct);
         }
     }
 
     @Transactional
     public ResponseInBoolean editTransaction(Long purchasingId, CreatePurchasingRequest req, ClientEntity clientData) {
+        String lastProduct ="Tanya Leon";
         // Check duplication
         boolean pembelianDuplicate = purchasingRepository.existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(
                 req.getPurchasingNumber(), clientData.getClientId(), purchasingId
@@ -385,6 +388,7 @@ public class PembelianService {
                         old.getFullName(), old.getShortName(), clientData.getClientId()
                 );
                 if (product != null) {
+                    lastProduct = old.getShortName();
                     String key = old.getShortName();
                     Long newQty = newQtyMap.getOrDefault(key, null);
                     boolean isQtyChanged = (newQty == null || !Objects.equals(newQty, old.getQty()));
@@ -410,7 +414,7 @@ public class PembelianService {
                     ));
                     if (!isAdjusted) {
                         TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore)");
+                        return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore). Karena barang : " + lastProduct);
                     }
 
                     oldProductMap.put(key, old); // Save for later comparison
@@ -427,6 +431,8 @@ public class PembelianService {
 
             for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
                 if (dto == null) continue;
+
+                lastProduct = dto.getCode();
 
                 ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
                         dto.getName(), dto.getCode(), clientData.getClientId()
@@ -514,7 +520,7 @@ public class PembelianService {
 
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage());
+            return new ResponseInBoolean(false, e.getMessage() + ". Errror di : "+ lastProduct);
         }
     }
 
