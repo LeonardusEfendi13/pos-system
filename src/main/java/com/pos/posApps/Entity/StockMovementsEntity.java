@@ -3,6 +3,8 @@ package com.pos.posApps.Entity;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -38,16 +40,16 @@ public class StockMovementsEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity productEntity;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-//    @Column(name = "tanggal_faktur")
-//    private LocalDateTime tanggalFaktur;
 }
 

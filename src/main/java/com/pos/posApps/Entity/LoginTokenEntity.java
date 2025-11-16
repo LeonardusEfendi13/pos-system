@@ -2,6 +2,8 @@ package com.pos.posApps.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +18,8 @@ public class LoginTokenEntity {
     @Column(name = "token")
     private String token;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "deleted_at")
