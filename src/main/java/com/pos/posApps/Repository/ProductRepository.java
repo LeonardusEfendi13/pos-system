@@ -15,6 +15,8 @@ import java.util.Set;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
+    List<ProductEntity> findAllByDeletedAtIsNull();
+
     @Query("SELECT p FROM ProductEntity p " +
             "WHERE p.clientEntity.clientId = :clientId " +
             "AND p.deletedAt IS NULL " +

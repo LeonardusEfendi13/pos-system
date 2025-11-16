@@ -92,7 +92,7 @@ public class HomeService {
         }
 
         //Load all product data (you can optimize this later)
-        List<ProductEntity> allProducts = productRepository.findAll();
+        List<ProductEntity> allProducts = productRepository.findAllByDeletedAtIsNull();
         Map<String, String> shortNameToFullName = allProducts.stream()
                 .collect(Collectors.toMap(ProductEntity::getShortName, ProductEntity::getFullName));
 
@@ -270,7 +270,7 @@ public class HomeService {
 
     private Map<String, BigDecimal> getLaba(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
         // Map shortName to supplierPrice
-        Map<String, BigDecimal> supplierPrices = productRepository.findAll().stream()
+        Map<String, BigDecimal> supplierPrices = productRepository.findAllByDeletedAtIsNull().stream()
                 .collect(Collectors.toMap(ProductEntity::getShortName, ProductEntity::getSupplierPrice));
 
         List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
