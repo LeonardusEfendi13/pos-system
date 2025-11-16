@@ -16,4 +16,6 @@ public class TransactionDetailDTO {
     private Long qty;
     private BigDecimal discAmount;
     private BigDecimal total;
+    private BigDecimal totalProfit;
+    private BigDecimal basicPrice;
 }

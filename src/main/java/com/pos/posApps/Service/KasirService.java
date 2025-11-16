@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -90,6 +91,9 @@ public class KasirService {
                 Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
                 for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
+                    //Get product Entity
+                    ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+
                     lastProduct = dtos.getCode();
                     TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                     transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
@@ -100,11 +104,14 @@ public class KasirService {
                     transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
                     transactionDetailEntity.setTotalPrice(dtos.getTotal());
                     transactionDetailEntity.setTransactionEntity(transactionEntity);
+                    transactionDetailEntity.setBasicPrice(productEntity.getSupplierPrice());
+                    BigDecimal totalBasicPrice = productEntity.getSupplierPrice().multiply(BigDecimal.valueOf(dtos.getQty()));
+                    BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
+                    transactionDetailEntity.setTotalProfit(totalProfit);
                     transactionDetailRepository.save(transactionDetailEntity);
                     newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                     //Update product stock
-                    ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                     Long newStock = productEntity.getStock() - dtos.getQty();
                     productEntity.setStock(newStock);
                     productRepository.save(productEntity);
@@ -214,6 +221,9 @@ public class KasirService {
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
                 if (dto == null) continue;
 
+                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
+
+
                 String key = dto.getCode();
                 newProductKeys.add(key);
 
@@ -228,11 +238,14 @@ public class KasirService {
                 transactionDetailEntity.setDiscountAmount(dto.getDiscAmount());
                 transactionDetailEntity.setTotalPrice(dto.getTotal());
                 transactionDetailEntity.setTransactionEntity(transactionEntity);
+                transactionDetailEntity.setBasicPrice(product.getSupplierPrice());
+                BigDecimal totalBasicPrice = product.getSupplierPrice().multiply(BigDecimal.valueOf(dto.getQty()));
+                BigDecimal totalProfit = dto.getTotal().subtract(totalBasicPrice);
+                transactionDetailEntity.setTotalProfit(totalProfit);
                 transactionDetailRepository.save(transactionDetailEntity);
                 newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 // Update stock
-                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
                 if (product == null) continue;
 
                 Long updatedStock = product.getStock() - dto.getQty();

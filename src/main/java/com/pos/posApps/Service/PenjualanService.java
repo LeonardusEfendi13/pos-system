@@ -14,11 +14,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Year;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -74,7 +70,9 @@ public class PenjualanService {
                                 transactionDetail.getPrice(),
                                 transactionDetail.getQty(),
                                 transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice()
+                                transactionDetail.getTotalPrice(),
+                                transactionDetail.getTotalProfit(),
+                                transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList())
         )).collect(Collectors.toList());
@@ -132,7 +130,9 @@ public class PenjualanService {
                                 transactionDetail.getPrice(),
                                 transactionDetail.getQty(),
                                 transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice()
+                                transactionDetail.getTotalPrice(),
+                                transactionDetail.getTotalProfit(),
+                                transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList())
         );
@@ -163,7 +163,9 @@ public class PenjualanService {
                                 transactionDetail.getPrice(),
                                 transactionDetail.getQty(),
                                 transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice()
+                                transactionDetail.getTotalPrice(),
+                                transactionDetail.getTotalProfit(),
+                                transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList())
         );
