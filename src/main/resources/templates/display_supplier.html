@@ -52,7 +52,7 @@
                 <button class="btn btn-success add-user-btn" data-bs-toggle="modal" data-bs-target="#addSupplierModal">Tambah Supplier Baru</button>
             </div>
 
-            <div style="max-height: 70vh; overflow-y: auto;">
+            <div style="overflow-y: auto;">
                 <table id="supplierTable" class="table table-striped table-bordered">
                 <thead class="sticky-top">
                 <tr>
@@ -172,7 +172,7 @@
     $(document).ready(function () {
         // Init DataTable
         $('#supplierTable').DataTable({
-            paging: true,
+            paging: false,
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
             ordering: true,
