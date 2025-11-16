@@ -39,43 +39,64 @@ public class HomeService {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
 
-        //Fetch all transaction Data by todays date
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+        // Fetch all transaction Data by todays date
+        List<TransactionEntity> transactionData =
+                transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                        clientId, startDate, endDate
+                );
 
-        //Extract the shortName
+        // Extract all shortNames
         Set<String> shortNamesInTransactions = transactionData.stream()
                 .flatMap(t -> t.getTransactionDetailEntities().stream())
                 .map(TransactionDetailEntity::getShortName)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        //Fetch ProductData with the extracted shortName
-        List<ProductEntity> relevantProducts = productRepository.findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(clientId, shortNamesInTransactions);
+        // Fetch product data
+        List<ProductEntity> relevantProducts =
+                productRepository.findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(
+                        clientId,
+                        shortNamesInTransactions
+                );
 
-        //Assign the data into productMap
-        Map<String, ProductEntity> productMap = relevantProducts.stream().collect(Collectors.toMap(ProductEntity::getShortName, Function.identity()));
+        // Map Product by shortName
+        Map<String, ProductEntity> productMap = relevantProducts.stream()
+                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity()));
 
-        //Count transaction data
+        // Count transaction data
         Long transactionCount = (long) transactionData.size();
 
-        //Sum transaction total price
-        BigDecimal totalTransaction = transactionData.stream().map(TransactionEntity::getTotalPrice).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Sum transaction total price
+        BigDecimal totalTransaction = transactionData.stream()
+                .map(TransactionEntity::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        //Get total profit
-        //Step 1. Initiate total profit
+        // Calculate total profit (NEW FIXED LOGIC)
         BigDecimal totalProfit = BigDecimal.ZERO;
 
-        //Step 2. Calculate total profit
-        for (TransactionEntity transactions : transactionData) {
-            for (TransactionDetailEntity details : transactions.getTransactionDetailEntities()) {
+        for (TransactionEntity transaction : transactionData) {
+            for (TransactionDetailEntity details : transaction.getTransactionDetailEntities()) {
+
+                // Ambil product sesuai shortName
                 ProductEntity product = productMap.get(details.getShortName());
-                if (product != null && details.getPrice() != null && product.getSupplierPrice() != null) {
-                    BigDecimal priceDiff = details.getPrice().subtract(product.getSupplierPrice());
-                    BigDecimal profit = priceDiff.multiply(BigDecimal.valueOf(details.getQty()));
-                    totalProfit = totalProfit.add(profit);
-                }
+
+                // Fallback supplierPrice = 0 jika product null
+                BigDecimal supplierPrice =
+                        (product != null && product.getSupplierPrice() != null)
+                                ? product.getSupplierPrice()
+                                : BigDecimal.ZERO;
+
+                BigDecimal sellingPrice =
+                        (details.getPrice() != null) ? details.getPrice() : BigDecimal.ZERO;
+
+                BigDecimal priceDiff = sellingPrice.subtract(supplierPrice);
+                BigDecimal profit = priceDiff.multiply(BigDecimal.valueOf(details.getQty()));
+
+                totalProfit = totalProfit.add(profit);
             }
         }
+
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
 
