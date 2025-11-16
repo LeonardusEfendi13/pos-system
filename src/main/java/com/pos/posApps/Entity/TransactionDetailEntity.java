@@ -51,4 +51,9 @@ public class TransactionDetailEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "basic_price")
+    private BigDecimal basicPrice;
+
+    @Column(name = "total_profit")
+    private BigDecimal totalProfit;
 }
