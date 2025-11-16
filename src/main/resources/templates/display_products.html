@@ -439,6 +439,15 @@
     $(document).ready(function () {
         $("#barangModal").draggable();
     });
+     window.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById("searchInput");
+        if (input) {
+            input.focus();
+            // Move cursor to the end
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+        }
+    });
 </script>
 <script th:inline="javascript">
     /*<![CDATA[*/
