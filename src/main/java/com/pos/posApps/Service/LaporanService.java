@@ -102,7 +102,7 @@ public class LaporanService {
         List<String> allPeriods = generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filterOptions);
 
         // Preload semua produk (asumsikan shortName unik)
-        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
+        Map<String, ProductEntity> productMap = productRepository.findAllByDeletedAtIsNull().stream()
                 .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
 
         // Grouping by actual data
@@ -218,7 +218,7 @@ public class LaporanService {
 
 
         // Preload all products (assuming shortName is unique)
-        Map<String, ProductEntity> productMap = productRepository.findAll().stream()
+        Map<String, ProductEntity> productMap = productRepository.findAllByDeletedAtIsNull().stream()
                 .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
 
         // Group by customer name
