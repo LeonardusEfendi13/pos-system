@@ -172,7 +172,7 @@ public class ProductService {
             newProduct.setFullName(req.getFullName());
             newProduct.setSupplierPrice(req.getSupplierPrice());
             newProduct.setSupplierEntity(supplierEntity);
-            newProduct.setStock(req.getStock());
+            newProduct.setStock(req.getStock() != null ? req.getStock() :  0L);
             newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
