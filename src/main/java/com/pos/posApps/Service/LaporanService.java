@@ -101,25 +101,18 @@ public class LaporanService {
         // Generate all periods between start and end
         List<String> allPeriods = generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filterOptions);
 
-        // Preload semua produk (asumsikan shortName unik)
-        Map<String, ProductEntity> productMap = productRepository.findAllByDeletedAtIsNull().stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
-
         // Grouping by actual data
         Map<String, LaporanPenjualanPerWaktuDTO> groupedMap = transactionData.stream()
                 .flatMap(trx -> trx.getTransactionDetailEntities().stream()
                         .filter(detail -> detail.getDeletedAt() == null)
                         .map(detail -> {
                             String period = trx.getCreatedAt().format(formatter);
-                            BigDecimal hargaJual = detail.getPrice();
+
                             BigDecimal totalPrice = detail.getTotalPrice();
-                            Long qty = detail.getQty();
+                            BigDecimal laba = detail.getTotalProfit() != null ? detail.getTotalProfit() : BigDecimal.ZERO;
 
-                            ProductEntity product = productMap.get(detail.getShortName());
-                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
-                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
-
-                            return Map.entry(period, new LaporanPenjualanPerWaktuDTO(period, totalPrice, laba));
+                            return Map.entry(period,
+                                    new LaporanPenjualanPerWaktuDTO(period, totalPrice, laba));
                         })
                 )
                 .collect(Collectors.toMap(
@@ -132,13 +125,11 @@ public class LaporanService {
                         )
                 ));
 
-        // Ensure all periods are present in the final map, even if zero
+        // Ensure all periods included even if zero
         Map<String, LaporanPenjualanPerWaktuDTO> finalMap = new TreeMap<>(Comparator.reverseOrder());
         for (String period : allPeriods) {
-            LaporanPenjualanPerWaktuDTO data = groupedMap.getOrDefault(
-                    period,
-                    new LaporanPenjualanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO)
-            );
+            LaporanPenjualanPerWaktuDTO data =
+                    groupedMap.getOrDefault(period, new LaporanPenjualanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO));
             finalMap.put(period, data);
         }
 
@@ -210,33 +201,22 @@ public class LaporanService {
             LocalDateTime startDate,
             LocalDateTime endDate
     ) {
-        List<TransactionEntity> transactionData;
-
-        transactionData = transactionRepository
+        List<TransactionEntity> transactionData = transactionRepository
                 .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
                         clientId, startDate, endDate);
 
-
-        // Preload all products (assuming shortName is unique)
-        Map<String, ProductEntity> productMap = productRepository.findAllByDeletedAtIsNull().stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity(), (a, b) -> a));
-
-        // Group by customer name
+        // Group by customer name + sum totals + sum profit
         Map<String, LaporanPenjualanPerPelangganDTO> groupedByCustomer = transactionData.stream()
                 .flatMap(trx -> trx.getTransactionDetailEntities().stream()
                         .filter(detail -> detail.getDeletedAt() == null)
                         .map(detail -> {
+                            // Determine customer name
                             String customerName = trx.getCustomerEntity() != null
                                     ? trx.getCustomerEntity().getName()
                                     : "Unknown Customer";
 
-                            BigDecimal hargaJual = detail.getPrice();
                             BigDecimal totalPrice = detail.getTotalPrice();
-                            Long qty = detail.getQty();
-
-                            ProductEntity product = productMap.get(detail.getShortName());
-                            BigDecimal hargaBeli = (product != null) ? product.getSupplierPrice() : BigDecimal.ZERO;
-                            BigDecimal laba = hargaJual.subtract(hargaBeli).multiply(BigDecimal.valueOf(qty));
+                            BigDecimal laba = detail.getTotalProfit() != null ? detail.getTotalProfit() : BigDecimal.ZERO;
 
                             return Map.entry(customerName,
                                     new LaporanPenjualanPerPelangganDTO(customerName, totalPrice, laba));
@@ -252,6 +232,7 @@ public class LaporanService {
                         )
                 ));
 
+        // Sort by customer name
         return groupedByCustomer.values().stream()
                 .sorted(Comparator.comparing(LaporanPenjualanPerPelangganDTO::getCustomerName))
                 .collect(Collectors.toList());
