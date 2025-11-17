@@ -37,7 +37,7 @@ public class PenjualanController {
     }
 
     @GetMapping
-    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size, @RequestParam(required = false) String search) {
+    public String showPenjualan(HttpSession session, Model model, String startDate, String endDate, Long customerId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "300") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -47,7 +47,7 @@ public class PenjualanController {
             return "redirect:/login";
         }
 
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
