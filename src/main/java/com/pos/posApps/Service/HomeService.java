@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,23 +44,6 @@ public class HomeService {
                         clientId, startDate, endDate
                 );
 
-        // Extract all shortNames
-        Set<String> shortNamesInTransactions = transactionData.stream()
-                .flatMap(t -> t.getTransactionDetailEntities().stream())
-                .map(TransactionDetailEntity::getShortName)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        // Fetch product data
-        List<ProductEntity> relevantProducts =
-                productRepository.findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(
-                        clientId,
-                        shortNamesInTransactions
-                );
-
-        // Map Product by shortName
-        Map<String, ProductEntity> productMap = relevantProducts.stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, Function.identity()));
 
         // Count transaction data
         Long transactionCount = (long) transactionData.size();
@@ -72,30 +54,13 @@ public class HomeService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Calculate total profit (NEW FIXED LOGIC)
-        BigDecimal totalProfit = BigDecimal.ZERO;
+        // Sum Total profit
+        BigDecimal totalProfit = transactionData.stream()
+                .flatMap(t -> t.getTransactionDetailEntities().stream())
+                .map(TransactionDetailEntity::getTotalProfit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        for (TransactionEntity transaction : transactionData) {
-            for (TransactionDetailEntity details : transaction.getTransactionDetailEntities()) {
-
-                // Ambil product sesuai shortName
-                ProductEntity product = productMap.get(details.getShortName());
-
-                // Fallback supplierPrice = 0 jika product null
-                BigDecimal supplierPrice =
-                        (product != null && product.getSupplierPrice() != null)
-                                ? product.getSupplierPrice()
-                                : BigDecimal.ZERO;
-
-                BigDecimal sellingPrice =
-                        (details.getPrice() != null) ? details.getPrice() : BigDecimal.ZERO;
-
-                BigDecimal priceDiff = sellingPrice.subtract(supplierPrice);
-                BigDecimal profit = priceDiff.multiply(BigDecimal.valueOf(details.getQty()));
-
-                totalProfit = totalProfit.add(profit);
-            }
-        }
 
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
@@ -145,7 +110,7 @@ public class HomeService {
 
         //Sort and limit to 5
         List<Long> top5 = firstCustomerMap.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(5)
+                .limit(10)
                 .map(Map.Entry::getKey)
                 .toList();
 
@@ -290,36 +255,20 @@ public class HomeService {
     }
 
     private Map<String, BigDecimal> getLaba(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        // Map shortName to supplierPrice
-        Map<String, BigDecimal> supplierPrices = productRepository.findAllByDeletedAtIsNull().stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, ProductEntity::getSupplierPrice));
-
         List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
 
-        Map<String, BigDecimal> labaMap = new HashMap<>();
-
-        for (TransactionEntity transaction : transactions) {
-            String label = formatDate(transaction.getCreatedAt(), periodFilter);
-            BigDecimal totalProfit = BigDecimal.ZERO;
-
-            for (TransactionDetailEntity detail : transaction.getTransactionDetailEntities()) {
-                String shortName = detail.getShortName();
-                Long qty = detail.getQty();
-
-                BigDecimal soldPrice = detail.getPrice(); // from TransactionDetail
-                BigDecimal costPrice = supplierPrices.getOrDefault(shortName, BigDecimal.ZERO);
-
-                BigDecimal profitPerUnit = soldPrice.subtract(costPrice);
-                BigDecimal totalDetailProfit = profitPerUnit.multiply(BigDecimal.valueOf(qty));
-
-                totalProfit = totalProfit.add(totalDetailProfit);
-            }
-
-            labaMap.merge(label, totalProfit, BigDecimal::add);
-        }
-
-        return labaMap;
+        // GROUP by date → sum totalProfit
+        return transactions.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getCreatedAt().toLocalDate().toString(), // group by date string (YYYY-MM-DD)
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                t -> t.getTransactionDetailEntities().stream()
+                                        .map(TransactionDetailEntity::getTotalProfit)
+                                        .filter(Objects::nonNull)
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                                BigDecimal::add
+                        )
+                ));
     }
-
-
 }
