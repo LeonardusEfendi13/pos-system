@@ -138,6 +138,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     AND p.minimumStock > 0
     AND p.stock <= p.minimumStock
     AND p.deletedAt IS NULL
+    ORDER BY p.fullName
 """)
     List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
 }
