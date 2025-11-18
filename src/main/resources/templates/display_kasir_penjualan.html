@@ -1566,6 +1566,14 @@
             e.preventDefault();
           }
         });
+        const customerSelect = document.getElementById("customerSelect");
+        customerSelect.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault(); // supaya tidak trigger form submit
+                codeInput.focus();
+                codeInput.select(); // optional: auto-select text
+            }
+        });
 
         priceInput.addEventListener("click", () => {
             priceInput.select();
