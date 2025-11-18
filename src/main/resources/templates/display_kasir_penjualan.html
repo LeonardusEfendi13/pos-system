@@ -1773,6 +1773,7 @@
         });
 
         qtyInput.addEventListener("blur", () => {
+             const nameInput = row.querySelector(".name-input").value;
             let qty = qtyInput.value.trim();
 
             // ❌ skip only the blur triggered by our own focus()
@@ -1781,19 +1782,22 @@
                 return;
             }
 
-            if (qty === "" || isNaN(qty) || qty <= 0) {
-                alert("Qty harus diisi!");
+            if(nameInput !== ""){
+                if (qty === "" || isNaN(qty) || qty <= 0) {
+                    alert("Qty harus diisi!");
 
-                // we will cause another blur due to focus(), PREVENT that one
-                qtyForceFocus = true;
+                    // we will cause another blur due to focus(), PREVENT that one
+                    qtyForceFocus = true;
 
-                setTimeout(() => {
-                    qtyInput.focus();
-                    qtyInput.select();
-                }, 0);
+                    setTimeout(() => {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }, 0);
 
-                return;
+                    return;
+                }
             }
+
 
             updateTotalRow(row);
         });
@@ -1803,21 +1807,25 @@
         });
 
         qtyInput.addEventListener("keydown", (e) => {
+          const nameInput = row.querySelector(".name-input").value;
           if (e.key === "Enter") {
             let qty = qtyInput.value.trim();
 
-            if (qty === "" || isNaN(qty) || qty <= 0) {
-                e.preventDefault();
-                alert("Qty harus diisi!");
-                qtyForceFocus = true;
+            if(nameInput !== ""){
+                if (qty === "" || isNaN(qty) || qty <= 0) {
+                    e.preventDefault();
+                    alert("Qty harus diisi!");
+                    qtyForceFocus = true;
 
-                setTimeout(() => {
-                    qtyInput.focus();
-                    qtyInput.select();
-                }, 0);
+                    setTimeout(() => {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }, 0);
 
-                return;
+                    return;
+                }
             }
+
             e.preventDefault();
             const rows = [...sellTableBody.querySelectorAll("tr")];
             const lastRow = rows[rows.length - 1];
@@ -3036,27 +3044,32 @@
             });
 
             qtyInput.addEventListener("blur", () => {
+                const nameInput = row.querySelector(".name-input").value;
                 let qty = qtyInput.value.trim();
+                const code = codeInput.value.trim();
 
                 // ❌ skip only the blur triggered by our own focus()
                 if (qtyForceFocus) {
                     qtyForceFocus = false;
                     return;
                 }
+                console.log("name input : ", nameInput);
+                if(nameInput !== ""){
+                     if (qty === "" || isNaN(qty) || qty <= 0) {
+                        alert("Qty harus diisi!");
 
-                if (qty === "" || isNaN(qty) || qty <= 0) {
-                    alert("Qty harus diisi!");
+                        // we will cause another blur due to focus(), PREVENT that one
+                        qtyForceFocus = true;
 
-                    // we will cause another blur due to focus(), PREVENT that one
-                    qtyForceFocus = true;
+                        setTimeout(() => {
+                            qtyInput.focus();
+                            qtyInput.select();
+                        }, 0);
 
-                    setTimeout(() => {
-                        qtyInput.focus();
-                        qtyInput.select();
-                    }, 0);
-
-                    return;
+                        return;
+                    }
                 }
+
 
                 updateTotalRow(row);
             });
@@ -3066,21 +3079,25 @@
             });
 
             qtyInput.addEventListener("keydown", (e) => {
+              const nameInput = row.querySelector(".name-input").value;
               if (e.key === "Enter") {
                 let qty = qtyInput.value.trim();
 
-                if (qty === "" || isNaN(qty) || qty <= 0) {
-                    e.preventDefault();
-                    alert("Qty harus diisi!");
-                    qtyForceFocus = true;
+                if(nameInput !== ""){
+                    if (qty === "" || isNaN(qty) || qty <= 0) {
+                        e.preventDefault();
+                        alert("Qty harus diisi!");
+                        qtyForceFocus = true;
 
-                    setTimeout(() => {
-                        qtyInput.focus();
-                        qtyInput.select();
-                    }, 0);
+                        setTimeout(() => {
+                            qtyInput.focus();
+                            qtyInput.select();
+                        }, 0);
 
-                    return;
+                        return;
+                    }
                 }
+
                 e.preventDefault();
                 const rows = [...sellTableBody.querySelectorAll("tr")];
                 const lastRow = rows[rows.length - 1];
