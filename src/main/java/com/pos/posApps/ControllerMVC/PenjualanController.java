@@ -69,6 +69,7 @@ public class PenjualanController {
         model.addAttribute("activePage", "penjualan");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        model.addAttribute("search", search);
 
         Long totalElements = penjualanData.getTotalElements();
 
