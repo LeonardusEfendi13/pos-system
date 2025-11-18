@@ -62,7 +62,8 @@
                     <h4 class="section-title">
                         Barang Understock
                         <br>
-                        <span class="small text-muted" th:text="${supplierId == null ? '--Pilih Supplier--' : (supplierName)}"></span>
+                        <span class="small text-muted"
+                              th:text="${supplierId == null ? '--Pilih Supplier--' : (supplierName)}"></span>
                     </h4>
 
                     <form method="get" action="/preorder/understock" class="row g-3">
@@ -103,9 +104,9 @@
                         <th scope="col">Minimum Stock</th>
                         <th scope="col">Stock</th>
                         <th style="text-align:center">
-                            <input type="checkbox" id="select-all" />
+                            <input type="checkbox" id="select-all"/>
                             <label for="select-all" style="margin-left: 5px;">
-                               (<span id="selected-count">0</span>)
+                                (<span id="selected-count">0</span>)
                             </label>
                         </th>
                     </tr>
@@ -127,7 +128,7 @@
                         data-stok=${product.stok},
                         data-minimumstock=${product.minimumStock}
                    "
-                                   class="product-checkbox" />
+                                   class="product-checkbox"/>
                         </td>
                     </tr>
 
@@ -145,7 +146,13 @@
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="selectedModal" tabindex="-1" aria-labelledby="selectedModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="selectedModal"
+     tabindex="-1"
+     aria-labelledby="selectedModalLabel"
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
@@ -211,170 +218,176 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <script>
-    $(document).ready(function () {
-        // Event Edit User Modal
-        $('.edit-user-btn').on('click', function () {
-            const userId = $(this).data('userid');
-            const name = $(this).data('name');
-            const username = $(this).data('username');
-            const role = $(this).data('role');
-
-            $('#editUserId').val(userId);
-            $('#editName').val(name);
-            $('#editUsername').val(username);
-            $('#editRole').val(role);
-        });
-    });
-
-    const selectAll = document.getElementById('select-all');
-    const checkboxes = document.querySelectorAll('.product-checkbox');
-    const selectedCount = document.getElementById('selected-count');
-
-    function updateSelectedCount() {
-        const count = document.querySelectorAll('.product-checkbox:checked').length;
-        selectedCount.textContent = count;
-    }
-
-    selectAll.addEventListener('change', function () {
-        checkboxes.forEach(cb => cb.checked = this.checked);
-        updateSelectedCount();
-    });
-
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateSelectedCount);
-    });
-
-    const currencyFormat = num => new Intl.NumberFormat('id-ID').format(num);
-
-    document.getElementById('viewSelectedBtn').addEventListener('click', function () {
-        const selectedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
-        const tbody = document.getElementById('selectedProductsTableBody');
-        tbody.innerHTML = '';
-
-        if (selectedCheckboxes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">No products selected.</td></tr>';
-            return;
-        }
-
-        let index = 1;
-        selectedCheckboxes.forEach(cb => {
-            const shortName = cb.dataset.shortname;
-            const fullName = cb.dataset.fullname;
-            const hargaBeli = parseFloat(cb.dataset.hargabeli || 0);
-            const stok = cb.dataset.stok;
-            const minimumStock = cb.dataset.minimumstock;
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td style="width:5%">${index++}</td>
-                <td style="width:20%">${shortName}</td>
-                <td style="width:35%">${fullName}</td>
-                <td style="width:10%">Rp <span class="harga-beli">${currencyFormat(hargaBeli)}</span></td>
-                <td style="width:5%">${stok}</td>
-                <td style="width:5%">${minimumStock}</td>
-                <td style="width:5%">
-                    <input type="number" min="1" value="1" class="form-control order-qty" data-harga="${hargaBeli}" />
-                </td>
-                <td style="width:15%">Rp <span class="subtotal">${currencyFormat(hargaBeli)}</span></td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        calculateGrandTotal();
-        setupQtyListeners();
-    });
-
-    function setupQtyListeners() {
-        const qtyInputs = document.querySelectorAll('.order-qty');
-        qtyInputs.forEach(input => {
-            input.addEventListener('input', function () {
-                const qty = parseInt(this.value || 0);
-                const harga = parseFloat(this.dataset.harga);
-                const subtotal = qty * harga;
-                const subtotalEl = this.closest('tr').querySelector('.subtotal');
-                subtotalEl.textContent = currencyFormat(subtotal);
-                calculateGrandTotal();
-            });
-        });
-    }
-
-    function calculateGrandTotal() {
-        let total = 0;
-        document.querySelectorAll('.order-qty').forEach(input => {
-            const qty = parseInt(input.value || 0);
-            const harga = parseFloat(input.dataset.harga || 0);
-            total += qty * harga;
-        });
-        document.getElementById('grandTotal').textContent = currencyFormat(total);
-    }
-
-    // Placeholder for Save button
-    document.getElementById('saveOrderBtn').addEventListener('click', async function () {
-        const supplierSelect = document.getElementById('supplierSelect');
-        const selectedSupplierId = supplierSelect.value;
-        const selectedSupplierName = supplierSelect.options[supplierSelect.selectedIndex].text;
-
-        if (!selectedSupplierId) {
-            alert("Please select a supplier.");
-            return;
-        }
-
-        const preorderDetailDTOS = [];
-        let subtotal = 0;
-        let totalDisc = 0;
-
-        document.querySelectorAll('#selectedProductsTableBody tr').forEach(row => {
-            const code = row.children[1].textContent;
-            const fullName = row.children[2].textContent;
-            const hargaBeli = parseFloat(row.querySelector('.order-qty').dataset.harga || 0);
-            const qty = parseInt(row.querySelector('.order-qty').value || 0);
-            if (qty <= 0) return;
-
-            const total = hargaBeli * qty;
-            subtotal += total;
-
-            preorderDetailDTOS.push({
-                code: code,
-                name: fullName,
-                qty: qty,
-                price: hargaBeli,
-                discAmount: 0,
-                total: total
-            });
-        });
-
-        const requestPayload = {
-            supplierId: parseInt(selectedSupplierId),
-            preorderDetailDTOS,
-            subtotal,
-            totalDisc,
-            totalPrice: subtotal - totalDisc
-        };
-
-        try {
-            const response = await fetch("/api/preorder/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(requestPayload),
-            });
-
-            const result = await response.text();
-            if (!response.ok) {
-                alert("Gagal menyimpan data");
-                throw new Error(`${result}`);
-            }
-
-            alert("Berhasil menyimpan data");
-
-            // 🔽 Immediately generate PDF
-            generateSimplePDF(preorderDetailDTOS, selectedSupplierName);
-            window.location.href = '/preorder';
-        } catch (err) {
-            console.error(err);
+    document.addEventListener("focusin", function(e) {
+        if (e.target.tagName === "INPUT") {
+            e.target.select();
         }
     });
+
+$(document).ready(function () {
+    // Event Edit User Modal
+    $('.edit-user-btn').on('click', function () {
+        const userId = $(this).data('userid');
+        const name = $(this).data('name');
+        const username = $(this).data('username');
+        const role = $(this).data('role');
+
+        $('#editUserId').val(userId);
+        $('#editName').val(name);
+        $('#editUsername').val(username);
+        $('#editRole').val(role);
+    });
+});
+
+const selectAll = document.getElementById('select-all');
+const checkboxes = document.querySelectorAll('.product-checkbox');
+const selectedCount = document.getElementById('selected-count');
+
+function updateSelectedCount() {
+    const count = document.querySelectorAll('.product-checkbox:checked').length;
+    selectedCount.textContent = count;
+}
+
+selectAll.addEventListener('change', function () {
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateSelectedCount();
+});
+
+checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+const currencyFormat = num => new Intl.NumberFormat('id-ID').format(num);
+
+document.getElementById('viewSelectedBtn').addEventListener('click', function () {
+    const selectedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
+    const tbody = document.getElementById('selectedProductsTableBody');
+    tbody.innerHTML = '';
+
+    if (selectedCheckboxes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No products selected.</td></tr>';
+        return;
+    }
+
+    let index = 1;
+    selectedCheckboxes.forEach(cb => {
+        const shortName = cb.dataset.shortname;
+        const fullName = cb.dataset.fullname;
+        const hargaBeli = parseFloat(cb.dataset.hargabeli || 0);
+        const stok = cb.dataset.stok;
+        const minimumStock = cb.dataset.minimumstock;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="width:5%">${index++}</td>
+            <td style="width:20%">${shortName}</td>
+            <td style="width:35%">${fullName}</td>
+            <td style="width:10%">Rp <span class="harga-beli">${currencyFormat(hargaBeli)}</span></td>
+            <td style="width:5%">${stok}</td>
+            <td style="width:5%">${minimumStock}</td>
+            <td style="width:5%">
+                <input type="number" min="1" value="1" class="form-control order-qty" data-harga="${hargaBeli}" />
+            </td>
+            <td style="width:15%">Rp <span class="subtotal">${currencyFormat(hargaBeli)}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    calculateGrandTotal();
+    setupQtyListeners();
+});
+
+function setupQtyListeners() {
+    const qtyInputs = document.querySelectorAll('.order-qty');
+    qtyInputs.forEach(input => {
+        input.addEventListener('input', function () {
+            const qty = parseInt(this.value || 0);
+            const harga = parseFloat(this.dataset.harga);
+            const subtotal = qty * harga;
+            const subtotalEl = this.closest('tr').querySelector('.subtotal');
+            subtotalEl.textContent = currencyFormat(subtotal);
+            calculateGrandTotal();
+        });
+    });
+}
+
+function calculateGrandTotal() {
+    let total = 0;
+    document.querySelectorAll('.order-qty').forEach(input => {
+        const qty = parseInt(input.value || 0);
+        const harga = parseFloat(input.dataset.harga || 0);
+        total += qty * harga;
+    });
+    document.getElementById('grandTotal').textContent = currencyFormat(total);
+}
+
+// Placeholder for Save button
+document.getElementById('saveOrderBtn').addEventListener('click', async function () {
+    const supplierSelect = document.getElementById('supplierSelect');
+    const selectedSupplierId = supplierSelect.value;
+    const selectedSupplierName = supplierSelect.options[supplierSelect.selectedIndex].text;
+
+    if (!selectedSupplierId) {
+        alert("Please select a supplier.");
+        return;
+    }
+
+    const preorderDetailDTOS = [];
+    let subtotal = 0;
+    let totalDisc = 0;
+
+    document.querySelectorAll('#selectedProductsTableBody tr').forEach(row => {
+        const code = row.children[1].textContent;
+        const fullName = row.children[2].textContent;
+        const hargaBeli = parseFloat(row.querySelector('.order-qty').dataset.harga || 0);
+        const qty = parseInt(row.querySelector('.order-qty').value || 0);
+        if (qty <= 0) return;
+
+        const total = hargaBeli * qty;
+        subtotal += total;
+
+        preorderDetailDTOS.push({
+            code: code,
+            name: fullName,
+            qty: qty,
+            price: hargaBeli,
+            discAmount: 0,
+            total: total
+        });
+    });
+
+    const requestPayload = {
+        supplierId: parseInt(selectedSupplierId),
+        preorderDetailDTOS,
+        subtotal,
+        totalDisc,
+        totalPrice: subtotal - totalDisc
+    };
+
+    try {
+        const response = await fetch("/api/preorder/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestPayload),
+        });
+
+        const result = await response.text();
+        if (!response.ok) {
+            alert("Gagal menyimpan data");
+            throw new Error(`${result}`);
+        }
+
+        alert("Berhasil menyimpan data");
+
+        // 🔽 Immediately generate PDF
+        generateSimplePDF(preorderDetailDTOS, selectedSupplierName);
+        window.location.href = '/preorder';
+    } catch (err) {
+        console.error(err);
+    }
+});
 
 </script>
 <script th:inline="none">
