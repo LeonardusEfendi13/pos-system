@@ -1575,6 +1575,14 @@
             }
         });
 
+        const reprintModal = document.getElementById("reprintModal");
+        reprintModal.addEventListener("hidden.bs.modal", function () {
+            if (codeInput) {
+                codeInput.focus();
+                codeInput.select(); // optional
+            }
+        });
+
         priceInput.addEventListener("click", () => {
             priceInput.select();
         });
