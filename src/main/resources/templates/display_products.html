@@ -40,7 +40,7 @@
 <div class="page">
     <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
     <div class="page-wrapper">
-        <div class="container">
+        <div class="container-fluid">
             <h2 style="text-align:center;padding-top:10px">Daftar Barang</h2>
 
             <!-- Add Barang Button -->
@@ -61,7 +61,6 @@
 
                     <!-- Supplier Filter -->
                     <div>
-<!--                        <label for="supplierIdFilter" class="form-label">Supplier</label>-->
                         <select id="supplierIdFilter"
                                 name="supplierIdFilter"
                                 class="form-select">
@@ -89,17 +88,17 @@
             </div>
 
 
-            <table id="productTable" class="table table-striped table-bordered w-100">
+            <table id="productTable" class="table table-striped table-bordered w-100" style="width:100%">
                 <thead class="sticky-top">
                 <tr>
-                    <th scope="col">No</th>
-                    <th scope="col">Kode Part</th>
-                    <th scope="col">Nama Barang</th>
-                    <th scope="col">Minimum Stok</th>
-                    <th scope="col">Stok</th>
-                    <th scope="col">Harga Beli</th>
-                    <th scope="col">Harga Jual</th>
-                    <th scope="col">Action</th>
+                    <th scope="col" style="width: 5%">No</th>
+                    <th scope="col" style="white-space: nowrap;width: 20%">Kode Part</th>
+                    <th scope="col" style="white-space: nowrap;width: 35%">Nama Barang</th>
+                    <th scope="col" style="width: 5%">Min Stok</th>
+                    <th scope="col" style="width: 5%">Stok</th>
+                    <th scope="col" style="width: 10%">Harga Beli</th>
+                    <th scope="col" style="width: 10%">Harga Jual</th>
+                    <th scope="col" style="width: 10%">Action</th>
                 </tr>
                 </thead>
                 <tbody>
