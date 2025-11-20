@@ -1750,8 +1750,8 @@
                 qtyInput.select();
               }
             } else {
-              alert("Product not found");
-              codeInput.value = "";
+              alert("Product not foundg");
+<!--              codeInput.value = "";-->
               codeInput.focus();
             }
           }
@@ -2706,7 +2706,14 @@
         } catch (error) {
             console.error("Failed to save transaction:", error.message);
             alert(`Gagal menyimpan data, ${error.message}.`);
-            window.location.href="/kasir";
+
+            // Pastikan tombol Save bisa diklik kembali
+            const saveBtn = document.getElementById("saveTransactionBtn");
+            saveBtn.disabled = false;   // Enable tombol
+            saveBtn.innerText = 'Simpan';  // Ubah teks tombol ke semula
+
+            // Set isSaving ke false
+            isSaving = false;
         }
     }
 
@@ -3021,8 +3028,8 @@
                     qtyInput.select();
                   }
                 } else {
-                  alert("Product not found");
-                  codeInput.value = "";
+                  alert("Product not founds");
+<!--                  codeInput.value = "";-->
                   codeInput.focus();
                 }
               }
