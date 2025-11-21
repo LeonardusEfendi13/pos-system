@@ -89,8 +89,12 @@ public class KasirService {
                 //Insert all the transaction details
                 Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
                 Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+                System.out.println("====START LOG (" + newTransactionDetailId + ")=====");
 
                 for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
+                    System.out.println("Part Number : " + dtos.getCode());
+                    System.out.println("Qty : " + dtos.getQty());
+
                     //Get product Entity
                     ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
 
@@ -113,6 +117,8 @@ public class KasirService {
 
                     //Update product stock
                     Long newStock = productEntity.getStock() - dtos.getQty();
+                    System.out.println("Stock Before : " + dtos.getQty());
+                    System.out.println("Stock After : " + newStock);
                     productEntity.setStock(newStock);
                     productRepository.save(productEntity);
 
@@ -130,6 +136,8 @@ public class KasirService {
                         return new ResponseInBoolean(false, "Gagal adjust di create transaction, ERROR karena : " + lastProduct);
                     }
                 }
+                System.out.println("====END LOG=====");
+
                 return new ResponseInBoolean(true, generatedNotaNumber);
             } catch (Exception e) {
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
