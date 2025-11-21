@@ -89,7 +89,7 @@ public class KasirService {
                 //Insert all the transaction details
                 Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
                 Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-                System.out.println("====START LOG (" + newTransactionDetailId + ")=====");
+                System.out.println("====START Create LOG (" + newTransactionDetailId + ")=====");
 
                 for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
                     System.out.println("Part Number : " + dtos.getCode());
@@ -226,7 +226,10 @@ public class KasirService {
                     .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
+            System.out.println("====START Edit LOG (" + newTransactionDetailId + ")=====");
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+                System.out.println("Part Number : " + dto.getCode());
+                System.out.println("Qty : " + dto.getQty());
                 if (dto == null) continue;
 
                 ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
@@ -257,6 +260,8 @@ public class KasirService {
                 if (product == null) continue;
 
                 Long updatedStock = product.getStock() - dto.getQty();
+                System.out.println("Stock Before : " + dto.getQty());
+                System.out.println("Stock After : " + updatedStock);
                 product.setStock(updatedStock);
                 productRepository.save(product);
 
@@ -282,6 +287,8 @@ public class KasirService {
                     return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail. ERROR karena : " + lastProduct);
                 }
             }
+            System.out.println("====END LOG=====");
+
 
             return new ResponseInBoolean(true, transactionEntity.getTransactionNumber());
 
