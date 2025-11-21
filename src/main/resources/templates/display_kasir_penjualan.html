@@ -1654,7 +1654,6 @@
             if (!res.ok) throw new Error("Gagal fetch harga");
 
             const text = await res.text();
-            console.log("rESPON : ", text);
 
             if (!text) {
               console.warn("Empty response from server");
@@ -2349,8 +2348,12 @@
     }
 
     function deleteRow() {
+        const code = selectedRow.querySelector(".code-input").value;
         if (selectedRow) {
             selectedRow.remove();
+            const product = dynamicProductsCache.find(p => p.shortName === code);
+            // ⭐ Remove it from the cache (optional)
+            dynamicProductsCache = dynamicProductsCache.filter(p => p.shortName !== code);
             selectedRow = null;
             document.getElementById("contextMenu").style.display = "none";
 
@@ -2746,9 +2749,6 @@
         qtyInput.addEventListener("input", async () => {
             const code = codeInput.value.trim();
             const qty = parseInt(qtyInput.value) || 0;
-
-            console.log("Qty changed:", qty);
-
             if (!code || qty <= 0) {
                 updateTotalRow(row);
                 return;
@@ -2761,7 +2761,6 @@
 
             // 2️⃣ If not found, fetch full_product from backend
             if (!product) {
-                console.log("Product not found in master — fetching backend");
                 try {
                     const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}`);
                     if (res.ok) {
@@ -3076,7 +3075,6 @@
                     qtyForceFocus = false;
                     return;
                 }
-                console.log("name input : ", nameInput);
                 if(nameInput !== ""){
                      if (qty === "" || isNaN(qty) || qty <= 0) {
                         alert("Qty harus diisi!");
