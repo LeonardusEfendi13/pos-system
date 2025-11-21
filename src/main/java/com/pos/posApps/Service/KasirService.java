@@ -117,7 +117,7 @@ public class KasirService {
 
                     //Update product stock
                     Long newStock = productEntity.getStock() - dtos.getQty();
-                    System.out.println("Stock Before : " + dtos.getQty());
+                    System.out.println("Stock Before : " + productEntity.getStock());
                     System.out.println("Stock After : " + newStock);
                     productEntity.setStock(newStock);
                     productRepository.save(productEntity);
@@ -260,7 +260,7 @@ public class KasirService {
                 if (product == null) continue;
 
                 Long updatedStock = product.getStock() - dto.getQty();
-                System.out.println("Stock Before : " + dto.getQty());
+                System.out.println("Stock Before : " + product.getStock());
                 System.out.println("Stock After : " + updatedStock);
                 product.setStock(updatedStock);
                 productRepository.save(product);
