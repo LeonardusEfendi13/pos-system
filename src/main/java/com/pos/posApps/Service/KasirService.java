@@ -89,7 +89,7 @@ public class KasirService {
                 //Insert all the transaction details
                 Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
                 Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-                System.out.println("====START Create LOG (" + newTransactionDetailId + ")=====");
+                System.out.println("====START Create LOG (" + newTransactionId + ")=====");
 
                 for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
                     System.out.println("Part Number : " + dtos.getCode());
@@ -226,7 +226,7 @@ public class KasirService {
                     .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
             Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
-            System.out.println("====START Edit LOG (" + newTransactionDetailId + ")=====");
+            System.out.println("====START Edit LOG (" + transactionId + ")=====");
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
                 System.out.println("Part Number : " + dto.getCode());
                 System.out.println("Qty : " + dto.getQty());
