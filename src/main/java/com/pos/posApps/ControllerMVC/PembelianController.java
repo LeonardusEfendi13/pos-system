@@ -35,7 +35,7 @@ public class PembelianController {
     }
 
     @GetMapping
-    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "50") Integer size, @RequestParam(required = false) String search) {
+    public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
         String token;
         try {
@@ -45,7 +45,7 @@ public class PembelianController {
             return "redirect:/login";
         }
 
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
 
