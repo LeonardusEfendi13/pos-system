@@ -4,7 +4,6 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,15 +70,15 @@ public class KasirService {
 
             CustomerEntity customerEntity = customerEntityOpt.get();
             //Get last Transaction id
-            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
-            Long newTransactionId = Generator.generateId(lastTransactionId);
+//            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
+//            Long newTransactionId = Generator.generateId(lastTransactionId);
             String generatedNotaNumber = generateTodayNota(clientData.getClientId());
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
             transactionEntity.setClientEntity(clientData);
             transactionEntity.setTransactionNumber(generatedNotaNumber);
-            transactionEntity.setTransactionId(newTransactionId);
+//            transactionEntity.setTransactionId(newTransactionId);
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
@@ -87,9 +86,9 @@ public class KasirService {
             transactionRepository.save(transactionEntity);
 
             //Insert all the transaction details
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-            System.out.println("====START Create LOG (" + newTransactionId + ")=====");
+//            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+//            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+//            System.out.println("====START Create LOG (" + newTransactionId + ")=====");
 
             for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
                 System.out.println("Part Number : " + dtos.getCode());
@@ -105,7 +104,7 @@ public class KasirService {
 
                 lastProduct = dtos.getCode();
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+//                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dtos.getCode());
                 transactionDetailEntity.setFullName(dtos.getName());
                 transactionDetailEntity.setQty(dtos.getQty());
@@ -118,7 +117,7 @@ public class KasirService {
                 BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
                 transactionDetailEntity.setTotalProfit(totalProfit);
                 transactionDetailRepository.save(transactionDetailEntity);
-                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+//                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 //Update product stock
                 Long newStock = productEntity.getStock() - dtos.getQty();
@@ -246,18 +245,21 @@ public class KasirService {
 
             // Track product codes from new transaction
             Set<String> newProductKeys = new HashSet<>();
-            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc()
-                    .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+//            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc()
+//                    .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+//            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
             System.out.println("====START Edit LOG (" + transactionId + ")=====");
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+                if (dto == null) continue;
                 System.out.println("Part Number : " + dto.getCode());
                 System.out.println("Qty : " + dto.getQty());
-                if (dto == null) continue;
 
                 ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
-
+                if (product == null) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(true, "Produk " + dto.getName() + " tidak ditemukan");
+                }
 
                 String key = dto.getCode();
                 newProductKeys.add(key);
@@ -265,7 +267,7 @@ public class KasirService {
                 // Save new transaction detail
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                 lastProduct = dto.getCode();
-                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+//                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dto.getCode());
                 transactionDetailEntity.setFullName(dto.getName());
                 transactionDetailEntity.setQty(dto.getQty());
@@ -278,10 +280,7 @@ public class KasirService {
                 BigDecimal totalProfit = dto.getTotal().subtract(totalBasicPrice);
                 transactionDetailEntity.setTotalProfit(totalProfit);
                 transactionDetailRepository.save(transactionDetailEntity);
-                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
-
-                // Update stock
-                if (product == null) continue;
+//                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 Long updatedStock = product.getStock() - dto.getQty();
                 System.out.println("Stock Before : " + product.getStock());

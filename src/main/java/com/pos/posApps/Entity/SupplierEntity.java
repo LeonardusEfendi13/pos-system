@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 public class SupplierEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "supplier_seq")
+    @SequenceGenerator(name = "supplier_seq", sequenceName = "supplier_sequences", allocationSize = 1)
     @Column(name = "supplier_id")
     private Long supplierId;
 

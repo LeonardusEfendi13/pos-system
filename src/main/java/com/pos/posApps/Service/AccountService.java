@@ -9,7 +9,6 @@ import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
 import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.LoginTokenRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -43,11 +42,11 @@ public class AccountService {
                 return false;
             }
             String hashedPassword = passwordEncoder.encode(request.getPassword());
-            Long lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse(0L);
-            Long newAccountId = Generator.generateId(lastAccountId);
+//            Long lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse(0L);
+//            Long newAccountId = Generator.generateId(lastAccountId);
 
             AccountEntity newAccountEntity = new AccountEntity();
-            newAccountEntity.setAccountId(newAccountId);
+//            newAccountEntity.setAccountId(newAccountId);
             newAccountEntity.setName(request.getName());
             newAccountEntity.setUsername(request.getUsername());
             newAccountEntity.setPassword(hashedPassword);

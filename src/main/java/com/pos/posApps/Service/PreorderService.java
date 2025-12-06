@@ -6,7 +6,6 @@ import com.pos.posApps.Repository.PreorderDetailRepository;
 import com.pos.posApps.Repository.PreorderRepository;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.SupplierRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +28,6 @@ public class PreorderService {
 
     @Autowired
     SupplierRepository supplierRepository;
-
-    @Autowired
-    ProductRepository productRepository;
 
     @Autowired
     PreorderDetailRepository preorderDetailRepository;
@@ -101,12 +97,16 @@ public class PreorderService {
             }
             SupplierEntity supplierEntity = supplierEntityOpt.get();
 
+            if(req.getPreorderDetailDTOS() == null){
+                return new ResponseInBoolean(true, "Data tidak diterima");
+            }
+
             //Get last Transaction id
-            Long lastPreorderId = preorderRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPreorderIdDesc(clientData.getClientId()).map(PreorderEntity::getPreorderId).orElse(0L);
-            Long newPreorderId = Generator.generateId(lastPreorderId);
+//            Long lastPreorderId = preorderRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPreorderIdDesc(clientData.getClientId()).map(PreorderEntity::getPreorderId).orElse(0L);
+//            Long newPreorderId = Generator.generateId(lastPreorderId);
 
             PreorderEntity preorderEntity = new PreorderEntity();
-            preorderEntity.setPreorderId(newPreorderId);
+//            preorderEntity.setPreorderId(newPreorderId);
             preorderEntity.setSupplierEntity(supplierEntity);
             preorderEntity.setClientEntity(clientData);
             preorderEntity.setSubtotal(req.getSubtotal());
@@ -120,13 +120,13 @@ public class PreorderService {
             }
 
             //Insert all the transaction details
-            Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
-            Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
+//            Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
+//            Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
 
             for (PreorderDetailDTO dtos : req.getPreorderDetailDTOS()) {
 
                 PreorderDetailEntity preorderDetailEntity = new PreorderDetailEntity();
-                preorderDetailEntity.setPreorderDetailId(newPreorderDetailId);
+//                preorderDetailEntity.setPreorderDetailId(newPreorderDetailId);
                 preorderDetailEntity.setShortName(dtos.getCode());
                 preorderDetailEntity.setFullName(dtos.getName());
                 preorderDetailEntity.setQuantity(dtos.getQty());
@@ -135,7 +135,7 @@ public class PreorderService {
                 preorderDetailEntity.setTotalPrice(dtos.getTotal());
                 preorderDetailEntity.setPreorderEntity(preorderEntity);
                 preorderDetailRepository.save(preorderDetailEntity);
-                newPreorderDetailId = Generator.generateId(newPreorderDetailId);
+//                newPreorderDetailId = Generator.generateId(newPreorderDetailId);
             }
             return new ResponseInBoolean(true, "Preorder berhasil dibuat");
         } catch (Exception e) {
@@ -178,13 +178,13 @@ public class PreorderService {
             }
 
             //Insert all the transaction details
-            Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
-            Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
+//            Long lastPreorderDetailId = preorderDetailRepository.findFirstByDeletedAtIsNullOrderByPreorderDetailIdDesc().map(PreorderDetailEntity::getPreorderDetailId).orElse(0L);
+//            Long newPreorderDetailId = Generator.generateId(lastPreorderDetailId);
 
             for(PreorderDetailDTO dtos : req.getPreorderDetailDTOS()){
                 if(dtos != null) {
                     PreorderDetailEntity preorderDetailEntity = new PreorderDetailEntity();
-                    preorderDetailEntity.setPreorderDetailId(newPreorderDetailId);
+//                    preorderDetailEntity.setPreorderDetailId(newPreorderDetailId);
                     preorderDetailEntity.setShortName(dtos.getCode());
                     preorderDetailEntity.setFullName(dtos.getName());
                     preorderDetailEntity.setQuantity(dtos.getQty());
@@ -193,7 +193,7 @@ public class PreorderService {
                     preorderDetailEntity.setTotalPrice(dtos.getTotal());
                     preorderDetailEntity.setPreorderEntity(preorderEntity);
                     preorderDetailRepository.save(preorderDetailEntity);
-                    newPreorderDetailId = Generator.generateId(newPreorderDetailId);
+//                    newPreorderDetailId = Generator.generateId(newPreorderDetailId);
                 }
             }
             return new ResponseInBoolean(true, "Data berhasil disimpan");

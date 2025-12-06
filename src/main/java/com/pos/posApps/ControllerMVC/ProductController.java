@@ -244,7 +244,7 @@ public class ProductController {
         if(productId != null){
             productName = productService.findProductById(productId).getFullName();
 //            Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
-            stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
+            stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
 //            totalElements = pageStokData.getTotalElements();
 //            stokData = pageStokData.getContent();
 //            totalPages = pageStokData.getTotalPages();

@@ -42,9 +42,8 @@ public class AuthService {
             String generatedToken = Generator.generateToken();
 
             //Get last token id
-            Long lastTokenId = loginTokenRepository.findFirstByOrderByTokenIdDesc().map(LoginTokenEntity::getTokenId).orElse(0L);
-            Long newToken = Generator.generateId(lastTokenId);
-
+//            Long lastTokenId = loginTokenRepository.findFirstByOrderByTokenIdDesc().map(LoginTokenEntity::getTokenId).orElse(0L);
+//            Long newToken = Generator.generateId(lastTokenId);
 
             //Update Account Data
             accountData.setLastLogin(getCurrentTimestamp());
@@ -53,7 +52,7 @@ public class AuthService {
 
             //Insert into LoginToken table
             LoginTokenEntity loginToken = new LoginTokenEntity();
-            loginToken.setTokenId(newToken);
+//            loginToken.setTokenId(newToken);
             loginToken.setToken(generatedToken);
             loginToken.setCreatedAt(getCurrentTimestamp());
             loginToken.setAccountEntity(accountData);

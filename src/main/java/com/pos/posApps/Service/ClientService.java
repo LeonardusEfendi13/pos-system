@@ -5,7 +5,6 @@ import com.pos.posApps.DTO.Dtos.CreateClientRequest;
 import com.pos.posApps.DTO.Dtos.EditClientRequest;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.ClientRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,10 +71,7 @@ public class ClientService {
     @Transactional
     public boolean doCreateClient(CreateClientRequest req) {
         try {
-            Long lastClientId = clientRepository.findFirstByOrderByClientIdDesc().map(ClientEntity::getClientId).orElse(0L);
-            Long newClientId = Generator.generateId(lastClientId);
             ClientEntity clientEntity = new ClientEntity();
-            clientEntity.setClientId(newClientId);
             clientEntity.setName(req.getName());
             clientEntity.setCreatedAt(getCurrentTimestamp());
             clientEntity.setUpdatedAt(getCurrentTimestamp());

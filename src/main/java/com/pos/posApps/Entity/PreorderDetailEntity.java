@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "preorder_detail")
 public class PreorderDetailEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "preorder_detail_seq")
+    @SequenceGenerator(name = "preorder_detail_seq", sequenceName = "preorder_detail_sequences", allocationSize = 1)
     @Column(name = "preorder_detail_id")
     private Long preorderDetailId;
 
