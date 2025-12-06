@@ -15,6 +15,8 @@ import java.util.List;
 public class ProductEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_seq")
+    @SequenceGenerator(name = "product_seq", sequenceName = "product_sequences", allocationSize = 1)
     @Column(name = "product_id")
     private Long productId;
 

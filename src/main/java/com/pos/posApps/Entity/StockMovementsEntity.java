@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class StockMovementsEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_movements_seq")
+    @SequenceGenerator(name = "stock_movements_seq", sequenceName = "stock_movements_sequences", allocationSize = 1)
     @Column(name = "stock_movements_id")
     private Long stockMovementsId;
 

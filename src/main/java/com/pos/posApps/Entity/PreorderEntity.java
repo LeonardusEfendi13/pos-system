@@ -14,6 +14,8 @@ import java.util.List;
 @Table(name = "preorder")
 public class PreorderEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "preorder_seq")
+    @SequenceGenerator(name = "preorder_seq", sequenceName = "preorder_sequences", allocationSize = 1)
     @Column(name = "preorder_id")
     private Long preorderId;
 

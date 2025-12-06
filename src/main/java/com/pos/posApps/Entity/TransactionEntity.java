@@ -16,6 +16,8 @@ import java.util.List;
 public class TransactionEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq")
+    @SequenceGenerator(name = "transaction_seq", sequenceName = "transaction_sequences", allocationSize = 1)
     @Column(name = "transaction_id")
     private Long transactionId;
 

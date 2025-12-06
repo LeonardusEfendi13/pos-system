@@ -7,7 +7,6 @@ import com.pos.posApps.Repository.ProductPricesRepository;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.StockMovementsRepository;
 import com.pos.posApps.Repository.SupplierRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -70,28 +69,7 @@ public class ProductService {
         return convertToDTO(productEntity);
     }
 
-//    public Page<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-//        Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
-//                .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
-//                        clientId, productId, startDate, endDate, pageable
-//                );
-//
-//        return stockMovementData.map(data -> new StockMovementsDTO(
-//                data.getStockMovementsId(),
-//                data.getReferenceNo(),
-//                data.getTipeKartuStok(),
-//                data.getQtyIn(),
-//                data.getQtyOut(),
-//                data.getSaldo(),
-//                data.getCreatedAt()
-//        ));
-//    }
-
-    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-//        Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
-//                .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
-//                        clientId, productId, startDate, endDate, pageable
-//                );
+    public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate) {
         List<StockMovementsEntity> stockMovementData = stockMovementsRepository
                 .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
                         clientId, productId, startDate, endDate);
@@ -104,15 +82,6 @@ public class ProductService {
                 data.getSaldo(),
                 data.getCreatedAt()
         )).collect(Collectors.toList());
-//        return stockMovementData.map(data -> new StockMovementsDTO(
-//                data.getStockMovementsId(),
-//                data.getReferenceNo(),
-//                data.getTipeKartuStok(),
-//                data.getQtyIn(),
-//                data.getQtyOut(),
-//                data.getSaldo(),
-//                data.getCreatedAt()
-//        ));
     }
 
 
@@ -157,8 +126,8 @@ public class ProductService {
                 return new ResponseInBoolean(false, "Barang sudah ada");
             }
 
-            Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
-            Long newProductId = Generator.generateId(lastProductId);
+//            Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
+//            Long newProductId = Generator.generateId(lastProductId);
 
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntityOpt.isEmpty()) {
@@ -169,7 +138,7 @@ public class ProductService {
 
             //Insert Product
             ProductEntity newProduct = new ProductEntity();
-            newProduct.setProductId(newProductId);
+//            newProduct.setProductId(newProductId);
             newProduct.setShortName(req.getShortName());
             newProduct.setFullName(req.getFullName());
             newProduct.setSupplierPrice(req.getSupplierPrice());
@@ -180,10 +149,10 @@ public class ProductService {
             productRepository.save(newProduct);
 
             //Insert Product Prices
-            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
-            Long newProductPricesId = Generator.generateId(lastProductPricesId);
+//            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
+//            Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
-            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+            stockMovementService.insertKartuStok(new AdjustStockDTO(
                     newProduct,
                     "-",
                     TipeKartuStok.PENYESUAIAN,
@@ -192,19 +161,29 @@ public class ProductService {
                     req.getStock(),
                     clientData
             ));
-            if (!isAdjusted) {
-                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                return new ResponseInBoolean(false, "Gagal insert kartu stok");
-            }
+
+//            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                    newProduct,
+//                    "-",
+//                    TipeKartuStok.PENYESUAIAN,
+//                    0L,
+//                    0L,
+//                    req.getStock(),
+//                    clientData
+//            ));
+//            if (!isAdjusted) {
+//                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                return new ResponseInBoolean(false, "Gagal insert kartu stok");
+//            }
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                newProductPrices.setProductPricesId(newProductPricesId);
+//                newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(newProduct);
                 newProductPrices.setPrice(productPricesData.getPrice());
                 newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
                 newProductPrices.setPercentage(productPricesData.getPercentage());
-                newProductPricesId = Generator.generateId(newProductPricesId);
+//                newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
 
@@ -235,7 +214,7 @@ public class ProductService {
             }
 
             if (!Objects.equals(req.getStock(), productEntity.getStock())) {
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         productEntity,
                         "-",
                         TipeKartuStok.PENYESUAIAN,
@@ -244,10 +223,19 @@ public class ProductService {
                         req.getStock(),
                         clientEntity
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal Adjust kartu stok");
-                }
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        productEntity,
+//                        "-",
+//                        TipeKartuStok.PENYESUAIAN,
+//                        0L,
+//                        0L,
+//                        req.getStock(),
+//                        clientEntity
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Gagal Adjust kartu stok");
+//                }
             }
 
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
@@ -267,17 +255,17 @@ public class ProductService {
             //Delete all product prices related to product id
             productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
-            Long newProductPricesId = Generator.generateId(lastProductPricesId);
+//            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
+//            Long newProductPricesId = Generator.generateId(lastProductPricesId);
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
-                newProductPrices.setProductPricesId(newProductPricesId);
+//                newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(productEntity);
                 newProductPrices.setPrice(productPricesData.getPrice());
                 newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
                 newProductPrices.setPercentage(productPricesData.getPercentage());
-                newProductPricesId = Generator.generateId(newProductPricesId);
+//                newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
             return new ResponseInBoolean(true, "Berhasil Edit Data");

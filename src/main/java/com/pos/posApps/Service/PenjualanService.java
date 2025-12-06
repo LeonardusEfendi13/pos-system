@@ -9,8 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -189,7 +187,7 @@ public class PenjualanService {
                 product.setStock(restoredStock);
                 productRepository.save(product);
 
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         product,
                         transactionEntity.getTransactionNumber(),
                         TipeKartuStok.KOREKSI_PENJUALAN,
@@ -198,10 +196,19 @@ public class PenjualanService {
                         restoredStock,
                         clientData
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return false;
-                }
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        product,
+//                        transactionEntity.getTransactionNumber(),
+//                        TipeKartuStok.KOREKSI_PENJUALAN,
+//                        old.getQty(),
+//                        0L,
+//                        restoredStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return false;
+//                }
             }
             old.setDeletedAt(getCurrentTimestamp());
             transactionDetailRepository.save(old);

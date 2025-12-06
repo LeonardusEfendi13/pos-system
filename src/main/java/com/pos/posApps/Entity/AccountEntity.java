@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class AccountEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_seq")
+    @SequenceGenerator(name = "account_seq", sequenceName = "account_sequences", allocationSize = 1)
     @Column(name = "account_id")
     private Long accountId;
 

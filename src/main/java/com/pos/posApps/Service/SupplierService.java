@@ -3,7 +3,6 @@ package com.pos.posApps.Service;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Repository.SupplierRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,11 +38,11 @@ public class SupplierService {
                 return false;
             }
 
-            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
-            Long lastSupplierId = lastSupplierData == null ? 0L : lastSupplierData.getSupplierId();
-            Long newSupplierId = Generator.generateId(lastSupplierId);
+//            SupplierEntity lastSupplierData = supplierRepository.findFirstByOrderBySupplierIdDesc();
+//            Long lastSupplierId = lastSupplierData == null ? 0L : lastSupplierData.getSupplierId();
+//            Long newSupplierId = Generator.generateId(lastSupplierId);
             SupplierEntity newSupplierEntity = new SupplierEntity();
-            newSupplierEntity.setSupplierId(newSupplierId);
+//            newSupplierEntity.setSupplierId(newSupplierId);
             newSupplierEntity.setSupplierName(supplierName);
             newSupplierEntity.setClientEntity(clientData);
             supplierRepository.save(newSupplierEntity);

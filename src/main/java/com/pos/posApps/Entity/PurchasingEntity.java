@@ -15,6 +15,8 @@ import java.util.List;
 public class PurchasingEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "purchasing_seq")
+    @SequenceGenerator(name = "purchasing_seq", sequenceName = "purchasing_sequences", allocationSize = 1)
     @Column(name = "purchasing_id")
     private Long purchasingId;
 

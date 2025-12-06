@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 public class LoginTokenEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "login_token_seq")
+    @SequenceGenerator(name = "login_token_seq", sequenceName = "login_token_sequences", allocationSize = 1)
     @Column(name = "token_id")
     private Long tokenId;
 

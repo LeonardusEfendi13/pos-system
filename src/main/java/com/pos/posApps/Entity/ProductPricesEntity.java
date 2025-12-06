@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class ProductPricesEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_prices_seq")
+    @SequenceGenerator(name = "product_prices_seq", sequenceName = "product_prices_sequences", allocationSize = 1)
     @Column(name = "product_prices_id")
     private Long productPricesId;
 

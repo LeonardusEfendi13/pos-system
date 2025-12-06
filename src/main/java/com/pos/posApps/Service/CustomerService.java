@@ -4,7 +4,6 @@ import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.CustomerRepository;
-import com.pos.posApps.Util.Generator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +19,6 @@ public class CustomerService {
     @Autowired
     CustomerRepository customerRepository;
 
-    @Autowired
-    private ClientRepository clientRepository;
-
     @Transactional
     public boolean doCreateCustomer(String customerName, String alamat, ClientEntity clientData) {
         try {
@@ -30,11 +26,7 @@ public class CustomerService {
             if (customerEntity != null) {
                 return false;
             }
-            Long lastCustomerId = customerRepository.findFirstByOrderByCustomerIdDesc().map(CustomerEntity::getCustomerId).orElse(0L);
-            Long newCustomerId = Generator.generateId(lastCustomerId);
-
             CustomerEntity newCustomerEntity = new CustomerEntity();
-            newCustomerEntity.setCustomerId(newCustomerId);
             newCustomerEntity.setName(customerName);
             newCustomerEntity.setAlamat(alamat);
             newCustomerEntity.setClientEntity(clientData);

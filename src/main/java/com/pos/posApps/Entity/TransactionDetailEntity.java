@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 public class TransactionDetailEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_detail_seq")
+    @SequenceGenerator(name = "transaction_detail_seq", sequenceName = "transaction_detail_sequences", allocationSize = 1)
     @Column(name = "transaction_detail_id")
     private Long transactionDetailId;
 
