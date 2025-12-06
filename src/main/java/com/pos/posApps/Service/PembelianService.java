@@ -563,11 +563,11 @@ public class PembelianService {
     public ResponseInBoolean payFaktur(Long clientId, LunaskanPembelianDTO req) {
         try {
             // Validation for transfer payments
-            if ("transfer".equalsIgnoreCase(req.getJenisPembayaran())) {
-                if (req.getBuktiPembayaran() == null || req.getBuktiPembayaran().isEmpty()) {
-                    return new ResponseInBoolean(false, "Harap unggah bukti pembayaran");
-                }
-            }
+//            if ("transfer".equalsIgnoreCase(req.getJenisPembayaran())) {
+//                if (req.getBuktiPembayaran() == null || req.getBuktiPembayaran().isEmpty()) {
+//                    return new ResponseInBoolean(false, "Harap unggah bukti pembayaran");
+//                }
+//            }
 
             // Find target purchasing entity
             Optional<PurchasingEntity> optional = purchasingRepository
