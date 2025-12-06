@@ -883,7 +883,6 @@ body {
 
             const updatedProductList = await fetchResponse.json();
             masterProducts = updatedProductList;
-            console.log("update product list : ", JSON.stringify(masterProducts, null, 2));
             loadProductTable(masterProducts);
 
             const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));

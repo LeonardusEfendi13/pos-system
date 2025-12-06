@@ -817,7 +817,6 @@
 
             const updatedProductList = await fetchResponse.json();
             masterProducts = updatedProductList;
-            console.log("update product list : ", JSON.stringify(masterProducts, null, 2));
             loadProductTable(masterProducts);
 
             const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
@@ -1685,7 +1684,6 @@
    }
 
    function fillProductRow(row, product) {
-        console.log("product : ", product);
       const qty = 1; // default qty
       row.querySelector(".code-input").value = product.shortName;
       row.querySelector(".name-input").value = product.fullName;
@@ -2129,7 +2127,6 @@
             const qty = row.querySelector(".qty-input")?.value.trim();
 
             const isFullyFilled = code && name && qty;
-            console.log("valid : ", isFullyFilled);
             if (!isFullyFilled) {
                 // Hapus baris yang tidak lengkap
                 row.remove();
@@ -2265,7 +2262,6 @@
        }
      });
      try {
-      console.log("transaction data : ", JSON.stringify(transactionData, null, 2));
       let response;
       if (
         masterTransactions.pembelianId !== null &&
@@ -2435,7 +2431,6 @@
 
 
    async function loadTransaction(transaction) {
-    console.log("Entering load Transaction");
      while (sellTableBody.firstChild) {
         sellTableBody.removeChild(sellTableBody.firstChild);
       }
