@@ -184,7 +184,7 @@ public class PembelianService {
                 product.setStock(restoredStock);
                 productRepository.save(product);
 
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         product,
                         transactionEntity.getPurchasingNumber(),
                         TipeKartuStok.KOREKSI_PEMBELIAN,
@@ -193,10 +193,20 @@ public class PembelianService {
                         restoredStock,
                         clientData
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return false;
-                }
+
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        product,
+//                        transactionEntity.getPurchasingNumber(),
+//                        TipeKartuStok.KOREKSI_PEMBELIAN,
+//                        0L,
+//                        old.getQty(),
+//                        restoredStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return false;
+//                }
             }
             old.setDeletedAt(getCurrentTimestamp());
             purchasingDetailRepository.save(old);
@@ -306,7 +316,7 @@ public class PembelianService {
                 }
 
                 //Insert kartu stok
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         productEntity,
                         req.getPurchasingNumber(),
                         TipeKartuStok.PEMBELIAN,
@@ -315,10 +325,19 @@ public class PembelianService {
                         newStock,
                         clientData
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal adjust di create pembelian. Errro karena  : " + lastProduct);
-                }
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        productEntity,
+//                        req.getPurchasingNumber(),
+//                        TipeKartuStok.PEMBELIAN,
+//                        dtos.getQty(),
+//                        0L,
+//                        newStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Gagal adjust di create pembelian. Errro karena  : " + lastProduct);
+//                }
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
         } catch (Exception e) {
@@ -403,7 +422,7 @@ public class PembelianService {
                     productRepository.save(product);
 
                     // Insert kartu stok (restore)
-                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                    stockMovementService.insertKartuStok(new AdjustStockDTO(
                             product,
                             purchasingEntity.getPurchasingNumber(),
                             TipeKartuStok.KOREKSI_PEMBELIAN,
@@ -412,10 +431,19 @@ public class PembelianService {
                             product.getStock(),
                             clientData
                     ));
-                    if (!isAdjusted) {
-                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore). Karena barang : " + lastProduct);
-                    }
+//                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                            product,
+//                            purchasingEntity.getPurchasingNumber(),
+//                            TipeKartuStok.KOREKSI_PEMBELIAN,
+//                            0L,
+//                            old.getQty(),
+//                            product.getStock(),
+//                            clientData
+//                    ));
+//                    if (!isAdjusted) {
+//                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                        return new ResponseInBoolean(false, "Gagal adjust di edit pembelian (restore). Karena barang : " + lastProduct);
+//                    }
 
                     oldProductMap.put(key, old); // Save for later comparison
                 }
@@ -501,7 +529,7 @@ public class PembelianService {
                 }
 
                 // Insert kartu stok (new)
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         product,
                         purchasingEntity.getPurchasingNumber(),
                         TipeKartuStok.KOREKSI_PEMBELIAN,
@@ -510,10 +538,19 @@ public class PembelianService {
                         updatedStock,
                         clientData
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail pembelian");
-                }
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        product,
+//                        purchasingEntity.getPurchasingNumber(),
+//                        TipeKartuStok.KOREKSI_PEMBELIAN,
+//                        dto.getQty(),
+//                        0L,
+//                        updatedStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail pembelian");
+//                }
             }
 
             return new ResponseInBoolean(true, "Data berhasil disimpan");

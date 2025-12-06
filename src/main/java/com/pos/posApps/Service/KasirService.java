@@ -59,91 +59,106 @@ public class KasirService {
         return today + String.format("%03d", counter);
     }
 
-        @Transactional
-        public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData) {
-            String lastProduct = "Tanya Leon";
-            try {
-                //Get Customer Entity
-                Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
-                if (customerEntityOpt.isEmpty()) {
-                    return new ResponseInBoolean(true, "Customer tidak ada");
-                }
-
-                CustomerEntity customerEntity = customerEntityOpt.get();
-                //Get last Transaction id
-                Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
-                Long newTransactionId = Generator.generateId(lastTransactionId);
-                String generatedNotaNumber = generateTodayNota(clientData.getClientId());
-
-                //insert the transaction data
-                TransactionEntity transactionEntity = new TransactionEntity();
-                transactionEntity.setClientEntity(clientData);
-                transactionEntity.setTransactionNumber(generatedNotaNumber);
-                transactionEntity.setTransactionId(newTransactionId);
-                transactionEntity.setCustomerEntity(customerEntity);
-                transactionEntity.setTotalPrice(req.getTotalPrice());
-                transactionEntity.setTotalDiscount(req.getTotalDisc());
-                transactionEntity.setSubtotal(req.getSubtotal());
-                transactionRepository.save(transactionEntity);
-
-                //Insert all the transaction details
-                Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-                Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-                System.out.println("====START Create LOG (" + newTransactionId + ")=====");
-
-                for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
-                    System.out.println("Part Number : " + dtos.getCode());
-                    System.out.println("Qty : " + dtos.getQty());
-
-                    //Get product Entity
-                    ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
-
-                    lastProduct = dtos.getCode();
-                    TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-                    transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
-                    transactionDetailEntity.setShortName(dtos.getCode());
-                    transactionDetailEntity.setFullName(dtos.getName());
-                    transactionDetailEntity.setQty(dtos.getQty());
-                    transactionDetailEntity.setPrice(dtos.getPrice());
-                    transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
-                    transactionDetailEntity.setTotalPrice(dtos.getTotal());
-                    transactionDetailEntity.setTransactionEntity(transactionEntity);
-                    transactionDetailEntity.setBasicPrice(productEntity.getSupplierPrice());
-                    BigDecimal totalBasicPrice = productEntity.getSupplierPrice().multiply(BigDecimal.valueOf(dtos.getQty()));
-                    BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
-                    transactionDetailEntity.setTotalProfit(totalProfit);
-                    transactionDetailRepository.save(transactionDetailEntity);
-                    newTransactionDetailId = Generator.generateId(newTransactionDetailId);
-
-                    //Update product stock
-                    Long newStock = productEntity.getStock() - dtos.getQty();
-                    System.out.println("Stock Before : " + productEntity.getStock());
-                    System.out.println("Stock After : " + newStock);
-                    productEntity.setStock(newStock);
-                    productRepository.save(productEntity);
-
-                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-                            productEntity,
-                            generatedNotaNumber,
-                            TipeKartuStok.PENJUALAN,
-                            0L,
-                            dtos.getQty(),
-                            newStock,
-                            clientData
-                    ));
-                    if (!isAdjusted) {
-                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(false, "Gagal adjust di create transaction, ERROR karena : " + lastProduct);
-                    }
-                }
-                System.out.println("====END LOG=====");
-
-                return new ResponseInBoolean(true, generatedNotaNumber);
-            } catch (Exception e) {
-                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                return new ResponseInBoolean(false, e.getMessage() +". ERROR KARENA : " + lastProduct);
+    @Transactional
+    public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData) {
+        String lastProduct = "Tanya Leon";
+        try {
+            //Get Customer Entity
+            Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
+            if (customerEntityOpt.isEmpty()) {
+                return new ResponseInBoolean(true, "Customer tidak ada");
             }
+
+            CustomerEntity customerEntity = customerEntityOpt.get();
+            //Get last Transaction id
+            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
+            Long newTransactionId = Generator.generateId(lastTransactionId);
+            String generatedNotaNumber = generateTodayNota(clientData.getClientId());
+
+            //insert the transaction data
+            TransactionEntity transactionEntity = new TransactionEntity();
+            transactionEntity.setClientEntity(clientData);
+            transactionEntity.setTransactionNumber(generatedNotaNumber);
+            transactionEntity.setTransactionId(newTransactionId);
+            transactionEntity.setCustomerEntity(customerEntity);
+            transactionEntity.setTotalPrice(req.getTotalPrice());
+            transactionEntity.setTotalDiscount(req.getTotalDisc());
+            transactionEntity.setSubtotal(req.getSubtotal());
+            transactionRepository.save(transactionEntity);
+
+            //Insert all the transaction details
+            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
+            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
+            System.out.println("====START Create LOG (" + newTransactionId + ")=====");
+
+            for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
+                System.out.println("Part Number : " + dtos.getCode());
+                System.out.println("Qty : " + dtos.getQty());
+
+                //Get product Entity
+                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                if (productEntity == null) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
+                }
+                System.out.println("Valid");
+
+                lastProduct = dtos.getCode();
+                TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
+                transactionDetailEntity.setShortName(dtos.getCode());
+                transactionDetailEntity.setFullName(dtos.getName());
+                transactionDetailEntity.setQty(dtos.getQty());
+                transactionDetailEntity.setPrice(dtos.getPrice());
+                transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
+                transactionDetailEntity.setTotalPrice(dtos.getTotal());
+                transactionDetailEntity.setTransactionEntity(transactionEntity);
+                transactionDetailEntity.setBasicPrice(productEntity.getSupplierPrice());
+                BigDecimal totalBasicPrice = productEntity.getSupplierPrice().multiply(BigDecimal.valueOf(dtos.getQty()));
+                BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
+                transactionDetailEntity.setTotalProfit(totalProfit);
+                transactionDetailRepository.save(transactionDetailEntity);
+                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
+
+                //Update product stock
+                Long newStock = productEntity.getStock() - dtos.getQty();
+                System.out.println("Stock Before : " + productEntity.getStock());
+                System.out.println("Stock After : " + newStock);
+                productEntity.setStock(newStock);
+                productRepository.save(productEntity);
+
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        productEntity,
+                        generatedNotaNumber,
+                        TipeKartuStok.PENJUALAN,
+                        0L,
+                        dtos.getQty(),
+                        newStock,
+                        clientData
+                ));
+
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        productEntity,
+//                        generatedNotaNumber,
+//                        TipeKartuStok.PENJUALAN,
+//                        0L,
+//                        dtos.getQty(),
+//                        newStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Gagal adjust di create transaction, ERROR karena : " + lastProduct);
+//                }
+            }
+            System.out.println("====END LOG=====");
+
+            return new ResponseInBoolean(true, generatedNotaNumber);
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, e.getMessage() + ". ERROR KARENA : " + lastProduct);
         }
+    }
 
     @Transactional
     public ResponseInBoolean editTransaction(Long transactionId, CreateTransactionRequest req, ClientEntity clientData) {
@@ -199,7 +214,7 @@ public class KasirService {
                     productRepository.save(product);
 
                     // Insert kartu stok restore karena qty berubah
-                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                    stockMovementService.insertKartuStok(new AdjustStockDTO(
                             product,
                             transactionEntity.getTransactionNumber(),
                             TipeKartuStok.KOREKSI_PENJUALAN,
@@ -208,10 +223,19 @@ public class KasirService {
                             product.getStock(),
                             clientData
                     ));
-                    if (!isAdjusted) {
-                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(false, "Gagal adjust saat restore stok");
-                    }
+//                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                            product,
+//                            transactionEntity.getTransactionNumber(),
+//                            TipeKartuStok.KOREKSI_PENJUALAN,
+//                            old.getQty(),
+//                            0L,
+//                            product.getStock(),
+//                            clientData
+//                    ));
+//                    if (!isAdjusted) {
+//                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                        return new ResponseInBoolean(false, "Gagal adjust saat restore stok");
+//                    }
 
                     oldProductMap.put(key, old);
                 }
@@ -273,7 +297,7 @@ public class KasirService {
                 }
 
                 // Qty berubah atau produk baru → insert kartu stok
-                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
                         product,
                         transactionEntity.getTransactionNumber(),
                         TipeKartuStok.KOREKSI_PENJUALAN,
@@ -282,10 +306,19 @@ public class KasirService {
                         updatedStock,
                         clientData
                 ));
-                if (!isAdjusted) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail. ERROR karena : " + lastProduct);
-                }
+//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        product,
+//                        transactionEntity.getTransactionNumber(),
+//                        TipeKartuStok.KOREKSI_PENJUALAN,
+//                        0L,
+//                        dto.getQty(),
+//                        updatedStock,
+//                        clientData
+//                ));
+//                if (!isAdjusted) {
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail. ERROR karena : " + lastProduct);
+//                }
             }
             System.out.println("====END LOG=====");
 
@@ -294,7 +327,7 @@ public class KasirService {
 
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage() +". ERROR karena : " + lastProduct);
+            return new ResponseInBoolean(false, e.getMessage() + ". ERROR karena : " + lastProduct);
         }
     }
 }

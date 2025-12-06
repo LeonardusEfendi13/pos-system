@@ -1,9 +1,11 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.Entity.ProductEntity;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,6 +53,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 """)
     ProductEntity findFirstActiveProduct(String fullName, String shortName, Long productId, Long clientId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     ProductEntity findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
     Optional<ProductEntity> findFirstByOrderByProductIdDesc();
