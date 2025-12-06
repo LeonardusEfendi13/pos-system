@@ -132,6 +132,10 @@
         .filepond--drip-blob {
             background-color: #7f8a9a;
         }
+        .required-label::after {
+            content: " *";
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -252,7 +256,7 @@
                                 <!-- Bukti Bayar Button -->
                                 <button type="button" class="btn btn-sm btn-success bukti-btn"
                                         th:data-id="${pembelian.pembelianId}"
-                                        th:if="${pembelian.isPaid}">
+                                        th:if="${pembelian.isPaid && !pembelian.isCash}">
                                     Bukti Bayar
                                 </button>
                             </td>
@@ -343,13 +347,13 @@
                     </div>
                     <div id="transferFields" style="display: none;">
                         <div class="form-group mt-3">
-                            <label for="rekeningAsal">Rekening Asal</label>
-                            <input type="text" class="form-control" id="rekeningAsal" name="rekeningAsal" placeholder="Nomor Rekening Asal"/>
+                            <label for="rekeningAsal" class="required-label">Rekening Asal</label>
+                            <input type="text" class="form-control" id="rekeningAsal" name="rekeningAsal" placeholder="Nomor Rekening Asal" required/>
                         </div>
 
                         <div class="form-group mt-3">
-                            <label for="rekeningTujuan">Rekening Tujuan</label>
-                            <input type="text" class="form-control" id="rekeningTujuan" name="rekeningTujuan" placeholder="Nomor Rekening Tujuan"/>
+                            <label for="rekeningTujuan" class="required-label">Rekening Tujuan</label>
+                            <input type="text" class="form-control" id="rekeningTujuan" name="rekeningTujuan" placeholder="Nomor Rekening Tujuan" required/>
                         </div>
                         <br>
                         <label for="buktiPembayaran">Bukti Pembayaran</label>
@@ -389,17 +393,6 @@
 </script>
 <!--Populate Bukti Bayar-->
 <script>
-<!--    function setLocalDateTimeInput(inputEl, dateTimeString) {-->
-<!--        // Create a Date object, but treat it as local, not UTC-->
-<!--        const d = new Date(dateTimeString);-->
-
-<!--        // Offset adjustment: reverse the timezone shift-->
-<!--        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)-->
-<!--            .toISOString()-->
-<!--            .slice(0, 16); // YYYY-MM-DDTHH:mm-->
-
-<!--        inputEl.value = local;-->
-<!--    }-->
     document.addEventListener("DOMContentLoaded", function () {
 
         // ==========================
@@ -511,6 +504,11 @@
                         if (data.filePath) {
                             pond.removeFiles();
                             pond.addFile("/" + data.filePath);
+                        } else {
+                            pond.removeFiles();
+                            pond.setOptions({
+                                labelIdle: 'Tidak ada bukti pembayaran'
+                            });
                         }
                     }
 
@@ -747,17 +745,6 @@
 
        const $searchInput = $('#searchInput');
        const baseUrl = '/pembelian';
-
-       $searchInput.on('input', function() {
-           if ($(this).val().trim() === '') {
-               const currentUrl = new URL(window.location.href);
-               const hasSearchParam = currentUrl.searchParams.has('search');
-
-               if (hasSearchParam) {
-                   window.location.href = baseUrl;
-               }
-           }
-       });
 
        $('#searchButton').on('click', function(e) {
            if ($searchInput.val().trim() === '') {
