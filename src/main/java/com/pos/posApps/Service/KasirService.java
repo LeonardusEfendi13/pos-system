@@ -11,6 +11,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -30,32 +31,32 @@ public class KasirService {
     @Autowired
     StockMovementService stockMovementService;
 
+    @Autowired
+    DailyCounterRepository dailyCounterRepository;
+
+    @Transactional
     public String generateTodayNota(Long clientId) {
+        String todayStr = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        LocalDate today = LocalDate.now();
 
-        String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
-
-        // Find last nota of today
-        Optional<TransactionEntity> lastToday = transactionRepository
-                .findFirstByClientEntity_ClientIdAndDeletedAtIsNullAndTransactionNumberStartingWithOrderByTransactionNumberDesc(
-                        clientId,
-                        today
-                );
+        Optional<DailyCounterEntity> counterOpt = dailyCounterRepository.findByCounterDateForUpdate(today);
 
         long counter;
 
-        if (lastToday.isEmpty()) {
-            // No nota today → start from 1
-            counter = 1L;
+        if (counterOpt.isPresent()) {
+            DailyCounterEntity dailyCounter = counterOpt.get();
+            counter = dailyCounter.getLastCounter() + 1;
+            dailyCounter.setLastCounter(counter);
+            dailyCounterRepository.save(dailyCounter);
         } else {
-            // Get last nota number (e.g., "20251114012")
-            String lastNota = lastToday.get().getTransactionNumber();
-
-            // Extract last 3 digits → counter
-            String counterPart = lastNota.substring(8); // after yyyyMMdd
-            counter = Long.parseLong(counterPart) + 1;
+            counter = 1L;
+            DailyCounterEntity newCounter = new DailyCounterEntity();
+            newCounter.setCounterDate(today);
+            newCounter.setLastCounter(counter);
+            dailyCounterRepository.save(newCounter);
         }
 
-        return today + String.format("%03d", counter);
+        return todayStr + String.format("%03d", counter);
     }
 
     @Transactional
@@ -69,42 +70,27 @@ public class KasirService {
             }
 
             CustomerEntity customerEntity = customerEntityOpt.get();
-            //Get last Transaction id
-//            Long lastTransactionId = transactionRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByTransactionIdDesc(clientData.getClientId()).map(TransactionEntity::getTransactionId).orElse(0L);
-//            Long newTransactionId = Generator.generateId(lastTransactionId);
             String generatedNotaNumber = generateTodayNota(clientData.getClientId());
 
             //insert the transaction data
             TransactionEntity transactionEntity = new TransactionEntity();
             transactionEntity.setClientEntity(clientData);
             transactionEntity.setTransactionNumber(generatedNotaNumber);
-//            transactionEntity.setTransactionId(newTransactionId);
             transactionEntity.setCustomerEntity(customerEntity);
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
-            //Insert all the transaction details
-//            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc().map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-//            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
-//            System.out.println("====START Create LOG (" + newTransactionId + ")=====");
-
             for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
-                System.out.println("Part Number : " + dtos.getCode());
-                System.out.println("Qty : " + dtos.getQty());
-
                 //Get product Entity
                 ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 if (productEntity == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
                 }
-                System.out.println("Valid");
-
                 lastProduct = dtos.getCode();
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-//                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dtos.getCode());
                 transactionDetailEntity.setFullName(dtos.getName());
                 transactionDetailEntity.setQty(dtos.getQty());
@@ -117,12 +103,9 @@ public class KasirService {
                 BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
                 transactionDetailEntity.setTotalProfit(totalProfit);
                 transactionDetailRepository.save(transactionDetailEntity);
-//                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 //Update product stock
                 Long newStock = productEntity.getStock() - dtos.getQty();
-                System.out.println("Stock Before : " + productEntity.getStock());
-                System.out.println("Stock After : " + newStock);
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
 
@@ -135,23 +118,7 @@ public class KasirService {
                         newStock,
                         clientData
                 ));
-
-//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                        productEntity,
-//                        generatedNotaNumber,
-//                        TipeKartuStok.PENJUALAN,
-//                        0L,
-//                        dtos.getQty(),
-//                        newStock,
-//                        clientData
-//                ));
-//                if (!isAdjusted) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return new ResponseInBoolean(false, "Gagal adjust di create transaction, ERROR karena : " + lastProduct);
-//                }
             }
-            System.out.println("====END LOG=====");
-
             return new ResponseInBoolean(true, generatedNotaNumber);
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -245,15 +212,9 @@ public class KasirService {
 
             // Track product codes from new transaction
             Set<String> newProductKeys = new HashSet<>();
-//            Long lastTransactionDetailId = transactionDetailRepository.findFirstByDeletedAtIsNullOrderByTransactionDetailIdDesc()
-//                    .map(TransactionDetailEntity::getTransactionDetailId).orElse(0L);
-//            Long newTransactionDetailId = Generator.generateId(lastTransactionDetailId);
 
-            System.out.println("====START Edit LOG (" + transactionId + ")=====");
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
                 if (dto == null) continue;
-                System.out.println("Part Number : " + dto.getCode());
-                System.out.println("Qty : " + dto.getQty());
 
                 ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
                 if (product == null) {
@@ -267,7 +228,6 @@ public class KasirService {
                 // Save new transaction detail
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                 lastProduct = dto.getCode();
-//                transactionDetailEntity.setTransactionDetailId(newTransactionDetailId);
                 transactionDetailEntity.setShortName(dto.getCode());
                 transactionDetailEntity.setFullName(dto.getName());
                 transactionDetailEntity.setQty(dto.getQty());
@@ -280,11 +240,8 @@ public class KasirService {
                 BigDecimal totalProfit = dto.getTotal().subtract(totalBasicPrice);
                 transactionDetailEntity.setTotalProfit(totalProfit);
                 transactionDetailRepository.save(transactionDetailEntity);
-//                newTransactionDetailId = Generator.generateId(newTransactionDetailId);
 
                 Long updatedStock = product.getStock() - dto.getQty();
-                System.out.println("Stock Before : " + product.getStock());
-                System.out.println("Stock After : " + updatedStock);
                 product.setStock(updatedStock);
                 productRepository.save(product);
 
@@ -305,23 +262,7 @@ public class KasirService {
                         updatedStock,
                         clientData
                 ));
-//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                        product,
-//                        transactionEntity.getTransactionNumber(),
-//                        TipeKartuStok.KOREKSI_PENJUALAN,
-//                        0L,
-//                        dto.getQty(),
-//                        updatedStock,
-//                        clientData
-//                ));
-//                if (!isAdjusted) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return new ResponseInBoolean(false, "Gagal adjust stok saat insert detail. ERROR karena : " + lastProduct);
-//                }
             }
-            System.out.println("====END LOG=====");
-
-
             return new ResponseInBoolean(true, transactionEntity.getTransactionNumber());
 
         } catch (Exception e) {

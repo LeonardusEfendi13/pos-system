@@ -243,12 +243,7 @@ public class ProductController {
         String productName = "";
         if(productId != null){
             productName = productService.findProductById(productId).getFullName();
-//            Page<StockMovementsDTO> pageStokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate, PageRequest.of(page, size));
             stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
-//            totalElements = pageStokData.getTotalElements();
-//            stokData = pageStokData.getContent();
-//            totalPages = pageStokData.getTotalPages();
-//            numberElement = pageStokData.getNumberOfElements();
         }
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
         if (totalPages == 0) {

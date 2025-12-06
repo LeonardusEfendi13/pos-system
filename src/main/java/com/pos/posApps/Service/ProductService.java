@@ -69,28 +69,7 @@ public class ProductService {
         return convertToDTO(productEntity);
     }
 
-//    public Page<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-//        Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
-//                .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
-//                        clientId, productId, startDate, endDate, pageable
-//                );
-//
-//        return stockMovementData.map(data -> new StockMovementsDTO(
-//                data.getStockMovementsId(),
-//                data.getReferenceNo(),
-//                data.getTipeKartuStok(),
-//                data.getQtyIn(),
-//                data.getQtyOut(),
-//                data.getSaldo(),
-//                data.getCreatedAt()
-//        ));
-//    }
-
     public List<StockMovementsDTO> getStockMovementData(Long clientId, Long productId, LocalDateTime startDate, LocalDateTime endDate) {
-//        Page<StockMovementsEntity> stockMovementData = stockMovementsRepository
-//                .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
-//                        clientId, productId, startDate, endDate, pageable
-//                );
         List<StockMovementsEntity> stockMovementData = stockMovementsRepository
                 .findAllByClientEntity_ClientIdAndProductEntity_ProductIdAndCreatedAtBetweenAndDeletedAtIsNullOrderByStockMovementsIdAsc(
                         clientId, productId, startDate, endDate);
@@ -103,15 +82,6 @@ public class ProductService {
                 data.getSaldo(),
                 data.getCreatedAt()
         )).collect(Collectors.toList());
-//        return stockMovementData.map(data -> new StockMovementsDTO(
-//                data.getStockMovementsId(),
-//                data.getReferenceNo(),
-//                data.getTipeKartuStok(),
-//                data.getQtyIn(),
-//                data.getQtyOut(),
-//                data.getSaldo(),
-//                data.getCreatedAt()
-//        ));
     }
 
 
