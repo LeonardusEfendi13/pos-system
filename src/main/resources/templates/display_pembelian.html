@@ -201,7 +201,20 @@
                 </div>
             </form>
 
-            <div class="container-fluid d-flex flex-column" style="height: 85vh;">
+            <div class="row mt-3 justify-content-center">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">
+                                Total Pembelian
+                                <span id="totalBeliDisplay" class="card-text fw-bold text-primary">Rp0</span>
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fluid d-flex flex-column" style="margin-top:20px">
                 <!-- Table Wrapper -->
                 <div id="tableWrapper" style="padding-left: 20px;">
                     <table id="userTable" class="table table-striped table-bordered w-100">
@@ -394,6 +407,20 @@
 <!--Populate Bukti Bayar-->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+
+        let total = 0;
+        if (Array.isArray(pembelianData)) {
+            pembelianData.forEach(p => {
+                total += p.totalPrice || 0;
+            });
+        }
+        const formatted = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0
+        }).format(total);
+
+        document.getElementById("totalBeliDisplay").textContent = formatted;
 
         // ==========================
         // 🔧 FilePond Setup
