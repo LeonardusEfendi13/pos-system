@@ -82,13 +82,19 @@ public class KasirService {
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionRepository.save(transactionEntity);
 
+            System.out.println("=====START LOG ID : " + transactionEntity.getTransactionId() + "=======");
+
             for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
+                System.out.println("Part Number : " + dtos.getCode());
+                System.out.println("Nama Barang : " + dtos.getName());
+
                 //Get product Entity
                 ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 if (productEntity == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
                 }
+                System.out.println("VALID");
                 lastProduct = dtos.getCode();
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                 transactionDetailEntity.setShortName(dtos.getCode());
@@ -105,6 +111,8 @@ public class KasirService {
                 transactionDetailRepository.save(transactionDetailEntity);
 
                 //Update product stock
+                System.out.println("Stock Before : " + productEntity.getStock());
+                System.out.println("Qty : " + dtos.getQty());
                 Long newStock = productEntity.getStock() - dtos.getQty();
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
@@ -118,7 +126,11 @@ public class KasirService {
                         newStock,
                         clientData
                 ));
+                System.out.println("Stock After : " + newStock);
+                System.out.println();
             }
+            System.out.println("=====END LOG=======");
+            System.out.println();
             return new ResponseInBoolean(true, generatedNotaNumber);
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
