@@ -1758,11 +1758,11 @@ body {
             row.style.cursor = "pointer";
 
             row.innerHTML = `
-<td>${product.shortName}</td>
-<td>${product.fullName}</td>
-<td>Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-<td>${product.stok}</td>
-`;
+                <td style="width:30%;white-space: nowrap;overflow: hidden;">${product.shortName}</td>
+                <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
+                <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+                <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
+      `;
 
             row.addEventListener("dblclick", () => {
                 selectProduct(product);
@@ -1800,21 +1800,20 @@ body {
             if (!productModalEl.classList.contains("show")) return;
 
             const activeElement = document.activeElement;
-            const isInSearch =
-                activeElement === searchCode || activeElement === searchName;
+            const isInSearchCode = activeElement === searchCode;
+            const isInSearchName = activeElement === searchName;
 
             switch (e.key) {
                 case "ArrowDown":
                     e.preventDefault();
                     if (rows.length === 0) return;
 
-                    if (isInSearch) {
+                    if (isInSearchCode || isInSearchName) {
                         currentKeyboardIndex = 0;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     } else {
-                        if (currentKeyboardIndex < rows.length - 1)
-                            currentKeyboardIndex++;
+                        if (currentKeyboardIndex < rows.length - 1) currentKeyboardIndex++;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     }
@@ -1824,7 +1823,7 @@ body {
                     e.preventDefault();
                     if (rows.length === 0) return;
 
-                    if (!isInSearch) {
+                    if (!isInSearchCode && !isInSearchName) {
                         if (currentKeyboardIndex > 0) currentKeyboardIndex--;
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
@@ -1833,18 +1832,40 @@ body {
 
                 case "ArrowLeft":
                     e.preventDefault();
-                    searchCode.focus();
+                    if (isInSearchCode) {
+                        // Move cursor to start
+                        searchCode.setSelectionRange(0, 0);
+                    } else if (isInSearchName) {
+                        // Go to searchCode and select all
+                        searchCode.focus();
+                        searchCode.select();
+                    } else {
+                        // If currently focused on a product row → go to searchCode
+                        searchCode.focus();
+                        searchCode.select();
+                    }
                     break;
 
                 case "ArrowRight":
                     e.preventDefault();
-                    searchName.focus();
+                    if (isInSearchCode) {
+                        // Go to searchName and select all
+                        searchName.focus();
+                        searchName.select();
+                    } else if (isInSearchName) {
+                        // Move cursor to end
+                        const len = searchName.value.length;
+                        searchName.setSelectionRange(len, len);
+                    } else {
+                        // If currently focused on a product row → go to searchName
+                        searchName.focus();
+                        searchName.select();
+                    }
                     break;
 
                 case "Enter":
                     e.preventDefault();
-
-                    if (isInSearch) {
+                    if (isInSearchCode || isInSearchName) {
                         doFilter();
                     } else {
                         if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {

@@ -1883,127 +1883,148 @@
    }
 
    function loadProductTable(filteredProducts = masterProducts) {
-     productTableBody.innerHTML = "";
-     let rows = [];
+        productTableBody.innerHTML = "";
+        let rows = [];
 
-     filteredProducts.forEach((product, index) => {
-       const row = document.createElement("tr");
-       row.setAttribute("data-index", index);
-       row.tabIndex = 0;
-       row.style.cursor = "pointer";
+        filteredProducts.forEach((product, index) => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-index", index);
+            row.tabIndex = 0;
+            row.style.cursor = "pointer";
 
-        row.innerHTML = `
-            <td style="width:30%;white-space: nowrap;overflow: hidden;">${product.shortName}</td>
-            <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
-            <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
-            <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
-        `;
+            row.innerHTML = `
+                <td style="width:30%;white-space: nowrap;overflow: hidden;">${product.shortName}</td>
+                <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
+                <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
+                <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
+      `;
 
-       row.addEventListener("dblclick", () => {
-         selectProduct(product);
-       });
-
-        // ⭐ added: Mouse click = behave like arrow key highlight
-        row.addEventListener("click", () => {
-          // remove highlight from all rows
-          rows.forEach(r => r.classList.remove("table-active"));
-          // highlight clicked row
-          row.classList.add("table-active");
-          // keep index in sync with keyboard navigation
-          currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
-          // focus row (so Enter works naturally)
-          row.focus();
-        });
-
-        // 🔑 Press Enter to select
-        row.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
+            row.addEventListener("dblclick", () => {
                 selectProduct(product);
-            }
+            });
+
+            // ⭐ added: Mouse click = behave like arrow key highlight
+            row.addEventListener("click", () => {
+                // remove highlight from all rows
+                rows.forEach((r) => r.classList.remove("table-active"));
+                // highlight clicked row
+                row.classList.add("table-active");
+                // keep index in sync with keyboard navigation
+                currentKeyboardIndex = parseInt(row.getAttribute("data-index"));
+                // focus row (so Enter works naturally)
+                row.focus();
+            });
+
+            // 🔑 Press Enter to select
+            row.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    selectProduct(product);
+                }
+            });
+
+            productTableBody.appendChild(row);
+            rows.push(row);
         });
 
-       productTableBody.appendChild(row);
-       rows.push(row);
-     });
+        currentKeyboardIndex = -1;
+        highlightRow(null);
 
-     currentKeyboardIndex = -1;
-     highlightRow(null);
+        document.onkeydown = null;
 
-     document.onkeydown = null;
+        document.onkeydown = function (e) {
+            if (!productModalEl.classList.contains("show")) return;
 
-     document.onkeydown = function (e) {
-       if (!productModalEl.classList.contains("show")) return;
+            const activeElement = document.activeElement;
+            const isInSearchCode = activeElement === searchCode;
+            const isInSearchName = activeElement === searchName;
 
-       const activeElement = document.activeElement;
-       const isInSearch =
-         activeElement === searchCode || activeElement === searchName;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-       switch (e.key) {
-         case "ArrowDown":
-           e.preventDefault();
-           if (rows.length === 0) return;
+                    if (isInSearchCode || isInSearchName) {
+                        currentKeyboardIndex = 0;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    } else {
+                        if (currentKeyboardIndex < rows.length - 1) currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
 
-           if (isInSearch) {
-             currentKeyboardIndex = 0;
-             highlightRow(rows[currentKeyboardIndex]);
-             rows[currentKeyboardIndex].focus();
-           } else {
-             if (currentKeyboardIndex < rows.length - 1)
-               currentKeyboardIndex++;
-             highlightRow(rows[currentKeyboardIndex]);
-             rows[currentKeyboardIndex].focus();
-           }
-           break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    if (rows.length === 0) return;
 
-         case "ArrowUp":
-           e.preventDefault();
-           if (rows.length === 0) return;
+                    if (!isInSearchCode && !isInSearchName) {
+                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    }
+                    break;
 
-           if (!isInSearch) {
-             if (currentKeyboardIndex > 0) currentKeyboardIndex--;
-             highlightRow(rows[currentKeyboardIndex]);
-             rows[currentKeyboardIndex].focus();
-           }
-           break;
+                case "ArrowLeft":
+                    e.preventDefault();
+                    if (isInSearchCode) {
+                        // Move cursor to start
+                        searchCode.setSelectionRange(0, 0);
+                    } else if (isInSearchName) {
+                        // Go to searchCode and select all
+                        searchCode.focus();
+                        searchCode.select();
+                    } else {
+                        // If currently focused on a product row → go to searchCode
+                        searchCode.focus();
+                        searchCode.select();
+                    }
+                    break;
 
-         case "ArrowLeft":
-           e.preventDefault();
-           searchCode.focus();
-           break;
+                case "ArrowRight":
+                    e.preventDefault();
+                    if (isInSearchCode) {
+                        // Go to searchName and select all
+                        searchName.focus();
+                        searchName.select();
+                    } else if (isInSearchName) {
+                        // Move cursor to end
+                        const len = searchName.value.length;
+                        searchName.setSelectionRange(len, len);
+                    } else {
+                        // If currently focused on a product row → go to searchName
+                        searchName.focus();
+                        searchName.select();
+                    }
+                    break;
 
-         case "ArrowRight":
-           e.preventDefault();
-           searchName.focus();
-           break;
+                case "Enter":
+                    e.preventDefault();
+                    if (isInSearchCode || isInSearchName) {
+                        doFilter();
+                    } else {
+                        if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                            const selectedCode = rows[currentKeyboardIndex]
+                                .querySelector("td")
+                                .textContent.trim();
+                            const selected = masterProducts.find(
+                                (p) => p.shortName === selectedCode
+                            );
+                            if (selected) selectProduct(selected);
+                        }
+                    }
+                    break;
+            }
+        };
 
-         case "Enter":
-           e.preventDefault();
-
-           if (isInSearch) {
-             doFilter();
-           } else {
-             if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
-               const selectedCode = rows[currentKeyboardIndex]
-                 .querySelector("td")
-                 .textContent.trim();
-               const selected = masterProducts.find(
-                 (p) => p.shortName === selectedCode
-               );
-               if (selected) selectProduct(selected);
-             }
-           }
-           break;
-       }
-     };
-
-     function highlightRow(row) {
-       rows.forEach((r) => r.classList.remove("table-active"));
-       if (row) {
-         row.classList.add("table-active");
-         row.scrollIntoView({ block: "nearest", behavior: "smooth" });
-       }
-     }
-   }
+        function highlightRow(row) {
+            rows.forEach((r) => r.classList.remove("table-active"));
+            if (row) {
+                row.classList.add("table-active");
+                row.scrollIntoView({block: "nearest", behavior: "smooth"});
+            }
+        }
+    }
 
    searchCode.addEventListener("focus", () => {
      activeSearchField = "shortName";

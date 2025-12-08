@@ -1488,27 +1488,35 @@
         const row = priceInputEl.closest("tr");
         const pctInput = row.querySelector(".pct-suggest-input");
 
-        // Kalkulasi awal saat fetch berhasil
-        const sellingPrice = parseRupiah(priceInputEl.value);
-        if (basicPrice > 0) {
-            const pct = ((sellingPrice - basicPrice) / basicPrice) * 100;
-            pctInput.value = pct.toFixed(2) + "%";
-        } else {
-            pctInput.value = "0%";
-        }
-
-        // Pastikan tidak dobel listener (hapus listener lama dulu)
-        priceInputEl.removeEventListener("input", priceInputEl._recalcListener);
-
-        // Tambahkan listener baru hanya jika basicPrice tersedia
-        const listener = () => {
-            const newSelling = parseRupiah(priceInputEl.value);
-            if (!isNaN(newSelling) && basicPrice > 0) {
-                const pct = ((newSelling - basicPrice) / basicPrice) * 100;
+        // function untuk hitung dan tampilkan lalu hilangkan
+        const showPercentage = (selling) => {
+            if (!isNaN(selling) && basicPrice > 0) {
+                const pct = ((selling - basicPrice) / basicPrice) * 100;
                 pctInput.value = pct.toFixed(2) + "%";
             } else {
                 pctInput.value = "0%";
             }
+
+            // Hapus timeout sebelumnya supaya tidak bentrok
+            clearTimeout(pctInput._hideTimer);
+
+            // Hilangkan setelah 3 detik
+            pctInput._hideTimer = setTimeout(() => {
+                pctInput.value = "";
+            }, 3000);
+        };
+
+        // Kalkulasi awal
+        const sellingPrice = parseRupiah(priceInputEl.value);
+        showPercentage(sellingPrice);
+
+        // Pastikan tidak double listener
+        priceInputEl.removeEventListener("input", priceInputEl._recalcListener);
+
+        // Listener baru
+        const listener = () => {
+            const newSelling = parseRupiah(priceInputEl.value);
+            showPercentage(newSelling);
         };
 
         priceInputEl.addEventListener("input", listener);
@@ -1746,6 +1754,8 @@
                 const qty = parseInt(qtyInput.value || "1", 10);
                 const newPrice = getPriceByQty(product, qty);
                 priceInput.value = formatRupiah(newPrice);
+                recalculateProfitPercentage(priceInput, product.hargaBeli);
+
                 updateTotalRow(existingRow);
 
                 // Kosongkan input baru agar tidak duplikat
@@ -1796,7 +1806,10 @@
 
             let qty = parseInt(qtyInput.value);
             if (product && qty > 0) {
-                priceInput.value = formatRupiah(getPriceByQty(product, qty));
+                let newPrice = getPriceByQty(product, qty);
+                priceInput.value = formatRupiah(newPrice);
+                recalculateProfitPercentage(priceInput, product.hargaBeli);
+
             }
 
             updateTotalRow(row);
@@ -1986,6 +1999,7 @@
         const qty = parseInt(qtyInput.value || "1", 10);
         const newPrice = getPriceByQty(product, qty);
         priceInput.value = formatRupiah(newPrice);
+        recalculateProfitPercentage(priceInput, product.hargaBeli);
 
         updateTotalRow(existingRow);
 
@@ -2010,6 +2024,7 @@
         // 🧮 Hitung harga tier pertama (qty 1)
         const newPrice = getPriceByQty(product, 1);
         priceInput.value = formatRupiah(newPrice);
+        recalculateProfitPercentage(priceInput, product.hargaBeli);
 
         updateTotalRow(selectedRow);
 
@@ -2053,6 +2068,8 @@
       // 🧮 Jalankan tiering untuk qty 1
       const newPrice = getPriceByQty(product, 1);
       priceInput.value = formatRupiah(newPrice);
+      recalculateProfitPercentage(priceInput, product.hargaBeli);
+
 
       updateTotalRow(targetRow);
       maybeAddNewRow();
@@ -2803,6 +2820,8 @@
 
             // 4️⃣ Update UI
             priceInput.value = formatRupiah(newTierPrice);
+            recalculateProfitPercentage(priceInput, product.hargaBeli);
+            recalcul
 
             // 5️⃣ Update total
             updateTotalRow(row);
@@ -2962,6 +2981,8 @@
                     const harga = response.sellingPrice;
                     basicPriceFromSuggested = response.basicPrice;
                     recalculateProfitPercentage(priceInput, basicPriceFromSuggested);
+                    const pctInput = row.querySelector(".pct-suggest-input");
+
 
                     if (harga && harga !== "null") {
                         hargaText.textContent = formatRupiah(Number(harga));
@@ -2975,6 +2996,7 @@
                     // ⏳ Show it back after 5 seconds
                     setTimeout(() => {
                         hargaText.textContent = "";
+                        pctInput.textContent = "";
                         cekHargaBtn.style.display = "inline-block";
                     }, 3000);
 
@@ -3039,7 +3061,7 @@
                     const qty = parseInt(qtyInput.value || "1", 10);
                     const newPrice = getPriceByQty(product, qty);
                     priceInput.value = formatRupiah(newPrice);
-
+                    recalculateProfitPercentage(priceInput, product.hargaBeli);
                     updateTotalRow(existingRow);
 
                     // Kosongkan input baru agar tidak duplikat
@@ -3090,7 +3112,9 @@
 
                 let qty = parseInt(qtyInput.value);
                 if (product && qty > 0) {
-                    priceInput.value = formatRupiah(getPriceByQty(product, qty));
+                    let finalPrice = getPriceByQty(product, qty);
+                    priceInput.value = formatRupiah(finalPrice);
+                    recalculateProfitPercentage(priceInput, product.hargaBeli);
                 }
 
                 updateTotalRow(row);
