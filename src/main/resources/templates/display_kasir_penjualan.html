@@ -1775,9 +1775,11 @@
               }
             } else {
               alert("Product not foundg");
-<!--              codeInput.value = "";-->
               codeInput.focus();
             }
+<!--              console.log("filtered prodducts : ", JSON.stringify(product));-->
+            recalculateProfitPercentage(priceInput, product.hargaBeli);
+
           }
         });
 
@@ -3081,9 +3083,10 @@
                   }
                 } else {
                   alert("Product not founds");
-<!--                  codeInput.value = "";-->
                   codeInput.focus();
                 }
+<!--              console.log("filtered prodducts : ", JSON.stringify(product));-->
+              recalculateProfitPercentage(priceInput, product.hargaBeli);
               }
             });
 
