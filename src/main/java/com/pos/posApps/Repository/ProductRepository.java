@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -148,4 +149,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     ORDER BY p.fullName
 """)
     List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+        UPDATE product
+        SET stock = stock - :qty
+        WHERE product_id = :productId AND stock >= :qty
+        RETURNING stock
+        """, nativeQuery = true)
+    List<Long> reduceStockReturning(@Param("productId") Long productId,
+                                    @Param("qty") Long qty);
 }
