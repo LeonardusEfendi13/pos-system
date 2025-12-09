@@ -196,19 +196,6 @@ public class PenjualanService {
                         restoredStock,
                         clientData
                 ));
-//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                        product,
-//                        transactionEntity.getTransactionNumber(),
-//                        TipeKartuStok.KOREKSI_PENJUALAN,
-//                        old.getQty(),
-//                        0L,
-//                        restoredStock,
-//                        clientData
-//                ));
-//                if (!isAdjusted) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return false;
-//                }
             }
             old.setDeletedAt(getCurrentTimestamp());
             transactionDetailRepository.save(old);

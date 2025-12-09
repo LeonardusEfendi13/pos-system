@@ -148,10 +148,6 @@ public class ProductService {
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
 
-            //Insert Product Prices
-//            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
-//            Long newProductPricesId = Generator.generateId(lastProductPricesId);
-
             stockMovementService.insertKartuStok(new AdjustStockDTO(
                     newProduct,
                     "-",
@@ -162,28 +158,13 @@ public class ProductService {
                     clientData
             ));
 
-//            boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                    newProduct,
-//                    "-",
-//                    TipeKartuStok.PENYESUAIAN,
-//                    0L,
-//                    0L,
-//                    req.getStock(),
-//                    clientData
-//            ));
-//            if (!isAdjusted) {
-//                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                return new ResponseInBoolean(false, "Gagal insert kartu stok");
-//            }
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
-//                newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(newProduct);
                 newProductPrices.setPrice(productPricesData.getPrice());
                 newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
                 newProductPrices.setPercentage(productPricesData.getPercentage());
-//                newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
 
@@ -255,17 +236,12 @@ public class ProductService {
             //Delete all product prices related to product id
             productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-//            Long lastProductPricesId = productPricesRepository.findFirstByOrderByProductPricesIdDesc().map(ProductPricesEntity::getProductPricesId).orElse(0L);
-//            Long newProductPricesId = Generator.generateId(lastProductPricesId);
-
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
-//                newProductPrices.setProductPricesId(newProductPricesId);
                 newProductPrices.setProductEntity(productEntity);
                 newProductPrices.setPrice(productPricesData.getPrice());
                 newProductPrices.setMaximalCount(productPricesData.getMaximalCount());
                 newProductPrices.setPercentage(productPricesData.getPercentage());
-//                newProductPricesId = Generator.generateId(newProductPricesId);
                 productPricesRepository.save(newProductPrices);
             }
             return new ResponseInBoolean(true, "Berhasil Edit Data");

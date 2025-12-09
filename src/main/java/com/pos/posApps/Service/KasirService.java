@@ -94,7 +94,7 @@ public class KasirService {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
                 }
-                System.out.println("VALID");
+                System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
                 lastProduct = dtos.getCode();
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
                 transactionDetailEntity.setShortName(dtos.getCode());
@@ -201,20 +201,6 @@ public class KasirService {
                             product.getStock(),
                             clientData
                     ));
-//                    boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                            product,
-//                            transactionEntity.getTransactionNumber(),
-//                            TipeKartuStok.KOREKSI_PENJUALAN,
-//                            old.getQty(),
-//                            0L,
-//                            product.getStock(),
-//                            clientData
-//                    ));
-//                    if (!isAdjusted) {
-//                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                        return new ResponseInBoolean(false, "Gagal adjust saat restore stok");
-//                    }
-
                     oldProductMap.put(key, old);
                 }
             }
