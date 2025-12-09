@@ -1503,7 +1503,7 @@
             // Hilangkan setelah 3 detik
             pctInput._hideTimer = setTimeout(() => {
                 pctInput.value = "";
-            }, 3000);
+            }, 1000);
         };
 
         // Kalkulasi awal
@@ -1668,7 +1668,7 @@
                     setTimeout(() => {
                         hargaText.textContent = "";
                         cekHargaBtn.style.display = "inline-block";
-                    }, 3000);
+                    }, 1000);
                     return;
                 }
 
@@ -1690,7 +1690,7 @@
                 setTimeout(() => {
                     hargaText.textContent = "";
                     cekHargaBtn.style.display = "inline-block";
-                }, 3000);
+                }, 1000);
 
             } catch (err) {
                 hargaText.textContent = "Error mengambil harga";
@@ -1700,7 +1700,7 @@
                 setTimeout(() => {
                     hargaText.textContent = "";
                     cekHargaBtn.style.display = "inline-block";
-                }, 3000);
+                }, 1000);
             }
         });
 
@@ -2975,7 +2975,7 @@
                         setTimeout(() => {
                             hargaText.textContent = "";
                             cekHargaBtn.style.display = "inline-block";
-                        }, 3000);
+                        }, 1000);
                         return;
                     }
 
@@ -3000,7 +3000,7 @@
                         hargaText.textContent = "";
                         pctInput.textContent = "";
                         cekHargaBtn.style.display = "inline-block";
-                    }, 3000);
+                    }, 1000);
 
                 } catch (err) {
                     hargaText.textContent = "Error mengambil harga";
@@ -3010,7 +3010,7 @@
                     setTimeout(() => {
                         hargaText.textContent = "";
                         cekHargaBtn.style.display = "inline-block";
-                    }, 3000);
+                    }, 1000);
                 }
             });
 
