@@ -166,14 +166,14 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 """)
     List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query(value = """
-        UPDATE product
-        SET stock = stock - :qty
-        WHERE product_id = :productId
-        RETURNING stock
-        """, nativeQuery = true)
+    UPDATE product
+    SET stock = stock - :qty
+    WHERE product_id = :productId AND stock >= :qty
+    RETURNING stock
+    """, nativeQuery = true)
     List<Long> reduceStockReturning(@Param("productId") Long productId,
                                     @Param("qty") Long qty);
 }

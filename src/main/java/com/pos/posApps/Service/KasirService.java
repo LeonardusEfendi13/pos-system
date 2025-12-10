@@ -115,7 +115,7 @@ public class KasirService {
                 //Update product stock
                 System.out.println("Stock Before : " + productEntity.getStock());
                 System.out.println("Qty : " + dtos.getQty());
-                Long newStock = productEntity.getStock() - dtos.getQty();
+//                Long newStock = productEntity.getStock() - dtos.getQty();
 //                productEntity.setStock(newStock);
 //                productRepository.save(productEntity);
                 List<Long> newStockAfterUpdated = productRepository.reduceStockReturning(productEntity.getProductId(),dtos.getQty());
@@ -126,7 +126,6 @@ public class KasirService {
                 }
                 Long newStockValues = newStockAfterUpdated.get(0);
 
-                System.out.println("Stock After (Product) : " + newStockValues);
 
                 stockMovementService.insertKartuStok(new AdjustStockDTO(
                         productEntity,
@@ -134,10 +133,10 @@ public class KasirService {
                         TipeKartuStok.PENJUALAN,
                         0L,
                         dtos.getQty(),
-                        newStock,
+                        newStockValues,
                         clientData
                 ));
-                System.out.println("Stock After (Kartu Stock) : " + newStock);
+                System.out.println("Stock After : " + newStockValues);
                 System.out.println();
             }
             System.out.println("=====END LOG=======");
