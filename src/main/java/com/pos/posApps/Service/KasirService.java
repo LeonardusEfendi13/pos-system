@@ -4,6 +4,8 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,9 @@ import java.util.*;
 
 @Service
 public class KasirService {
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Autowired
     ProductRepository productRepository;
 
@@ -91,6 +96,7 @@ public class KasirService {
                 //Get product Entity
 //                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                entityManager.refresh(productEntity);
 
                 if (productEntity == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -188,6 +194,7 @@ public class KasirService {
             for (TransactionDetailEntity old : oldTransactions) {
 //                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
                 ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());
+                entityManager.refresh(product);
                 if (product != null) {
                     String key = old.getShortName();
                     Long newQty = newQtyMap.getOrDefault(key, null);
@@ -227,6 +234,7 @@ public class KasirService {
 
 //                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
                 ProductEntity product = productRepository.findAndLockProduct(dto.getName(), dto.getCode(), clientData.getClientId());
+                entityManager.refresh(product);
                 if (product == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dto.getName() + " tidak ditemukan");
