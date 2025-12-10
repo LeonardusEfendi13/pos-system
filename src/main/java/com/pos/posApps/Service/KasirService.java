@@ -89,7 +89,9 @@ public class KasirService {
                 System.out.println("Nama Barang : " + dtos.getName());
 
                 //Get product Entity
-                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+//                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
+
                 if (productEntity == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
@@ -185,7 +187,8 @@ public class KasirService {
             Map<String, TransactionDetailEntity> oldProductMap = new HashMap<>();
 
             for (TransactionDetailEntity old : oldTransactions) {
-                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
+//                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
+                ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());
                 if (product != null) {
                     String key = old.getShortName();
                     Long newQty = newQtyMap.getOrDefault(key, null);
@@ -223,7 +226,8 @@ public class KasirService {
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
                 if (dto == null) continue;
 
-                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
+//                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dto.getName(), dto.getCode(), clientData.getClientId());
+                ProductEntity product = productRepository.findAndLockProduct(dto.getName(), dto.getCode(), clientData.getClientId());
                 if (product == null) {
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                     return new ResponseInBoolean(true, "Produk " + dto.getName() + " tidak ditemukan");
