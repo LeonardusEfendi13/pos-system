@@ -172,7 +172,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     @Query(value = """
     UPDATE product
     SET stock = stock - :qty
-    WHERE product_id = :productId AND stock >= :qty
+    WHERE product_id = :productId
     RETURNING stock
     """, nativeQuery = true)
     List<Long> reduceStockReturning(@Param("productId") Long productId,
