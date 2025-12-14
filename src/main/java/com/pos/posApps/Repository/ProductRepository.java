@@ -61,8 +61,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({
-            @QueryHint(name = "javax.persistence.lock.timeout", value = "5000"),
-            @QueryHint(name = "javax.persistence.cache.storeMode", value = "REFRESH") // ⬅ WAJIB
+            @QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"),
+            @QueryHint(name = "jakarta.persistence.cache.storeMode", value = "REFRESH") // ⬅ WAJIB
     })
     @Query("""
     SELECT p

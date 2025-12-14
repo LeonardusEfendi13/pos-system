@@ -312,19 +312,6 @@ public class PembelianService {
                         newStock,
                         clientData
                 ));
-//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                        productEntity,
-//                        req.getPurchasingNumber(),
-//                        TipeKartuStok.PEMBELIAN,
-//                        dtos.getQty(),
-//                        0L,
-//                        newStock,
-//                        clientData
-//                ));
-//                if (!isAdjusted) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return new ResponseInBoolean(false, "Gagal adjust di create pembelian. Errro karena  : " + lastProduct);
-//                }
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
         } catch (Exception e) {
@@ -335,205 +322,208 @@ public class PembelianService {
     }
 
     @Transactional
-    public ResponseInBoolean editTransaction(Long purchasingId, CreatePurchasingRequest req, ClientEntity clientData) {
-        String lastProduct ="Tanya Leon";
-        // Check duplication
-        boolean pembelianDuplicate = purchasingRepository.existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(
-                req.getPurchasingNumber(), clientData.getClientId(), purchasingId
-        );
-        if (pembelianDuplicate) {
+    public ResponseInBoolean editTransaction(
+            Long purchasingId,
+            CreatePurchasingRequest req,
+            ClientEntity clientData
+    ) {
+        String lastProduct = "-";
+
+        // =========================
+        // DUPLICATE CHECK
+        // =========================
+        boolean duplicate = purchasingRepository
+                .existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(
+                        req.getPurchasingNumber(), clientData.getClientId(), purchasingId
+                );
+        if (duplicate) {
             return new ResponseInBoolean(false, "Nomor faktur sudah ada");
         }
 
         try {
-            // Validate supplier
-            Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(
-                    req.getSupplierId(), clientData.getClientId()
-            );
-            if (supplierEntityOpt.isEmpty()) {
-                return new ResponseInBoolean(false, "Supplier tidak ada");
-            }
-            SupplierEntity supplierEntity = supplierEntityOpt.get();
+            // =========================
+            // VALIDASI SUPPLIER
+            // =========================
+            SupplierEntity supplier = supplierRepository
+                    .findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(
+                            req.getSupplierId(), clientData.getClientId()
+                    )
+                    .orElseThrow(() -> new RuntimeException("Supplier tidak ada"));
 
-            // Validate purchasing
-            Optional<PurchasingEntity> purchasingEntityOpt = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
-                    clientData.getClientId(), purchasingId
-            );
-            if (purchasingEntityOpt.isEmpty()) {
-                return new ResponseInBoolean(false, "Data Pembelian tidak ada");
-            }
-            PurchasingEntity purchasingEntity = purchasingEntityOpt.get();
+            // =========================
+            // VALIDASI PURCHASING
+            // =========================
+            PurchasingEntity purchasing = purchasingRepository.findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
+                            clientData.getClientId(), purchasingId
+                    )
+                    .orElseThrow(() -> new RuntimeException("Data pembelian tidak ada"));
 
-            // Update purchasing summary
-            purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
-            purchasingEntity.setSupplierEntity(supplierEntity);
-            purchasingEntity.setTotalPrice(req.getTotalPrice());
-            purchasingEntity.setTotalDiscount(req.getTotalDisc());
-            purchasingEntity.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
+            // =========================
+            // UPDATE HEADER
+            // =========================
+            purchasing.setPurchasingNumber(req.getPurchasingNumber());
+            purchasing.setSupplierEntity(supplier);
+            purchasing.setTotalPrice(req.getTotalPrice());
+            purchasing.setTotalDiscount(req.getTotalDisc());
+            purchasing.setSubtotal(req.getSubtotal());
+            purchasing.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
+            purchasing.setCash(req.isCash());
+
             if (!req.isCash()) {
-                purchasingEntity.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
+                purchasing.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
             }
-            purchasingEntity.setCash(req.isCash());
-            purchasingEntity.setSubtotal(req.getSubtotal());
-            purchasingRepository.save(purchasingEntity);
 
-            // Build map of new purchasing detail qty for comparison
-            Map<String, Long> newQtyMap = new HashMap<>();
+            purchasingRepository.save(purchasing);
+
+            // =========================
+            // MAP DETAIL LAMA
+            // =========================
+            List<PurchasingDetailEntity> oldDetails =
+                    purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
+
+            Map<String, PurchasingDetailEntity> oldMap = new HashMap<>();
+            for (PurchasingDetailEntity d : oldDetails) {
+                oldMap.put(d.getShortName(), d);
+            }
+
+            // =========================
+            // MAP DETAIL BARU
+            // =========================
+            Map<String, PurchasingDetailDTO> newMap = new HashMap<>();
             for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
                 if (dto != null) {
-                    newQtyMap.put(dto.getCode(), dto.getQty());
+                    newMap.put(dto.getCode(), dto);
                 }
             }
 
-            // Restore stock from old transaction (if qty changed)
-            List<PurchasingDetailEntity> oldTransactions = purchasingDetailRepository.findAllByPurchasingEntity_PurchasingIdOrderByPurchasingDetailIdDesc(purchasingId);
-            Map<String, PurchasingDetailEntity> oldProductMap = new HashMap<>();
+            // =========================
+            // UNION SEMUA PRODUK
+            // =========================
+            Set<String> allCodes = new HashSet<>();
+            allCodes.addAll(oldMap.keySet());
+            allCodes.addAll(newMap.keySet());
 
-            for (PurchasingDetailEntity old : oldTransactions) {
-//                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
-//                        old.getFullName(), old.getShortName(), clientData.getClientId()
-//                );
+            // =========================
+            // DELTA STOCK LOOP
+            // =========================
+            for (String code : allCodes) {
+
+                PurchasingDetailEntity oldDetail = oldMap.get(code);
+                PurchasingDetailDTO newDetail = newMap.get(code);
+
+                long oldQty = oldDetail != null ? oldDetail.getQty() : 0;
+                long newQty = newDetail != null ? newDetail.getQty() : 0;
+                long delta = newQty - oldQty;
+
+                // Qty sama → JANGAN SENTUH STOCK
+                if (delta == 0) continue;
+
+                lastProduct = code;
+
                 ProductEntity product = productRepository.findAndLockProduct(
-                        old.getFullName(), old.getShortName(), clientData.getClientId()
+                        newDetail != null ? newDetail.getName() : oldDetail.getFullName(),
+                        code,
+                        clientData.getClientId()
                 );
-                if (product != null) {
-                    lastProduct = old.getShortName();
-                    String key = old.getShortName();
-                    Long newQty = newQtyMap.getOrDefault(key, null);
-                    boolean isQtyChanged = (newQty == null || !Objects.equals(newQty, old.getQty()));
 
-                    if (!isQtyChanged) {
-                        oldProductMap.put(key, old); // Save for reuse
-                        continue;
-                    }
-
-                    // Restore stock
-                    product.setStock(product.getStock() - old.getQty()); // Undo purchase
-                    productRepository.save(product);
-
-                    // Insert kartu stok (restore)
-                    stockMovementService.insertKartuStok(new AdjustStockDTO(
-                            product,
-                            purchasingEntity.getPurchasingNumber(),
-                            TipeKartuStok.KOREKSI_PEMBELIAN,
-                            0L,
-                            old.getQty(),
-                            product.getStock(),
-                            clientData
-                    ));
-
-                    oldProductMap.put(key, old); // Save for later comparison
+                if (product == null) {
+                    throw new RuntimeException("Produk " + code + " tidak ditemukan");
                 }
+
+                // =========================
+                // UPDATE STOCK (PEMBELIAN)
+                // =========================
+                long newStock = product.getStock() + delta;
+                product.setStock(newStock);
+
+                // Update harga beli terakhir
+                if (newDetail != null) {
+                    product.setSupplierPrice(newDetail.getPrice());
+                }
+
+                productRepository.save(product);
+
+                // =========================
+                // KARTU STOK
+                // =========================
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        product,
+                        purchasing.getPurchasingNumber(),
+                        TipeKartuStok.KOREKSI_PEMBELIAN,
+                        delta > 0 ? delta : 0L,            // IN
+                        delta < 0 ? Math.abs(delta) : 0L, // OUT
+                        newStock,
+                        clientData
+                ));
             }
 
-            // Delete old purchasing details
+            // =========================
+            // REPLACE DETAIL
+            // =========================
             purchasingDetailRepository.deleteAllByPurchasingEntity_PurchasingId(purchasingId);
-
 
             for (PurchasingDetailDTO dto : req.getPembelianDetailDTOS()) {
                 if (dto == null) continue;
 
-                lastProduct = dto.getCode();
-
-//                ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(
-//                        dto.getName(), dto.getCode(), clientData.getClientId()
-//                );
                 ProductEntity product = productRepository.findAndLockProduct(
-                        dto.getName(), dto.getCode(), clientData.getClientId()
+                        dto.getName(),
+                        dto.getCode(),
+                        clientData.getClientId()
                 );
-                if (product == null) continue;
 
-                // Insert detail
                 PurchasingDetailEntity detail = new PurchasingDetailEntity();
-//                detail.setPurchasingDetailId(newDetailId);
                 detail.setShortName(dto.getCode());
                 detail.setFullName(dto.getName());
                 detail.setQty(dto.getQty());
                 detail.setPrice(dto.getPrice());
                 detail.setDiscAmount(dto.getDiscAmount());
                 detail.setTotalPrice(dto.getTotal());
-                detail.setPurchasingEntity(purchasingEntity);
+                detail.setPurchasingEntity(purchasing);
 
-                // Set harga jual/markup
-                int counter = 0;
-                for (ProductPricesEntity price : product.getProductPricesEntity()) {
-                    if (price.getPrice() != null && price.getPrice().compareTo(BigDecimal.ZERO) > 0) {
-                        counter++;
-                        if (counter == 1) {
-                            detail.setMarkup1(dto.getMarkup1());
-                            detail.setHargaJual1(dto.getHargaJual1());
-                        } else if (counter == 2) {
-                            detail.setMarkup2(dto.getMarkup2());
-                            detail.setHargaJual2(dto.getHargaJual2());
-                        } else if (counter == 3) {
-                            detail.setMarkup3(dto.getMarkup3());
-                            detail.setHargaJual3(dto.getHargaJual3());
-                        }
-                    }
-                }
+                detail.setMarkup1(dto.getMarkup1());
+                detail.setHargaJual1(dto.getHargaJual1());
+                detail.setMarkup2(dto.getMarkup2());
+                detail.setHargaJual2(dto.getHargaJual2());
+                detail.setMarkup3(dto.getMarkup3());
+                detail.setHargaJual3(dto.getHargaJual3());
+
                 purchasingDetailRepository.save(detail);
-//                newDetailId = Generator.generateId(newDetailId);
 
-                // Update product stock
-                Long updatedStock = product.getStock() + dto.getQty();
-                product.setSupplierPrice(dto.getPrice());
-                product.setStock(updatedStock);
-                productRepository.save(product);
+                // Update product prices
+                List<ProductPricesEntity> prices =
+                        productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(
+                                product.getProductId()
+                        );
 
-                //Update Product Prices
-                List<ProductPricesEntity> productPricesList = productPricesRepository.findAllByProductEntity_ProductIdOrderByProductPricesIdAsc(product.getProductId());
-                int index = 0;
-                for (ProductPricesEntity data : productPricesList) {
-                    if (index == 0 && dto.getHargaJual1() != null) {
-                        data.setPrice(dto.getHargaJual1());
-                        data.setPercentage(dto.getMarkup1());
-                    } else if (index == 1 && dto.getHargaJual2() != null) {
-                        data.setPrice(dto.getHargaJual2());
-                        data.setPercentage(dto.getMarkup2());
-                    } else if (index == 2 && dto.getHargaJual3() != null) {
-                        data.setPrice(dto.getHargaJual3());
-                        data.setPercentage(dto.getMarkup3());
-                    }
-                    productPricesRepository.save(data);
-                    index++;
+                if (prices.size() > 0 && dto.getHargaJual1() != null) {
+                    prices.get(0).setPrice(dto.getHargaJual1());
+                    prices.get(0).setPercentage(dto.getMarkup1());
+                }
+                if (prices.size() > 1 && dto.getHargaJual2() != null) {
+                    prices.get(1).setPrice(dto.getHargaJual2());
+                    prices.get(1).setPercentage(dto.getMarkup2());
+                }
+                if (prices.size() > 2 && dto.getHargaJual3() != null) {
+                    prices.get(2).setPrice(dto.getHargaJual3());
+                    prices.get(2).setPercentage(dto.getMarkup3());
                 }
 
-                // Check if qty has changed
-                PurchasingDetailEntity oldDetail = oldProductMap.get(dto.getCode());
-                if (oldDetail != null && Objects.equals(oldDetail.getQty(), dto.getQty())) {
-                    continue; // Skip stock adjustment if qty is same
-                }
-
-                // Insert kartu stok (new)
-                stockMovementService.insertKartuStok(new AdjustStockDTO(
-                        product,
-                        purchasingEntity.getPurchasingNumber(),
-                        TipeKartuStok.KOREKSI_PEMBELIAN,
-                        dto.getQty(),
-                        0L,
-                        updatedStock,
-                        clientData
-                ));
+                productPricesRepository.saveAll(prices);
             }
 
             return new ResponseInBoolean(true, "Data berhasil disimpan");
 
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage() + ". Errror di : "+ lastProduct);
+            return new ResponseInBoolean(false,
+                    e.getMessage() + " (ERROR di produk: " + lastProduct + ")");
         }
     }
+
 
     @Transactional
     public ResponseInBoolean payFaktur(Long clientId, LunaskanPembelianDTO req) {
         try {
-            // Validation for transfer payments
-//            if ("transfer".equalsIgnoreCase(req.getJenisPembayaran())) {
-//                if (req.getBuktiPembayaran() == null || req.getBuktiPembayaran().isEmpty()) {
-//                    return new ResponseInBoolean(false, "Harap unggah bukti pembayaran");
-//                }
-//            }
-
             // Find target purchasing entity
             Optional<PurchasingEntity> optional = purchasingRepository
                     .findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
