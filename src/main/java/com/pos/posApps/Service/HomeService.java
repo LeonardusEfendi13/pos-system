@@ -1,5 +1,6 @@
 package com.pos.posApps.Service;
 
+import com.pos.posApps.DTO.Dtos.ChartPointDTO;
 import com.pos.posApps.DTO.Dtos.Home.ChartDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeCustomerDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
@@ -7,13 +8,13 @@ import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,36 +65,12 @@ public class HomeService {
 
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
-
     public List<HomeProductDTO> getTop10Product(LocalDateTime startDate, LocalDateTime endDate) {
-        //Fetch all the data within the dates
-        List<TransactionDetailEntity> transactionDetailEntities = transactionDetailRepository.findAllByDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionDetailIdDesc(startDate, endDate);
-        //Initiate Map to store data
-        Map<String, Long> productMap = new HashMap<>();
-
-        for (TransactionDetailEntity data : transactionDetailEntities) {
-            String shortName = data.getShortName();
-            Long qty = data.getQty() != null ? data.getQty() : 0L;
-            productMap.put(shortName, productMap.getOrDefault(shortName, 0L) + qty);
-        }
-
-        //Load all product data (you can optimize this later)
-        List<ProductEntity> allProducts = productRepository.findAllByDeletedAtIsNull();
-        Map<String, String> shortNameToFullName = allProducts.stream()
-                .collect(Collectors.toMap(ProductEntity::getShortName, ProductEntity::getFullName));
-
-
-        //Sort by qty descending and get top 10
-        return productMap.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder()))
-                .limit(10)
-                .map(entry -> {
-                    String shortName = entry.getKey();
-                    Long qty = entry.getValue();
-                    String fullName = shortNameToFullName.getOrDefault(shortName, shortName); // fallback to shortName
-                    return new HomeProductDTO(fullName, qty);
-                })
-                .collect(Collectors.toList());
+        return transactionDetailRepository.findTopProducts(
+                startDate,
+                endDate,
+                PageRequest.of(0, 10)
+        );
     }
 
     public List<HomeCustomerDTO> getTop5Customer(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
@@ -123,152 +100,114 @@ public class HomeService {
         return top5.stream().map(id -> new HomeCustomerDTO(idToNameMap.getOrDefault(id, "Unknown"), firstCustomerMap.get(id))).toList();
     }
 
-    public ChartDTO getChartData(Long clientId, LocalDateTime adjustedStartDate, LocalDateTime adjustedEndDate, String periodFilter) {
-        // Adjust range based on periodFilter
-//        LocalDateTime adjustedStartDate = adjustStartDate(startDate, periodFilter);
-//        LocalDateTime adjustedEndDate = adjustEndDate(endDate, periodFilter);
+    public ChartDTO getChartData(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
 
-        List<String> labels = generateLabels(adjustedStartDate, adjustedEndDate, periodFilter);
+        String dateFormat = resolveDateFormat(periodFilter);
 
-        Map<String, BigDecimal> pendapatanMap = getPendapatan(clientId, adjustedStartDate, adjustedEndDate, periodFilter);
-        Map<String, BigDecimal> pengeluaranMap = getPengeluaran(clientId, adjustedStartDate, adjustedEndDate, periodFilter);
-        Map<String, BigDecimal> labaMap = getLaba(clientId, adjustedStartDate, adjustedEndDate, periodFilter);
+        List<String> labels = generateLabels(start, end, periodFilter);
 
-        List<BigDecimal> pendapatan = labels.stream()
-                .map(label -> pendapatanMap.getOrDefault(label, BigDecimal.ZERO))
-                .collect(Collectors.toList());
-
-        List<BigDecimal> pengeluaran = labels.stream()
-                .map(label -> pengeluaranMap.getOrDefault(label, BigDecimal.ZERO))
-                .collect(Collectors.toList());
-
-        List<BigDecimal> laba = labels.stream()
-                .map(label -> labaMap.getOrDefault(label, BigDecimal.ZERO))
-                .collect(Collectors.toList());
+        List<ChartPointDTO> pendapatan = transactionRepository.getPendapatanChart(clientId, start, end, dateFormat)
+                .stream()
+                .map(p -> new ChartPointDTO(p.getLabel(), p.getValue()))
+                .toList();
+        List<ChartPointDTO> pengeluaran = purchasingRepository.getPengeluaranChart(clientId, start, end, dateFormat)
+                .stream()
+                .map(p -> new ChartPointDTO(p.getLabel(), p.getValue()))
+                .toList();
+        List<ChartPointDTO> laba = transactionRepository.getLabaChart(clientId, start, end, dateFormat)
+                .stream()
+                .map(p -> new ChartPointDTO(p.getLabel(), p.getValue()))
+                .toList();
+        // Map label -> value for missing labels
+        Map<String, BigDecimal> pendapatanMap = pendapatan.stream().collect(Collectors.toMap(ChartPointDTO::getLabel, ChartPointDTO::getValue));
+        Map<String, BigDecimal> pengeluaranMap = pengeluaran.stream().collect(Collectors.toMap(ChartPointDTO::getLabel, ChartPointDTO::getValue));
+        Map<String, BigDecimal> labaMap = laba.stream().collect(Collectors.toMap(ChartPointDTO::getLabel, ChartPointDTO::getValue));
 
         ChartDTO chartDTO = new ChartDTO();
         chartDTO.setLabels(labels);
-        chartDTO.setPendapatan(pendapatan);
-        chartDTO.setPengeluaran(pengeluaran);
-        chartDTO.setLaba(laba);
+        chartDTO.setPendapatan(labels.stream().map(l -> pendapatanMap.getOrDefault(l, BigDecimal.ZERO)).collect(Collectors.toList()));
+        chartDTO.setPengeluaran(labels.stream().map(l -> pengeluaranMap.getOrDefault(l, BigDecimal.ZERO)).collect(Collectors.toList()));
+        chartDTO.setLaba(labels.stream().map(l -> labaMap.getOrDefault(l, BigDecimal.ZERO)).collect(Collectors.toList()));
 
         return chartDTO;
     }
 
+    private String resolveDateFormat(String periodFilter) {
+        return switch (periodFilter.toUpperCase()) {
+            case "DAY" -> "YYYY-MM-DD";     // e.g., 2025-12-16
+            case "MONTH" -> "YYYY-MM";      // e.g., 2025-12
+            case "YEAR" -> "YYYY";          // e.g., 2025
+            default -> throw new IllegalArgumentException("Invalid period filter: " + periodFilter);
+        };
+    }
+
+    private List<String> generateLabels(
+            LocalDateTime start,
+            LocalDateTime end,
+            String periodFilter
+    ) {
+        List<String> labels = new ArrayList<>();
+        DateTimeFormatter formatter;
+
+        switch (periodFilter.toUpperCase()) {
+            case "DAY":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                for (LocalDate date = start.toLocalDate();
+                     !date.isAfter(end.toLocalDate());
+                     date = date.plusDays(1)) {
+                    labels.add(date.format(formatter));
+                }
+                break;
+
+            case "MONTH":
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                for (LocalDate date = start.toLocalDate().withDayOfMonth(1);
+                     !date.isAfter(end.toLocalDate());
+                     date = date.plusMonths(1)) {
+                    labels.add(date.format(formatter));
+                }
+                break;
+
+            case "YEAR":
+                formatter = DateTimeFormatter.ofPattern("yyyy");
+                for (int year = start.getYear(); year <= end.getYear(); year++) {
+                    labels.add(String.valueOf(year));
+                }
+                break;
+        }
+        return labels;
+    }
+
     // Adjust start date based on period
     public LocalDateTime adjustStartDate(LocalDateTime start, String periodFilter) {
-        switch (periodFilter.toLowerCase()) {
-            case "year":
+        return switch (periodFilter.toLowerCase()) {
+            case "year" ->
                 // pindahkan ke 1 Januari tahun start
-                return LocalDateTime.of(start.getYear(), 1, 1, 0, 0, 0);
-            case "month":
+                    LocalDateTime.of(start.getYear(), 1, 1, 0, 0, 0);
+            case "month" ->
                 // pindahkan ke 1 hari di bulan start (full month)
                 // Tambahan: sesuai permintaan, extend ke 1 bulan sebelum start untuk cover bulan penuh
-                return LocalDateTime.of(start.getYear(), start.getMonth(), 1, 0, 0, 0);
-            case "day":
-            default:
+                    LocalDateTime.of(start.getYear(), start.getMonth(), 1, 0, 0, 0);
+            default ->
                 // biarkan apa adanya (per hari)
-                return start.withHour(0).withMinute(0).withSecond(0).withNano(0);
-        }
+                    start.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        };
     }
 
     // Adjust end date based on period
     public LocalDateTime adjustEndDate(LocalDateTime end, String periodFilter) {
-        switch (periodFilter.toLowerCase()) {
-            case "year":
+        return switch (periodFilter.toLowerCase()) {
+            case "year" ->
                 // pindahkan ke 31 Desember tahun end jam 23:59:59.999
-                return LocalDateTime.of(end.getYear(), 12, 31, 23, 59, 59, 999_999_999);
-            case "month":
+                    LocalDateTime.of(end.getYear(), 12, 31, 23, 59, 59, 999_999_999);
+            case "month" ->
                 // pindahkan ke akhir bulan dari end (full month)
                 // Untuk memperjelas, end bulan itu tanggal terakhir bulan tersebut
-                LocalDateTime endMonthLastDay = end.withDayOfMonth(end.toLocalDate().lengthOfMonth())
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
-                return endMonthLastDay;
-            case "day":
-            default:
+                    end.withDayOfMonth(end.toLocalDate().lengthOfMonth())
+                            .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
+            default ->
                 // biarkan apa adanya, tapi set jam akhir hari
-                return end.withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
-        }
-    }
-
-    private List<String> generateLabels(LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<String> labels = new ArrayList<>();
-
-        DateTimeFormatter formatter;
-        ChronoUnit stepUnit;
-
-        switch (periodFilter.toLowerCase()) {
-            case "year":
-                formatter = DateTimeFormatter.ofPattern("yyyy");
-                stepUnit = ChronoUnit.YEARS;
-                break;
-            case "month":
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                stepUnit = ChronoUnit.MONTHS;
-                break;
-            case "day":
-            default:
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                stepUnit = ChronoUnit.DAYS;
-                break;
-        }
-
-        LocalDateTime current = start;
-        while (!current.isAfter(end)) {
-            labels.add(current.format(formatter));
-            current = current.plus(1, stepUnit);
-        }
-
-        return labels;
-    }
-
-    private String formatDate(LocalDateTime date, String periodFilter) {
-        switch (periodFilter.toLowerCase()) {
-            case "year":
-                return date.format(DateTimeFormatter.ofPattern("yyyy"));
-            case "month":
-                return date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            case "day":
-            default:
-                return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        }
-    }
-
-    private Map<String, BigDecimal> getPendapatan(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
-
-        return transactions.stream()
-                .collect(Collectors.groupingBy(
-                        t -> formatDate(t.getCreatedAt(), periodFilter),
-                        Collectors.reducing(BigDecimal.ZERO, TransactionEntity::getTotalPrice, BigDecimal::add)
-                ));
-    }
-
-    private Map<String, BigDecimal> getPengeluaran(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<PurchasingEntity> purchases = purchasingRepository.findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(clientId, start, end);
-
-        return purchases.stream()
-                .collect(Collectors.groupingBy(
-                        p -> formatDate(p.getCreatedAt(), periodFilter),
-                        Collectors.reducing(BigDecimal.ZERO, PurchasingEntity::getTotalPrice, BigDecimal::add)
-                ));
-    }
-
-    private Map<String, BigDecimal> getLaba(Long clientId, LocalDateTime start, LocalDateTime end, String periodFilter) {
-        List<TransactionEntity> transactions = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, start, end);
-
-        // GROUP by date → sum totalProfit
-        return transactions.stream()
-                .collect(Collectors.groupingBy(
-                        t -> t.getCreatedAt().toLocalDate().toString(), // group by date string (YYYY-MM-DD)
-                        Collectors.reducing(
-                                BigDecimal.ZERO,
-                                t -> t.getTransactionDetailEntities().stream()
-                                        .map(TransactionDetailEntity::getTotalProfit)
-                                        .filter(Objects::nonNull)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add),
-                                BigDecimal::add
-                        )
-                ));
+                    end.withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
+        };
     }
 }
