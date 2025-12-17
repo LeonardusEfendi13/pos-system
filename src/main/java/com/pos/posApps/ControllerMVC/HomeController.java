@@ -58,6 +58,7 @@ public class HomeController {
         LocalDateTime finalEndDate = homeService.adjustEndDate(inputEndDate, periodFilter);
 
         HomeTopBarDTO topBarData = homeService.getHomeTopBarData(clientId);
+        //bottleneck di 1 dan 3
         List<HomeProductDTO> homeProductData = homeService.getTop10Product(finalStartDate, finalEndDate);
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
@@ -77,6 +78,5 @@ public class HomeController {
         }else{
             return "redirect:/penjualan";
         }
-//        return "home";
     }
 }

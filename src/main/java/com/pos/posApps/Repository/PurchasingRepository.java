@@ -1,5 +1,6 @@
 package com.pos.posApps.Repository;
 
+import com.pos.posApps.DTO.Dtos.ChartPointView;
 import com.pos.posApps.Entity.PurchasingEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -64,11 +65,27 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
 
     Optional<PurchasingEntity> findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(Long clientId, Long purchasingId);
 
-    Optional<PurchasingEntity> findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPurchasingIdDesc(Long clientId);
-
     Optional<PurchasingEntity> findFirstByClientEntity_ClientIdAndPurchasingNumberAndSupplierEntity_SupplierId(Long clientId, String purchasingNumber, Long supplierId);
 
     Optional<PurchasingEntity> findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(String purchasingNumber, Long clientId);
 
     boolean existsByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNullAndPurchasingIdNot(String purchasingNumber, Long clientId, Long purchasingId);
+
+
+    @Query(value = """
+    SELECT TO_CHAR(p.po_date, :dateFormat) AS label,
+           SUM(p.total_price) AS value
+    FROM purchasing p
+    WHERE p.client_id = :clientId
+      AND p.deleted_at IS NULL
+      AND p.po_date BETWEEN :start AND :end
+    GROUP BY label
+    ORDER BY label
+""", nativeQuery = true)
+    List<ChartPointView> getPengeluaranChart(
+            Long clientId,
+            LocalDateTime start,
+            LocalDateTime end,
+            String dateFormat
+    );
 }

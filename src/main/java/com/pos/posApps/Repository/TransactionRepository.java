@@ -1,11 +1,10 @@
 package com.pos.posApps.Repository;
 
+import com.pos.posApps.DTO.Dtos.ChartPointView;
 import com.pos.posApps.Entity.TransactionEntity;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -48,6 +47,40 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
 
     Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(Long clientId, Long transactionId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndDeletedAtIsNullAndTransactionNumberStartingWithOrderByTransactionNumberDesc(Long clientId, String today);
+    @Query(value = """
+    SELECT TO_CHAR(t.created_at, :dateFormat) AS label,
+           SUM(td.total_profit) AS value
+    FROM transaction t
+    JOIN transaction_detail td
+      ON t.transaction_id = td.transaction_id
+    WHERE t.client_id = :clientId
+      AND t.deleted_at IS NULL
+      AND t.created_at BETWEEN :start AND :end
+    GROUP BY label
+    ORDER BY label
+""", nativeQuery = true)
+    List<ChartPointView> getLabaChart(
+            Long clientId,
+            LocalDateTime start,
+            LocalDateTime end,
+            String dateFormat
+    );
+
+    @Query(value = """
+    SELECT
+        TO_CHAR(t.created_at, :dateFormat) AS label,
+        SUM(t.total_price) AS value
+    FROM transaction t
+    WHERE t.client_id = :clientId
+      AND t.deleted_at IS NULL
+      AND t.created_at BETWEEN :start AND :end
+    GROUP BY label
+    ORDER BY label
+""", nativeQuery = true)
+    List<ChartPointView> getPendapatanChart(
+            Long clientId,
+            LocalDateTime start,
+            LocalDateTime end,
+            String dateFormat
+    );
 }
