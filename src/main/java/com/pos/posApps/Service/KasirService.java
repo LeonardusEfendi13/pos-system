@@ -252,15 +252,6 @@ public class KasirService {
                 }
 
                 // =========================
-                // 9. VALIDASI STOCK
-                // =========================
-                if (delta > 0 && product.getStock() < delta) {
-                    throw new RuntimeException(
-                            "Stock produk " + code + " tidak mencukupi. Sisa: " + product.getStock()
-                    );
-                }
-
-                // =========================
                 // 10. UPDATE STOCK
                 // =========================
                 long newStock = product.getStock() - delta;
