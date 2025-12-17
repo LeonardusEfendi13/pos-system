@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +37,9 @@ public class ProductService {
 
     @Autowired
     StockMovementService stockMovementService;
+
+    @Autowired
+    PriceListService priceListService;
 
     private ProductDTO convertToDTO(ProductEntity product) {
         return new ProductDTO(
@@ -95,6 +99,13 @@ public class ProductService {
 
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId) {
         Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
+        productData.getContent().forEach(product -> {
+            SuggestedPricesDTO priceDto = priceListService.getSuggestedPriceByPartNumber(product.getShortName());
+            String supplierPriceStr = priceDto.getBasicPrice();
+            if (supplierPriceStr != null && !supplierPriceStr.isBlank()) {
+                product.setSupplierPrice(new BigDecimal(supplierPriceStr));
+            }
+        });
         return productData.map(this::convertToDTO);
     }
 
@@ -126,9 +137,6 @@ public class ProductService {
                 return new ResponseInBoolean(false, "Barang sudah ada");
             }
 
-//            Long lastProductId = productRepository.findFirstByOrderByProductIdDesc().map(ProductEntity::getProductId).orElse(0L);
-//            Long newProductId = Generator.generateId(lastProductId);
-
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientData.getClientId());
             if (supplierEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data Supplier tidak ditemukan");
@@ -138,7 +146,6 @@ public class ProductService {
 
             //Insert Product
             ProductEntity newProduct = new ProductEntity();
-//            newProduct.setProductId(newProductId);
             newProduct.setShortName(req.getShortName());
             newProduct.setFullName(req.getFullName());
             newProduct.setSupplierPrice(req.getSupplierPrice());
@@ -167,7 +174,6 @@ public class ProductService {
                 newProductPrices.setPercentage(productPricesData.getPercentage());
                 productPricesRepository.save(newProductPrices);
             }
-
             return new ResponseInBoolean(true, "Berhasil tambah produk baru");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -204,19 +210,6 @@ public class ProductService {
                         req.getStock(),
                         clientEntity
                 ));
-//                boolean isAdjusted = stockMovementService.insertKartuStok(new AdjustStockDTO(
-//                        productEntity,
-//                        "-",
-//                        TipeKartuStok.PENYESUAIAN,
-//                        0L,
-//                        0L,
-//                        req.getStock(),
-//                        clientEntity
-//                ));
-//                if (!isAdjusted) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return new ResponseInBoolean(false, "Gagal Adjust kartu stok");
-//                }
             }
 
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientEntity.getClientId());
@@ -287,6 +280,11 @@ public class ProductService {
 
     public ProductDTO findProductByCode(Long clientId, String keyword) {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
+        String code = productData.getShortName();
+        String supplierPrice = priceListService.getSuggestedPriceByPartNumber(code).getBasicPrice();
+        if(supplierPrice != null && !supplierPrice.isBlank()){
+            productData.setSupplierPrice(new BigDecimal(supplierPrice));
+        }
         return convertToDTO(productData);
     }
 

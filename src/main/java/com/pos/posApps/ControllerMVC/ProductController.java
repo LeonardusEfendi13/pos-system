@@ -115,14 +115,14 @@ public class ProductController {
             AccountEntity accEntity = authService.validateToken(token);
             Long clientId = accEntity.getClientEntity().getClientId();
 
-            List<ProductDTO> products = productService.searchProductByKeyword(clientId, keyword, field);
-            return products;
+            return productService.searchProductByKeyword(clientId, keyword, field);
         } catch (Exception e) {
             e.printStackTrace(); // Log error
             return List.of(); // Return empty list on error
         }
     }
 
+    //Find untuk get product langsung di row (tanpa buka modal)
     @GetMapping("/find")
     @ResponseBody
     public ResponseEntity<ProductDTO> findProduct(

@@ -29,7 +29,6 @@ public class PriceListService {
         BigDecimal suggestedPrice = null;
         BigDecimal basicPrice = null;
 
-
         //Get Merk
         String merk = priceListEntity.getMerk();
         BigDecimal hargaJual = priceListEntity.getHargaJual();
