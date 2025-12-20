@@ -76,7 +76,7 @@ public class ProductController {
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
 
         if (search == null || search.isEmpty()) {
-            productEntity = productService.getProductData(clientId, PageRequest.of(page, size), supplierIdFilter);
+            productEntity = productService.getProductData(clientId, PageRequest.of(page, size), supplierIdFilter, false);
         } else {
             productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
@@ -127,13 +127,14 @@ public class ProductController {
     @ResponseBody
     public ResponseEntity<ProductDTO> findProduct(
             HttpSession session,
-            @RequestParam String keyword
+            @RequestParam String keyword,
+            @RequestParam Boolean isPurchasing
     ) {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             AccountEntity accEntity = authService.validateToken(token);
             Long clientId = accEntity.getClientEntity().getClientId();
-            ProductDTO data = productService.findProductByCode(clientId, keyword.toUpperCase());
+            ProductDTO data = productService.findProductByCode(clientId, keyword.toUpperCase(), isPurchasing);
             return ResponseEntity.ok(data);
         } catch (Exception e) {
             e.printStackTrace(); // Log error
@@ -235,7 +236,7 @@ public class ProductController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null);
+        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
         List<StockMovementsDTO> stokData = Collections.emptyList();
         long totalElements = 0L;
         int totalPages = 0;

@@ -39,7 +39,7 @@ public class KasirController {
             return "redirect:/login";
         }
 
-        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null);
+        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
         List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
         model.addAttribute("clientSettingData", clientSettingData);

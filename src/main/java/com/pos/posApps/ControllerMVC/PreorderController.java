@@ -120,7 +120,7 @@ public class PreorderController {
         if (clientData.getClientId() == null) {
             return "redirect:/login";
         }
-        Page<ProductDTO> productEntity = productService.getProductData(clientData.getClientId(), PageRequest.of(page, size), null);
+        Page<ProductDTO> productEntity = productService.getProductData(clientData.getClientId(), PageRequest.of(page, size), null, false);
         List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientData.getClientId());
 
         PreorderDTO preorderData = new PreorderDTO();

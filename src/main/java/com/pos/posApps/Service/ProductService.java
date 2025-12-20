@@ -97,12 +97,12 @@ public class ProductService {
                 .orElse(0L);
     }
 
-    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId) {
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing) {
         Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
         productData.getContent().forEach(product -> {
             SuggestedPricesDTO priceDto = priceListService.getSuggestedPriceByPartNumber(product.getShortName());
             String supplierPriceStr = priceDto.getBasicPrice();
-            if (supplierPriceStr != null && !supplierPriceStr.isBlank()) {
+            if (supplierPriceStr != null && !supplierPriceStr.isBlank() && isPurchasing) {
                 product.setSupplierPrice(new BigDecimal(supplierPriceStr));
             }
         });
@@ -113,7 +113,7 @@ public class ProductService {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
         if (trimmedSearch.isEmpty()) {
-            return getProductData(clientId, pageable, supplierIdFilter);
+            return getProductData(clientId, pageable, supplierIdFilter, false);
         }
 
         Page<ProductEntity> productData = productRepository
@@ -278,11 +278,11 @@ public class ProductService {
         return products.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    public ProductDTO findProductByCode(Long clientId, String keyword) {
+    public ProductDTO findProductByCode(Long clientId, String keyword, Boolean isPurchasing) {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
         String code = productData.getShortName();
         String supplierPrice = priceListService.getSuggestedPriceByPartNumber(code).getBasicPrice();
-        if(supplierPrice != null && !supplierPrice.isBlank()){
+        if(supplierPrice != null && !supplierPrice.isBlank() && isPurchasing){
             productData.setSupplierPrice(new BigDecimal(supplierPrice));
         }
         return convertToDTO(productData);

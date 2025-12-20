@@ -1468,7 +1468,7 @@
             // 🚀 Kalau belum ada, fetch ke backend
             if (!product) {
               try {
-                const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}`);
+                const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}&isPurchasing=true`);
                 if (res.ok) {
                   const result = await res.json();
                   if (result) {
@@ -2613,7 +2613,7 @@
             // 🚀 Kalau belum ada, fetch ke backend
             if (!product) {
               try {
-                const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}`);
+                const res = await fetch(`/products/find?keyword=${encodeURIComponent(code)}&isPurchasing=true`);
                 if (res.ok) {
                   const result = await res.json();
                   if (result) {
