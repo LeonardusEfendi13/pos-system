@@ -97,6 +97,13 @@ public class ProductService {
                 .orElse(0L);
     }
 
+    //For master product
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing, Boolean isMasterProduct) {
+        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
+        return productData.map(this::convertToDTO);
+    }
+
+    //for non master products
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing) {
         Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
         productData.getContent().forEach(product -> {

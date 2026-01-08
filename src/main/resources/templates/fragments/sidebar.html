@@ -293,8 +293,19 @@
                     </a>
                 </li>
 
+                <!-- Settings -->
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'dataCenter' ? ' active'">
+                    <a class="nav-link" th:href="@{/data_center}">
+                        <span class="nav-link-title">Data Center</span>
+                    </a>
+                </li>
+
             </ul>
+
         </div>
+
 
         <!-- Logout Button -->
         <div class="logout-button mt-3">
