@@ -76,7 +76,7 @@ public class ProductController {
         List<SupplierEntity> supplierEntity = supplierService.getSupplierList(clientId);
 
         if (search == null || search.isEmpty()) {
-            productEntity = productService.getProductData(clientId, PageRequest.of(page, size), supplierIdFilter, false);
+            productEntity = productService.getProductData(clientId, PageRequest.of(page, size), supplierIdFilter, false, true);
         } else {
             productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
