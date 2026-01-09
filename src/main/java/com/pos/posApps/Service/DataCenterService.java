@@ -93,7 +93,7 @@ public class DataCenterService {
                 "--if-exists",
                 "--no-owner",
                 "--no-privileges",
-                "-d", "dev",
+                "-d", "postgres",
                 dumpFile.getAbsolutePath()
         );
 
