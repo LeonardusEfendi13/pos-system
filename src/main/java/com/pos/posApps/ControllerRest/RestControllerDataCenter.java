@@ -42,6 +42,6 @@ public class RestControllerDataCenter {
         File tempFile = File.createTempFile("restore-", ".dump");
         file.transferTo(tempFile);
         dataCenterService.restoreDatabase(tempFile);
-        return ResponseEntity.ok("Database restored successfully");
+        return ResponseEntity.ok("Database berhasil dipulihkan! Harap melakukan login ulang");
     }
 }

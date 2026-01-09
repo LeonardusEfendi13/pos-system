@@ -105,7 +105,7 @@
                                         database (.sql)</label>
                                     <div class="input-group mb-2">
                                         <input class="form-control form-control-lg" type="file" id="restoreFile"
-                                               accept=".dump">
+                                               accept=".sql">
                                         <button id="restoreBtn" class="btn btn-restore fs-5">
                                             <i class="bi bi-cloud-arrow-down-fill me-2"></i> Pulihkan database
                                         </button>
@@ -193,6 +193,50 @@
         this.disabled = false;
         this.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i> Backup Database';
       }
+    });
+
+    document.getElementById('restoreBtn').addEventListener('click', async function () {
+        const restoreBtn = this;
+        const fileInput = document.getElementById('restoreFile');
+
+        // Validasi file
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a backup file first!');
+            return;
+        }
+
+        const file = fileInput.files[0];
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // UI feedback
+            restoreBtn.disabled = true;
+            restoreBtn.innerText = 'Restoring...';
+
+            const response = await fetch('/api/restore', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'Restore failed');
+            }
+
+            // Optional: baca response text
+            const resp = await response.text();
+            alert(resp);
+
+            // ✅ Reload page AFTER restore finished
+            window.location.reload();
+
+        } catch (err) {
+            alert('Restore error: ' + err.message);
+            restoreBtn.disabled = false;
+            restoreBtn.innerText = 'Restore Database';
+        }
     });
 </script>
 

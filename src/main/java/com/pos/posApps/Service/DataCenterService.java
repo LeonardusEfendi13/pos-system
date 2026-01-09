@@ -23,7 +23,7 @@ public class DataCenterService {
     private DataCenterLogRepository dataCenterLogRepository;
 
     public List<DataCenterLogEntity> getLogData(){
-        return dataCenterLogRepository.findAll();
+        return dataCenterLogRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public File backupDatabase(String dbName)
@@ -34,7 +34,7 @@ public class DataCenterService {
         String timestamp = LocalDateTime.now().format(formatter);
 
         // Use .dump or .backup (NOT .sql)
-        String fileName = "dump-" + dbName + "-" + timestamp + ".sql";
+        String fileName = "backup-ANUGRAH MOTOR-" + timestamp + ".sql";
 
         File backupFile = new File(
                 System.getProperty("java.io.tmpdir"),
@@ -93,7 +93,7 @@ public class DataCenterService {
                 "--if-exists",
                 "--no-owner",
                 "--no-privileges",
-                "-d", "postgres",
+                "-d", "dev",
                 dumpFile.getAbsolutePath()
         );
 
