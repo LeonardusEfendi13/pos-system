@@ -236,7 +236,7 @@ public class ProductController {
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
-        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
+        Page<ProductDTO> productPage = productService.getProductData(clientId, PageRequest.of(page, size), null, false, true);
         List<StockMovementsDTO> stokData = Collections.emptyList();
         long totalElements = 0L;
         int totalPages = 0;
