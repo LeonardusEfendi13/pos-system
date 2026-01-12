@@ -7,6 +7,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.ProductEntity;
 import com.pos.posApps.Entity.PurchasingEntity;
+import com.pos.posApps.Entity.TransactionDetailEntity;
 import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
@@ -73,6 +74,7 @@ public class LaporanService {
         return new PageImpl<>(dtos, pageable, productIdsPage.getTotalElements());
     }
 
+
     public List<LaporanPenjualanPerWaktuDTO> getLaporanPenjualanDataByPeriode(
             Long clientId,
             LocalDateTime startDate,
@@ -80,57 +82,44 @@ public class LaporanService {
             Long customerId,
             String filterOptions
     ) {
-        List<TransactionEntity> transactionData;
 
-        if (customerId == null) {
-            transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
-                            clientId, startDate, endDate);
-        } else {
-            transactionData = transactionRepository
-                    .findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(
-                            clientId, customerId, startDate, endDate);
-        }
+        String filter = filterOptions != null ? filterOptions.toLowerCase() : "day";
 
-        DateTimeFormatter formatter = switch (filterOptions != null ? filterOptions.toLowerCase() : "") {
-            case "year" -> DateTimeFormatter.ofPattern("yyyy");
-            case "month" -> DateTimeFormatter.ofPattern("yyyy-MM");
-            default -> DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        };
+        // 1️⃣ Ambil data yang SUDAH teragregasi
+        List<Object[]> rawData =
+                transactionRepository.getLaporanPenjualanPerWaktuRaw(
+                        clientId, startDate, endDate, customerId, filter
+                );
 
-        // Generate all periods between start and end
-        List<String> allPeriods = generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filterOptions);
-
-        // Grouping by actual data
-        Map<String, LaporanPenjualanPerWaktuDTO> groupedMap = transactionData.stream()
-                .flatMap(trx -> trx.getTransactionDetailEntities().stream()
-                        .filter(detail -> detail.getDeletedAt() == null)
-                        .map(detail -> {
-                            String period = trx.getCreatedAt().format(formatter);
-
-                            BigDecimal totalPrice = detail.getTotalPrice();
-                            BigDecimal laba = detail.getTotalProfit() != null ? detail.getTotalProfit() : BigDecimal.ZERO;
-
-                            return Map.entry(period,
-                                    new LaporanPenjualanPerWaktuDTO(period, totalPrice, laba));
-                        })
-                )
+        // 2️⃣ Convert ke Map (PERIOD -> DTO)
+        Map<String, LaporanPenjualanPerWaktuDTO> dbMap = rawData.stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (existing, incoming) -> new LaporanPenjualanPerWaktuDTO(
-                                existing.getPeriod(),
-                                existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
-                                existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
+                        row -> (String) row[0],
+                        row -> new LaporanPenjualanPerWaktuDTO(
+                                (String) row[0],
+                                (BigDecimal) row[1],
+                                (BigDecimal) row[2]
                         )
                 ));
 
-        // Ensure all periods included even if zero
-        Map<String, LaporanPenjualanPerWaktuDTO> finalMap = new TreeMap<>(Comparator.reverseOrder());
+        // 3️⃣ Generate semua periode (tetap perlu)
+        List<String> allPeriods =
+                generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filter);
+
+        // 4️⃣ Gabungkan + isi data kosong
+        Map<String, LaporanPenjualanPerWaktuDTO> finalMap =
+                new TreeMap<>(Comparator.reverseOrder());
+
         for (String period : allPeriods) {
-            LaporanPenjualanPerWaktuDTO data =
-                    groupedMap.getOrDefault(period, new LaporanPenjualanPerWaktuDTO(period, BigDecimal.ZERO, BigDecimal.ZERO));
-            finalMap.put(period, data);
+            finalMap.put(
+                    period,
+                    dbMap.getOrDefault(
+                            period,
+                            new LaporanPenjualanPerWaktuDTO(
+                                    period, BigDecimal.ZERO, BigDecimal.ZERO
+                            )
+                    )
+            );
         }
 
         return new ArrayList<>(finalMap.values());
@@ -201,41 +190,22 @@ public class LaporanService {
             LocalDateTime startDate,
             LocalDateTime endDate
     ) {
-        List<TransactionEntity> transactionData = transactionRepository
-                .findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
-                        clientId, startDate, endDate);
+        List<Object[]> rows =
+                transactionRepository.getLaporanPenjualanRaw(
+                        clientId, startDate, endDate
+                );
 
-        // Group by customer name + sum totals + sum profit
-        Map<String, LaporanPenjualanPerPelangganDTO> groupedByCustomer = transactionData.stream()
-                .flatMap(trx -> trx.getTransactionDetailEntities().stream()
-                        .filter(detail -> detail.getDeletedAt() == null)
-                        .map(detail -> {
-                            // Determine customer name
-                            String customerName = trx.getCustomerEntity() != null
-                                    ? trx.getCustomerEntity().getName()
-                                    : "Unknown Customer";
+        List<LaporanPenjualanPerPelangganDTO> result = new ArrayList<>(rows.size());
 
-                            BigDecimal totalPrice = detail.getTotalPrice();
-                            BigDecimal laba = detail.getTotalProfit() != null ? detail.getTotalProfit() : BigDecimal.ZERO;
+        for (Object[] row : rows) {
+            result.add(new LaporanPenjualanPerPelangganDTO(
+                    (String) row[0],
+                    (BigDecimal) row[1],
+                    (BigDecimal) row[2]
+            ));
+        }
 
-                            return Map.entry(customerName,
-                                    new LaporanPenjualanPerPelangganDTO(customerName, totalPrice, laba));
-                        })
-                )
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (existing, incoming) -> new LaporanPenjualanPerPelangganDTO(
-                                existing.getCustomerName(),
-                                existing.getTotalHargaPenjualan().add(incoming.getTotalHargaPenjualan()),
-                                existing.getLabaPenjualan().add(incoming.getLabaPenjualan())
-                        )
-                ));
-
-        // Sort by customer name
-        return groupedByCustomer.values().stream()
-                .sorted(Comparator.comparing(LaporanPenjualanPerPelangganDTO::getCustomerName))
-                .collect(Collectors.toList());
+        return result;
     }
 
     public List<LaporanPembelianPerPelangganDTO> getLaporanPembelianDataByCustomer(
