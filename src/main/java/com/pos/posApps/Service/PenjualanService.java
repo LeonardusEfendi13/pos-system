@@ -111,6 +111,12 @@ public class PenjualanService {
     }
 
     private PenjualanDTO convertToDTO(TransactionEntity transactions) {
+        String name = "Unknown";
+        if(transactions.getAccountEntity() != null) {
+            if (transactions.getAccountEntity().getName() != null && !transactions.getAccountEntity().getName().isBlank()) {
+                name = transactions.getAccountEntity().getName();
+            }
+        }
         return new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
@@ -135,7 +141,7 @@ public class PenjualanService {
                                 transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName()
+                name
         );
     }
 

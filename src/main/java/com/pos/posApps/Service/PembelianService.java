@@ -49,13 +49,14 @@ public class PembelianService {
     BuktiBayarRepository buktiBayarRepository;
 
     public Page<PembelianDTO> getPembelianData(
-            Long clientId,
+            AccountEntity accountData,
             LocalDateTime startDate,
             LocalDateTime endDate,
             Long supplierId,
             Boolean lunas,
             Boolean tunai,
             Pageable pageable) {
+        Long clientId = accountData.getClientEntity().getClientId();
 
         Page<PurchasingEntity> purchasingData = purchasingRepository.findPurchasingData(
                 clientId, supplierId, lunas, tunai, startDate, endDate, pageable
@@ -64,11 +65,11 @@ public class PembelianService {
         return purchasingData.map(this::convertToDTO);
     }
 
-    public Page<PembelianDTO> searchPembelianData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, String search, Pageable pageable) {
+    public Page<PembelianDTO> searchPembelianData(AccountEntity accountData, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
-
+        Long clientId = accountData.getClientEntity().getClientId();
         if (trimmedSearch.isEmpty()) {
-            return getPembelianData(clientId, startDate, endDate, supplierId, lunas, tunai, pageable);
+            return getPembelianData(accountData, startDate, endDate, supplierId, lunas, tunai, pageable);
         }
 
         Page<PurchasingEntity> purchasingData = purchasingRepository
@@ -87,6 +88,12 @@ public class PembelianService {
     }
 
     private PembelianDTO convertToDTO(PurchasingEntity purchasings) {
+        String name = "Unknown";
+        if(purchasings.getAccountEntity() != null) {
+            if (purchasings.getAccountEntity().getName() != null && !purchasings.getAccountEntity().getName().isBlank()) {
+                name = purchasings.getAccountEntity().getName();
+            }
+        }
         return new PembelianDTO(
                 purchasings.getPurchasingId(),
                 purchasings.getPurchasingNumber(),
@@ -117,7 +124,8 @@ public class PembelianService {
                                 purchasingDetail.getHargaJual2(),
                                 purchasingDetail.getHargaJual3()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                name
         );
     }
 
@@ -162,7 +170,8 @@ public class PembelianService {
                                 purchasingDetail.getHargaJual2(),
                                 purchasingDetail.getHargaJual3()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                purchasings.getAccountEntity().getName()
         );
     }
 
@@ -206,8 +215,9 @@ public class PembelianService {
     }
 
     @Transactional
-    public ResponseInBoolean createTransaction(CreatePurchasingRequest req, ClientEntity clientData) {
+    public ResponseInBoolean createTransaction(CreatePurchasingRequest req, AccountEntity accountData) {
         String lastProduct = "Tanya Leon";
+        ClientEntity clientData = accountData.getClientEntity();
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
         if (pembelian.isPresent()) {
@@ -225,7 +235,6 @@ public class PembelianService {
 
             //insert the transaction data
             PurchasingEntity purchasingEntity = new PurchasingEntity();
-//            purchasingEntity.setPurchasingId(newPurchasingId);
             purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
             purchasingEntity.setSupplierEntity(supplierEntity.get());
             purchasingEntity.setTotalPrice(req.getTotalPrice());
@@ -239,6 +248,7 @@ public class PembelianService {
             purchasingEntity.setPaid(req.isCash());
             purchasingEntity.setClientEntity(clientData);
             purchasingEntity.setSubtotal(req.getSubtotal());
+            purchasingEntity.setAccountEntity(accountData);
             purchasingRepository.save(purchasingEntity);
 
             //Insert all the transaction details
@@ -325,10 +335,10 @@ public class PembelianService {
     public ResponseInBoolean editTransaction(
             Long purchasingId,
             CreatePurchasingRequest req,
-            ClientEntity clientData
+            AccountEntity accountData
     ) {
         String lastProduct = "-";
-
+        ClientEntity clientData = accountData.getClientEntity();
         // =========================
         // DUPLICATE CHECK
         // =========================
@@ -368,7 +378,7 @@ public class PembelianService {
             purchasing.setSubtotal(req.getSubtotal());
             purchasing.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
             purchasing.setCash(req.isCash());
-
+            purchasing.setAccountEntity(accountData);
             if (!req.isCash()) {
                 purchasing.setPoDueDate(LocalDate.parse(req.getPoDueDate()).atStartOfDay());
             }

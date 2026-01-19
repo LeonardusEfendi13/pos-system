@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.BuktiBayarDTO;
 import com.pos.posApps.DTO.Dtos.CreatePurchasingRequest;
 import com.pos.posApps.DTO.Dtos.LunaskanPembelianDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
+import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.PembelianService;
@@ -47,13 +48,15 @@ public class RestControllerPembelian {
     @PostMapping("/add")
     public ResponseEntity<String> addTransaction(@RequestBody CreatePurchasingRequest req, HttpSession session) {
         ClientEntity clientData;
+        AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
-            clientData = authService.validateToken(token).getClientEntity();
+//            clientData = authService.validateToken(token).getClientEntity();
+            accountData = authService.validateToken(token);
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
-        ResponseInBoolean response = pembelianService.createTransaction(req, clientData);
+        ResponseInBoolean response = pembelianService.createTransaction(req, accountData);
         if (response.isStatus()) {
             return ResponseEntity.ok(response.getMessage());
         }
@@ -62,14 +65,15 @@ public class RestControllerPembelian {
 
     @PostMapping("/edit/{purchasingId}")
     public ResponseEntity<String> editTransaction(@PathVariable("purchasingId") Long purchasingId, @RequestBody CreatePurchasingRequest req, HttpSession session) {
-        ClientEntity clientData;
+//        ClientEntity clientData;
+        AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
-            clientData = authService.validateToken(token).getClientEntity();
+            accountData = authService.validateToken(token);
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
-        ResponseInBoolean response = pembelianService.editTransaction(purchasingId, req, clientData);
+        ResponseInBoolean response = pembelianService.editTransaction(purchasingId, req, accountData);
         if (response.isStatus()) {
             return ResponseEntity.ok(response.getMessage());
         }
