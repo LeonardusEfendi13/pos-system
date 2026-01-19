@@ -65,8 +65,9 @@ public class KasirService {
     }
 
     @Transactional
-    public ResponseInBoolean createTransaction(CreateTransactionRequest req, ClientEntity clientData) {
+    public ResponseInBoolean createTransaction(CreateTransactionRequest req, AccountEntity accountData) {
         String lastProduct = "Tanya Leon";
+        ClientEntity clientData = accountData.getClientEntity();
         try {
             //Get Customer Entity
             Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
@@ -85,6 +86,7 @@ public class KasirService {
             transactionEntity.setTotalPrice(req.getTotalPrice());
             transactionEntity.setTotalDiscount(req.getTotalDisc());
             transactionEntity.setSubtotal(req.getSubtotal());
+            transactionEntity.setAccountEntity(accountData);
             transactionRepository.save(transactionEntity);
 
             System.out.println("=====START LOG ID : " + transactionEntity.getTransactionId() + "=======");
@@ -158,10 +160,10 @@ public class KasirService {
     public ResponseInBoolean editTransaction(
             Long transactionId,
             CreateTransactionRequest req,
-            ClientEntity clientData
+            AccountEntity accountData
     ) {
         String lastProduct = "-";
-
+        ClientEntity clientData = accountData.getClientEntity();
         try {
             // =========================
             // 1. VALIDASI CUSTOMER
@@ -190,6 +192,7 @@ public class KasirService {
             transaction.setTotalPrice(req.getTotalPrice());
             transaction.setTotalDiscount(req.getTotalDisc());
             transaction.setSubtotal(req.getSubtotal());
+            transaction.setAccountEntity(accountData);
             transactionRepository.save(transaction);
 
             // =========================

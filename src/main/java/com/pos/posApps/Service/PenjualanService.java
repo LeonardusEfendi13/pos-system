@@ -72,7 +72,9 @@ public class PenjualanService {
                                 transactionDetail.getTotalProfit(),
                                 transactionDetail.getBasicPrice()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                transactions.getAccountEntity().getName()
+
         )).collect(Collectors.toList());
     }
 
@@ -132,7 +134,8 @@ public class PenjualanService {
                                 transactionDetail.getTotalProfit(),
                                 transactionDetail.getBasicPrice()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                transactions.getAccountEntity().getName()
         );
     }
 
@@ -165,7 +168,8 @@ public class PenjualanService {
                                 transactionDetail.getTotalProfit(),
                                 transactionDetail.getBasicPrice()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                transactions.getAccountEntity().getName()
         );
     }
 

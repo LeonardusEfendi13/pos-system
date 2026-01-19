@@ -157,6 +157,7 @@
                             <th>Tanggal Jual</th>
                             <th>Total Jual</th>
                             <th>Pelanggan</th>
+                            <th>Kasir</th>
                             <th>Action</th>
                         </tr>
                         </thead>
@@ -169,6 +170,7 @@
                             </td>
                             <td><span th:text="${penjualan.totalPrice}">Rp0</span></td>
                             <td th:text="${penjualan.customerDTO.customerName}">Pelanggan</td>
+                            <td th:text="${penjualan.accountName}">Account Name</td>
                             <td>
                                 <form th:action="@{/kasir}" method="get" style="display: inline">
                                     <input type="hidden" name="transactionId" th:value="${penjualan.transactionId}"/>

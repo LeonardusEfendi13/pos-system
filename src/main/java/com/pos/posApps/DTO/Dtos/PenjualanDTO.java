@@ -21,4 +21,5 @@ public class PenjualanDTO {
     private BigDecimal totalDisc;
     private LocalDateTime tanggalJual;
     private List<TransactionDetailDTO> transactionDetailDTOS;
+    private String accountName;
 }
