@@ -54,4 +54,8 @@ public class TransactionEntity {
 
     @OneToMany(mappedBy = "transactionEntity")
     private List<TransactionDetailEntity> transactionDetailEntities;
+
+    @OneToOne
+    @JoinColumn(name = "created_by")
+    private AccountEntity accountEntity;
 }

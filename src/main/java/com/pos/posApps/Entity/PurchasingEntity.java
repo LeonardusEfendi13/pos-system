@@ -65,4 +65,8 @@ public class PurchasingEntity {
 
     @OneToMany(mappedBy = "purchasingEntity")
     private List<PurchasingDetailEntity> purchasingDetailEntities;
+
+    @OneToOne
+    @JoinColumn(name = "created_by")
+    private AccountEntity accountEntity;
 }

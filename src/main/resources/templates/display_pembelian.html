@@ -228,6 +228,7 @@
                             <th scope="col">Supplier</th>
                             <th scope="col">Tipe Pembayaran</th>
                             <th scope="col">Lunas</th>
+                            <th scope="col">Kasir</th>
                             <th scope="col">Action</th>
                         </tr>
                         </thead>
@@ -249,6 +250,7 @@
                                 <input type="checkbox" th:checked="${pembelian.isPaid}"
                                        style="transform:scale(1.5);pointer-events: none;"/>
                             </td>
+                            <td th:text="${pembelian.accountName}">Account Name</td>
                             <td>
                                 <form th:action="@{/pembelian/tambah}" method="get" style="display:inline;">
                                     <input type="hidden" name="pembelianId" th:value="${pembelian.pembelianId}">

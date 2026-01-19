@@ -5,8 +5,8 @@
     <div class="container-fluid">
         <h2 class="navbar-brand navbar-brand-autodark">
             <a th:href="@{/home}"
-               th:text="${sidebarData.namaToko}"
-               style="margin-left:10px !important; word-break: break-word; white-space: normal; display: block; max-width: 150px;text-align:center">
+               th:text="'Halo, ' + ${sidebarData.accountName}"
+               style="margin-left:10px !important; word-break: break-word; white-space: normal; display: block; max-width: 150px;text-align:center;text-decoration: none;">
                 AAANU
             </a>
         </h2>

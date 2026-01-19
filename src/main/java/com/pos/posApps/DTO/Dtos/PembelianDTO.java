@@ -24,4 +24,5 @@ public class PembelianDTO {
     private boolean isPaid;
     private BigDecimal subtotal;
     private List<PembelianDetailDTO> pembelianDetailDTOS;
+    private String accountName;
 }
