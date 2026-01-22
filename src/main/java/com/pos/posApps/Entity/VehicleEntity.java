@@ -10,6 +10,9 @@ import java.util.List;
 @Table(name = "vehicle")
 public class VehicleEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "vehicle_seq")
+    @SequenceGenerator(name = "vehicle_seq", sequenceName = "vehicle_sequences", allocationSize = 1)
+
     @Column(name = "id")
     private Long id;
 
@@ -24,4 +27,5 @@ public class VehicleEntity {
 
     @OneToMany(mappedBy = "vehicleEntity")
     private List<CompatibleProductsEntity> compatibleProductsEntities;
+
 }

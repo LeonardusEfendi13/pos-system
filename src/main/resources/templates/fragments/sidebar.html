@@ -33,20 +33,20 @@
                 <!-- Master Barang -->
                 <li class="nav-item dropdown"
                     th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
-                    th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? ' active' : ''">
+                    th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok' or ${activePage} == 'vehicle') ? ' active' : ''">
                     <a class="nav-link dropdown-toggle"
                        href="#sidebar-barang"
                        data-bs-toggle="collapse"
                        role="button"
                        aria-expanded="false"
                        aria-controls="sidebar-barang"
-                       th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? '' : ' collapsed'">
+                       th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok' or ${activePage} == 'vehicle') ? '' : ' collapsed'">
                         <span class="nav-link-title">Master Barang</span>
                     </a>
 
                     <div class="collapse"
                          id="sidebar-barang"
-                         th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok') ? ' show' : ''">
+                         th:classappend="(${activePage} == 'masterBarang' or ${activePage} == 'kartuStok' or ${activePage} == 'vehicle') ? ' show' : ''">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
                                 <a class="nav-link"
@@ -60,6 +60,13 @@
                                    href="/products/kartu_stok"
                                    th:classappend="${activePage} == 'kartuStok' ? ' active' : ''">
                                     Kartu Stok
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/vehicle"
+                                   th:classappend="${activePage} == 'vehicle' ? ' active' : ''">
+                                    Data Kendaraan
                                 </a>
                             </li>
                         </ul>
