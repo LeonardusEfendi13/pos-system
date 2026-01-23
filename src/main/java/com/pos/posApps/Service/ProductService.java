@@ -41,6 +41,9 @@ public class ProductService {
     @Autowired
     CompatibleProductsRepository compatibleProductsRepository;
 
+    @Autowired
+    VehicleRepository vehicleRepository;
+
     private ProductDTO convertToDTO(ProductEntity product) {
         return new ProductDTO(
                 product.getProductId(),
@@ -60,13 +63,23 @@ public class ProductService {
                         ))
                         .collect(Collectors.toList()),
                 product.getSupplierEntity().getSupplierId(),
-                product.getMinimumStock()
+                product.getMinimumStock(),
+                product.getCompatibleProductsEntities() == null ? new ArrayList<>() :
+                        product.getCompatibleProductsEntities().stream()
+                                .map(cp -> new CompatibleProductsDTO(
+                                        cp.getProductEntity().getProductId(),
+                                        cp.getVehicleEntity().getId(),
+                                        cp.getYearStart(),
+                                        cp.getYearEnd(),
+                                        cp.getVehicleEntity().getModel()
+                                ))
+                                .collect(Collectors.toList())
         );
     }
 
-    public ProductDTO findProductById(Long productId){
+    public ProductDTO findProductById(Long productId) {
         Optional<ProductEntity> dataOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
-        if(dataOpt.isEmpty()){
+        if (dataOpt.isEmpty()) {
             return new ProductDTO();
         }
         ProductEntity productEntity = dataOpt.get();
@@ -157,14 +170,16 @@ public class ProductService {
             newProduct.setFullName(req.getFullName());
             newProduct.setSupplierPrice(req.getSupplierPrice());
             newProduct.setSupplierEntity(supplierEntity);
-            newProduct.setStock(req.getStock() != null ? req.getStock() :  0L);
+            newProduct.setStock(req.getStock() != null ? req.getStock() : 0L);
             newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
 
             //Start insert compatible Product
-            for(CompatibleProductsDTO c : req.getCompatibleVehicles()){
+            for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
                 CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
+                VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
+                compatibleProducts.setVehicleEntity(v);
                 compatibleProducts.setProductEntity(newProduct);
                 compatibleProducts.setYearStart(c.getYearStart());
                 compatibleProducts.setYearEnd(c.getYearEnd());
@@ -298,7 +313,7 @@ public class ProductService {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
         String code = productData.getShortName();
         String supplierPrice = priceListService.getSuggestedPriceByPartNumber(code).getBasicPrice();
-        if(supplierPrice != null && !supplierPrice.isBlank() && isPurchasing){
+        if (supplierPrice != null && !supplierPrice.isBlank() && isPurchasing) {
             productData.setSupplierPrice(new BigDecimal(supplierPrice));
         }
         return convertToDTO(productData);

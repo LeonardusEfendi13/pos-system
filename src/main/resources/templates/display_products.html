@@ -169,24 +169,7 @@
                                     data-bs-toggle="modal"
                                     data-bs-target="#addBarangModal"
                                     id="edit-barang-btn"
-                                    th:attr="
-                                    data-productid=${product.productId},
-                                    data-shortname=${product.shortName},
-                                    data-fullname=${product.fullName},
-                                    data-supplierid=${product.supplierId},
-                                    data-stok=${product.stok},
-                                    data-minimumstock=${product.minimumStock},
-                                    data-hargabeli=${product.hargaBeli},
-                                    data-hargajual1=${product.productPricesDTO[0].price},
-                                    data-hargajual2=${product.productPricesDTO[1].price},
-                                    data-hargajual3=${product.productPricesDTO[2].price},
-                                    data-maxqty1=${product.productPricesDTO[0].maximalCount},
-                                    data-maxqty2=${product.productPricesDTO[1].maximalCount},
-                                    data-maxqty3=${product.productPricesDTO[2].maximalCount},
-                                    data-percentage1=${product.productPricesDTO[0].percentage},
-                                    data-percentage2=${product.productPricesDTO[1].percentage},
-                                    data-percentage3=${product.productPricesDTO[2].percentage}
-                                "
+                                    th:attr="data-productid=${product.productId}"
                             >Edit
                             </button>
 
@@ -519,6 +502,9 @@
 
 
     </div>
+    <th:block th:each="p : ${productData}">
+        <p th:text="${p.productId} + ' -> ' + ${p.compatibleProductsDTOS}"></p>
+    </th:block>
 </div>
 
 <!-- Tabler Core JS -->
@@ -529,6 +515,9 @@
 <!--    For Draggable modals-->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script th:inline="javascript">
+    const productData = /*[[${productData}]]*/ [];
+</script>
 <script>
     $(document).ready(function () {
         $("#barangModal").draggable();
@@ -668,28 +657,71 @@
         }
 
         function populateForm(data) {
+            console.log("Populating..");
             $('#modalLabel').text('Edit Master Barang & Jasa');
             $('#barangForm').attr('action', '/products/edit');
             $('#productId').val(data.productid); // Set the hidden ID for editing
-
+            console.log("data", data);
             // Populate other fields
-            $('#shortName').val(data.shortname);
-            $('#fullName').val(data.fullname);
-            $('#supplierId').val(data.supplierid);
+            $('#shortName').val(data.shortName);
+            $('#fullName').val(data.fullName);
+            $('#supplierId').val(data.supplierId);
             $('#stok').val(data.stok);
-            $('#minimumStock').val(data.minimumstock);
-            $('#supplierPrice').val(rupiahFormatter.format(data.hargabeli));
+            $('#minimumStock').val(data.minimumStock);
+            $('#supplierPrice').val(rupiahFormatter.format(data.hargaBeli));
 
-            // Populate harga jual and pct fields
-            $('#hargaJual1').val(rupiahFormatter.format(data.hargajual1));
-            $('#hargaJual2').val(rupiahFormatter.format(data.hargajual2));
-            $('#hargaJual3').val(rupiahFormatter.format(data.hargajual3));
-            $('#pct1').val(data.percentage1);
-            $('#pct2').val(data.percentage2);
-            $('#pct3').val(data.percentage3);
-            $('#maxqty1').val(data.maxqty1);
-            $('#maxqty2').val(data.maxqty2);
-            $('#maxqty3').val(data.maxqty3);
+           // ===== productPricesDTO SAFE ACCESS =====
+            const prices = data.productPricesDTO || [];
+
+            const p1 = prices[0] || {};
+            const p2 = prices[1] || {};
+            const p3 = prices[2] || {};
+
+            $('#hargaJual1').val(p1.price ? rupiahFormatter.format(p1.price) : '');
+            $('#hargaJual2').val(p2.price ? rupiahFormatter.format(p2.price) : '');
+            $('#hargaJual3').val(p3.price ? rupiahFormatter.format(p3.price) : '');
+
+            $('#pct1').val(p1.percentage ?? '');
+            $('#pct2').val(p2.percentage ?? '');
+            $('#pct3').val(p3.percentage ?? '');
+
+            $('#maxqty1').val(p1.maximalCount ?? '');
+            $('#maxqty2').val(p2.maximalCount ?? '');
+            $('#maxqty3').val(p3.maximalCount ?? '');
+
+            console.log("retrieving cvm..");
+
+            const container = document.getElementById("vehicleChips");
+            container.innerHTML = "";  // clear old chips
+            vehicleIndex = 0;          // reset index for this modal
+
+            const compatible = data.compatibleProductsDTOS || [];
+            console.log("compatible", compatible);
+
+            compatible.forEach((cp) => {
+                const chip = document.createElement("div");
+                chip.className = "vehicle-chip";
+
+                chip.innerHTML = `
+                    <div class="chip-text">
+                        <span class="chip-title">${cp.model}</span>
+                        <span class="chip-year">${cp.yearStart} – ${cp.yearEnd}</span>
+                    </div>
+
+                    <button type="button"
+                            class="chip-remove"
+                            onclick="this.closest('.vehicle-chip').remove()">
+                        &times;
+                    </button>
+
+                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].vehicleId" value="${cp.vehicleId}">
+                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearStart" value="${cp.yearStart}">
+                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearEnd" value="${cp.yearEnd}">
+                `;
+
+                container.appendChild(chip);
+                vehicleIndex++;
+            });
         }
 
         // Listener for the "Add Product" button to open the modal and clear the form.
@@ -702,7 +734,9 @@
         // The data attributes on these buttons are crucial for this to work.
         $('.edit-barang-btn').on('click', function () {
             const data = $(this).data();
-            populateForm(data);
+            const id = $(this).data('productid');
+            const product = productData.find(p => p.productId === id);
+            populateForm(product);
             $('#barangModal').modal('show');
         });
 

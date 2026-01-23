@@ -82,6 +82,7 @@ public class ProductController {
             productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
 
+        System.out.println("Otw get vehicles");
         List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
         model.addAttribute("vehicleData", vehicleEntity);
         model.addAttribute("productData", productEntity.getContent());

@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CompatibleProductsDTO {
+    private Long productId;
     private Long vehicleId;
     private String yearStart;
     private String yearEnd;
+    private String model;
 }
