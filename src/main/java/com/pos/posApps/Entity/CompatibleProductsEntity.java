@@ -8,6 +8,8 @@ import lombok.Data;
 @Table(name = "compatible_products")
 public class CompatibleProductsEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "compatible_product_seq")
+    @SequenceGenerator(name = "compatible_product_seq", sequenceName = "compatible_products_sequences", allocationSize = 1)
     @Column(name = "id")
     private Long id;
 

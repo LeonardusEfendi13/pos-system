@@ -3,10 +3,7 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
-import com.pos.posApps.Repository.ProductPricesRepository;
-import com.pos.posApps.Repository.ProductRepository;
-import com.pos.posApps.Repository.StockMovementsRepository;
-import com.pos.posApps.Repository.SupplierRepository;
+import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +37,9 @@ public class ProductService {
 
     @Autowired
     PriceListService priceListService;
+
+    @Autowired
+    CompatibleProductsRepository compatibleProductsRepository;
 
     private ProductDTO convertToDTO(ProductEntity product) {
         return new ProductDTO(
@@ -161,6 +161,15 @@ public class ProductService {
             newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
+
+            //Start insert compatible Product
+            for(CompatibleProductsDTO c : req.getCompatibleVehicles()){
+                CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
+                compatibleProducts.setProductEntity(newProduct);
+                compatibleProducts.setYearStart(c.getYearStart());
+                compatibleProducts.setYearEnd(c.getYearEnd());
+                compatibleProductsRepository.save(compatibleProducts);
+            }
 
             stockMovementService.insertKartuStok(new AdjustStockDTO(
                     newProduct,

@@ -34,6 +34,54 @@
             color: #e0e7ff;
             padding-left: calc(1rem - 4px); /* agar padding kiri pas */
         }
+
+        .vehicle-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+
+            padding: 6px 10px;
+            border-radius: 8px;
+
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+
+            font-size: 0.85rem;
+            color: #212529;
+        }
+
+        .vehicle-chip:hover {
+            background-color: #f1f3f5;
+        }
+
+        .chip-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .chip-title {
+            font-weight: 600;
+        }
+
+        .chip-year {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .chip-remove {
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            line-height: 1;
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        .chip-remove:hover {
+            color: #a71d2a;
+        }
     </style>
 </head>
 <body>
@@ -284,6 +332,52 @@
 
                             <hr/>
 
+                            <!-- KENDARAAN COMPATIBLE -->
+                            <div class="mb-3">
+                                <label class="form-label">Kendaraan Compatible</label>
+
+                                <div id="vehicleChips" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="toggleVehicleForm()">
+                                    + Tambah Kendaraan
+                                </button>
+                            </div>
+
+                            <div id="vehicleInlineForm" class="border rounded p-3 mb-3 d-none">
+                                <div class="mb-3">
+                                    <label class="form-label">Kendaraan</label>
+                                    <select id="vehicleId" class="form-select">
+                                        <option value="">Pilih Kendaraan</option>
+                                        <option th:each="v : ${vehicleData}"
+                                                th:value="${v.id}"
+                                                th:text="${v.model}">
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <label>Tahun Mulai</label>
+                                        <input type="number" id="yearStart" class="form-control">
+                                    </div>
+                                    <div class="col">
+                                        <label>Tahun Akhir</label>
+                                        <input type="number" id="yearEnd" class="form-control">
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="addVehicle()">
+                                        Simpan
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleVehicleForm()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Harga Beli -->
                             <div class="mb-3">
                                 <h6>Harga Beli</h6>
@@ -422,8 +516,9 @@
                 </form>
             </div>
         </div>
-    </div>
 
+
+    </div>
 </div>
 
 <!-- Tabler Core JS -->
@@ -447,6 +542,55 @@
             input.setSelectionRange(len, len);
         }
     });
+
+
+    let vehicleIndex = 0;
+    function toggleVehicleForm() {
+        const form = document.getElementById("vehicleInlineForm");
+        form.classList.toggle("d-none");
+    }
+
+    function addVehicle() {
+        const select = document.getElementById("vehicleId");
+        const vehicleId = select.value;
+        const vehicleName = select.options[select.selectedIndex]?.text;
+        const yearStart = document.getElementById("yearStart").value;
+        const yearEnd = document.getElementById("yearEnd").value;
+
+        if (!vehicleId || !yearStart || !yearEnd) {
+            alert("Lengkapi data kendaraan");
+            return;
+        }
+
+        const chip = document.createElement("div");
+        chip.className = "vehicle-chip";
+
+        chip.innerHTML = `
+            <div class="chip-text">
+                <span class="chip-title">${vehicleName}</span>
+                <span class="chip-year">${yearStart} – ${yearEnd}</span>
+            </div>
+
+            <button type="button"
+                    class="chip-remove"
+                    onclick="this.closest('.vehicle-chip').remove()">
+                &times;
+            </button>
+
+            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].vehicleId" value="${vehicleId}">
+            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearStart" value="${yearStart}">
+            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearEnd" value="${yearEnd}">
+        `;
+
+        document.getElementById("vehicleChips").appendChild(chip);
+        vehicleIndex++;
+
+        // reset & hide form
+        select.value = "";
+        document.getElementById("yearStart").value = "";
+        document.getElementById("yearEnd").value = "";
+        toggleVehicleForm();
+    }
 </script>
 <script th:inline="javascript">
     /*<![CDATA[*/

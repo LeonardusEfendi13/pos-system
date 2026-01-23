@@ -17,6 +17,8 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     @Query("SELECT v FROM VehicleEntity v WHERE v.brand = 'HONDA'")
     List<VehicleEntity> findHondaVehicleList();
 
+    List<VehicleEntity> findAllByBrand(String brand);
+
     Optional<VehicleEntity> findFirstByModelIgnoreCaseAndBrandIgnoreCase(String model, String brand);
 
     VehicleEntity findFirstById(Long id);

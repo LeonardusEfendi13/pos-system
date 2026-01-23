@@ -15,11 +15,11 @@ public class VehicleService {
     @Autowired
     VehicleRepository vehicleRepository;
 
-    public List<VehicleEntity> getVehicleYamahaList(){
-        return vehicleRepository.findYamahaVehicleList();
-    }
-    public List<VehicleEntity> getVehicleHondaList(){
-        return vehicleRepository.findHondaVehicleList();
+    public List<VehicleEntity> getVehicleList(String brand){
+        if(brand == null || brand.isBlank()){
+            return vehicleRepository.findAll();
+        }
+        return vehicleRepository.findAllByBrand(brand);
     }
 
     @Transactional

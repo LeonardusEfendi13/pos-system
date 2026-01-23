@@ -42,8 +42,8 @@ public class VehicleController {
             return "redirect:/login";
         }
 
-        List<VehicleEntity> yamahaData = vehicleService.getVehicleYamahaList();
-        List<VehicleEntity> hondaData = vehicleService.getVehicleHondaList();
+        List<VehicleEntity> yamahaData = vehicleService.getVehicleList("YAMAHA");
+        List<VehicleEntity> hondaData = vehicleService.getVehicleList("HONDA");
 
         model.addAttribute("vehicleYamahaData", yamahaData);
         model.addAttribute("vehicleHondaData", hondaData);
