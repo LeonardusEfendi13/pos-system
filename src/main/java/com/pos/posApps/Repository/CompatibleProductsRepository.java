@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CompatibleProductsRepository extends JpaRepository<CompatibleProductsEntity, Long> {
+
+    void deleteAllByProductEntity_ProductId(Long productId);
 }

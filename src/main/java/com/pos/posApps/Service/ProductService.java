@@ -216,6 +216,7 @@ public class ProductService {
     @Transactional
     public ResponseInBoolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
         try {
+            System.out.println("Req : " + req);
             Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
             if (productEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data barang belum ketemu");
@@ -259,6 +260,19 @@ public class ProductService {
 
             //Delete all product prices related to product id
             productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
+
+            //Delete all compatible vehicle related to product id
+            compatibleProductsRepository.deleteAllByProductEntity_ProductId(req.getProductId());
+
+            for(CompatibleProductsDTO cp: req.getCompatibleVehicles()){
+                CompatibleProductsEntity newCompatibleProduct = new CompatibleProductsEntity();
+                VehicleEntity vehicleData = vehicleRepository.findFirstById(cp.getVehicleId());
+                newCompatibleProduct.setProductEntity(productEntity);
+                newCompatibleProduct.setVehicleEntity(vehicleData);
+                newCompatibleProduct.setYearStart(cp.getYearStart());
+                newCompatibleProduct.setYearEnd(cp.getYearEnd());
+                compatibleProductsRepository.save(newCompatibleProduct);
+            }
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();

@@ -499,12 +499,7 @@
                 </form>
             </div>
         </div>
-
-
     </div>
-    <th:block th:each="p : ${productData}">
-        <p th:text="${p.productId} + ' -> ' + ${p.compatibleProductsDTOS}"></p>
-    </th:block>
 </div>
 
 <!-- Tabler Core JS -->
@@ -653,6 +648,12 @@
             $('#modalLabel').text('Tambah Master Barang & Jasa');
             $('#barangForm').attr('action', '/products/add');
             $('#productId').val(''); // Clear the hidden ID for new products
+
+            // 🔥 CLEAR COMPATIBLE VEHICLE CHIPS
+            $('#vehicleChips').empty();
+
+            // Optional: hide inline form if open
+            $('#vehicleInlineForm').addClass('d-none');
             $('#shortName').focus();
         }
 
@@ -660,7 +661,7 @@
             console.log("Populating..");
             $('#modalLabel').text('Edit Master Barang & Jasa');
             $('#barangForm').attr('action', '/products/edit');
-            $('#productId').val(data.productid); // Set the hidden ID for editing
+            $('#productId').val(data.productId); // Set the hidden ID for editing
             console.log("data", data);
             // Populate other fields
             $('#shortName').val(data.shortName);
