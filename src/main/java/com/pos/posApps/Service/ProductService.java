@@ -66,12 +66,13 @@ public class ProductService {
                 product.getMinimumStock(),
                 product.getCompatibleProductsEntities() == null ? new ArrayList<>() :
                         product.getCompatibleProductsEntities().stream()
-                                .map(cp -> new CompatibleProductsDTO(
+                                .map(cp ->
+                                    new CompatibleProductsDTO(
                                         cp.getProductEntity().getProductId(),
-                                        cp.getVehicleEntity().getId(),
+                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getId() : null,
                                         cp.getYearStart(),
                                         cp.getYearEnd(),
-                                        cp.getVehicleEntity().getModel()
+                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getModel() : null
                                 ))
                                 .collect(Collectors.toList())
         );
@@ -264,15 +265,25 @@ public class ProductService {
             //Delete all compatible vehicle related to product id
             compatibleProductsRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-            for(CompatibleProductsDTO cp: req.getCompatibleVehicles()){
-                CompatibleProductsEntity newCompatibleProduct = new CompatibleProductsEntity();
-                VehicleEntity vehicleData = vehicleRepository.findFirstById(cp.getVehicleId());
-                newCompatibleProduct.setProductEntity(productEntity);
-                newCompatibleProduct.setVehicleEntity(vehicleData);
-                newCompatibleProduct.setYearStart(cp.getYearStart());
-                newCompatibleProduct.setYearEnd(cp.getYearEnd());
-                compatibleProductsRepository.save(newCompatibleProduct);
+            if(req.getCompatibleVehicles() != null){
+                req.setCompatibleVehicles(
+                        req.getCompatibleVehicles()
+                                .stream()
+                                .filter(Objects::nonNull)
+                                .filter(v -> v.getVehicleId() != null)
+                                .toList()
+                );
+                for(CompatibleProductsDTO cp: req.getCompatibleVehicles()){
+                    CompatibleProductsEntity newCompatibleProduct = new CompatibleProductsEntity();
+                    VehicleEntity vehicleData = vehicleRepository.findFirstById(cp.getVehicleId());
+                    newCompatibleProduct.setProductEntity(productEntity);
+                    newCompatibleProduct.setVehicleEntity(vehicleData);
+                    newCompatibleProduct.setYearStart(cp.getYearStart());
+                    newCompatibleProduct.setYearEnd(cp.getYearEnd());
+                    compatibleProductsRepository.save(newCompatibleProduct);
+                }
             }
+
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();

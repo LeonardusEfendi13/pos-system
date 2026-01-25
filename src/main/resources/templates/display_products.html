@@ -541,10 +541,12 @@
         const yearStart = document.getElementById("yearStart").value;
         const yearEnd = document.getElementById("yearEnd").value;
 
-        if (!vehicleId || !yearStart || !yearEnd) {
+        if (!vehicleId || vehicleId === "null" || !yearStart || !yearEnd) {
             alert("Lengkapi data kendaraan");
             return;
         }
+
+        const index = document.querySelectorAll("#vehicleChips .vehicle-chip").length;
 
         const chip = document.createElement("div");
         chip.className = "vehicle-chip";
@@ -557,23 +559,50 @@
 
             <button type="button"
                     class="chip-remove"
-                    onclick="this.closest('.vehicle-chip').remove()">
+                    onclick="removeVehicle(this)">
                 &times;
             </button>
 
-            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].vehicleId" value="${vehicleId}">
-            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearStart" value="${yearStart}">
-            <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearEnd" value="${yearEnd}">
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].vehicleId"
+                   value="${vehicleId}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearStart"
+                   value="${yearStart}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearEnd"
+                   value="${yearEnd}">
         `;
 
         document.getElementById("vehicleChips").appendChild(chip);
-        vehicleIndex++;
 
-        // reset & hide form
         select.value = "";
         document.getElementById("yearStart").value = "";
         document.getElementById("yearEnd").value = "";
         toggleVehicleForm();
+    }
+
+    function removeVehicle(button) {
+        const chip = button.closest(".vehicle-chip");
+        chip.remove();
+        reindexVehicles();
+    }
+
+    function reindexVehicles() {
+        const chips = document.querySelectorAll("#vehicleChips .vehicle-chip");
+
+        chips.forEach((chip, index) => {
+            chip.querySelector('input[name*=".vehicleId"]')
+                .name = `compatibleVehicles[${index}].vehicleId`;
+
+            chip.querySelector('input[name*=".yearStart"]')
+                .name = `compatibleVehicles[${index}].yearStart`;
+
+            chip.querySelector('input[name*=".yearEnd"]')
+                .name = `compatibleVehicles[${index}].yearEnd`;
+        });
     }
 </script>
 <script th:inline="javascript">
