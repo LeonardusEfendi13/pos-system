@@ -57,4 +57,7 @@ public class ProductEntity {
 
     @Column(name = "minimum_stock")
     private Long minimumStock;
+
+    @OneToMany(mappedBy = "productEntity")
+    private List<CompatibleProductsEntity> compatibleProductsEntities;
 }

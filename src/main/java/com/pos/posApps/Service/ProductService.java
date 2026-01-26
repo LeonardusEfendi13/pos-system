@@ -3,10 +3,7 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
-import com.pos.posApps.Repository.ProductPricesRepository;
-import com.pos.posApps.Repository.ProductRepository;
-import com.pos.posApps.Repository.StockMovementsRepository;
-import com.pos.posApps.Repository.SupplierRepository;
+import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +38,12 @@ public class ProductService {
     @Autowired
     PriceListService priceListService;
 
+    @Autowired
+    CompatibleProductsRepository compatibleProductsRepository;
+
+    @Autowired
+    VehicleRepository vehicleRepository;
+
     private ProductDTO convertToDTO(ProductEntity product) {
         return new ProductDTO(
                 product.getProductId(),
@@ -60,13 +63,24 @@ public class ProductService {
                         ))
                         .collect(Collectors.toList()),
                 product.getSupplierEntity().getSupplierId(),
-                product.getMinimumStock()
+                product.getMinimumStock(),
+                product.getCompatibleProductsEntities() == null ? new ArrayList<>() :
+                        product.getCompatibleProductsEntities().stream()
+                                .map(cp ->
+                                    new CompatibleProductsDTO(
+                                        cp.getProductEntity().getProductId(),
+                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getId() : null,
+                                        cp.getYearStart(),
+                                        cp.getYearEnd(),
+                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getModel() : null
+                                ))
+                                .collect(Collectors.toList())
         );
     }
 
-    public ProductDTO findProductById(Long productId){
+    public ProductDTO findProductById(Long productId) {
         Optional<ProductEntity> dataOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
-        if(dataOpt.isEmpty()){
+        if (dataOpt.isEmpty()) {
             return new ProductDTO();
         }
         ProductEntity productEntity = dataOpt.get();
@@ -157,10 +171,21 @@ public class ProductService {
             newProduct.setFullName(req.getFullName());
             newProduct.setSupplierPrice(req.getSupplierPrice());
             newProduct.setSupplierEntity(supplierEntity);
-            newProduct.setStock(req.getStock() != null ? req.getStock() :  0L);
+            newProduct.setStock(req.getStock() != null ? req.getStock() : 0L);
             newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
             productRepository.save(newProduct);
+
+            //Start insert compatible Product
+            for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
+                CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
+                VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
+                compatibleProducts.setVehicleEntity(v);
+                compatibleProducts.setProductEntity(newProduct);
+                compatibleProducts.setYearStart(c.getYearStart());
+                compatibleProducts.setYearEnd(c.getYearEnd());
+                compatibleProductsRepository.save(compatibleProducts);
+            }
 
             stockMovementService.insertKartuStok(new AdjustStockDTO(
                     newProduct,
@@ -236,6 +261,29 @@ public class ProductService {
             //Delete all product prices related to product id
             productPricesRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
+            //Delete all compatible vehicle related to product id
+            compatibleProductsRepository.deleteAllByProductEntity_ProductId(req.getProductId());
+
+            if(req.getCompatibleVehicles() != null){
+                req.setCompatibleVehicles(
+                        req.getCompatibleVehicles()
+                                .stream()
+                                .filter(Objects::nonNull)
+                                .filter(v -> v.getVehicleId() != null)
+                                .toList()
+                );
+                for(CompatibleProductsDTO cp: req.getCompatibleVehicles()){
+                    CompatibleProductsEntity newCompatibleProduct = new CompatibleProductsEntity();
+                    VehicleEntity vehicleData = vehicleRepository.findFirstById(cp.getVehicleId());
+                    newCompatibleProduct.setProductEntity(productEntity);
+                    newCompatibleProduct.setVehicleEntity(vehicleData);
+                    newCompatibleProduct.setYearStart(cp.getYearStart());
+                    newCompatibleProduct.setYearEnd(cp.getYearEnd());
+                    compatibleProductsRepository.save(newCompatibleProduct);
+                }
+            }
+
+
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
                 newProductPrices.setProductEntity(productEntity);
@@ -289,7 +337,7 @@ public class ProductService {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
         String code = productData.getShortName();
         String supplierPrice = priceListService.getSuggestedPriceByPartNumber(code).getBasicPrice();
-        if(supplierPrice != null && !supplierPrice.isBlank() && isPurchasing){
+        if (supplierPrice != null && !supplierPrice.isBlank() && isPurchasing) {
             productData.setSupplierPrice(new BigDecimal(supplierPrice));
         }
         return convertToDTO(productData);

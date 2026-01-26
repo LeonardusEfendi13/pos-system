@@ -37,10 +37,12 @@ public class PembelianController {
     @GetMapping
     public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size, @RequestParam(required = false) String search) {
         Long clientId;
+        AccountEntity accountData;
         String token;
         try {
             token = (String) session.getAttribute(authSessionKey);
-            clientId = authService.validateToken(token).getClientEntity().getClientId();
+//            clientId = authService.validateToken(token).getClientEntity().getClientId();
+            accountData = authService.validateToken(token);
         } catch (Exception e) {
             return "redirect:/login";
         }
@@ -53,12 +55,12 @@ public class PembelianController {
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
         Page<PembelianDTO> pembelianData;
-        List<SupplierEntity> supplierData = supplierService.getSupplierList(clientId);
+        List<SupplierEntity> supplierData = supplierService.getSupplierList(accountData.getClientEntity().getClientId());
 
         if (search == null || search.isEmpty()) {
-            pembelianData = pembelianService.getPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, PageRequest.of(page, size));
+            pembelianData = pembelianService.getPembelianData(accountData, inputStartDate, inputEndDate, supplierId, lunas, tunai, PageRequest.of(page, size));
         } else {
-            pembelianData = pembelianService.searchPembelianData(clientId, inputStartDate, inputEndDate, supplierId, lunas, tunai, search, PageRequest.of(page, size));
+            pembelianData = pembelianService.searchPembelianData(accountData, inputStartDate, inputEndDate, supplierId, lunas, tunai, search, PageRequest.of(page, size));
         }
 
         model.addAttribute("pembelianData", pembelianData.getContent());
@@ -96,7 +98,7 @@ public class PembelianController {
 
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
-        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        SidebarDTO sidebarData = sidebarService.getSidebarData(accountData.getClientEntity().getClientId(), token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_pembelian";
     }
