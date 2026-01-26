@@ -126,15 +126,6 @@ public class KasirService {
                 Long newStock = productEntity.getStock() - dtos.getQty();
                 productEntity.setStock(newStock);
                 productRepository.save(productEntity);
-//                List<Long> newStockAfterUpdated = productRepository.reduceStockReturning(productEntity.getProductId(),dtos.getQty());
-//                System.out.println("Updated size : " + newStockAfterUpdated.size());
-//                if (newStockAfterUpdated.isEmpty()) {
-//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//                    return new ResponseInBoolean(false, "Stock produk " + dtos.getName() + " tidak mencukupi atau sedang dipakai transaksi lain");
-//                }
-//                Long newStockValues = newStockAfterUpdated.get(0);
-
-
                 stockMovementService.insertKartuStok(new AdjustStockDTO(
                         productEntity,
                         generatedNotaNumber,

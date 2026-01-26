@@ -82,7 +82,6 @@ public class ProductController {
             productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
 
-        System.out.println("Otw get vehicles");
         List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
         model.addAttribute("vehicleData", vehicleEntity);
         model.addAttribute("productData", productEntity.getContent());
@@ -165,16 +164,6 @@ public class ProductController {
         }
         String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            System.out.println("Entering add");
-            if(req.getCompatibleVehicles() != null){
-                for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
-                    System.out.println(
-                            c.getVehicleId() + " " +
-                                    c.getYearStart() + "-" +
-                                    c.getYearEnd()
-                    );
-                }
-            }
             ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
             redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", isInserted.getMessage());
@@ -189,15 +178,6 @@ public class ProductController {
     @PostMapping("/edit")
     public String editProducts(HttpSession session, EditProductRequest req, RedirectAttributes redirectAttributes, String search) {
         AccountEntity accEntity;
-        if (req.getCompatibleVehicles() != null) {
-            for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
-                System.out.println(
-                        c.getVehicleId() + " " +
-                                c.getYearStart() + "-" +
-                                c.getYearEnd()
-                );
-            }
-        }
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);

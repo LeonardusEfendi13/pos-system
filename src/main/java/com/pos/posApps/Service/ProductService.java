@@ -217,7 +217,6 @@ public class ProductService {
     @Transactional
     public ResponseInBoolean editProducts(EditProductRequest req, ClientEntity clientEntity) {
         try {
-            System.out.println("Req : " + req);
             Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(req.getProductId());
             if (productEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data barang belum ketemu");

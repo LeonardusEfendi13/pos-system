@@ -57,7 +57,6 @@ public class VehicleController {
     public String addVehicle(String vehicleName, String vehicleBrand, String partNumber, HttpSession session, RedirectAttributes redirectAttributes){
         AccountEntity accEntity;
         ClientEntity clientData;
-        System.out.println("Entering add");
         try{
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -87,8 +86,6 @@ public class VehicleController {
     public String editVehicle(Long vehicleId, String vehicleName, String vehicleBrand, String partNumber, HttpSession session, RedirectAttributes redirectAttributes){
         AccountEntity accEntity;
         ClientEntity clientData;
-        System.out.println("Entering edit");
-
         try{
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);

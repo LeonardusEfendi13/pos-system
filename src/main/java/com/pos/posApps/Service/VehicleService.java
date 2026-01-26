@@ -17,10 +17,8 @@ public class VehicleService {
 
     public List<VehicleEntity> getVehicleList(String brand){
         if(brand == null || brand.isBlank()){
-            System.out.println("Gada brand");
             return vehicleRepository.findAll();
         }
-        System.out.println("ada brand");
         return vehicleRepository.findAllByBrand(brand);
     }
 
