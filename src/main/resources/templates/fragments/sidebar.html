@@ -73,15 +73,6 @@
                     </div>
                 </li>
 
-                <!-- Supplier -->
-                <li class="nav-item"
-                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
-                    th:classappend="${activePage} == 'supplier' ? ' active'">
-                    <a class="nav-link" th:href="@{/supplier}">
-                        <span class="nav-link-title">Supplier</span>
-                    </a>
-                </li>
-
                 <!-- Preorder -->
                 <li class="nav-item dropdown"
                     th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
@@ -119,6 +110,42 @@
                                    href="/preorder"
                                    th:classappend="${activePage} == 'preorderRiwayat' ? ' active' : ''">
                                     Riwayat Preorder
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Preorder -->
+                <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="(${activePage} == 'indenTambah' or ${activePage} == 'indenRiwayat') ? ' active' : ''">
+                    <a class="nav-link dropdown-toggle"
+                       href="#sidebar-inden"
+                       data-bs-toggle="collapse"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="sidebar-preorder"
+                       th:classappend="(${activePage} == 'indenTambah' or ${activePage} == 'indenRiwayat') ? '' : ' collapsed'">
+                        <span class="nav-link-title">Inden</span>
+                    </a>
+
+                    <div class="collapse"
+                         id="sidebar-inden"
+                         th:classappend="(${activePage} == 'indenTambah' or ${activePage} == 'indenRiwayat') ? ' show' : ''">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/inden/tambah"
+                                   th:classappend="${activePage} == 'indenTambah' ? ' active' : ''">
+                                    Tambah Inden
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/inden"
+                                   th:classappend="${activePage} == 'indenRiwayat' ? ' active' : ''">
+                                    Riwayat Inden
                                 </a>
                             </li>
                         </ul>
@@ -168,6 +195,8 @@
                         </ul>
                     </div>
                 </li>
+
+
 
                 <!-- Laporan -->
                 <li class="nav-item dropdown"
@@ -271,6 +300,16 @@
                             </li>
                         </ul>
                     </div>
+                </li>
+
+
+                <!-- Supplier -->
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'supplier' ? ' active'">
+                    <a class="nav-link" th:href="@{/supplier}">
+                        <span class="nav-link-title">Supplier</span>
+                    </a>
                 </li>
 
                 <!-- Customer -->
