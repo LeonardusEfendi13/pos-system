@@ -54,7 +54,7 @@
 
             <!-- Add User Button -->
             <div style="text-align:end; padding-left:20px">
-                <button class="btn btn-success add-vehicle-btn" data-bs-toggle="modal" data-bs-target="#editVehicleModal">
+                <button type="button" class="btn btn-success add-vehicle-btn" id="add-vehicle-btn">
                     Tambah Kendaraan Baru
                 </button>
             </div>
@@ -254,7 +254,6 @@
         });
 
         function populateForm(data) {
-<!--            $('#modalLabel').text('Edit Master Barang & Jasa');-->
             $('#vehicleForm').attr('action', '/vehicle/edit');
             $('#vehicleId').val(data.id); // Set the hidden ID for editing
 
@@ -268,9 +267,11 @@
 
         function clearForm() {
             vehicleForm.reset();
-<!--            $('#modalLabel').text('Tambah Master Barang & Jasa');-->
+            $('#vehicleId').val('');
+            $('#vehicleName').val('');
+            $('#vehicleBrand').val('');
+            $('#partNumber').val('');
             $('#vehicleForm').attr('action', '/vehicle/add');
-            $('#vehicleId').val(''); // Clear the hidden ID for new vehicle
             $('#vehicleName').focus();
         }
 
