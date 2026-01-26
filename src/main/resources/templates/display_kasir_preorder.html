@@ -37,205 +37,208 @@
             background: rgba(0, 123, 255 , 0.4) !important; /* biru tebal */
             color: black;
         }
-body {
-    background-color: #f8f9fa;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-}
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+        }
 
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
 
-.table {
-    margin-bottom: 0;
-}
+        .table {
+            margin-bottom: 0;
+        }
 
-.table thead {
-    background-color: #e9ecef;
-}
+        .table thead {
+            background-color: #e9ecef;
+        }
 
-.table td,
-.table th {
-    vertical-align: middle;
-    padding: 0.5rem 0.75rem;
-}
+        .table td,
+        .table th {
+            vertical-align: middle;
+            padding: 0.5rem 0.75rem;
+        }
 
-.form-control-sm,
-.form-select-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
+        .form-control-sm,
+        .form-select-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
 
-.btn {
-    font-size: 0.875rem;
-}
+        .btn {
+            font-size: 0.875rem;
+        }
 
-#contextMenu {
-    position: absolute;
-    display: none;
-    background-color: white;
-    border: 1px solid #ccc;
-    z-index: 1000;
-    min-width: 150px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    border-radius: 0.25rem;
-}
+        #contextMenu {
+            position: absolute;
+            display: none;
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
+        }
 
-#contextMenu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+        #contextMenu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
 
-#contextMenu li {
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 0.875rem;
-}
+        #contextMenu li {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
 
-#contextMenu li:hover {
-    background-color: #f0f0f0;
-}
+        #contextMenu li:hover {
+            background-color: #f0f0f0;
+        }
 
-/* Custom styles for the scrollable table */
-.scrollable-table {
-    max-height: 50vh;
-    overflow-y: auto;
-}
+        /* Custom styles for the scrollable table */
+        .scrollable-table {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
 
-/* Payment section styling */
-.payment-section-card {
-    background-color: #e9ecef;
-    padding: 1.5rem;
-}
+        /* Payment section styling */
+        .payment-section-card {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+        }
 
-html,
-body {
-    height: 100%;
-    overflow: hidden; /* hilangkan scroll body */
-}
+        html,
+        body {
+            height: 100%;
+            overflow: hidden; /* hilangkan scroll body */
+        }
 
-.table-responsive {
-    border-radius: 0.3rem;
-    height: 100%;
-    max-width: 100%;
-    overflow-y: auto; /* kalau banyak data scroll di tabel aja */
-    overflow-x: auto;
-}
+        .table-responsive {
+            border-radius: 0.3rem;
+            height: 100%;
+            max-width: 100%;
+            overflow-y: auto; /* kalau banyak data scroll di tabel aja */
+            overflow-x: auto;
+        }
 
-.scrollable-table thead th {
-    position: sticky;
-    top: 0;
-    background: #f8f9fa; /* biar header tidak tembus */
-    z-index: 2; /* biar header di atas isi tabel */
-}
+        .scrollable-table thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa; /* biar header tidak tembus */
+            z-index: 2; /* biar header di atas isi tabel */
+        }
 
-#sellTable {
-    width: max-content; /* Biarkan tabel melebar melebihi container */
-    min-width: 100%; /* Tetap 100% minimal */
-}
+        #sellTable {
+            width: max-content; /* Biarkan tabel melebar melebihi container */
+            min-width: 100%; /* Tetap 100% minimal */
+        }
 
-#sellTable th,
-#sellTable td {
-    white-space: nowrap; /* Jangan wrap konten */
-}
+        #sellTable th,
+        #sellTable td {
+            white-space: nowrap; /* Jangan wrap konten */
+        }
 
-.bottom-right-fixed {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-}
+        .bottom-right-fixed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
 
-#productTable th,
-#productTable td {
-    border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
-}
+        #productTable th,
+        #productTable td {
+            border-right: 1px solid #dee2e6; /* Bootstrap's default border color */
+        }
 
-#productTable th:last-child,
-#productTable td:last-child {
-    border-right: none; /* Remove border on the last column */
-}
+        #productTable th:last-child,
+        #productTable td:last-child {
+            border-right: none; /* Remove border on the last column */
+        }
 
-#productTable thead th {
-    position: sticky;
-    top: 0;
-    background-color: #f8f9fa;
-    z-index: 10;
-    border-right: 1px solid #dee2e6;
-    padding-top: 0.3rem;
-    padding-bottom: 0.3rem;
-    height: 40px; /* fixed height */
-}
+        #productTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-right: 1px solid #dee2e6;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+            height: 40px; /* fixed height */
+        }
 
-#productTable thead th:last-child {
-    border-right: none;
-}
+        #productTable thead th:last-child {
+            border-right: none;
+        }
 
-#productTable tbody td {
-    border-right: 1px solid #dee2e6;
-}
+        #productTable tbody td {
+            border-right: 1px solid #dee2e6;
+        }
 
-#productTable tbody td:last-child {
-    border-right: none;
-}
+        #productTable tbody td:last-child {
+            border-right: none;
+        }
 
-/* Push the first row down by header height */
-#productTable tbody tr:first-child {
-    padding-top: 40px;
-    display: table-row;
-}
+        /* Push the first row down by header height */
+        #productTable tbody tr:first-child {
+            padding-top: 40px;
+            display: table-row;
+        }
 
-#sellTable input.form-control {
-    border: none; /* hilangkan border bootstrap */
-    box-shadow: none; /* hilangkan shadow fokus */
-    padding: 0 2px; /* rapat kiri kanan */
-    height: 20px; /* perkecil tinggi */
-    font-size: 0.8rem; /* font lebih kecil */
-    line-height: 1.2;
-    margin: 0;
-    border-radius: 0;
-}
+        #sellTable input.form-control {
+            border: none; /* hilangkan border bootstrap */
+            box-shadow: none; /* hilangkan shadow fokus */
+            padding: 0 2px; /* rapat kiri kanan */
+            height: 20px; /* perkecil tinggi */
+            font-size: 0.8rem; /* font lebih kecil */
+            line-height: 1.2;
+            margin: 0;
+            border-radius: 0;
+        }
 
-#sellTable td,
-#sellTable th {
-    padding: 2px 4px; /* default bootstrap 8–12px, ini lebih rapat */
-}
+        #sellTable td,
+        #sellTable th {
+            padding: 2px 4px; /* default bootstrap 8–12px, ini lebih rapat */
+        }
 
-#sellTable input:focus {
-    outline: none; /* supaya pas fokus tidak muncul border biru tebal */
-    background-color: #fff7cc;
-}
+        #sellTable input:focus {
+            outline: none; /* supaya pas fokus tidak muncul border biru tebal */
+            background-color: #fff7cc;
+        }
 
-#sellTable td:has(input:focus) {
-    background-color: #fff3cd; /* warna highlight cell */
-}
+        #sellTable td:has(input:focus) {
+            background-color: #fff3cd; /* warna highlight cell */
+        }
 
-.modalHeader {
-    cursor: pointer;
-    background-color: #f1f1f1;
-    padding: 10px;
-    font-weight: bold;
-}
-#sellTableBody td{
-    padding-top: 0px !important;
-    padding-bottom: 0px !imporant;
-}
-.total-cell{
-    font-size:18px !important;
-    font-weight:500
-}
-#sellTableBody input {
-    font-size: 18px !important;
-    padding: 0px !important;
-    font-weight:500;
-}
-.cek-harga-btn{
-    font-size: 14px !important;
-    font-weight: 400;
-}
+        .modalHeader {
+            cursor: pointer;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-weight: bold;
+        }
+        #sellTableBody td{
+            padding-top: 0px !important;
+            padding-bottom: 0px !imporant;
+        }
+        .total-cell{
+            font-size:18px !important;
+            font-weight:500
+        }
+        #sellTableBody input {
+            font-size: 18px !important;
+            padding: 0px !important;
+            font-weight:500;
+        }
+        .cek-harga-btn{
+            font-size: 14px !important;
+            font-weight: 400;
+        }
+        .modal-medium-width {
+            max-width: 40vw; /* atur sesuai selera */
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -738,13 +741,14 @@ body {
 
                 <!-- Scrollable Table Body -->
                 <div style="height: 600px; overflow-y: auto;padding-bottom:10px">
-                    <table class="table table-sm table-hover mb-0" id="productTable">
+                    <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
-                            <th>Kode</th>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th>Stok</th>
+                            <th style="width:25%;white-space: nowrap;overflow: hidden;font-weight:bold">Kode</th>
+                            <th style="width:45%;white-space: nowrap;overflow: hidden;font-weight:bold">Nama</th>
+                            <th style="width:15%;white-space: nowrap;overflow: hidden;font-weight:bold">Harga</th>
+                            <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center;font-weight:bold">Stok</th>
+                            <th style="text-align: center"></th>
                         </tr>
                         </thead>
                         <tbody id="productTableBody"></tbody>
@@ -1762,7 +1766,68 @@ body {
                 <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
                 <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
                 <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
-      `;
+                <td style="width:5%;text-align:center">
+                    <button class="btn btn-sm btn-outline-secondary expand-btn">+</button>
+                </td>
+            `;
+
+            /* ===============================
+               ROW DETAIL (EXPAND)
+            =============================== */
+            const detailRow = document.createElement("tr");
+            detailRow.style.display = "none";
+            detailRow.classList.add("bg-light");
+
+            const compatibleHtml =
+                product.compatibleProductsDTOS && product.compatibleProductsDTOS.length > 0
+                    ? `
+                        <table
+                            class="table table-sm mt-2 mb-0"
+                            style="font-size:14px;border:1px solid #dee2e6;border-collapse:separate;border-spacing:0"
+                        >
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="border:1px solid #dee2e6">Model</th>
+                                    <th style="border:1px solid #dee2e6;width:120px;text-align:center">Tahun</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${product.compatibleProductsDTOS
+                                    .map(cp => `
+                                        <tr>
+                                            <td style="border:1px solid #dee2e6">${cp.model || "-"}</td>
+                                            <td style="border:1px solid #dee2e6;text-align:center">
+                                                ${cp.yearStart || "?"} - ${cp.yearEnd || "?"}
+                                            </td>
+                                        </tr>
+                                    `)
+                                    .join("")}
+                            </tbody>
+                        </table>
+                      `
+                    : `<em>Tidak ada data kompatibilitas</em>`;
+
+            detailRow.innerHTML = `
+                <td colspan="5">
+                    <div style="padding:8px 12px;font-size:14px">
+                        <strong>Kompatibel Dengan:</strong>
+                        ${compatibleHtml}
+                    </div>
+                </td>
+            `;
+
+            /* ===============================
+               EXPAND BUTTON LOGIC
+            =============================== */
+            const expandBtn = row.querySelector(".expand-btn");
+
+            expandBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // ⛔ jangan trigger row select
+
+                const isOpen = detailRow.style.display === "table-row";
+                detailRow.style.display = isOpen ? "none" : "table-row";
+                expandBtn.textContent = isOpen ? "+" : "−";
+            });
 
             row.addEventListener("dblclick", () => {
                 selectProduct(product);
@@ -1788,6 +1853,7 @@ body {
             });
 
             productTableBody.appendChild(row);
+            productTableBody.appendChild(detailRow);
             rows.push(row);
         });
 

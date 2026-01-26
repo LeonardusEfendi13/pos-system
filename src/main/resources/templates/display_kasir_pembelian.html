@@ -230,6 +230,9 @@
           border-color: #66b2ff;
           box-shadow: 0 0 3px #66b2ff;
         }
+        .modal-medium-width {
+            max-width: 40vw; /* atur sesuai selera */
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -635,7 +638,7 @@
 </div>
 
 <div class="modal" id="productModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-medium-width">
         <div class="modal-content">
             <div class="modal-header modalHeader">
                 <h5 class="modal-title">Pilih Barang</h5>
@@ -675,10 +678,11 @@
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
-                            <th style="width:30%;white-space: nowrap;overflow: hidden;font-weight:bold">Kode</th>
-                            <th style="width:48%;white-space: nowrap;overflow: hidden;font-weight:bold">Nama</th>
+                            <th style="width:25%;white-space: nowrap;overflow: hidden;font-weight:bold">Kode</th>
+                            <th style="width:45%;white-space: nowrap;overflow: hidden;font-weight:bold">Nama</th>
                             <th style="width:15%;white-space: nowrap;overflow: hidden;font-weight:bold">Harga</th>
                             <th style="width:7%;white-space: nowrap;overflow: hidden;text-align:center;font-weight:bold">Stok</th>
+                            <th style="text-align: center"></th>
                         </tr>
                         </thead>
                         <tbody id="productTableBody"></tbody>
@@ -1897,8 +1901,68 @@
                 <td style="width:48%;white-space: nowrap;overflow: hidden;">${product.fullName}</td>
                 <td style="width:15%;white-space: nowrap;overflow: hidden;">Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}</td>
                 <td style="width:7%;white-space: nowrap;overflow: hidden;text-align:center">${product.stok}</td>
+                <td style="width:5%;text-align:center">
+                    <button class="btn btn-sm btn-outline-secondary expand-btn">+</button>
+                </td>
       `;
 
+            /* ===============================
+               ROW DETAIL (EXPAND)
+            =============================== */
+            const detailRow = document.createElement("tr");
+            detailRow.style.display = "none";
+            detailRow.classList.add("bg-light");
+
+            const compatibleHtml =
+                product.compatibleProductsDTOS && product.compatibleProductsDTOS.length > 0
+                    ? `
+                        <table
+                            class="table table-sm mt-2 mb-0"
+                            style="font-size:14px;border:1px solid #dee2e6;border-collapse:separate;border-spacing:0"
+                        >
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="border:1px solid #dee2e6">Model</th>
+                                    <th style="border:1px solid #dee2e6;width:120px;text-align:center">Tahun</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${product.compatibleProductsDTOS
+                                    .map(cp => `
+                                        <tr>
+                                            <td style="border:1px solid #dee2e6">${cp.model || "-"}</td>
+                                            <td style="border:1px solid #dee2e6;text-align:center">
+                                                ${cp.yearStart || "?"} - ${cp.yearEnd || "?"}
+                                            </td>
+                                        </tr>
+                                    `)
+                                    .join("")}
+                            </tbody>
+                        </table>
+                      `
+                    : `<em>Tidak ada data kompatibilitas</em>`;
+
+            detailRow.innerHTML = `
+                <td colspan="5">
+                    <div style="padding:8px 12px;font-size:14px">
+                        <strong>Kompatibel Dengan:</strong>
+                        ${compatibleHtml}
+                    </div>
+                </td>
+            `;
+
+            /* ===============================
+               EXPAND BUTTON LOGIC
+            =============================== */
+            const expandBtn = row.querySelector(".expand-btn");
+
+            expandBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // ⛔ jangan trigger row select
+
+                const isOpen = detailRow.style.display === "table-row";
+                detailRow.style.display = isOpen ? "none" : "table-row";
+                expandBtn.textContent = isOpen ? "+" : "−";
+            });
             row.addEventListener("dblclick", () => {
                 selectProduct(product);
             });
@@ -1923,6 +1987,7 @@
             });
 
             productTableBody.appendChild(row);
+            productTableBody.appendChild(detailRow);
             rows.push(row);
         });
 

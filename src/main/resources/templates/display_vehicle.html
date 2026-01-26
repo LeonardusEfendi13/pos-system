@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:inline="html">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Kendaraan</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+
+    <!-- Bootstrap 5 (example) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!--    datatable-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+
+    <style>
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+            color: #e0e7ff;
+            padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+        }
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .logout-button {
+            margin-top: auto;
+            padding: 1rem;
+        }
+
+        .add-vehicle-btn {
+            margin-bottom: 15px;
+        }
+
+        .modalHeader {
+          cursor: pointer;
+          background-color: #f1f1f1;
+          padding: 10px;
+          font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
+    <div class="page-wrapper">
+        <div class="container-fluid">
+            <h2 style="text-align:center;padding-top:10px">Data Kendaraan</h2>
+
+            <!-- Add User Button -->
+            <div style="text-align:end; padding-left:20px">
+                <button class="btn btn-success add-vehicle-btn" data-bs-toggle="modal" data-bs-target="#editVehicleModal">
+                    Tambah Kendaraan Baru
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- LEFT TABLE -->
+                <div class="col-md-1"></div>
+                <div class="col-md-4">
+                    <h5 class="text-center">Yamaha</h5>
+                    <table id="vehicleYamahaTable" class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama</th>
+                            <th>Part Number</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="yamaha, iterStat : ${vehicleYamahaData}">
+                            <td th:text="${iterStat.index + 1}"></td>
+                            <td th:text="${yamaha.model}"></td>
+                            <td th:text="${yamaha.knownPartNumber}"></td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button
+                                            class="btn btn-sm btn-primary me-1 edit-vehicle-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editVehicleModal"
+                                            th:attr="
+                                    data-id=${yamaha.id},
+                                    data-brand=${yamaha.brand},
+                                    data-name=${yamaha.model},
+                                    data-knownpartnumber=${yamaha.knownPartNumber}
+                                "
+                                    >Edit
+                                    </button>
+
+                                    <form th:action="@{|/vehicle/delete/${yamaha.id}|}"
+                                          method="post"
+                                          style="display:inline;">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Apakah anda yakin ingin menghapus barang ini?');"
+                                                title="Hapus Data Kendaraan">
+                                            <i class="ti ti-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-1"></div>
+
+                <!-- RIGHT TABLE -->
+                <div class="col-md-4">
+                    <h5 class="text-center">Honda</h5>
+                    <table id="vehicleHondaTable" class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama</th>
+                            <th>Part Number</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="honda, iterStat : ${vehicleHondaData}">
+                            <td th:text="${iterStat.index + 1}"></td>
+                            <td th:text="${honda.model}"></td>
+                            <td th:text="${honda.knownPartNumber}"></td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button
+                                            class="btn btn-sm btn-primary me-1 edit-vehicle-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editVehicleModal"
+                                            th:attr="
+                                    data-id=${honda.id},
+                                    data-brand=${honda.brand},
+                                    data-name=${honda.model},
+                                    data-knownpartnumber=${honda.knownPartNumber}
+                                "
+                                    >Edit
+                                    </button>
+
+                                    <form th:action="@{|/vehicle/delete/${honda.id}|}"
+                                          method="post"
+                                          style="display:inline;">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Apakah anda yakin ingin menghapus barang ini?');"
+                                                title="Hapus Data Kendaraan">
+                                            <i class="ti ti-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+        </div>
+
+        <!-- Edit/Add Vehicle Modal -->
+        <div class="modal fade" id="editVehicleModal" tabindex="-1" role="dialog"
+             aria-labelledby="editVehicleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form th:action="@{/vehicle/add}" method="post" id="vehicleForm">
+                    <div class="modal-content">
+                        <div class="modal-header modalHeader">
+                            <h5 class="modal-title" id="editSupplierModalLabel">Tambah / Edit Kendaraan</h5>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="vehicleId" name="vehicleId"/>
+
+                            <div class="form-group mb-4">
+                                <label for="vehicleName">Model Kendaraan</label>
+                                <input type="text" class="form-control" id="vehicleName" name="vehicleName" required/>
+                            </div>
+
+                            <div class="form-group mb-4">
+                                <label for="vehicleBrand">Brand</label>
+                                <select class="form-select highlight-field" id="vehicleBrand" name="vehicleBrand"
+                                        required>
+                                    <option value="" disabled selected>Pilih Merk</option>
+                                    <option value="YAMAHA">Yamaha</option>
+                                    <option value="HONDA">Honda</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-4">
+                                <label for="partNumber">Part Number</label>
+                                <input type="text" class="form-control" id="partNumber" name="partNumber"
+                                       placeholder="54P, 1S7, K1A, KWB.." required/>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Tabler Core JS -->
+<script src="https://unpkg.com/@tabler/core@latest/dist/js/tabler.min.js"></script>
+<!-- jQuery DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!--    For Draggable modals-->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script>
+    $(document).ready(function () {
+      $("#editVehicleModal").draggable();
+    });
+</script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var status = /*[[${status}]]*/ false;
+    var message = /*[[${message}]]*/ "Unknown message";
+
+    if (status == 'true') {
+        alert(message);
+    }
+    /*]]>*/
+</script>
+<script>
+    $('#vehicleName').on('input', function() {
+      this.value = this.value.toUpperCase();
+    });
+
+    $('#partNumber').on('input', function() {
+      this.value = this.value.toUpperCase();
+    });
+
+    $(document).ready(function () {
+        $('#vehicleHondaTable, #vehicleYamahaTable').DataTable({
+            paging: false,
+            ordering: true,
+            order: [],
+            language: {
+                search: "Cari:",
+                zeroRecords: "Data tidak ditemukan",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data"
+            }
+        });
+
+        function populateForm(data) {
+<!--            $('#modalLabel').text('Edit Master Barang & Jasa');-->
+            $('#vehicleForm').attr('action', '/vehicle/edit');
+            $('#vehicleId').val(data.id); // Set the hidden ID for editing
+
+            // Populate other fields
+            $('#vehicleBrand').val(data.brand);
+            $('#vehicleName').val(data.name);
+            $('#partNumber').val(data.knownpartnumber);
+        }
+
+        const vehicleForm = document.getElementById('vehicleForm');
+
+        function clearForm() {
+            vehicleForm.reset();
+<!--            $('#modalLabel').text('Tambah Master Barang & Jasa');-->
+            $('#vehicleForm').attr('action', '/vehicle/add');
+            $('#vehicleId').val(''); // Clear the hidden ID for new vehicle
+            $('#vehicleName').focus();
+        }
+
+
+        // Listener for the "Add Vehicle" button to open the modal and clear the form.
+        $('#add-vehicle-btn').on('click', function () {
+            clearForm();
+            $('#editVehicleModal').modal('show');
+        });
+
+        // Listener for the "Edit" buttons to open the modal and populate the form.
+        // The data attributes on these buttons are crucial for this to work.
+        $('.edit-vehicle-btn').on('click', function () {
+            const data = $(this).data();
+            populateForm(data);
+            $('#vehicleModal').modal('show');
+        });
+    });
+
+</script>
+</body>
+</html>

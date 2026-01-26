@@ -20,4 +20,5 @@ public class ProductDTO {
     private List<ProductPricesDTO> productPricesDTO;
     private Long supplierId;
     private Long minimumStock;
+    private List<CompatibleProductsDTO> compatibleProductsDTOS;
 }

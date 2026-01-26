@@ -32,4 +32,6 @@ public class CreateProductRequest {
     @NotBlank
     private List<ProductPricesDTO> productPricesDTO;
 
+    private List<CompatibleProductsDTO> compatibleVehicles;
+
 }

@@ -4,10 +4,8 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
-import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.ProductService;
-import com.pos.posApps.Service.SidebarService;
-import com.pos.posApps.Service.SupplierService;
+import com.pos.posApps.Entity.VehicleEntity;
+import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +45,9 @@ public class ProductController {
     @Autowired
     private SidebarService sidebarService;
 
+    @Autowired
+    private VehicleService vehicleService;
+
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
     }
@@ -81,6 +82,8 @@ public class ProductController {
             productEntity = productService.searchProductData(clientId, search, PageRequest.of(page, size), supplierIdFilter);
         }
 
+        List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
+        model.addAttribute("vehicleData", vehicleEntity);
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productEntity.getTotalPages());
@@ -146,6 +149,7 @@ public class ProductController {
     public String addProducts(HttpSession session, CreateProductRequest req, RedirectAttributes redirectAttributes, String search) {
         AccountEntity accEntity;
         ClientEntity clientData;
+
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -210,7 +214,7 @@ public class ProductController {
                 redirectAttributes.addFlashAttribute("status", true);
                 redirectAttributes.addFlashAttribute("message", "Data Deleted");
                 return "redirect:/products";
-        }
+            }
             redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/products";
@@ -242,7 +246,7 @@ public class ProductController {
         int totalPages = 0;
         int numberElement = 0;
         String productName = "";
-        if(productId != null){
+        if (productId != null) {
             productName = productService.findProductById(productId).getFullName();
             stokData = productService.getStockMovementData(clientId, productId, inputStartDate, inputEndDate);
         }
