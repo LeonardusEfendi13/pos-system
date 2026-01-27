@@ -177,14 +177,16 @@ public class ProductService {
             productRepository.save(newProduct);
 
             //Start insert compatible Product
-            for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
-                CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
-                VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
-                compatibleProducts.setVehicleEntity(v);
-                compatibleProducts.setProductEntity(newProduct);
-                compatibleProducts.setYearStart(c.getYearStart());
-                compatibleProducts.setYearEnd(c.getYearEnd());
-                compatibleProductsRepository.save(compatibleProducts);
+            if(req.getCompatibleVehicles() != null && !req.getCompatibleVehicles().isEmpty()){
+                for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
+                    CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
+                    VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
+                    compatibleProducts.setVehicleEntity(v);
+                    compatibleProducts.setProductEntity(newProduct);
+                    compatibleProducts.setYearStart(c.getYearStart());
+                    compatibleProducts.setYearEnd(c.getYearEnd());
+                    compatibleProductsRepository.save(compatibleProducts);
+                }
             }
 
             stockMovementService.insertKartuStok(new AdjustStockDTO(
@@ -196,7 +198,6 @@ public class ProductService {
                     req.getStock(),
                     clientData
             ));
-
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
