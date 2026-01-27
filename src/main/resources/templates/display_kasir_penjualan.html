@@ -811,6 +811,7 @@
 
     productModalEl.addEventListener("shown.bs.modal", () => {
         productTableWrapper.scrollTop = 0;
+        searchName.focus();
     });
 
     const subTotalDisplay = document.getElementById("subTotalDisplay");

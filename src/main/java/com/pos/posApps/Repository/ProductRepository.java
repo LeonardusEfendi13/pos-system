@@ -177,4 +177,5 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     """, nativeQuery = true)
     List<Long> reduceStockReturning(@Param("productId") Long productId,
                                     @Param("qty") Long qty);
+
 }

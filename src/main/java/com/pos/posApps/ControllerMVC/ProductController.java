@@ -106,6 +106,7 @@ public class ProductController {
         return "display_products";
     }
 
+    //Untuk buka productModal
     @GetMapping("/search")
     @ResponseBody
     public List<ProductDTO> searchProducts(
@@ -117,7 +118,6 @@ public class ProductController {
             String token = (String) session.getAttribute(authSessionKey);
             AccountEntity accEntity = authService.validateToken(token);
             Long clientId = accEntity.getClientEntity().getClientId();
-
             return productService.searchProductByKeyword(clientId, keyword, field);
         } catch (Exception e) {
             e.printStackTrace(); // Log error
