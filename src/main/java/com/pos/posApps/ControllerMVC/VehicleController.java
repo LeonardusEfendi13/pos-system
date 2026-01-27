@@ -98,16 +98,13 @@ public class VehicleController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = vehicleService.editVehicle(vehicleId, vehicleName, vehicleBrand, partNumber);
-            if (isInserted) {
-                redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Data Updated");
-                return "redirect:/vehicle";
-            }
-            redirectAttributes.addFlashAttribute("status", "failed");
-            redirectAttributes.addFlashAttribute("message", "Failed to update data");
+            ResponseInBoolean isInserted = vehicleService.editVehicle(vehicleId, vehicleName, vehicleBrand, partNumber);
+            redirectAttributes.addFlashAttribute("status", isInserted.isStatus());
+            redirectAttributes.addFlashAttribute("message", isInserted.getMessage());
             return "redirect:/vehicle";
         }
+        redirectAttributes.addFlashAttribute("status", true);
+        redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses");
         return "redirect:/login";
     }
 

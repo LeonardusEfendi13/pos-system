@@ -23,6 +23,6 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
 
     VehicleEntity findFirstById(Long id);
 
-    Boolean existsByModelIgnoreCaseAndBrandIgnoreCase(String model, String brand);
+    Boolean existsByModelIgnoreCaseAndBrandIgnoreCaseAndIdNot(String model, String brand, Long vehicleId);
 
 }
