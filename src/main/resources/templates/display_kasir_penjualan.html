@@ -588,8 +588,7 @@
                 </div>
 
                 <!-- Scrollable Table Body -->
-                <div
-                        style="height: 600px; overflow-y: auto; padding-bottom: 10px;"
+                <div id="productTableWrapper" style="height: 600px; overflow-y: auto; padding-bottom: 10px;"
                 >
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
@@ -806,9 +805,14 @@
     const productModalEl = document.getElementById("productModal");
     const productModal = new bootstrap.Modal(productModalEl);
 
+    const modalBody = productModalEl.querySelector(".modal-body");
+
+    const productTableWrapper = document.getElementById("productTableWrapper");
+
     productModalEl.addEventListener("shown.bs.modal", () => {
-        searchName.focus();
+        productTableWrapper.scrollTop = 0;
     });
+
     const subTotalDisplay = document.getElementById("subTotalDisplay");
     const grandTotalDisplay = document.getElementById("grandTotalDisplay");
     const grandDiscountPercent = document.getElementById(
@@ -2309,7 +2313,7 @@
         currentKeyboardIndex = -1;
         highlightRow(null);
 
-        document.onkeydown = function (e) {
+         document.onkeydown = function (e) {
             if (!productModalEl.classList.contains("show")) return;
 
             const activeElement = document.activeElement;
@@ -2324,45 +2328,80 @@
 
                     if (isInSearchCode || isInSearchName) {
                         currentKeyboardIndex = 0;
-                    } else if (currentKeyboardIndex < rows.length - 1) {
-                        currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
+                    } else {
+                        if (currentKeyboardIndex < rows.length - 1) currentKeyboardIndex++;
+                        highlightRow(rows[currentKeyboardIndex]);
+                        rows[currentKeyboardIndex].focus();
                     }
-                    highlightRow(rows[currentKeyboardIndex]);
-                    rows[currentKeyboardIndex]?.focus();
+
+
                     break;
 
                 case "ArrowUp":
                     e.preventDefault();
-                    if (currentKeyboardIndex > 0) {
-                        currentKeyboardIndex--;
+                    if (rows.length === 0) return;
+
+                    if (!isInSearchCode && !isInSearchName) {
+                        if (currentKeyboardIndex > 0) currentKeyboardIndex--;
                         highlightRow(rows[currentKeyboardIndex]);
-                        rows[currentKeyboardIndex]?.focus();
+                        rows[currentKeyboardIndex].focus();
                     }
                     break;
 
                 case "ArrowLeft":
                     e.preventDefault();
-                    searchCode.focus();
-                    searchCode.select();
+                    if (isInSearchCode) {
+                        // Move cursor to start
+                        searchCode.setSelectionRange(0, 0);
+                    } else if (isInSearchName) {
+                        // Go to searchCode and select all
+                        searchCode.focus();
+                        searchCode.select();
+                    } else {
+                        // If currently focused on a product row → go to searchCode
+                        searchCode.focus();
+                        searchCode.select();
+                    }
                     break;
 
                 case "ArrowRight":
                     e.preventDefault();
-                    searchName.focus();
-                    searchName.select();
+                    if (isInSearchCode) {
+                        // Go to searchName and select all
+                        searchName.focus();
+                        searchName.select();
+                    } else if (isInSearchName) {
+                        // Move cursor to end
+                        const len = searchName.value.length;
+                        searchName.setSelectionRange(len, len);
+                    } else {
+                        // If currently focused on a product row → go to searchName
+                        searchName.focus();
+                        searchName.select();
+                    }
                     break;
 
                 case "Enter":
                     e.preventDefault();
                     if (isInSearchCode || isInSearchName) {
                         doFilter();
-                    } else if (currentKeyboardIndex >= 0) {
-                        const selected = filteredProducts[currentKeyboardIndex];
-                        if (selected) selectProduct(selected);
+                    } else {
+                        if (currentKeyboardIndex >= 0 && rows[currentKeyboardIndex]) {
+                            const selectedCode = rows[currentKeyboardIndex]
+                                .querySelector("td")
+                                .textContent.trim();
+                            const selected = masterProducts.find(
+                                (p) => p.shortName === selectedCode
+                            );
+                            if (selected) selectProduct(selected);
+                        }
                     }
                     break;
             }
         };
+
 
         function highlightRow(row) {
             rows.forEach(r => r.classList.remove("table-active"));

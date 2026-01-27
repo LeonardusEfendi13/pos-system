@@ -674,7 +674,7 @@
                 </div>
 
                 <!-- Scrollable Table Body -->
-                <div style="height: 600px; overflow-y: auto;padding-bottom:10px">
+                <div id="productTableWrapper" style="height: 600px; overflow-y: auto;padding-bottom:10px">
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
@@ -1174,10 +1174,16 @@
    const searchCode = document.getElementById("searchCode");
    const searchName = document.getElementById("searchName");
    const productModalEl = document.getElementById("productModal");
+
    const productModal = new bootstrap.Modal(productModalEl);
-  productModalEl.addEventListener("shown.bs.modal", () => {
-      searchName.focus();
+
+    const productTableWrapper = document.getElementById("productTableWrapper");
+
+    productModalEl.addEventListener("shown.bs.modal", () => {
+        productTableWrapper.scrollTop = 0;
+        searchName.focus();
     });
+
    const subTotalDisplay = document.getElementById("subTotalDisplay");
    const grandTotalDisplay = document.getElementById("grandTotalDisplay");
    const grandDiscountPercent = document.getElementById(
@@ -2004,6 +2010,7 @@
             const isInSearchName = activeElement === searchName;
 
             switch (e.key) {
+
                 case "ArrowDown":
                     e.preventDefault();
                     if (rows.length === 0) return;
@@ -2017,6 +2024,8 @@
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     }
+
+
                     break;
 
                 case "ArrowUp":
