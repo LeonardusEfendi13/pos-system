@@ -16,6 +16,4 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> 
     List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(Long clientId);
 
     List<CustomerEntity> findAllByClientEntity_ClientIdOrderByCustomerIdDesc(Long clientId);
-
-    Optional<CustomerEntity> findFirstByOrderByCustomerIdDesc();
 }

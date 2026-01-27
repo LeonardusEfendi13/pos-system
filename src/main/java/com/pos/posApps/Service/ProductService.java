@@ -364,33 +364,24 @@ public class ProductService {
 
         List<ProductEntity> products;
 
-//        System.out.println("VEHICLES = " + ctx.getVehicles());
-//        System.out.println("PRODUCT KEYWORD = " + ctx.getProductKeyword());
         if (!ctx.getVehicles().isEmpty()) {
             List<Long> vehicleIds = ctx.getVehicles()
                     .stream()
                     .map(VehicleEntity::getId)
                     .toList();
 
-            products = ctx.getProductKeyword().isBlank()
-                    ? compatibleProductsRepository.findProductsByVehicles(vehicleIds)
-                    : compatibleProductsRepository.searchByVehiclesAndProductKeyword(
-                    vehicleIds,
-                    ctx.getProductKeyword()
-            );
+            products = productRepository
+                    .searchByVehicleOrProductName(vehicleIds, keyword);
         } else {
             products = fallbackSearch(clientId, keyword, field);
         }
 
         return products.stream()
-                .distinct()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // ==============================
-    // Fallback search untuk input tanpa vehicle
-    // ==============================
+
     private List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
         if ("shortName".equalsIgnoreCase(field)) {
             return productRepository.findByShortNameContaining(clientId, keyword);

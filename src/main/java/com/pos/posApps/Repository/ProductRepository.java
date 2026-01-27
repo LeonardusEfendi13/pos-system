@@ -8,18 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
-
-    List<ProductEntity> findAllByDeletedAtIsNull();
 
     @Query("SELECT p FROM ProductEntity p " +
             "WHERE p.clientEntity.clientId = :clientId " +
@@ -55,9 +49,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 """)
     ProductEntity findFirstActiveProduct(String fullName, String shortName, Long productId, Long clientId);
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    ProductEntity findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(String fullname, String shortName, Long clientId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({
@@ -77,8 +68,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @Param("shortName") String shortName,
             @Param("clientId") Long clientId
     );
-
-    Optional<ProductEntity> findFirstByOrderByProductIdDesc();
 
     Optional<ProductEntity> findFirstByProductIdAndDeletedAtIsNull(Long productId);
 
@@ -106,8 +95,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     @Query("SELECT SUM(p.stock * p.supplierPrice) FROM ProductEntity p WHERE p.clientEntity.clientId = :clientId")
     BigDecimal sumInventoryValue(@Param("clientId") Long clientId);
-
-    List<ProductEntity> findAllByClientEntity_ClientIdAndShortNameInAndProductPricesEntityIsNotNullAndDeletedAtIsNull(Long clientId, Set<String> shortNames);
 
 
     @Query("""
@@ -167,15 +154,24 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 """)
     List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
-    @Query(value = """
-    UPDATE product
-    SET stock = stock - :qty
-    WHERE product_id = :productId
-    RETURNING stock
-    """, nativeQuery = true)
-    List<Long> reduceStockReturning(@Param("productId") Long productId,
-                                    @Param("qty") Long qty);
+    @Query("""
+    SELECT DISTINCT p
+    FROM ProductEntity p
+    LEFT JOIN CompatibleProductsEntity cp
+           ON cp.productEntity = p
+    WHERE
+        (
+            cp.vehicleEntity.id IN :vehicleIds
+        )
+        OR
+        (
+            LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        )
+""")
+    List<ProductEntity> searchByVehicleOrProductName(
+            @Param("vehicleIds") List<Long> vehicleIds,
+            @Param("keyword") String keyword
+    );
 
 }
