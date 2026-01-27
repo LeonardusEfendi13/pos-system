@@ -44,26 +44,26 @@ public class VehicleService {
     }
 
     @Transactional
-    public Boolean editVehicle(Long vehicleId, String name, String brand, String partNumber){
+    public ResponseInBoolean editVehicle(Long vehicleId, String name, String brand, String partNumber){
         try{
             //Will throw exception when data is null
             VehicleEntity vehicleEntity = vehicleRepository.findFirstById(vehicleId);
 
             // Check if another vehicle with the same name & brand exists (excluding the current one)
-            boolean vehicleExists = vehicleRepository.existsByModelIgnoreCaseAndBrandIgnoreCase(name, brand);
+            boolean vehicleExists = vehicleRepository.existsByModelIgnoreCaseAndBrandIgnoreCaseAndIdNot(name, brand, vehicleId);
 
             if (vehicleExists) {
-                return false; // Duplicate data exists
+                return new ResponseInBoolean(true, "Data sudah ada"); // Duplicate data exists
             }
 
             vehicleEntity.setModel(name);
             vehicleEntity.setBrand(brand);
             vehicleEntity.setKnownPartNumber(partNumber);
             vehicleRepository.save(vehicleEntity);
-            return true;
+            return new ResponseInBoolean(true, "Berhasil update data");
         }catch (Exception e){
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return false;
+            return new ResponseInBoolean(false, "Gagal update data");
         }
     }
 

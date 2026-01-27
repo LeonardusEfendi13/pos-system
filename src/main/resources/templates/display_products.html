@@ -687,11 +687,9 @@
         }
 
         function populateForm(data) {
-            console.log("Populating..");
             $('#modalLabel').text('Edit Master Barang & Jasa');
             $('#barangForm').attr('action', '/products/edit');
             $('#productId').val(data.productId); // Set the hidden ID for editing
-            console.log("data", data);
             // Populate other fields
             $('#shortName').val(data.shortName);
             $('#fullName').val(data.fullName);
@@ -719,14 +717,11 @@
             $('#maxqty2').val(p2.maximalCount ?? '');
             $('#maxqty3').val(p3.maximalCount ?? '');
 
-            console.log("retrieving cvm..");
-
             const container = document.getElementById("vehicleChips");
             container.innerHTML = "";  // clear old chips
             vehicleIndex = 0;          // reset index for this modal
 
             const compatible = data.compatibleProductsDTOS || [];
-            console.log("compatible", compatible);
 
             compatible.forEach((cp) => {
                 const chip = document.createElement("div");

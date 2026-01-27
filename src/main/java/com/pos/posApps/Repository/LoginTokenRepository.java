@@ -9,7 +9,5 @@ import java.util.Optional;
 @Repository
 public interface LoginTokenRepository extends JpaRepository<LoginTokenEntity, Long> {
 
-    Optional<LoginTokenEntity> findFirstByOrderByTokenIdDesc();
-
     Optional<LoginTokenEntity> findByTokenAndDeletedAtIsNull(String token);
 }
