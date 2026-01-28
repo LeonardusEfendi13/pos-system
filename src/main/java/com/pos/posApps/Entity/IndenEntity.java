@@ -1,5 +1,6 @@
 package com.pos.posApps.Entity;
 
+import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -56,14 +57,8 @@ public class IndenEntity {
     @Column(name = "deposit")
     private BigDecimal deposit;
 
-    @Column(name = "is_ordered")
-    private Boolean isOrdered;
-
-    @Column(name = "is_available")
-    private Boolean isAvailable;
-
-    @Column(name = "is_delivered")
-    private Boolean isDelivered;
+    @Column(name = "status_inden")
+    private StatusInden statusInden;
 
     @OneToMany(mappedBy = "indenEntity")
     private List<IndenDetailEntity> indenDetailEntities;

@@ -1,6 +1,7 @@
 package com.pos.posApps.DTO.Dtos;
 
 
+import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,10 +21,9 @@ public class IndenDTO {
     private BigDecimal totalDisc;
     private LocalDateTime tanggalInden;
     private List<IndenDetailDTO> indenDetailDTOS;
+    private BigDecimal deposit;
     private String createdBy;
     private String custName;
     private String custPhone;
-    private Boolean isOrdered;
-    private Boolean isAvailable;
-    private Boolean isDelivered;
+    private StatusInden statusInden;
 }

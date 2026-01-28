@@ -1,6 +1,7 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.Entity.IndenEntity;
+import com.pos.posApps.Entity.TransactionEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface IndenRepository extends JpaRepository<IndenEntity, Long> {
@@ -30,4 +32,7 @@ public interface IndenRepository extends JpaRepository<IndenEntity, Long> {
             @Param("search") String search,
             Pageable pageable
     );
+
+    Optional<IndenEntity> findFirstByIndenIdAndDeletedAtIsNull(Long transactionId);
+
 }

@@ -158,27 +158,33 @@
                         <thead class="sticky-top">
                         <tr>
                             <th>No</th>
-                            <th>No. Faktur</th>
-                            <th>Tanggal Jual</th>
-                            <th>Total Jual</th>
-                            <th>Pelanggan</th>
+                            <th>No. Inden</th>
+                            <th>Tanggal Inden</th>
+                            <th>Jumlah Deposit</th>
+                            <th>Total Harga</th>
+                            <th>Nama Customer</th>
+                            <th>Telp Customer</th>
                             <th>Kasir</th>
-                            <th>Action</th>
+                            <th>Status Inden</th>
+                            <th></th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="penjualan, iterStat : ${penjualanData}">
+                        <tr th:each="data, iterStat : ${indenData}">
                             <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
-                            <td th:text="${penjualan.transactionNumber}">No Faktur</td>
-                            <td th:text="${#temporals.format(penjualan.tanggalJual, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
-                                Tanggal Jual
+                            <td th:text="${data.indenNumber}">No Inden</td>
+                            <td th:text="${#temporals.format(data.tanggalInden, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">
+                                Tanggal Inden
                             </td>
-                            <td><span th:text="${penjualan.totalPrice}">Rp0</span></td>
-                            <td th:text="${penjualan.customerDTO.customerName}">Pelanggan</td>
-                            <td th:text="${penjualan.accountName}">Account Name</td>
+                            <td><span th:text="${data.deposit}">Rp0</span></td>
+                            <td><span th:text="${data.totalPrice}">Rp0</span></td>
+                            <td th:text="${data.custName}">Pelanggan</td>
+                            <td th:text="${data.custPhone}">Cust Phone</td>
+                            <td th:text="${data.createdBy}">Kasir Name</td>
+                            <td th:text="${data.statusInden}">Kasir Name</td>
                             <td>
                                 <form th:action="@{/kasir}" method="get" style="display: inline">
-                                    <input type="hidden" name="transactionId" th:value="${penjualan.transactionId}"/>
+                                    <input type="hidden" name="transactionId" th:value="${data.transactionId}"/>
                                     <button class="btn btn-sm btn-primary me-1">Edit</button>
                                 </form>
                                 <form th:action="@{|/penjualan/delete/${penjualan.transactionId}|}" method="post"

@@ -1,8 +1,9 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.ClientDTO;
-import com.pos.posApps.DTO.Dtos.IndenDTO;
-import com.pos.posApps.DTO.Dtos.SidebarDTO;
+import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.Entity.CustomerEntity;
+import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.Entity.VehicleEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
@@ -24,6 +26,7 @@ public class IndenController {
     private ClientService clientService;
     private SidebarService sidebarService;
     private IndenService indenService;
+    private ProductService productService;
 
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
@@ -91,6 +94,32 @@ public class IndenController {
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
         model.addAttribute("sidebarData", sidebarData);
         return "display_inden";
+    }
+
+    @GetMapping("/tambah")
+    public String displayKasirInden(Model model, HttpSession session, Long indenId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
+        Long clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+
+        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
+        ClientDTO clientSettingData = clientService.getClientSettings(clientId);
+        model.addAttribute("clientSettingData", clientSettingData);
+        IndenDTO indenData = (indenId != null)
+                ? indenService.getPenjualanDataById(indenId)
+                : new IndenDTO();
+
+        model.addAttribute("indenData", indenData);
+        model.addAttribute("productData", productEntity.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productEntity.getTotalPages());
+        model.addAttribute("settingData", clientSettingData);
+
+        return "display_kasir_inden";
     }
 
 //    @PostMapping("/delete/{transactionId}")

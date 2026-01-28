@@ -40,55 +40,6 @@ public class IndenService {
     @Autowired
     IndenRepository indenRepository;
 
-    public BigDecimal getTotalRevenues(Long clientId) {
-        LocalDateTime startDate = LocalDate.now().atStartOfDay();
-        LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
-        return transactionData.stream()
-                .map(TransactionEntity::getTotalPrice)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-
-    public List<PenjualanDTO> getLast10Transaction(Long clientId) {
-        LocalDateTime startDate = LocalDate.now().atStartOfDay();
-        LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
-//        For testing only
-//        LocalDateTime startDate = LocalDate.parse("2025-09-13").atStartOfDay();
-//        LocalDateTime endDate = LocalDate.parse("2025-09-13").atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(20).toList();
-        return transactionData.stream().map(transactions -> new PenjualanDTO(
-                transactions.getTransactionId(),
-                new CustomerDTO(
-                        transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName(),
-                        transactions.getCustomerEntity().getAlamat()
-                ),
-                transactions.getTransactionNumber(),
-                transactions.getSubtotal(),
-                transactions.getTotalPrice(),
-                transactions.getTotalDiscount(),
-                transactions.getCreatedAt(),
-                transactions.getTransactionDetailEntities().stream()
-                        .map(transactionDetail -> new TransactionDetailDTO(
-                                transactionDetail.getShortName(),
-                                transactionDetail.getFullName(),
-                                transactionDetail.getPrice(),
-                                transactionDetail.getQty(),
-                                transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice(),
-                                transactionDetail.getTotalProfit(),
-                                transactionDetail.getBasicPrice()
-                        ))
-                        .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName()
-
-        )).collect(Collectors.toList());
-    }
-
-    // File: PenjualanService.java
-
     public Page<IndenDTO> getIndenData(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<IndenEntity> indenData;
         indenData = indenRepository.findAllByDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(startDate, endDate, pageable);
@@ -131,47 +82,21 @@ public class IndenService {
                         indenDetail.getTotalProfit(),
                         indenDetail.getBasicPrice()
                 )).collect(Collectors.toList()),
+                indens.getDeposit(),
                 name,
                 indens.getCustomerName(),
                 indens.getCustomerPhone(),
-                indens.getIsOrdered(),
-                indens.getIsAvailable(),
-                indens.getIsDelivered()
+                indens.getStatusInden()
         );
     }
 
-    public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
-        Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, penjualanId);
-        if (transactionsOpt.isEmpty()) {
+    public IndenDTO getPenjualanDataById(Long penjualanId) {
+        Optional<IndenEntity> indenOpt = indenRepository.findFirstByIndenIdAndDeletedAtIsNull(penjualanId);
+        if (indenOpt.isEmpty()) {
             return null;
         }
-        TransactionEntity transactions = transactionsOpt.get();
-        return new PenjualanDTO(
-                transactions.getTransactionId(),
-                new CustomerDTO(
-                        transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName(),
-                        transactions.getCustomerEntity().getAlamat()
-                ),
-                transactions.getTransactionNumber(),
-                transactions.getSubtotal(),
-                transactions.getTotalPrice(),
-                transactions.getTotalDiscount(),
-                transactions.getCreatedAt(),
-                transactions.getTransactionDetailEntities().stream()
-                        .map(transactionDetail -> new TransactionDetailDTO(
-                                transactionDetail.getShortName(),
-                                transactionDetail.getFullName(),
-                                transactionDetail.getPrice(),
-                                transactionDetail.getQty(),
-                                transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice(),
-                                transactionDetail.getTotalProfit(),
-                                transactionDetail.getBasicPrice()
-                        ))
-                        .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName()
-        );
+        IndenEntity indenEntity = indenOpt.get();
+        return convertToDTO(indenEntity);
     }
 
     @Transactional
