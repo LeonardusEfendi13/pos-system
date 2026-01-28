@@ -7,8 +7,4 @@ import java.util.Optional;
 
 public interface ClientRepository extends JpaRepository<ClientEntity, Long> {
     Optional<ClientEntity> findByClientIdAndDeletedAtIsNull(Long clientId);
-
-    Optional<ClientEntity> findFirstByOrderByClientIdDesc();
-
-
 }

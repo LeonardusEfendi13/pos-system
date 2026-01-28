@@ -233,6 +233,53 @@
         .modal-medium-width {
             max-width: 40vw; /* atur sesuai selera */
         }
+        .vehicle-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+
+            padding: 6px 10px;
+            border-radius: 8px;
+
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+
+            font-size: 0.85rem;
+            color: #212529;
+        }
+
+        .vehicle-chip:hover {
+            background-color: #f1f3f5;
+        }
+
+        .chip-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .chip-title {
+            font-weight: 600;
+        }
+
+        .chip-year {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .chip-remove {
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            line-height: 1;
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        .chip-remove:hover {
+            color: #a71d2a;
+        }
     </style>
 </head>
 <body class="d-flex flex-column vh-100 p-2">
@@ -487,6 +534,52 @@
 
                         <hr/>
 
+                        <!-- KENDARAAN COMPATIBLE -->
+                        <div class="mb-3">
+                            <label class="form-label">Kendaraan Compatible</label>
+
+                            <div id="vehicleChips" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    onclick="toggleVehicleForm()">
+                                + Tambah Kendaraan
+                            </button>
+                        </div>
+
+                        <div id="vehicleInlineForm" class="border rounded p-3 mb-3 d-none">
+                            <div class="mb-3">
+                                <label class="form-label">Kendaraan</label>
+                                <select id="vehicleId" class="form-select">
+                                    <option value="">Pilih Kendaraan</option>
+                                    <option th:each="v : ${vehicleData}"
+                                            th:value="${v.id}"
+                                            th:text="${v.model}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label>Tahun Mulai</label>
+                                    <input type="number" id="yearStart" class="form-control">
+                                </div>
+                                <div class="col">
+                                    <label>Tahun Akhir</label>
+                                    <input type="number" id="yearEnd" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-success btn-sm" onclick="addVehicle()">
+                                    Simpan
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleVehicleForm()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Harga Beli -->
                         <div class="mb-3">
                             <h6>Harga Beli</h6>
@@ -674,7 +767,7 @@
                 </div>
 
                 <!-- Scrollable Table Body -->
-                <div style="height: 600px; overflow-y: auto;padding-bottom:10px">
+                <div id="productTableWrapper" style="height: 600px; overflow-y: auto;padding-bottom:10px">
                     <table class="table table-sm table-hover mb-0" id="productTable" style="table-layout:fixed">
                         <thead class="table-light">
                         <tr>
@@ -727,6 +820,88 @@
 </script>
 
 <script>
+<!--    Vehicle Chips-->
+    let vehicleIndex = 0;
+    function toggleVehicleForm() {
+        const form = document.getElementById("vehicleInlineForm");
+        form.classList.toggle("d-none");
+    }
+
+    function addVehicle() {
+        const select = document.getElementById("vehicleId");
+        const vehicleId = select.value;
+        const vehicleName = select.options[select.selectedIndex]?.text;
+        const yearStart = document.getElementById("yearStart").value;
+        const yearEnd = document.getElementById("yearEnd").value;
+
+        if (!vehicleId || vehicleId === "null" || !yearStart || !yearEnd) {
+            alert("Lengkapi data kendaraan");
+            return;
+        }
+
+        const index = document.querySelectorAll("#vehicleChips .vehicle-chip").length;
+
+        const chip = document.createElement("div");
+        chip.className = "vehicle-chip";
+
+        chip.innerHTML = `
+            <div class="chip-text">
+                <span class="chip-title">${vehicleName}</span>
+                <span class="chip-year">${yearStart} – ${yearEnd}</span>
+            </div>
+
+            <button type="button"
+                    class="chip-remove"
+                    onclick="removeVehicle(this)">
+                &times;
+            </button>
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].vehicleId"
+                   value="${vehicleId}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearStart"
+                   value="${yearStart}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearEnd"
+                   value="${yearEnd}">
+        `;
+
+        document.getElementById("vehicleChips").appendChild(chip);
+
+        select.value = "";
+        document.getElementById("yearStart").value = "";
+        document.getElementById("yearEnd").value = "";
+        toggleVehicleForm();
+    }
+
+    function removeVehicle(button) {
+        const chip = button.closest(".vehicle-chip");
+        chip.remove();
+        reindexVehicles();
+    }
+
+    function reindexVehicles() {
+        const chips = document.querySelectorAll("#vehicleChips .vehicle-chip");
+
+        chips.forEach((chip, index) => {
+            chip.querySelector('input[name*=".vehicleId"]')
+                .name = `compatibleVehicles[${index}].vehicleId`;
+
+            chip.querySelector('input[name*=".yearStart"]')
+                .name = `compatibleVehicles[${index}].yearStart`;
+
+            chip.querySelector('input[name*=".yearEnd"]')
+                .name = `compatibleVehicles[${index}].yearEnd`;
+        });
+    }
+
+     barangModal.addEventListener('hidden.bs.modal', function () {
+            $('#vehicleChips').empty();
+    });
+
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
 
@@ -803,6 +978,7 @@
         });
 
         try {
+            console.log("json data : ", JSON.stringify(jsonData, null, 2));
             const response = await fetch("/api/product/add", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1174,10 +1350,16 @@
    const searchCode = document.getElementById("searchCode");
    const searchName = document.getElementById("searchName");
    const productModalEl = document.getElementById("productModal");
+
    const productModal = new bootstrap.Modal(productModalEl);
-  productModalEl.addEventListener("shown.bs.modal", () => {
-      searchName.focus();
+
+    const productTableWrapper = document.getElementById("productTableWrapper");
+
+    productModalEl.addEventListener("shown.bs.modal", () => {
+        productTableWrapper.scrollTop = 0;
+        searchName.focus();
     });
+
    const subTotalDisplay = document.getElementById("subTotalDisplay");
    const grandTotalDisplay = document.getElementById("grandTotalDisplay");
    const grandDiscountPercent = document.getElementById(
@@ -2004,6 +2186,7 @@
             const isInSearchName = activeElement === searchName;
 
             switch (e.key) {
+
                 case "ArrowDown":
                     e.preventDefault();
                     if (rows.length === 0) return;
@@ -2017,6 +2200,8 @@
                         highlightRow(rows[currentKeyboardIndex]);
                         rows[currentKeyboardIndex].focus();
                     }
+
+
                     break;
 
                 case "ArrowUp":

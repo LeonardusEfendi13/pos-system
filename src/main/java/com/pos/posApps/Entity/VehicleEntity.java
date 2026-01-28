@@ -27,5 +27,4 @@ public class VehicleEntity {
 
     @OneToMany(mappedBy = "vehicleEntity")
     private List<CompatibleProductsEntity> compatibleProductsEntities;
-
 }

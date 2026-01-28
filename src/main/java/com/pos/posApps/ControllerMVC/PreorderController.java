@@ -3,10 +3,7 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.PreorderDTO;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
-import com.pos.posApps.Entity.AccountEntity;
-import com.pos.posApps.Entity.ClientEntity;
-import com.pos.posApps.Entity.PreorderEntity;
-import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -45,6 +42,9 @@ public class PreorderController {
 
     @Autowired
     private SidebarService sidebarService;
+
+    @Autowired
+    private VehicleService vehicleService;
 
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
@@ -127,6 +127,8 @@ public class PreorderController {
         if (preorderId != null) {
             preorderData = preorderService.getPreorderDataById(clientData.getClientId(), preorderId);
         }
+        List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
+        model.addAttribute("vehicleData", vehicleEntity);
         model.addAttribute("preorderData", preorderData);
         model.addAttribute("activePage", "preorderTambah");
         model.addAttribute("productData", productEntity.getContent());

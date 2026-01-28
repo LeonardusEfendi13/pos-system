@@ -67,13 +67,13 @@ public class ProductService {
                 product.getCompatibleProductsEntities() == null ? new ArrayList<>() :
                         product.getCompatibleProductsEntities().stream()
                                 .map(cp ->
-                                    new CompatibleProductsDTO(
-                                        cp.getProductEntity().getProductId(),
-                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getId() : null,
-                                        cp.getYearStart(),
-                                        cp.getYearEnd(),
-                                        cp.getVehicleEntity() != null ? cp.getVehicleEntity().getModel() : null
-                                ))
+                                        new CompatibleProductsDTO(
+                                                cp.getProductEntity().getProductId(),
+                                                cp.getVehicleEntity() != null ? cp.getVehicleEntity().getId() : null,
+                                                cp.getYearStart(),
+                                                cp.getYearEnd(),
+                                                cp.getVehicleEntity() != null ? cp.getVehicleEntity().getModel() : null
+                                        ))
                                 .collect(Collectors.toList())
         );
     }
@@ -177,14 +177,16 @@ public class ProductService {
             productRepository.save(newProduct);
 
             //Start insert compatible Product
-            for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
-                CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
-                VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
-                compatibleProducts.setVehicleEntity(v);
-                compatibleProducts.setProductEntity(newProduct);
-                compatibleProducts.setYearStart(c.getYearStart());
-                compatibleProducts.setYearEnd(c.getYearEnd());
-                compatibleProductsRepository.save(compatibleProducts);
+            if (req.getCompatibleVehicles() != null && !req.getCompatibleVehicles().isEmpty()) {
+                for (CompatibleProductsDTO c : req.getCompatibleVehicles()) {
+                    CompatibleProductsEntity compatibleProducts = new CompatibleProductsEntity();
+                    VehicleEntity v = vehicleRepository.findFirstById(c.getVehicleId());
+                    compatibleProducts.setVehicleEntity(v);
+                    compatibleProducts.setProductEntity(newProduct);
+                    compatibleProducts.setYearStart(c.getYearStart());
+                    compatibleProducts.setYearEnd(c.getYearEnd());
+                    compatibleProductsRepository.save(compatibleProducts);
+                }
             }
 
             stockMovementService.insertKartuStok(new AdjustStockDTO(
@@ -196,7 +198,6 @@ public class ProductService {
                     req.getStock(),
                     clientData
             ));
-
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
                 ProductPricesEntity newProductPrices = new ProductPricesEntity();
@@ -264,7 +265,7 @@ public class ProductService {
             //Delete all compatible vehicle related to product id
             compatibleProductsRepository.deleteAllByProductEntity_ProductId(req.getProductId());
 
-            if(req.getCompatibleVehicles() != null){
+            if (req.getCompatibleVehicles() != null) {
                 req.setCompatibleVehicles(
                         req.getCompatibleVehicles()
                                 .stream()
@@ -272,7 +273,7 @@ public class ProductService {
                                 .filter(v -> v.getVehicleId() != null)
                                 .toList()
                 );
-                for(CompatibleProductsDTO cp: req.getCompatibleVehicles()){
+                for (CompatibleProductsDTO cp : req.getCompatibleVehicles()) {
                     CompatibleProductsEntity newCompatibleProduct = new CompatibleProductsEntity();
                     VehicleEntity vehicleData = vehicleRepository.findFirstById(cp.getVehicleId());
                     newCompatibleProduct.setProductEntity(productEntity);
@@ -319,18 +320,76 @@ public class ProductService {
         return true;
     }
 
-    public List<ProductDTO> searchProductByKeyword(Long clientId, String keyword, String field) {
-        List<ProductEntity> products;
+    public SearchContextDTO parseKeyword(String input) {
+        String normalized = input.toLowerCase().trim();
+        List<String> tokens = new ArrayList<>(List.of(normalized.split("\\s+")));
 
-        if ("shortName".equalsIgnoreCase(field)) {
-            products = productRepository.findByShortNameContaining(clientId, keyword);
-        } else if ("fullName".equalsIgnoreCase(field)) {
-            products = productRepository.findByFullNameContaining(clientId, keyword);
-        } else {
-            products = productRepository.findAllWithPricesByClientId(clientId, keyword);
+        List<VehicleEntity> matchedVehicles = new ArrayList<>();
+
+        for (VehicleEntity v : vehicleRepository.findAll()) {
+            List<String> modelTokens =
+                    List.of(v.getModel().toLowerCase().split("\\s+"));
+
+            boolean matched = modelTokens.stream()
+                    .anyMatch(mt ->
+                            tokens.stream().anyMatch(t ->
+                                    t.startsWith(mt) || mt.startsWith(t)
+                            )
+                    );
+
+            if (matched) {
+                matchedVehicles.add(v);
+            }
         }
 
-        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+        // remove vehicle tokens from product keyword
+        List<String> productTokens = new ArrayList<>(tokens);
+        for (VehicleEntity v : matchedVehicles) {
+            for (String mt : v.getModel().toLowerCase().split("\\s+")) {
+                productTokens.removeIf(t ->
+                        t.startsWith(mt) || mt.startsWith(t)
+                );
+            }
+        }
+
+        SearchContextDTO ctx = new SearchContextDTO();
+        ctx.setVehicles(matchedVehicles);
+        ctx.setProductKeyword(String.join(" ", productTokens).trim());
+
+        return ctx;
+    }
+
+    public List<ProductDTO> searchProductByKeyword(Long clientId, String keyword, String field) {
+        SearchContextDTO ctx = parseKeyword(keyword);
+
+        List<ProductEntity> products;
+
+        if (!ctx.getVehicles().isEmpty()) {
+            List<Long> vehicleIds = ctx.getVehicles()
+                    .stream()
+                    .map(VehicleEntity::getId)
+                    .toList();
+
+            products = productRepository
+                    .searchByVehicleOrProductName(vehicleIds, keyword);
+        } else {
+            products = fallbackSearch(clientId, keyword, field);
+        }
+
+        return products.stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+
+    private List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
+        if ("shortName".equalsIgnoreCase(field)) {
+            return productRepository.findByShortNameContaining(clientId, keyword);
+        } else if ("fullName".equalsIgnoreCase(field)) {
+            return productRepository.findByFullNameContaining(clientId, keyword);
+        } else {
+            return productRepository.findAllWithPricesByClientId(clientId, keyword);
+        }
     }
 
     public ProductDTO findProductByCode(Long clientId, String keyword, Boolean isPurchasing) {

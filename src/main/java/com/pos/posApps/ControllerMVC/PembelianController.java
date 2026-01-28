@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.Entity.VehicleEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class PembelianController {
     private SupplierService supplierService;
     private ProductService productService;
     private SidebarService sidebarService;
+    private VehicleService vehicleService;
 
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
@@ -41,7 +43,6 @@ public class PembelianController {
         String token;
         try {
             token = (String) session.getAttribute(authSessionKey);
-//            clientId = authService.validateToken(token).getClientEntity().getClientId();
             accountData = authService.validateToken(token);
         } catch (Exception e) {
             return "redirect:/login";
@@ -120,6 +121,8 @@ public class PembelianController {
         if (pembelianId != null) {
             pembelianData = pembelianService.getPembelianDataById(clientId, pembelianId);
         }
+        List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
+        model.addAttribute("vehicleData", vehicleEntity);
         model.addAttribute("pembelianData", pembelianData);
         model.addAttribute("activePage", "pembelianTambah");
         model.addAttribute("productData", productPage);
