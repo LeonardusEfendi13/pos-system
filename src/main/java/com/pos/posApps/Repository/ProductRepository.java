@@ -121,6 +121,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     WHERE p.clientEntity.clientId = :clientId
     AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
     AND p.deletedAt IS NULL
+    ORDER BY p.fullName
 """)
     List<ProductEntity> findByShortNameContaining(
             @Param("clientId") Long clientId,
@@ -168,6 +169,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
+    ORDER BY p.fullName
 """)
     List<ProductEntity> searchByVehicleOrProductName(
             @Param("vehicleIds") List<Long> vehicleIds,
