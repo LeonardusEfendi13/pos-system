@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
-    List<VehicleEntity> findAllByBrand(String brand);
+    List<VehicleEntity> findAllByBrandOrderByModelAsc(String brand);
 
     Optional<VehicleEntity> findFirstByModelIgnoreCaseAndBrandIgnoreCase(String model, String brand);
 
