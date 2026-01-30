@@ -321,66 +321,122 @@ public class ProductService {
     }
 
     public SearchContextDTO parseKeyword(String input) {
+
         String normalized = input.toLowerCase().trim();
         List<String> tokens = new ArrayList<>(List.of(normalized.split("\\s+")));
 
         List<VehicleEntity> matchedVehicles = new ArrayList<>();
 
-        for (VehicleEntity v : vehicleRepository.findAll()) {
-            List<String> modelTokens =
-                    List.of(v.getModel().toLowerCase().split("\\s+"));
+        String baseToken = null;
 
-            boolean matched = modelTokens.stream()
-                    .anyMatch(mt ->
-                            tokens.stream().anyMatch(t ->
-                                    t.startsWith(mt) || mt.startsWith(t)
-                            )
-                    );
+        for (String t : tokens) {
+            if (t.isBlank()) continue;
 
-            if (matched) {
-                matchedVehicles.add(v);
+            boolean exists = vehicleRepository.existsByModelContainingIgnoreCase(t);
+            if (exists) {
+                baseToken = t;
+                break;
             }
         }
 
-        // remove vehicle tokens from product keyword
+        // Kalau tidak ada vehicle sama sekali
+        if (baseToken == null) {
+            SearchContextDTO ctx = new SearchContextDTO();
+            ctx.setRawKeyword(normalized);
+            ctx.setProductKeyword(normalized);
+            ctx.setVehicles(List.of());
+            return ctx;
+        }
+
+        List<VehicleEntity> baseVehicles =
+                vehicleRepository.findByModelContainingIgnoreCase(baseToken);
+
+        String finalBaseToken = baseToken;
+
+        List<String> variantTokens = tokens.stream()
+                .filter(t -> !t.equals(finalBaseToken))
+                .filter(t -> !t.isBlank())
+                // hanya token yg memang prefix dari model vehicle
+                .filter(t ->
+                        baseVehicles.stream().anyMatch(v ->
+                                Arrays.stream(v.getModel().toLowerCase().split("\\s+"))
+                                        .anyMatch(mt -> mt.startsWith(t))
+                        )
+                )
+                .toList();
+
+        if (!variantTokens.isEmpty()) {
+            // user menyebut variant → FILTER KETAT
+            for (VehicleEntity v : baseVehicles) {
+                String model = v.getModel().toLowerCase();
+
+                boolean allVariantMatch = variantTokens.stream()
+                        .allMatch(t ->
+                                Arrays.stream(model.split("\\s+"))
+                                        .anyMatch(mt -> mt.startsWith(t))
+                        );
+
+                if (allVariantMatch) {
+                    matchedVehicles.add(v);
+                }
+            }
+        } else {
+            // hanya base vehicle → ambil semua variannya
+            matchedVehicles.addAll(baseVehicles);
+        }
+
         List<String> productTokens = new ArrayList<>(tokens);
-        for (VehicleEntity v : matchedVehicles) {
-            for (String mt : v.getModel().toLowerCase().split("\\s+")) {
-                productTokens.removeIf(t ->
-                        t.startsWith(mt) || mt.startsWith(t)
-                );
-            }
-        }
+
+        String finalBaseToken1 = baseToken;
+        productTokens.removeIf(t ->
+                t.equals(finalBaseToken1) || variantTokens.contains(t)
+        );
 
         SearchContextDTO ctx = new SearchContextDTO();
         ctx.setVehicles(matchedVehicles);
+        ctx.setRawKeyword(normalized);
         ctx.setProductKeyword(String.join(" ", productTokens).trim());
 
         return ctx;
     }
 
-    public List<ProductDTO> searchProductByKeyword(Long clientId, String keyword, String field) {
+    public List<ProductDTO> searchProductByKeyword(
+            Long clientId,
+            String keyword,
+            String field
+    ) {
+
         SearchContextDTO ctx = parseKeyword(keyword);
+        Set<ProductEntity> result = new LinkedHashSet<>();
 
-        List<ProductEntity> products;
+        // 🅰️ Product name search
+        result.addAll(
+                productRepository.searchByProductName(
+                        ctx.getRawKeyword(),
+                        field
+                )
+        );
 
-        if (!ctx.getVehicles().isEmpty()) {
-            List<Long> vehicleIds = ctx.getVehicles()
-                    .stream()
-                    .map(VehicleEntity::getId)
-                    .toList();
+        // 🅱️ Compatibility + product filter
+        if (!ctx.getVehicles().isEmpty()
+                && ctx.getProductKeyword() != null
+                && !ctx.getProductKeyword().isBlank()) {
 
-            products = productRepository
-                    .searchByVehicleOrProductName(vehicleIds, keyword);
-        } else {
-            products = fallbackSearch(clientId, keyword, field);
+            for (VehicleEntity v : ctx.getVehicles()) {
+                result.addAll(
+                        productRepository.searchByVehicleAndProductKeyword(
+                                v.getModel(),
+                                ctx.getProductKeyword(),
+                                field
+                        )
+                );
+            }
         }
 
-        return products.stream()
+        return result.stream()
                 .map(this::convertToDTO)
                 .toList();
     }
-
 
     private List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
         if ("shortName".equalsIgnoreCase(field)) {

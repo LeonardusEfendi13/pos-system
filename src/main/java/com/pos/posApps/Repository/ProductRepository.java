@@ -32,21 +32,21 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     );
 
     @Query("""
-            SELECT DISTINCT p FROM ProductEntity p
-            JOIN p.productPricesEntity prices
-            WHERE p.clientEntity.clientId = :clientId
-              AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
-              AND p.deletedAt IS NULL
-            ORDER BY p.fullName
-        """)
+                SELECT DISTINCT p FROM ProductEntity p
+                JOIN p.productPricesEntity prices
+                WHERE p.clientEntity.clientId = :clientId
+                  AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+                  AND p.deletedAt IS NULL
+                ORDER BY p.fullName
+            """)
     Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable, @Param("supplierId") Long supplierId);
 
     @Query("""
-    SELECT p FROM ProductEntity p
-    WHERE (p.fullName = :fullName OR p.shortName = :shortName OR p.productId = :productId)
-      AND p.clientEntity.clientId = :clientId
-      AND p.deletedAt IS NULL
-""")
+                SELECT p FROM ProductEntity p
+                WHERE (p.fullName = :fullName OR p.shortName = :shortName OR p.productId = :productId)
+                  AND p.clientEntity.clientId = :clientId
+                  AND p.deletedAt IS NULL
+            """)
     ProductEntity findFirstActiveProduct(String fullName, String shortName, Long productId, Long clientId);
 
 
@@ -56,13 +56,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @QueryHint(name = "jakarta.persistence.cache.storeMode", value = "REFRESH") // ⬅ WAJIB
     })
     @Query("""
-    SELECT p
-    FROM ProductEntity p
-    WHERE p.fullName = :fullname
-      AND p.shortName = :shortName
-      AND p.deletedAt IS NULL
-      AND p.clientEntity.clientId = :clientId
-""")
+                SELECT p
+                FROM ProductEntity p
+                WHERE p.fullName = :fullname
+                  AND p.shortName = :shortName
+                  AND p.deletedAt IS NULL
+                  AND p.clientEntity.clientId = :clientId
+            """)
     ProductEntity findAndLockProduct(
             @Param("fullname") String fullname,
             @Param("shortName") String shortName,
@@ -98,16 +98,16 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
 
     @Query("""
-    SELECT p FROM ProductEntity p
-    LEFT JOIN FETCH p.productPricesEntity
-    WHERE p.clientEntity.clientId = :clientId
-    AND p.deletedAt IS NULL
-    AND (
-        LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    )
-    ORDER BY p.fullName
-""")
+                SELECT p FROM ProductEntity p
+                LEFT JOIN FETCH p.productPricesEntity
+                WHERE p.clientEntity.clientId = :clientId
+                AND p.deletedAt IS NULL
+                AND (
+                    LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                )
+                ORDER BY p.fullName
+            """)
     List<ProductEntity> findAllWithPricesByClientId(
             @Param("clientId") Long clientId,
             @Param("keyword") String keyword
@@ -116,13 +116,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     // Search by shortName only
     @Query("""
-    SELECT p FROM ProductEntity p
-    LEFT JOIN FETCH p.productPricesEntity
-    WHERE p.clientEntity.clientId = :clientId
-    AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    AND p.deletedAt IS NULL
-    ORDER BY p.fullName
-""")
+                SELECT p FROM ProductEntity p
+                LEFT JOIN FETCH p.productPricesEntity
+                WHERE p.clientEntity.clientId = :clientId
+                AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                AND p.deletedAt IS NULL
+                ORDER BY p.fullName
+            """)
     List<ProductEntity> findByShortNameContaining(
             @Param("clientId") Long clientId,
             @Param("keyword") String keyword
@@ -130,13 +130,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     // Search by fullName only
     @Query("""
-    SELECT p FROM ProductEntity p
-    LEFT JOIN FETCH p.productPricesEntity
-    WHERE p.clientEntity.clientId = :clientId
-    AND LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    AND p.deletedAt IS NULL
-    ORDER BY p.fullName
-""")
+                SELECT p FROM ProductEntity p
+                LEFT JOIN FETCH p.productPricesEntity
+                WHERE p.clientEntity.clientId = :clientId
+                AND LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                AND p.deletedAt IS NULL
+                ORDER BY p.fullName
+            """)
     List<ProductEntity> findByFullNameContaining(
             @Param("clientId") Long clientId,
             @Param("keyword") String keyword
@@ -145,35 +145,51 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     ProductEntity findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(String shortName, Long clientId);
 
     @Query("""
-    SELECT p FROM ProductEntity p
-    WHERE p.clientEntity.clientId = :clientId
-    AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
-    AND p.minimumStock > 0
-    AND p.stock <= p.minimumStock
-    AND p.deletedAt IS NULL
-    ORDER BY p.fullName
-""")
+                SELECT p FROM ProductEntity p
+                WHERE p.clientEntity.clientId = :clientId
+                AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+                AND p.minimumStock > 0
+                AND p.stock <= p.minimumStock
+                AND p.deletedAt IS NULL
+                ORDER BY p.fullName
+            """)
     List<ProductEntity> getUnderstockProductData(Long clientId, Long supplierId);
 
     @Query("""
-    SELECT DISTINCT p
-    FROM ProductEntity p
-    LEFT JOIN CompatibleProductsEntity cp
-           ON cp.productEntity = p
-    WHERE
-        (
-            cp.vehicleEntity.id IN :vehicleIds
-        )
-        OR
-        (
-            LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        )
-    ORDER BY p.fullName
-""")
-    List<ProductEntity> searchByVehicleOrProductName(
-            @Param("vehicleIds") List<Long> vehicleIds,
-            @Param("keyword") String keyword
+            SELECT DISTINCT p
+            FROM ProductEntity p
+            WHERE
+                (
+                    (:field = 'shortName' AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                    OR
+                    (:field = 'fullName' AND LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                )
+            AND p.deletedAt IS NULL
+            ORDER BY p.fullName
+            """)
+    List<ProductEntity> searchByProductName(
+            @Param("keyword") String keyword,
+            @Param("field") String field
+    );
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProductEntity p
+            JOIN CompatibleProductsEntity cp ON cp.productEntity = p
+            JOIN VehicleEntity v ON cp.vehicleEntity = v
+            WHERE
+                LOWER(v.model) LIKE LOWER(CONCAT('%', :vehicleKeyword, '%'))
+            AND (
+                    (:field = 'shortName' AND LOWER(p.shortName) LIKE LOWER(CONCAT('%', :productKeyword, '%')))
+                 OR (:field = 'fullName' AND LOWER(p.fullName) LIKE LOWER(CONCAT('%', :productKeyword, '%')))
+                )
+            AND p.deletedAt IS NULL
+            ORDER BY p.fullName
+            """)
+    List<ProductEntity> searchByVehicleAndProductKeyword(
+            @Param("vehicleKeyword") String vehicleKeyword,
+            @Param("productKeyword") String productKeyword,
+            @Param("field") String field
     );
 
 }

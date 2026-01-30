@@ -12,5 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 public class SearchContextDTO {
     private List<VehicleEntity> vehicles;
+    private String rawKeyword;
     private String productKeyword;
 }
