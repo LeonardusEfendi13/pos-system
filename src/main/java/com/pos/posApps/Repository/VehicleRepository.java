@@ -9,12 +9,16 @@ import java.util.Optional;
 
 @Repository
 public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
-    List<VehicleEntity> findAllByBrand(String brand);
+    List<VehicleEntity> findAllByBrandOrderByModelAsc(String brand);
 
     Optional<VehicleEntity> findFirstByModelIgnoreCaseAndBrandIgnoreCase(String model, String brand);
 
     VehicleEntity findFirstById(Long id);
 
     Boolean existsByModelIgnoreCaseAndBrandIgnoreCaseAndIdNot(String model, String brand, Long vehicleId);
+
+    Boolean existsByModelContainingIgnoreCase(String model);
+
+    List<VehicleEntity> findByModelContainingIgnoreCase(String model);
 
 }

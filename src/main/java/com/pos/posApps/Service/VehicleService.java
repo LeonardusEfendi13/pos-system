@@ -19,7 +19,7 @@ public class VehicleService {
         if(brand == null || brand.isBlank()){
             return vehicleRepository.findAll();
         }
-        return vehicleRepository.findAllByBrand(brand);
+        return vehicleRepository.findAllByBrandOrderByModelAsc(brand);
     }
 
     @Transactional
