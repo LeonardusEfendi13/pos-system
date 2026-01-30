@@ -1,23 +1,22 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
-import com.pos.posApps.Repository.IndenRepository;
-import com.pos.posApps.Repository.ProductRepository;
-import com.pos.posApps.Repository.TransactionDetailRepository;
-import com.pos.posApps.Repository.TransactionRepository;
+import com.pos.posApps.Repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,6 +38,15 @@ public class IndenService {
 
     @Autowired
     IndenRepository indenRepository;
+
+    @Autowired
+    KasirService kasirService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    IndenDetailRepository indenDetailRepository;
 
     public Page<IndenDTO> getIndenData(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<IndenEntity> indenData;
@@ -83,6 +91,7 @@ public class IndenService {
                         indenDetail.getBasicPrice()
                 )).collect(Collectors.toList()),
                 indens.getDeposit(),
+                indens.getTotalPrice().subtract(indens.getDeposit()),
                 name,
                 indens.getCustomerName(),
                 indens.getCustomerPhone(),
@@ -136,5 +145,66 @@ public class IndenService {
         transactionRepository.save(transactionEntity);
 
         return true;
+    }
+
+    @Transactional
+    public ResponseInBoolean createTransaction(CreateIndenRequest req, AccountEntity accountData) {
+        String lastProduct = "Tanya Leon";
+        ClientEntity clientData = accountData.getClientEntity();
+        try {
+            String generatedNotaNumber = kasirService.generateTodayNota(clientData.getClientId());
+
+            //insert the Inden data
+            IndenEntity indenEntity = new IndenEntity();
+            indenEntity.setIndenNumber(generatedNotaNumber);
+            indenEntity.setSubtotal(req.getSubtotal());
+            indenEntity.setTotalPrice(req.getTotalPrice());
+            indenEntity.setTotalDiscount(req.getTotalDisc());
+            indenEntity.setAccountEntity(accountData);
+            indenEntity.setCustomerName(req.getCustomerName());
+            indenEntity.setCustomerPhone(req.getCustomerPhone());
+            indenEntity.setDeposit(req.getDeposit());
+            indenEntity.setStatusInden(StatusInden.TERCATAT);
+            indenRepository.save(indenEntity);
+
+            System.out.println("=====START LOG ID : " + indenEntity.getIndenId() + "=======");
+
+            for(IndenDetailDTO  dtos: req.getIndenDetailDTOS()){
+                System.out.println("Part Number : " + dtos.getCode());
+                System.out.println("Nama Barang : " + dtos.getName());
+
+                //Get Product Entity
+                ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                entityManager.refresh(productEntity);
+
+                if(productEntity == null){
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
+                }
+
+                System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
+                lastProduct = dtos.getCode();
+
+                IndenDetailEntity indenDetailEntity = new IndenDetailEntity();
+                indenDetailEntity.setShortName(dtos.getCode());
+                indenDetailEntity.setFullName(dtos.getName());
+                indenDetailEntity.setQty(dtos.getQty());
+                indenDetailEntity.setPrice(dtos.getPrice());
+                indenDetailEntity.setDiscountAmount(dtos.getDiscAmount());
+                indenDetailEntity.setTotalPrice(dtos.getTotal());
+                indenDetailEntity.setIndenEntity(indenEntity);
+                indenDetailEntity.setBasicPrice(productEntity.getSupplierPrice());
+                BigDecimal totalBasicPrice = productEntity.getSupplierPrice().multiply(BigDecimal.valueOf(dtos.getQty()));
+                BigDecimal totalProfit = dtos.getTotal().subtract(totalBasicPrice);
+                indenDetailEntity.setTotalProfit(totalProfit);
+                indenDetailRepository.save(indenDetailEntity);
+            }
+            System.out.println("=====END LOG=======");
+            System.out.println();
+            return new ResponseInBoolean(true, generatedNotaNumber);
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, e.getMessage() + ". ERROR KARENA : " + lastProduct);
+        }
     }
 }

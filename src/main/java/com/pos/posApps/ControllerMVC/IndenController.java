@@ -1,9 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.*;
-import com.pos.posApps.Entity.CustomerEntity;
-import com.pos.posApps.Entity.SupplierEntity;
-import com.pos.posApps.Entity.VehicleEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -14,8 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
@@ -59,6 +54,7 @@ public class IndenController {
         }
 
         model.addAttribute("indenData", indenData.getContent());
+        System.out.println("Inden Data list : " + indenData.getContent());
         model.addAttribute("activePage", "indenRiwayat");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
@@ -96,8 +92,9 @@ public class IndenController {
         return "display_inden";
     }
 
-    @GetMapping("/tambah")
+    @GetMapping("/add")
     public String displayKasirInden(Model model, HttpSession session, Long indenId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
+        System.out.println("inden id : " + indenId);
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -113,6 +110,7 @@ public class IndenController {
                 ? indenService.getPenjualanDataById(indenId)
                 : new IndenDTO();
 
+        System.out.println("Inden data : " + indenData);
         model.addAttribute("indenData", indenData);
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);

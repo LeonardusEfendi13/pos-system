@@ -286,22 +286,35 @@
 <body class="p-3">
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="card p-3 me-auto" style="width: 450px">
-            <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
-            <div>
-                <select
-                        id="customerSelect"
-                        class="form-select form-select-sm"
-                ></select>
+        <div class="card p-3 flex-grow-1" style="margin-right:20px">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
+                    <br>
+                    <button class="btn btn-success add-product-btn" data-bs-toggle="modal"
+                            data-bs-target="#addBarangModal" id="add-barang-btn">Tambah Barang
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-weight: bold">Data Customer</label>
+                    <input type="text" class="form-control" name="customerName" id="customerName"
+                           placeholder="Nama Customer" autocomplete="off" required>
+                    <br>
+                    <input type="number" class="form-control" name="customerPhone" id="customerPhone"
+                           placeholder="No. Hp Customer" autocomplete="off" required>
+                </div>
+                <div class="col-md-4"></div>
             </div>
         </div>
-        <a
-                th:href="@{/penjualan}"
-                class="btn btn-warning d-flex align-items-center"
-                onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
-        >
-            Kembali
-        </a>
+        <div class="d-flex align-items-start">
+            <a
+                    th:href="@{/inden}"
+                    class="btn btn-warning d-flex align-items-center"
+                    onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
+            >
+                Kembali
+            </a>
+        </div>
     </div>
 
     <div class="table-responsive mb-3 scrollable-table">
@@ -484,7 +497,7 @@
                                 for="paymentAmount"
                                 class="form-label"
                                 style="font-weight: bold"
-                        >Jumlah Bayar</label
+                        >Jumlah Deposit</label
                         >
                         <input
                                 type="text"
@@ -500,7 +513,7 @@
                                 for="returnAmount"
                                 class="form-label"
                                 style="font-weight: bold"
-                        >Kembali</label
+                        >Sisa Bayar</label
                         >
                         <input
                                 type="text"
@@ -814,6 +827,9 @@
         searchName.focus();
     });
 
+    const customerName = document.getElementById("customerName");
+    const customerPhone = document.getElementById("customerPhone");
+
     const subTotalDisplay = document.getElementById("subTotalDisplay");
     const grandTotalDisplay = document.getElementById("grandTotalDisplay");
     const grandDiscountPercent = document.getElementById(
@@ -952,34 +968,6 @@
         document.getElementById("contextMenu").style.display = "none";
     }
 
-    async function getRevenue() {
-        try {
-            const response = await fetch("/api/kasir/transaction/revenue");
-            if (!response.ok) throw new Error("Gagal fetch revenue transaksi");
-
-            const totalRevenue = await response.text();
-
-            // 💰 Format the revenue (optional)
-            const formatted = new Intl.NumberFormat("id-ID", {
-                style: "currency",
-                currency: "IDR",
-                minimumFractionDigits: 0,
-            }).format(totalRevenue);
-
-            // 🎯 Set the value inside the modal
-            document.getElementById("revenueValue").textContent = formatted;
-
-            // 📦 Show the modal using Bootstrap's JS API
-            const modal = new bootstrap.Modal(
-                document.getElementById("revenueModal")
-            );
-            modal.show();
-        } catch (err) {
-            alert("Error: " + err.message);
-        }
-
-        document.getElementById("contextMenu").style.display = "none";
-    }
 
     function setupRowSelection() {
         const tbody = document.querySelector("#reprintTable tbody");
@@ -1183,7 +1171,7 @@
                         setTimeout(() => {
                             document.body.innerHTML = originalContent;
                             alert("Berhasil mencetak nota!");
-                            window.location.href = "/kasir";
+                            window.location.href = "/inden";
                         }, 500);
                     }, 100);
                 });
@@ -1464,6 +1452,7 @@
     if (paymentInput) {
         paymentInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
+                console.log("Masuk listener 1452");
                 e.preventDefault();
 
                 const returnAmountEl = document.getElementById("returnAmount");
@@ -1474,7 +1463,7 @@
 
                 if (!paymentVal || paymentVal === 0) {
                     // ✅ skenario 1: kosong → ambil dari returnAmount (tapi positif)
-                    if (returnVal < 0) {
+                    if (returnVal > 0) {
                         paymentVal = Math.abs(returnVal); // balik ke positif
                         paymentInput.value = formatRupiah(paymentVal);
 
@@ -1584,14 +1573,14 @@
             e.preventDefault();
           }
         });
-        const customerSelect = document.getElementById("customerSelect");
-        customerSelect.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault(); // supaya tidak trigger form submit
-                codeInput.focus();
-                codeInput.select(); // optional: auto-select text
-            }
-        });
+<!--        const customerSelect = document.getElementById("customerSelect");-->
+<!--        customerSelect.addEventListener("keydown", function (e) {-->
+<!--            if (e.key === "Enter") {-->
+<!--                e.preventDefault(); // supaya tidak trigger form submit-->
+<!--                codeInput.focus();-->
+<!--                codeInput.select(); // optional: auto-select text-->
+<!--            }-->
+<!--        });-->
 
         const reprintModal = document.getElementById("reprintModal");
         reprintModal.addEventListener("hidden.bs.modal", function () {
@@ -2139,7 +2128,7 @@
                     .replace(",", ".")
             ) || 0;
         const paymentAmount = parseRupiah(paymentAmountInput.value);
-        const returnAmount = paymentAmount - grandTotal;
+        const returnAmount = (-1) * (paymentAmount - grandTotal);
 
         returnAmountInput.value = formatRupiah(returnAmount);
 
@@ -2573,6 +2562,20 @@
                     .replace(",", ".")
             ) || 0;
         const paymentAmount = parseRupiah(paymentAmountInput.value);
+        const returnAmount = parseRupiah(returnAmountInput.value);
+        console.log("Otw save");
+        console.log("payment : ", paymentAmount);
+        console.log("return : ", returnAmount);
+
+        const inputCustomerName = customerName.value;
+        const inputCustomerPhone = customerPhone.value;
+        if(!inputCustomerName || !inputCustomerPhone){
+            alert("Harap lengkapi Data Customer");
+            saveBtn.disabled = false;
+            saveBtn.innerText='Simpan';
+            isSaving = false;
+            return;
+        }
 
         if (
             sellTableBody.querySelectorAll("tr").length === 0 ||
@@ -2585,25 +2588,21 @@
             return;
         }
 
-        if (paymentAmount < grandTotal) {
-            alert("Jumlah bayar kurang dari Grand Total.");
+        if (paymentAmount > grandTotal) {
+            alert("Jumlah deposit melebihi Grand Total.");
             saveBtn.disabled = false;
             saveBtn.innerText='Simpan';
             isSaving = false;
             return;
         }
 
-<!--        const selectedCustomerId = customerSelect.value;-->
-<!--        const selectedCustomer = masterCustomers.find(-->
-<!--            (c) => c.customerId == selectedCustomerId-->
-<!--        );-->
-
         // ⭐ Clean up half-typed rows before collecting data
         cleanUpRowsBeforeSave();
 
         const transactionData = {
-            customerId: selectedCustomer.customerId,
-            transactionDetailDTOS: [],
+            customerName: inputCustomerName,
+            customerPhone: inputCustomerPhone,
+            indenDetailDTOS: [],
             subtotal: parseFloat(
                 subTotalDisplay.textContent
                     .replace("Rp ", "")
@@ -2612,12 +2611,13 @@
             ),
             totalDisc: parseFloat(grandDiscountAmount.value) || 0,
             totalPrice: grandTotal,
+            deposit: parseRupiah(paymentAmountInput.value)
         };
 
         sellTableBody.querySelectorAll("tr").forEach((row) => {
             const code = row.querySelector(".code-input").value;
             if (code) {
-                transactionData.transactionDetailDTOS.push({
+                transactionData.indenDetailDTOS.push({
                     code: code,
                     name: row.querySelector(".name-input").value,
                     price: parseRupiah(row.querySelector(".price-input").value),
@@ -2645,7 +2645,7 @@
                 masterTransactions.indenDetailDTOS !== null
             ) {
                 response = await fetch(
-                    `api/inden/edit/${masterTransactions.id}`,
+                    `/api/inden/edit/${masterTransactions.id}`,
                     {
                         method: "POST",
                         headers: {
@@ -2655,7 +2655,7 @@
                     }
                 );
             } else {
-                response = await fetch("api/inden/add", {
+                response = await fetch("/api/inden/add", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -2670,8 +2670,8 @@
             }
             const data = {
                 inv_number: result,
-                customer_name: selectedCustomer.name,
-                customer_alamat: selectedCustomer.alamat,
+                customer_name: inputCustomerName,
+                customer_alamat: inputCustomerPhone,
                 tanggal: `${new Date().toLocaleDateString("id-ID", {
                     day: "numeric",
                     month: "long",
@@ -2685,8 +2685,8 @@
                 grandTotal: transactionData.totalPrice,
                 totalDisc: transactionData.totalDisc,
                 paymentAmount: paymentAmountInput.value,
-                returnAmount: paymentAmount - grandTotal,
-                transactionDetailDTOS: transactionData.transactionDetailDTOS.map(
+                returnAmount: (-1) * (paymentAmount - grandTotal),
+                transactionDetailDTOS: transactionData.indenDetailDTOS.map(
                     (item, index) => ({
                         no: index + 1,
                         code: item.code,
@@ -2806,29 +2806,11 @@
                     // Print
                     window.print();
 
-                    // Restore original body after print
-                    setTimeout(() => {
-                        document.body.innerHTML = originalContent;
-                        alert("Transaction saved successfully!");
-
-                        // Optional: redirect after printing
-                        if (
-                            masterTransactions.transactionId !== null &&
-                            masterTransactions.transactionDetailDTOS !== null
-                        ) {
-                            window.location.href = "/penjualan";
-                        } else {
-                            window.location.href = "/kasir";
-                        }
-                    }, 500); // Delay restore to ensure print dialog completes
+                window.location.href = "/inden";
                 }, 100); // Short delay to ensure DOM is ready
             } else {
                 alert("Transaction saved successfully!");
-                window.location.href =
-                    masterTransactions.transactionId !== null &&
-                    masterTransactions.transactionDetailDTOS !== null
-                        ? "/penjualan"
-                        : "/kasir";
+                window.location.href = "/inden";
             }
         } catch (error) {
             console.error("Failed to save transaction:", error.message);
@@ -2853,9 +2835,6 @@
         document.getElementById("printBill").checked = false;
 
         transactionNumberDisplay.textContent = formatTanggalWaktuIndonesia();
-<!--        const customerUmum = masterCustomers.find(-->
-<!--            (c) => c.customerId == 1-->
-<!--        ).customerId;-->
         customerSelect.value = customerUmum;
         addNewRow();
         calculateGrandTotal();
@@ -3325,6 +3304,7 @@
         masterTransactions.id !== null &&
         masterTransactions.indenDetailDTOS !== null
     ) {
+        console.log("Otw load ");
         loadTransaction(masterTransactions);
     }
     updateJam();

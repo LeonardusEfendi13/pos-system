@@ -22,6 +22,7 @@ public class IndenDTO {
     private LocalDateTime tanggalInden;
     private List<IndenDetailDTO> indenDetailDTOS;
     private BigDecimal deposit;
+    private BigDecimal sisaBayar;
     private String createdBy;
     private String custName;
     private String custPhone;

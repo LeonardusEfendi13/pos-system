@@ -1,7 +1,6 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.Entity.IndenEntity;
-import com.pos.posApps.Entity.TransactionEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,6 +32,6 @@ public interface IndenRepository extends JpaRepository<IndenEntity, Long> {
             Pageable pageable
     );
 
-    Optional<IndenEntity> findFirstByIndenIdAndDeletedAtIsNull(Long transactionId);
+    Optional<IndenEntity> findFirstByIndenIdAndDeletedAtIsNull(Long indenId);
 
 }
