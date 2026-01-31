@@ -26,5 +26,5 @@ public class IndenDTO {
     private String createdBy;
     private String custName;
     private String custPhone;
-    private StatusInden statusInden;
+    private String statusInden;
 }

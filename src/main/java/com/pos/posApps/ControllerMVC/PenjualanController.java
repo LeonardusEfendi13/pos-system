@@ -124,5 +124,4 @@ public class PenjualanController {
         }
         return "redirect:/login";
     }
-
 }

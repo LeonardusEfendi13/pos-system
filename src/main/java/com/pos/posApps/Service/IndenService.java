@@ -16,8 +16,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -48,20 +47,24 @@ public class IndenService {
     @Autowired
     IndenDetailRepository indenDetailRepository;
 
-    public Page<IndenDTO> getIndenData(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<IndenDTO> getIndenData(String statusInden, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<IndenEntity> indenData;
-        indenData = indenRepository.findAllByDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(startDate, endDate, pageable);
+        if(statusInden != null){
+            indenData = indenRepository.findAllByDeletedAtIsNullAndStatusIndenAndCreatedAtBetweenOrderByCreatedAtDesc(statusInden, startDate, endDate, pageable);
+        }else{
+            indenData = indenRepository.findAllByDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(startDate, endDate, pageable);
+        }
         return indenData.map(this::convertToDTO);
     }
 
-    public Page<IndenDTO> searchIndenData(LocalDateTime startDate, LocalDateTime endDate, String search, Pageable pageable) {
+    public Page<IndenDTO> searchIndenData(String statusInden, LocalDateTime startDate, LocalDateTime endDate, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
         if (trimmedSearch.isEmpty()) {
-            return getIndenData(startDate, endDate, pageable);
+            return getIndenData(statusInden, startDate, endDate, pageable);
         }
 
-        Page<IndenEntity> indenEntity = indenRepository.searchIndens(startDate, endDate, trimmedSearch, pageable);
+        Page<IndenEntity> indenEntity = indenRepository.searchIndens(statusInden, startDate, endDate, trimmedSearch, pageable);
 
         return indenEntity.map(this::convertToDTO);
     }
@@ -109,40 +112,22 @@ public class IndenService {
     }
 
     @Transactional
-    public boolean deletePenjualan(Long transactionId, ClientEntity clientData) {
-        Optional<TransactionEntity> transactionEntityOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientData.getClientId(), transactionId);
-        if (transactionEntityOpt.isEmpty()) {
+    public boolean deleteInden(Long indenId) {
+        Optional<IndenEntity> indenEntityOpt = indenRepository.findFirstByIndenIdAndDeletedAtIsNull(indenId);
+        if(indenEntityOpt.isEmpty()){
             return false;
         }
-        TransactionEntity transactionEntity = transactionEntityOpt.get();
 
+        IndenEntity indenEntity = indenEntityOpt.get();
 
-        //Restore stock from old transaction
-        List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
-        for (TransactionDetailEntity old : oldTransactions) {
-//            ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
-            ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());
-            if (product != null) {
-                Long restoredStock = product.getStock() + old.getQty();
-                product.setStock(restoredStock);
-                productRepository.save(product);
-
-                stockMovementService.insertKartuStok(new AdjustStockDTO(
-                        product,
-                        transactionEntity.getTransactionNumber(),
-                        TipeKartuStok.KOREKSI_PENJUALAN,
-                        old.getQty(),
-                        0L,
-                        restoredStock,
-                        clientData
-                ));
-            }
+        List<IndenDetailEntity> oldTransactions = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
+        for (IndenDetailEntity old : oldTransactions) {
             old.setDeletedAt(getCurrentTimestamp());
-            transactionDetailRepository.save(old);
+            indenDetailRepository.save(old);
         }
 
-        transactionEntity.setDeletedAt(getCurrentTimestamp());
-        transactionRepository.save(transactionEntity);
+        indenEntity.setDeletedAt(getCurrentTimestamp());
+        indenRepository.save(indenEntity);
 
         return true;
     }
@@ -164,7 +149,8 @@ public class IndenService {
             indenEntity.setCustomerName(req.getCustomerName());
             indenEntity.setCustomerPhone(req.getCustomerPhone());
             indenEntity.setDeposit(req.getDeposit());
-            indenEntity.setStatusInden(StatusInden.TERCATAT);
+            System.out.println("Status Inden otw save : " + StatusInden.TERCATAT.name());
+            indenEntity.setStatusInden(StatusInden.TERCATAT.name());
             indenRepository.save(indenEntity);
 
             System.out.println("=====START LOG ID : " + indenEntity.getIndenId() + "=======");
@@ -205,6 +191,59 @@ public class IndenService {
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, e.getMessage() + ". ERROR KARENA : " + lastProduct);
+        }
+    }
+
+    @Transactional
+    public ResponseInBoolean editTransaction(
+            Long indenId,
+            CreateIndenRequest req,
+            AccountEntity accountData
+    ) {
+        String lastProduct = "-";
+        ClientEntity clientData = accountData.getClientEntity();
+        try {
+            IndenEntity inden = indenRepository.findFirstByIndenIdAndDeletedAtIsNull(indenId).orElseThrow(() -> new RuntimeException("Transaksi tidak ditemukan"));
+            inden.setSubtotal(req.getSubtotal());
+            inden.setTotalPrice(req.getTotalPrice());
+            inden.setTotalDiscount(req.getTotalDisc());
+            inden.setAccountEntity(accountData);
+            inden.setCustomerName(req.getCustomerName());
+            inden.setCustomerPhone(req.getCustomerPhone());
+            inden.setDeposit(req.getDeposit());
+            inden.setStatusInden(StatusInden.TERCATAT.name());
+            indenRepository.save(inden);
+
+            indenDetailRepository.deleteAllByIndenEntity_IndenId(indenId);
+
+            for (IndenDetailDTO dto : req.getIndenDetailDTOS()) {
+                ProductEntity product = productRepository.findAndLockProduct(
+                        dto.getName(),
+                        dto.getCode(),
+                        clientData.getClientId()
+                );
+
+                IndenDetailEntity detail = new IndenDetailEntity();
+                detail.setShortName(dto.getCode());
+                detail.setFullName(dto.getName());
+                detail.setQty(dto.getQty());
+                detail.setPrice(dto.getPrice());
+                detail.setDiscountAmount(dto.getDiscAmount());
+                detail.setTotalPrice(dto.getTotal());
+                detail.setIndenEntity(inden);
+                detail.setBasicPrice(product.getSupplierPrice());
+                BigDecimal totalBasic = product.getSupplierPrice()
+                        .multiply(BigDecimal.valueOf(dto.getQty()));
+                detail.setTotalProfit(dto.getTotal().subtract(totalBasic));
+                indenDetailRepository.save(detail);
+            }
+
+            return new ResponseInBoolean(true, inden.getIndenNumber());
+
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false,
+                    e.getMessage() + " (ERROR di produk: " + lastProduct + ")");
         }
     }
 }

@@ -383,17 +383,6 @@
         const $searchInput = $('#searchInput');
         const baseUrl = '/penjualan';
 
-        $searchInput.on('input', function() {
-            if ($(this).val().trim() === '') {
-                const currentUrl = new URL(window.location.href);
-                const hasSearchParam = currentUrl.searchParams.has('search');
-
-                if (hasSearchParam) {
-                    window.location.href = baseUrl;
-                }
-            }
-        });
-
         $('#searchButton').on('click', function(e) {
             if ($searchInput.val().trim() === '') {
                 e.preventDefault();

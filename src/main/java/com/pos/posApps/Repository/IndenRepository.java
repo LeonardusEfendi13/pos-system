@@ -1,5 +1,6 @@
 package com.pos.posApps.Repository;
 
+import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import com.pos.posApps.Entity.IndenEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,19 +14,25 @@ import java.util.Optional;
 
 @Repository
 public interface IndenRepository extends JpaRepository<IndenEntity, Long> {
+    Page<IndenEntity> findAllByDeletedAtIsNullAndStatusIndenAndCreatedAtBetweenOrderByCreatedAtDesc(String statusInden, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
     Page<IndenEntity> findAllByDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-    @Query("SELECT t FROM IndenEntity t " +
-            "WHERE t.indenDetailEntities IS NOT EMPTY " +
-            "AND t.deletedAt IS NULL " +
-            "AND t.createdAt BETWEEN :startDate AND :endDate " +
-            "AND (" +
-            "    LOWER(t.indenNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "    OR LOWER(t.customerName) LIKE LOWER(CONCAT('%', :search, '%'))" +
-            "    OR LOWER(t.customerPhone) LIKE LOWER(CONCAT('%', :search, '%'))" +
-            ") " +
-            "ORDER BY t.indenId DESC")
+    @Query("""
+            SELECT t FROM IndenEntity t
+            WHERE t.deletedAt IS NULL
+            AND t.createdAt BETWEEN :startDate AND :endDate
+            AND (:statusInden IS NULL OR t.statusInden = :statusInden)
+            AND (
+                :search IS NULL
+                OR LOWER(t.indenNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(t.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(t.customerPhone) LIKE LOWER(CONCAT('%', :search, '%'))
+            )
+            ORDER BY t.indenId DESC
+            """)
     Page<IndenEntity> searchIndens(
+            @Param("statusInden") String statusInden,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("search") String search,
@@ -33,5 +40,4 @@ public interface IndenRepository extends JpaRepository<IndenEntity, Long> {
     );
 
     Optional<IndenEntity> findFirstByIndenIdAndDeletedAtIsNull(Long indenId);
-
 }

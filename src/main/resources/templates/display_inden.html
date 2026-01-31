@@ -122,7 +122,7 @@
             <h2 style="text-align: center; padding-top: 10px">Riwayat Inden</h2>
 
             <!-- Filter Form -->
-            <form method="get" action="/penjualan" class="row filter-container">
+            <form method="get" action="/inden" class="row filter-container">
                 <div class="col-md-2">
                     <label for="startDate" class="form-label">Tanggal Mulai</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}"/>
@@ -132,11 +132,33 @@
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}"/>
                 </div>
                 <div class="col-md-3">
-                    <label for="customerId" class="form-label">Pelanggan</label>
-                    <select id="customerId" name="customerId" class="form-select">
-                        <option value="">-- Semua Pelanggan --</option>
-                        <option th:each="customer : ${customerData}" th:value="${customer.customerId}"
-                                th:text="${customer.name}" th:selected="${customer.customerId == customerId}"></option>
+                    <label for="statusInden" class="form-label">Status Inden</label>
+                    <select id="statusInden" name="statusInden" class="form-select">
+                        <option value="">-- Semua Status --</option>
+                        <option value="TERCATAT"
+                                th:selected="${statusInden == 'TERCATAT'}">
+                            TERCATAT
+                        </option>
+
+                        <option value="DIPESAN"
+                                th:selected="${statusInden == 'DIPESAN'}">
+                            DIPESAN
+                        </option>
+
+                        <option value="DITERIMA"
+                                th:selected="${statusInden == 'DITERIMA'}">
+                            DITERIMA
+                        </option>
+
+                        <option value="KOSONG"
+                                th:selected="${statusInden == 'KOSONG'}">
+                            KOSONG
+                        </option>
+
+                        <option value="DISERAHKAN"
+                                th:selected="${statusInden == 'DISERAHKAN'}">
+                            DISERAHKAN
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -158,7 +180,7 @@
                     <table id="userTable" class="table table-bordered w-100">
                         <thead class="sticky-top">
                         <tr>
-                            <th>No</th>
+                            <th style="width:10px">No</th>
                             <th>No. Inden</th>
                             <th>Tanggal Inden</th>
                             <th>Nama Customer</th>
@@ -184,11 +206,14 @@
                             <td><span th:text="${data.deposit}">Rp0</span></td>
                             <td><span th:text="${data.sisaBayar}">Rp0</span></td>
                             <td th:text="${data.createdBy}">Kasir Name</td>
-                            <td th:text="${data.statusInden}">Status Inden</td>
+                            <td th:text="${data.statusInden}" style="font-weight:bold">Status Inden</td>
                             <td>
                                 <form th:action="@{/inden/add}" method="get" style="display: inline">
                                     <input type="hidden" name="indenId" th:value="${data.id}"/>
                                     <button class="btn btn-sm btn-primary me-1">Edit</button>
+                                </form>
+                                <form th:action="@{|/inden/delete/${data.id}|}" method="post" style="display: inline">
+                                    <button class="btn btn-sm btn-danger me-1" onclick="return confirm('Are you sure you want to delete this data?');">Hapus</button>
                                 </form>
                             </td>
                         </tr>
@@ -212,18 +237,18 @@
                             <ul class="pagination mb-0">
                                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                                     <a class="page-link"
-                                       th:href="@{/penjualan(page=${currentPage - 1}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}">‹</a>
+                                       th:href="@{/inden(page=${currentPage - 1}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}">‹</a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}"
                                     th:classappend="${i == currentPage} ? 'active'">
                                     <a class="page-link"
-                                       th:href="@{/penjualan(page=${i}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}"
+                                       th:href="@{/inden(page=${i}, search=${search}, customerId=${customerId}, startDate=${startDate}, endDate=${endDate})}"
                                        th:text="${i + 1}">1</a>
                                 </li>
 
                                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
                                     <a class="page-link"
-                                       th:href="@{/penjualan(page=${currentPage + 1},customerId=${customerId}, search=${search}, startDate=${startDate}, endDate=${endDate})}">›</a>
+                                       th:href="@{/inden(page=${currentPage + 1},customerId=${customerId}, search=${search}, startDate=${startDate}, endDate=${endDate})}">›</a>
                                 </li>
                             </ul>
                         </nav>
@@ -388,18 +413,7 @@
         });
 
         const $searchInput = $('#searchInput');
-        const baseUrl = '/penjualan';
-
-        $searchInput.on('input', function() {
-            if ($(this).val().trim() === '') {
-                const currentUrl = new URL(window.location.href);
-                const hasSearchParam = currentUrl.searchParams.has('search');
-
-                if (hasSearchParam) {
-                    window.location.href = baseUrl;
-                }
-            }
-        });
+        const baseUrl = '/inden';
 
         $('#searchButton').on('click', function(e) {
             if ($searchInput.val().trim() === '') {

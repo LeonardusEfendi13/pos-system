@@ -2910,12 +2910,13 @@
             grandDiscountPercent.value = "0.00";
         }
         grandDiscountAmount.value = transaction.totalDisc;
+        customerName.value = transaction.custName;;
+        customerPhone.value = transaction.custPhone;
 
-        if (transaction.customerDTO.customerId) {
-            customerSelect.value = transaction.customerDTO.customerId;
-        }
+        paymentAmountInput.value = transaction.deposit;
+        returnAmountInput.value = transaction.sisaBayar;
 
-        transaction.transactionDetailDTOS.forEach((detail, index) => {
+        transaction.indenDetailDTOS.forEach((detail, index) => {
             const row = document.createElement("tr");
             row.innerHTML = `
     <td class="row-number">${index + 1}</td>

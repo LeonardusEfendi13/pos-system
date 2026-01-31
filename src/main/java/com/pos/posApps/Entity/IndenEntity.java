@@ -58,7 +58,7 @@ public class IndenEntity {
     private BigDecimal deposit;
 
     @Column(name = "status_inden")
-    private StatusInden statusInden;
+    private String statusInden;
 
     @OneToMany(mappedBy = "indenEntity")
     private List<IndenDetailEntity> indenDetailEntities;
