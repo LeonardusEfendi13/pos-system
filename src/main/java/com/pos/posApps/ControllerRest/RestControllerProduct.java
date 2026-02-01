@@ -44,7 +44,6 @@ public class RestControllerProduct {
     public ResponseEntity<String> addProducts(HttpSession session, @RequestBody CreateProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
         ClientEntity clientData;
-        System.out.println("otw add : "+ req );
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);

@@ -154,7 +154,6 @@ public class IndenService {
             //Insert into transaction
 
             if(newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name())){
-                System.out.println("Otw insert transac");
                 String lastProduct = "Tanya Leon";
                 List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
                 if(indenDetailEntities.isEmpty()){
@@ -222,21 +221,40 @@ public class IndenService {
                 }
             }
             String phoneNumber = formatPhoneTo62(indenEntity.getCustomerPhone());
-            String message = "";
+            StringBuilder message = new StringBuilder();
+            List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
             if(newStatusInden.equalsIgnoreCase(StatusInden.TERCATAT.name())){
                 isOpenWa = true;
-                message = "Halo, balalblaa";
+                message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
+                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di Anugrah Motor Tanjung Enim.\n")
+                        .append("Detail Pesanan:\n");
+                int no = 1;
+                for (IndenDetailEntity item : indenDetailEntities) {
+                    message.append(no).append(") ")
+                            .append(item.getShortName()).append(" | ")
+                            .append(item.getFullName()).append(" | ")
+                            .append(item.getQty()).append(" buah")
+                            .append("\n");
+                    no++;
+                }
+                message.append("\nPesanan Anda telah masuk ke sistem kami. Mohon menunggu info selanjutnya.\n\n");
+                message.append("--Pesan ini dibuat secara otomatis--");
             }else if(newStatusInden.equalsIgnoreCase(StatusInden.KOSONG.name())){
                 isOpenWa = true;
-                message="asda adsd";
-            }else if(newStatusInden.equalsIgnoreCase(StatusInden.DITERIMA.name())){
+                message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
+                        .append("Kami dari Anugrah Motor Tanjung Enim menyampaikan permohonan maaf terkait pesanan nomor ").append(indenEntity.getIndenNumber()).append(".\n\n");
+                message.append("Saat ini, pesanan Anda tidak dapat kami proses dikarenakan stok barang tersebut sedang kosong. Sehubungan dengan hal tersebut, mohon kesediaan Anda untuk datang ke toko kami guna proses pengembalian deposit (refund).");
+                message.append("\n\nTerima kasih atas pengertiannya.\n\n");
+                message.append("--Pesan ini dibuat secara otomatis--");
+            }else if(newStatusInden.equalsIgnoreCase(StatusInden.DITERIMA.name())) {
                 isOpenWa = true;
-                message="asdad ddd";
-            }else if(newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name())){
-                isOpenWa = true;
-                message="asdad 2131";
+                message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
+                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di Anugrah Motor Tanjung Enim.\n");
+                message.append("Kami ingin menginformasikan bahwa pesanan anda telah tiba dan sudah tersedia di toko kami.");
+                message.append("\n\nSilakan datang ke lokasi kami untuk pengambilan barang. Terima kasih\n\n");
+                message.append("--Pesan ini dibuat secara otomatis--");
             }
-            return new ResponseForWhatsapp(true, "Berhasil memperbarui status data inden.", isOpenWa, phoneNumber, message);
+            return new ResponseForWhatsapp(true, "Berhasil memperbarui status data inden.", isOpenWa, phoneNumber, message.toString());
         }catch (Exception e){
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseForWhatsapp(false, e.getMessage(), false, "", "");
@@ -299,6 +317,7 @@ public class IndenService {
             }
             System.out.println("=====END LOG=======");
             System.out.println();
+
             return new ResponseInBoolean(true, generatedNotaNumber);
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();

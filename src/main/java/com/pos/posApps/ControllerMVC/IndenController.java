@@ -66,7 +66,6 @@ public class IndenController {
             indenData = indenService.searchIndenData(statusInden, inputStartDate, inputEndDate, search, PageRequest.of(page, size));
         }
         model.addAttribute("statusInden", statusInden);
-        System.out.println("Inden data : " + indenData.getContent());
         model.addAttribute("indenData", indenData.getContent());
         model.addAttribute("activePage", "indenRiwayat");
         model.addAttribute("startDate", startDate);
@@ -107,7 +106,6 @@ public class IndenController {
 
     @GetMapping("/add")
     public String displayKasirInden(Model model, HttpSession session, Long indenId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
-        System.out.println("inden id : " + indenId);
         Long clientId;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -139,7 +137,6 @@ public class IndenController {
 
     @PostMapping("/delete/{indenId}")
     public String deleteInden(@PathVariable("indenId") Long indenId, HttpSession session, RedirectAttributes redirectAttributes) {
-        System.out.println("Entering delete");
         String token = (String) session.getAttribute(authSessionKey);
         AccountEntity accEntity = authService.validateToken(token);
         ClientEntity clientData = accEntity.getClientEntity();
@@ -173,6 +170,19 @@ public class IndenController {
             if (isUpdated.isStatus()) {
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
+
+                //  WHATSAPP FLAG & DATA
+                if (isUpdated.isOpenWa()) {
+                    redirectAttributes.addFlashAttribute("openWa", true);
+                    redirectAttributes.addFlashAttribute(
+                            "waPhone",
+                            isUpdated.getPhoneNumber()
+                    );
+                    redirectAttributes.addFlashAttribute(
+                            "waMessage",
+                            isUpdated.getWaMessage()
+                    );
+                }
                 return "redirect:/inden";
             }
             redirectAttributes.addFlashAttribute("status", "failed");

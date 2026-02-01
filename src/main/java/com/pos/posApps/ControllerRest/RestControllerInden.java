@@ -22,7 +22,6 @@ public class RestControllerInden {
 
     @PostMapping("/add")
     public ResponseEntity<String> addInden(@RequestBody CreateIndenRequest req, HttpSession session){
-        System.out.println("Req : " + req);
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);

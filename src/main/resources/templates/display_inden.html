@@ -329,6 +329,24 @@
         setTimeout(() => overlay.remove(), 400); // Remove from DOM after fade out
     });
 </script>
+
+<script th:if="${openWa}">
+    (function () {
+        const phone = '[[${waPhone}]]';
+        const message = `[[${waMessage}]]`;
+
+        if (!phone || !message) return;
+
+        const url =
+            'https://wa.me/' +
+            phone +
+            '?text=' +
+            encodeURIComponent(message);
+
+        window.open(url, '_blank');
+    })();
+</script>
+
 <script th:inline="javascript">
     /*<![CDATA[*/
     var indenData = /*[[${indenData}]]*/ [];
