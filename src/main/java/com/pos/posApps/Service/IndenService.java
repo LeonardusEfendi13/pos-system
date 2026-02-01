@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.pos.posApps.Util.Generator.formatPhoneTo62;
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 
 @Service
@@ -136,12 +137,13 @@ public class IndenService {
     }
 
     @Transactional
-    public ResponseInBoolean updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData) {
+    public ResponseForWhatsapp updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData) {
         try{
+            boolean isOpenWa = false;
             ClientEntity clientData = accountData.getClientEntity();
             Optional<IndenEntity> indenEntityOpt = indenRepository.findFirstByIndenIdAndDeletedAtIsNull(indenId);
             if(indenEntityOpt.isEmpty()){
-                return new ResponseInBoolean(false, "Data Inden tidak ditemukan");
+                return new ResponseForWhatsapp(false, "Data Inden tidak ditemukan",isOpenWa, "", "");
             }
 
             IndenEntity indenEntity = indenEntityOpt.get();
@@ -157,7 +159,7 @@ public class IndenService {
                 List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
                 if(indenDetailEntities.isEmpty()){
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(false, "Data inden detail tidak ada");
+                    return new ResponseForWhatsapp(false, "Data Inden detail tidak ditemukan",isOpenWa, "", "");
                 }
 
                 //Get Customer Data (Umum = 1)
@@ -184,7 +186,7 @@ public class IndenService {
 
                     if (productEntity == null) {
                         TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                        return new ResponseInBoolean(true, "Produk " + dtos.getFullName() + " tidak ditemukan");
+                        return new ResponseForWhatsapp(true, "Produk " + dtos.getFullName() + " tidak ditemukan", isOpenWa, "", "");
                     }
                     System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
                     lastProduct = dtos.getShortName();
@@ -219,10 +221,25 @@ public class IndenService {
                     System.out.println();
                 }
             }
-            return new ResponseInBoolean(true, "Berhasil memperbarui status data inden.");
+            String phoneNumber = formatPhoneTo62(indenEntity.getCustomerPhone());
+            String message = "";
+            if(newStatusInden.equalsIgnoreCase(StatusInden.TERCATAT.name())){
+                isOpenWa = true;
+                message = "Halo, balalblaa";
+            }else if(newStatusInden.equalsIgnoreCase(StatusInden.KOSONG.name())){
+                isOpenWa = true;
+                message="asda adsd";
+            }else if(newStatusInden.equalsIgnoreCase(StatusInden.DITERIMA.name())){
+                isOpenWa = true;
+                message="asdad ddd";
+            }else if(newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name())){
+                isOpenWa = true;
+                message="asdad 2131";
+            }
+            return new ResponseForWhatsapp(true, "Berhasil memperbarui status data inden.", isOpenWa, phoneNumber, message);
         }catch (Exception e){
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage());
+            return new ResponseForWhatsapp(false, e.getMessage(), false, "", "");
         }
 
     }
