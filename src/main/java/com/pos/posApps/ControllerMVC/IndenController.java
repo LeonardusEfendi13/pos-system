@@ -3,6 +3,8 @@ package com.pos.posApps.ControllerMVC;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.Entity.VehicleEntity;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -15,6 +17,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
@@ -26,6 +30,8 @@ public class IndenController {
     private SidebarService sidebarService;
     private IndenService indenService;
     private ProductService productService;
+    private SupplierService supplierService;
+    private VehicleService vehicleService;
 
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
@@ -112,13 +118,17 @@ public class IndenController {
 
         Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
+
         model.addAttribute("clientSettingData", clientSettingData);
         IndenDTO indenData = (indenId != null)
                 ? indenService.getPenjualanDataById(indenId)
                 : new IndenDTO();
 
-        System.out.println("Inden data : " + indenData);
+        List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
+        model.addAttribute("vehicleData", vehicleEntity);
+        List<SupplierEntity> supplierEntityList = supplierService.getSupplierList(clientId);
         model.addAttribute("indenData", indenData);
+        model.addAttribute("supplierData", supplierEntityList);
         model.addAttribute("productData", productEntity.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productEntity.getTotalPages());
@@ -145,6 +155,28 @@ public class IndenController {
             }
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
+            return "redirect:/inden";
+        }
+        return "redirect:/login";
+    }
+
+    @PostMapping("/update_status/{indenId}")
+    public String updateStatusInden(@PathVariable("indenId") Long indenId, HttpSession session, RedirectAttributes redirectAttributes, String statusInden) {
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accEntity = authService.validateToken(token);
+        ClientEntity clientData = accEntity.getClientEntity();
+        if (clientData.getClientId() == null) {
+            return "redirect:/login";
+        }
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            ResponseInBoolean isUpdated = indenService.updateStatusInden(indenId, statusInden, accEntity);
+            if (isUpdated.isStatus()) {
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
+                return "redirect:/inden";
+            }
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
             return "redirect:/inden";
         }
         return "redirect:/login";

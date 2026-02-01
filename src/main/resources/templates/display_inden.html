@@ -105,6 +105,9 @@
         #userTable tbody tr.previewing-row td {
             background-color: #FFA500 !important;
         }
+        .status-badge {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -188,7 +191,7 @@
                             <th>Total Harga</th>
                             <th>Jumlah Deposit</th>
                             <th>Sisa Bayar</th>
-                            <th>Kasir</th>
+                            <th>Last Update by</th>
                             <th>Status Inden</th>
                             <th></th>
                         </tr>
@@ -202,19 +205,63 @@
                             </td>
                             <td th:text="${data.custName}">Pelanggan</td>
                             <td th:text="${data.custPhone}">Cust Phone</td>
-                            <td><span th:text="${data.totalPrice}">Rp0</span></td>
-                            <td><span th:text="${data.deposit}">Rp0</span></td>
-                            <td><span th:text="${data.sisaBayar}">Rp0</span></td>
+                            <td><span class="money" th:text="${data.totalPrice}">Rp0</span></td>
+                            <td><span class="money" th:text="${data.deposit}">Rp0</span></td>
+                            <td><span class="money" th:text="${data.sisaBayar}">Rp0</span></td>
                             <td th:text="${data.createdBy}">Kasir Name</td>
-                            <td th:text="${data.statusInden}" style="font-weight:bold">Status Inden</td>
+                            <td>
+                                <!-- Badge view -->
+                                <span class="badge status-badge"
+                                      th:data-id="${data.id}"
+                                      th:text="${data.statusInden}"
+                                      th:classappend="${{
+                                          'TERCATAT':' bg-info',
+                                          'DIPESAN':' bg-warning',
+                                          'DITERIMA':' bg-primary',
+                                          'DISERAHKAN':' bg-success',
+                                          'KOSONG':' bg-danger'
+                                      }[data.statusInden]}">
+                                </span>
+
+                                <!-- Inline form (hidden by default) -->
+                                <form th:action="@{|/inden/update_status/${data.id}|}"
+                                      method="post"
+                                      class="d-none status-form align-items-center gap-1 mt-1">
+
+                                    <input type="hidden" name="id" th:value="${data.id}"/>
+
+                                    <select name="statusInden"
+                                            class="form-select form-select-sm"
+                                            style="width: 130px">
+                                        <option value="TERCATAT">TERCATAT</option>
+                                        <option value="KOSONG">KOSONG</option>
+                                        <option value="DIPESAN">DIPESAN</option>
+                                        <option value="DISERAHKAN">DISERAHKAN</option>
+                                        <option value="DITERIMA">DITERIMA</option>
+                                    </select>
+
+                                    <button class="btn btn-sm btn-outline-success bg-white" onclick="return confirm('Anda yakin ingin mengubah status inden ini?')">
+                                        ✔
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary bg-white cancel-status">
+                                        ✖
+                                    </button>
+                                </form>
+                            </td>
                             <td>
                                 <form th:action="@{/inden/add}" method="get" style="display: inline">
                                     <input type="hidden" name="indenId" th:value="${data.id}"/>
                                     <button class="btn btn-sm btn-primary me-1">Edit</button>
                                 </form>
                                 <form th:action="@{|/inden/delete/${data.id}|}" method="post" style="display: inline">
-                                    <button class="btn btn-sm btn-danger me-1" onclick="return confirm('Are you sure you want to delete this data?');">Hapus</button>
+                                    <button class="btn btn-sm btn-danger me-1"
+                                            onclick="return confirm('Are you sure you want to delete this data?');">
+                                        Hapus
+                                    </button>
                                 </form>
+
                             </td>
                         </tr>
                         </tbody>
@@ -293,6 +340,32 @@
     });
     /*]]>*/
 </script>
+<script>
+    $(document).on("click", ".status-badge", function () {
+        const $td = $(this).closest("td");
+
+        // Sembunyikan badge
+        $(this).addClass("d-none");
+
+        // Tampilkan form
+        const $form = $td.find(".status-form");
+        $form.removeClass("d-none").addClass("d-flex");
+
+        // Set dropdown ke status saat ini
+        const currentStatus = $(this).text().trim();
+        $form.find("select[name='statusInden']").val(currentStatus);
+    });
+
+    $(document).on("click", ".cancel-status", function () {
+        const $td = $(this).closest("td");
+
+        // Sembunyikan form
+        $td.find(".status-form").addClass("d-none").removeClass("d-flex");
+
+        // Tampilkan badge kembali
+        $td.find(".status-badge").removeClass("d-none");
+    });
+</script>
 
 <script>
     function format(details) {
@@ -340,8 +413,10 @@
 
     $(document).ready(function () {
         // Format currency in main table
-        document.querySelectorAll("td span").forEach((el) => {
+        document.querySelectorAll("span.money").forEach((el) => {
             const number = parseFloat(el.textContent);
+            if (isNaN(number)) return;
+
             el.textContent = new Intl.NumberFormat("id-ID", {
                 style: "currency",
                 currency: "IDR",

@@ -44,6 +44,7 @@ public class RestControllerProduct {
     public ResponseEntity<String> addProducts(HttpSession session, @RequestBody CreateProductRequest req, RedirectAttributes redirectAttributes) {
         AccountEntity accEntity;
         ClientEntity clientData;
+        System.out.println("otw add : "+ req );
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accEntity = authService.validateToken(token);
@@ -57,9 +58,9 @@ public class RestControllerProduct {
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             ResponseInBoolean isInserted = productService.insertProducts(req, clientData);
             if (isInserted.isStatus()) {
-                return ResponseEntity.ok("Berhasil menyimpan data");
+                return ResponseEntity.ok(isInserted.getMessage());
             }
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Gagal menyimpan data");
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(isInserted.getMessage());
         }
         return ResponseEntity.status(UNAUTHORIZED).body("Anda tidak memiliki akses untuk ini!");
     }

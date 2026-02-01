@@ -281,6 +281,53 @@
         .modal-medium-width {
             max-width: 40vw; /* atur sesuai selera */
         }
+                .vehicle-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+
+            padding: 6px 10px;
+            border-radius: 8px;
+
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+
+            font-size: 0.85rem;
+            color: #212529;
+        }
+
+        .vehicle-chip:hover {
+            background-color: #f1f3f5;
+        }
+
+        .chip-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .chip-title {
+            font-weight: 600;
+        }
+
+        .chip-year {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .chip-remove {
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            line-height: 1;
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        .chip-remove:hover {
+            color: #a71d2a;
+        }
     </style>
 </head>
 <body class="p-3">
@@ -292,7 +339,7 @@
                     <h5 class="m-0 mb-2" id="transactionNumberDisplay">#TRX000001</h5>
                     <br>
                     <button class="btn btn-success add-product-btn" data-bs-toggle="modal"
-                            data-bs-target="#addBarangModal" id="add-barang-btn">Tambah Barang
+                            data-bs-target="#addBarangModal" id="add-barang-btn">+ Tambah Barang
                     </button>
                 </div>
                 <div class="col-md-4">
@@ -702,6 +749,286 @@
     </div>
 </div>
 
+<!-- Edit & Add Barang Modal -->
+<div
+        class="modal"
+        id="barangModal"
+        tabindex="-1"
+        aria-labelledby="editBarangLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog modal-lg">
+        <form th:action="@{/api/product/add}" method="post" id="barangForm">
+            <div class="modal-content">
+                <div class="modal-header py-2 modalHeader">
+                    <h5 class="modal-title" id="editBarangLabel">
+                        Edit/Tambah Master Barang
+                    </h5>
+                    <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="productId" name="productId"/>
+                    <!-- Kode -->
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label" for="shortName">Kode Barang</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="shortName" class="form-control" name="shortName"
+                                   oninput="this.value = this.value.toUpperCase();" required/>
+                        </div>
+                    </div>
+
+                    <!-- Nama Barang -->
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label" for="fullName">Nama Barang</label>
+                        <div class="col-sm-6">
+                            <input
+                                    type="text"
+                                    class="form-control"
+                                    id="fullName"
+                                    name="fullName"
+                                    oninput="this.value = this.value.toUpperCase();"
+                                    required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Supplier (Searchable Dropdown) -->
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label">Supplier Utama</label>
+                        <div class="col-sm-4">
+                            <select class="form-select highlight-field" id="supplierId" name="supplierId"
+                                    required>
+                                <option value="" disabled selected>Pilih Supplier</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Nama Barang -->
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label" for="stok">Minimum Stok</label>
+                        <div class="col-sm-2">
+                            <input
+                                    type="number"
+                                    class="form-control"
+                                    id="minimumStok"
+                                    name="minimumStock"
+                                    value="0"
+                                    required
+                            />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-sm-2 col-form-label" for="stok">Stok</label>
+                        <div class="col-sm-2">
+                            <input
+                                    type="number"
+                                    class="form-control"
+                                    id="stok"
+                                    name="stock"
+                                    value="0"
+                                    required
+                            />
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <!-- KENDARAAN COMPATIBLE -->
+                    <div class="mb-3">
+                        <label class="form-label">Kendaraan Compatible</label>
+
+                        <div id="vehicleChips" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                onclick="toggleVehicleForm()">
+                            + Tambah Kendaraan
+                        </button>
+                    </div>
+
+                    <div id="vehicleInlineForm" class="border rounded p-3 mb-3 d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Kendaraan</label>
+                            <select id="vehicleId" class="form-select">
+                                <option value="">Pilih Kendaraan</option>
+                                <option th:each="v : ${vehicleData}"
+                                        th:value="${v.id}"
+                                        th:text="${v.model}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label>Tahun Mulai</label>
+                                <input type="number" id="yearStart" class="form-control">
+                            </div>
+                            <div class="col">
+                                <label>Tahun Akhir</label>
+                                <input type="number" id="yearEnd" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success btn-sm" onclick="addVehicle()">
+                                Simpan
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleVehicleForm()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Harga Beli -->
+                    <div class="mb-3">
+                        <h6>Harga Beli</h6>
+                        <div class="row mb-2">
+                            <label class="col-sm-3 col-form-label" for="supplierPrice">Harga Beli Satuan</label>
+                            <div class="col-sm-3">
+                                <input
+                                        type="text"
+                                        class="form-control rupiah-input"
+                                        id="supplierPrice"
+                                        name="supplierPrice"
+                                        required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <!-- Harga Jual -->
+                    <h6>Harga Jual</h6>
+                    <table class="table table-bordered table-sm align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th></th>
+                            <th>Maks Qty</th>
+                            <th>Pct</th>
+                            <th>Harga Jual Satuan</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><p>Harga Jual 1</p></td>
+                            <td>
+                                <input
+                                        type="number"
+                                        class="form-control form-control-sm"
+                                        name="productPricesDTO[0].maximalCount"
+                                        id="maxqty1"
+                                        value="0"
+                                        required/>
+                            </td>
+                            <td>
+                                <input
+                                        type="number"
+                                        class="form-control form-control-sm"
+                                        id="pct1"
+                                        name="productPricesDTO[0].percentage"
+                                        value="0"
+                                        step="0.01"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                        type="text"
+                                        class="form-control form-control-sm rupiah-input"
+                                        name="productPricesDTO[0].price"
+                                        id="hargaJual1"
+                                        value="0"
+                                        required/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><p>Harga Jual 2</p></td>
+                            <td>
+                                <input
+                                        type="text"
+                                        class="form-control form-control-sm"
+                                        name="productPricesDTO[1].maximalCount"
+                                        value="0"
+                                        id="maxqty2"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                        type="number"
+                                        class="form-control form-control-sm"
+                                        name="productPricesDTO[1].percentage"
+                                        id="pct2"
+                                        value="0"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                        type="text"
+                                        class="form-control form-control-sm rupiah-input"
+                                        name="productPricesDTO[1].price"
+                                        value="0"
+                                        id="hargaJual2"
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><p>Harga Jual 3</p></td>
+                            <td>
+                                <input
+                                        type="number"
+                                        class="form-control form-control-sm"
+                                        name="productPricesDTO[2].maximalCount"
+                                        value="0"
+                                        id="maxqty3"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                        type="number"
+                                        class="form-control form-control-sm"
+                                        id="pct3"
+                                        name="productPricesDTO[2].percentage"
+                                        value="0"
+                                />
+                            </td>
+                            <td>
+                                <input
+                                        type="text"
+                                        class="form-control form-control-sm rupiah-input"
+                                        name="productPricesDTO[2].price"
+                                        value="0"
+                                        id="hargaJual3"
+                                />
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="submit" class="btn btn-primary" id="addProductForm">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status"
+                              aria-hidden="true"></span>
+                        <span class="btn-text">Simpan</span>
+                    </button>
+                    <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Revenue Modal -->
 <div
         class="modal fade"
@@ -750,11 +1077,111 @@
 
 <script th:inline="javascript">
     const masterProducts = /*[[${productData}]]*/ [];
-<!--    const masterCustomers = /*[[${customerData}]]*/ [];-->
     const masterTransactions = /*[[${indenData}]]*/ [];
     const masterSettings = /*[[${settingData}]]*/ [];
+    const masterSuppliers = /*[[${supplierData}]]*/ [];
+
+  function populateSupplierOptions() {
+    const select = document.getElementById("supplierId");
+    // Clear all options except the first placeholder
+    select.length = 1;
+
+    masterSuppliers.forEach((supplier) => {
+      const option = document.createElement("option");
+      option.value = supplier.supplierId;
+      option.textContent = supplier.supplierName;
+      select.appendChild(option);
+    });
+  }
+
+  // Run after DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    populateSupplierOptions();
+  });
 </script>
 <script>
+    <!--    Vehicle Chips-->
+    let vehicleIndex = 0;
+    function toggleVehicleForm() {
+        const form = document.getElementById("vehicleInlineForm");
+        form.classList.toggle("d-none");
+    }
+
+    function addVehicle() {
+        const select = document.getElementById("vehicleId");
+        const vehicleId = select.value;
+        const vehicleName = select.options[select.selectedIndex]?.text;
+        const yearStart = document.getElementById("yearStart").value;
+        const yearEnd = document.getElementById("yearEnd").value;
+
+        if (!vehicleId || vehicleId === "null" || !yearStart || !yearEnd) {
+            alert("Lengkapi data kendaraan");
+            return;
+        }
+
+        const index = document.querySelectorAll("#vehicleChips .vehicle-chip").length;
+
+        const chip = document.createElement("div");
+        chip.className = "vehicle-chip";
+
+        chip.innerHTML = `
+            <div class="chip-text">
+                <span class="chip-title">${vehicleName}</span>
+                <span class="chip-year">${yearStart} – ${yearEnd}</span>
+            </div>
+
+            <button type="button"
+                    class="chip-remove"
+                    onclick="removeVehicle(this)">
+                &times;
+            </button>
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].vehicleId"
+                   value="${vehicleId}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearStart"
+                   value="${yearStart}">
+
+            <input type="hidden"
+                   name="compatibleVehicles[${index}].yearEnd"
+                   value="${yearEnd}">
+        `;
+
+        document.getElementById("vehicleChips").appendChild(chip);
+
+        select.value = "";
+        document.getElementById("yearStart").value = "";
+        document.getElementById("yearEnd").value = "";
+        toggleVehicleForm();
+    }
+
+    function removeVehicle(button) {
+        const chip = button.closest(".vehicle-chip");
+        chip.remove();
+        reindexVehicles();
+    }
+
+    function reindexVehicles() {
+        const chips = document.querySelectorAll("#vehicleChips .vehicle-chip");
+
+        chips.forEach((chip, index) => {
+            chip.querySelector('input[name*=".vehicleId"]')
+                .name = `compatibleVehicles[${index}].vehicleId`;
+
+            chip.querySelector('input[name*=".yearStart"]')
+                .name = `compatibleVehicles[${index}].yearStart`;
+
+            chip.querySelector('input[name*=".yearEnd"]')
+                .name = `compatibleVehicles[${index}].yearEnd`;
+        });
+    }
+
+     barangModal.addEventListener('hidden.bs.modal', function () {
+            $('#vehicleChips').empty();
+    });
+
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
 
@@ -799,6 +1226,261 @@
             e.target.select();
         }
     });
+</script>
+
+<script th:inline="none">
+    //Send new product to backend
+    document.getElementById("addProductForm").addEventListener("click", async function () {
+        const button = this;
+        const spinner = button.querySelector(".spinner-border");
+        const buttonText = button.querySelector(".btn-text");
+
+        // Show spinner, disable button
+        spinner.classList.remove("d-none");
+        buttonText.textContent = "Menyimpan...";
+        button.disabled = true;
+
+        const form = document.getElementById("barangForm");
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => {
+            const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+            if (match) {
+                const [, arrName, index, field] = match;
+                jsonData[arrName] = jsonData[arrName] || [];
+                jsonData[arrName][index] = jsonData[arrName][index] || {};
+                jsonData[arrName][index][field] =
+                    field === "price" ? parseRupiah(value) : value;
+            } else {
+                jsonData[key] = key.toLowerCase().includes("price")
+                    ? parseRupiah(value)
+                    : value;
+            }
+        });
+
+        try {
+            console.log("json data : ", JSON.stringify(jsonData, null, 2));
+            const response = await fetch("/api/product/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(jsonData),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "Failed to save product");
+            }
+
+<!--            const fetchResponse = await fetch("/api/product/list");-->
+<!--            if (!fetchResponse.ok) {-->
+<!--                throw new Error("Failed to fetch updated product list");-->
+<!--            }-->
+
+<!--            const updatedProductList = await fetchResponse.json();-->
+<!--            masterProducts = updatedProductList;-->
+<!--            loadProductTable(masterProducts);-->
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById("barangModal"));
+            modal.hide();
+            form.reset();
+
+            alert("Produk berhasil disimpan dan daftar produk diperbarui.");
+            setTimeout(() => {
+                focusNextEmptyRow(); // baris baru
+                const nextRow = sellTableBody.lastElementChild;
+                const nextCodeInput = nextRow?.querySelector(".code-input");
+                nextCodeInput?.focus(); // langsung fokus ke code-input
+              }, 300);
+        } catch (err) {
+            console.error("Error:", err);
+            alert(err.message);
+        } finally {
+            // Hide spinner, enable button
+            spinner.classList.add("d-none");
+            buttonText.textContent = "Simpan";
+            button.disabled = false;
+        }
+    });
+    $(document).ready(function () {
+        const barangModal = document.getElementById('barangModal');
+        const barangForm = document.getElementById('barangForm');
+        const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0
+        });
+
+        const hargaBeliInput = document.getElementById("supplierPrice");
+        const hargaJual1 = document.getElementById("hargaJual1");
+        const hargaJual2 = document.getElementById("hargaJual2");
+        const hargaJual3 = document.getElementById("hargaJual3");
+        const pct1 = document.getElementById("pct1");
+        const pct2 = document.getElementById("pct2");
+        const pct3 = document.getElementById("pct3");
+        const rupiahInputs = document.querySelectorAll(".rupiah-input");
+        const rupiahPrices = document.querySelectorAll(".rupiah-price");
+
+        // --- Helper Functions ---
+        function updatePercentage(hargaJualInput, pctOutput){
+            const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
+            const hargaJual = parseCurrency(hargaJualRaw);
+
+            const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
+            const result = calculatedPct.toFixed(2);
+            pctOutput.value = result;
+        }
+
+        function updateHargaJual(pctInput, jualOutput) {
+            const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+            const percentage = parseFloat(pctInput.value) || 0;
+            const calculatedHargaJual = hargaBeli + (hargaBeli * (percentage / 100));
+            jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
+        }
+
+        function parseCurrency(input) {
+            if (!input) return 0;
+
+            // Remove currency symbol and spaces
+            let cleaned = input.replace(/[^0-9.,]/g, '');
+
+            // Remove thousands separator
+            cleaned = cleaned.replace(/\./g, '');
+
+            // Replace decimal comma with dot
+            cleaned = cleaned.replace(/,/g, '.');
+
+            return parseFloat(cleaned) || 0;
+        }
+
+        function cleanRupiahToNumber(value) {
+            return value.replace(/[^0-9]/g, '');
+        }
+
+        function clearForm() {
+            barangForm.reset();
+            $('#modalLabel').text('Tambah Master Barang & Jasa');
+            $('#barangForm').attr('action', '/api/product/add');
+            $('#productId').val(''); // Clear the hidden ID for new products
+            $('#shortName').focus();
+        }
+
+        // Listener for the "Add Product" button to open the modal and clear the form.
+        $('#add-barang-btn').on('click', function() {
+            clearForm();
+            $('#barangModal').modal('show');
+        });
+
+
+        // Event listeners for price and percentage inputs (remains the same)
+        hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
+        hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
+        hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));
+        pct1.addEventListener('input', () => updateHargaJual(pct1, hargaJual1));
+        pct2.addEventListener('input', () => updateHargaJual(pct2, hargaJual2));
+        pct3.addEventListener('input', () => updateHargaJual(pct3, hargaJual3));
+
+        // Event listeners for Rupiah formatting (remains the same)
+        rupiahInputs.forEach(function (input) {
+            input.addEventListener("input", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+            input.addEventListener("blur", function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
+            });
+        });
+
+        document.querySelectorAll('.rupiah-price').forEach(element => {
+            const price = parseFloat(element.getAttribute('data-price'));
+            if (!isNaN(price)) {
+                element.textContent = rupiahFormatter.format(price);
+            }
+        });
+
+        // Form submission listener to clean up Rupiah values before submission.
+        document.getElementById("barangForm").addEventListener("submit", function (e) {
+            e.preventDefault(); // Stop the default form submission temporarily
+
+            // Clean Rupiah inputs by removing formatting
+            rupiahInputs.forEach(input => {
+                if (input.value && input.value.trim() !== '') {
+                    input.value = cleanRupiahToNumber(input.value);
+                }
+            });
+
+            this.submit();
+        });
+        const dirtyFlags = {
+          maxqty2: false,
+          maxqty3: false
+        };
+
+        function onInputChange() {
+          dirtyFlags[this.id] = true; // User changed the value, mark dirty
+        }
+
+        function validateOnBlur() {
+          const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
+          const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
+          const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
+
+          if (this.id === 'maxqty2') {
+            if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+
+          if (this.id === 'maxqty3') {
+            if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
+              alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+              dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
+              this.focus(); // refocus to fix
+            }
+          }
+        }
+
+        const maxqty2Input = document.getElementById('maxqty2');
+        const maxqty3Input = document.getElementById('maxqty3');
+
+        maxqty2Input.addEventListener('input', onInputChange);
+        maxqty3Input.addEventListener('input', onInputChange);
+
+        maxqty2Input.addEventListener('blur', validateOnBlur);
+        maxqty3Input.addEventListener('blur', validateOnBlur);
+    });
+</script>
+
+
+<script>
+    // Listener for the "Add Product" button to open the modal and clear the form.
+    $('#add-barang-btn').on('click', function() {
+        clearForm();
+        $('#barangModal').modal('show');
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const addButton = document.getElementById("add-barang-btn");
+        const productModalEl = document.getElementById("barangModal");
+      const productModal = new bootstrap.Modal(productModalEl);
+
+      addButton.addEventListener("click", () => {
+        productModal.show();
+      });
+    });
+
+    function clearForm() {
+        barangForm.reset();
+        $('#modalLabel').text('Tambah Master Barang & Jasa');
+        $('#barangForm').attr('action', '/api/product/add');
+        $('#productId').val(''); // Clear the hidden ID for new products
+        $('#shortName').focus();
+    }
+
 </script>
 
 <script>

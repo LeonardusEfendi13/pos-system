@@ -24,16 +24,7 @@ import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
 @Service
 public class IndenService {
     @Autowired
-    TransactionDetailRepository transactionDetailRepository;
-
-    @Autowired
-    TransactionRepository transactionRepository;
-
-    @Autowired
     ProductRepository productRepository;
-
-    @Autowired
-    StockMovementService stockMovementService;
 
     @Autowired
     IndenRepository indenRepository;
@@ -46,6 +37,18 @@ public class IndenService {
 
     @Autowired
     IndenDetailRepository indenDetailRepository;
+
+    @Autowired
+    CustomerRepository customerRepository;
+
+    @Autowired
+    TransactionRepository transactionRepository;
+
+    @Autowired
+    TransactionDetailRepository transactionDetailRepository;
+
+    @Autowired
+    StockMovementService stockMovementService;
 
     public Page<IndenDTO> getIndenData(String statusInden, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Page<IndenEntity> indenData;
@@ -130,6 +133,98 @@ public class IndenService {
         indenRepository.save(indenEntity);
 
         return true;
+    }
+
+    @Transactional
+    public ResponseInBoolean updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData) {
+        try{
+            ClientEntity clientData = accountData.getClientEntity();
+            Optional<IndenEntity> indenEntityOpt = indenRepository.findFirstByIndenIdAndDeletedAtIsNull(indenId);
+            if(indenEntityOpt.isEmpty()){
+                return new ResponseInBoolean(false, "Data Inden tidak ditemukan");
+            }
+
+            IndenEntity indenEntity = indenEntityOpt.get();
+
+            indenEntity.setStatusInden(newStatusInden);
+            indenRepository.save(indenEntity);
+
+            //Insert into transaction
+
+            if(newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name())){
+                System.out.println("Otw insert transac");
+                String lastProduct = "Tanya Leon";
+                List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
+                if(indenDetailEntities.isEmpty()){
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(false, "Data inden detail tidak ada");
+                }
+
+                //Get Customer Data (Umum = 1)
+                CustomerEntity customerData = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(1L, clientData.getClientId()).get();
+
+                //Insert into transaction
+                TransactionEntity transactionEntity = new TransactionEntity();
+                transactionEntity.setClientEntity(clientData);
+                transactionEntity.setTransactionNumber(indenEntity.getIndenNumber());
+                transactionEntity.setCustomerEntity(customerData);
+                transactionEntity.setTotalPrice(indenEntity.getTotalPrice());
+                transactionEntity.setTotalDiscount(indenEntity.getTotalDiscount());
+                transactionEntity.setSubtotal(indenEntity.getSubtotal());
+                transactionEntity.setAccountEntity(accountData);
+                transactionRepository.save(transactionEntity);
+
+                for (IndenDetailEntity dtos : indenDetailEntities) {
+                    System.out.println("Part Number : " + dtos.getShortName());
+                    System.out.println("Nama Barang : " + dtos.getFullName());
+
+                    //Get product Entity
+                    ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getFullName(), dtos.getShortName(), clientData.getClientId());
+                    entityManager.refresh(productEntity);
+
+                    if (productEntity == null) {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                        return new ResponseInBoolean(true, "Produk " + dtos.getFullName() + " tidak ditemukan");
+                    }
+                    System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
+                    lastProduct = dtos.getShortName();
+                    TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                    transactionDetailEntity.setShortName(dtos.getShortName());
+                    transactionDetailEntity.setFullName(dtos.getFullName());
+                    transactionDetailEntity.setQty(dtos.getQty());
+                    transactionDetailEntity.setPrice(dtos.getPrice());
+                    transactionDetailEntity.setDiscountAmount(dtos.getDiscountAmount());
+                    transactionDetailEntity.setTotalPrice(dtos.getTotalPrice());
+                    transactionDetailEntity.setTransactionEntity(transactionEntity);
+                    transactionDetailEntity.setBasicPrice(dtos.getBasicPrice());
+                    transactionDetailEntity.setTotalProfit(dtos.getTotalProfit());
+                    transactionDetailRepository.save(transactionDetailEntity);
+
+                    //Update product stock
+                    System.out.println("Stock Before : " + productEntity.getStock());
+                    System.out.println("Qty : " + dtos.getQty());
+                    Long newStock = productEntity.getStock() - dtos.getQty();
+                    productEntity.setStock(newStock);
+                    productRepository.save(productEntity);
+                    stockMovementService.insertKartuStok(new AdjustStockDTO(
+                            productEntity,
+                            indenEntity.getIndenNumber(),
+                            TipeKartuStok.PENJUALAN,
+                            0L,
+                            dtos.getQty(),
+                            newStock,
+                            clientData
+                    ));
+                    System.out.println("Stock After : " + newStock);
+                    System.out.println();
+                }
+            }
+            return new ResponseInBoolean(true, "Berhasil memperbarui status data inden.");
+        }catch (Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, e.getMessage());
+        }
+
     }
 
     @Transactional
