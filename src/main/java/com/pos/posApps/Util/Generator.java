@@ -49,4 +49,18 @@ public class Generator {
         // Gabungkan
         return datePart + counterPart;
     }
+
+    public static String formatPhoneTo62(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return null;
+        }
+
+        String cleaned = phone.replaceAll("\\D", "");
+
+        if (cleaned.startsWith("0")) {
+            return "62" + cleaned.substring(1);
+        }
+
+        return cleaned; // fallback kalau ternyata bukan 0
+    }
 }
