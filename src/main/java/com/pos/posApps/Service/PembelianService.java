@@ -420,12 +420,9 @@ public class PembelianService {
                 PurchasingDetailEntity oldDetail = oldMap.get(code);
                 PurchasingDetailDTO newDetail = newMap.get(code);
 
-                long oldQty = oldDetail != null ? oldDetail.getQty() : 0;
-                long newQty = newDetail != null ? newDetail.getQty() : 0;
+                long oldQty = oldDetail != null ? oldDetail.getQty() : 0L;
+                long newQty = newDetail != null ? newDetail.getQty() : 0L;
                 long delta = newQty - oldQty;
-
-                // Qty sama → JANGAN SENTUH STOCK
-                if (delta == 0) continue;
 
                 lastProduct = code;
 
@@ -439,31 +436,52 @@ public class PembelianService {
                     throw new RuntimeException("Produk " + code + " tidak ditemukan");
                 }
 
-                // =========================
-                // UPDATE STOCK (PEMBELIAN)
-                // =========================
-                long newStock = product.getStock() + delta;
-                product.setStock(newStock);
+                boolean hasChange = false;
 
-                // Update harga beli terakhir
+                // =========================
+                // UPDATE SEMUA FIELD NON-STOK
+                // =========================
                 if (newDetail != null) {
-                    product.setSupplierPrice(newDetail.getPrice());
+
+                    if (newDetail.getPrice() != null
+                            && !newDetail.getPrice().equals(product.getSupplierPrice())) {
+                        product.setSupplierPrice(newDetail.getPrice());
+                        hasChange = true;
+                    }
+
+                    if (newDetail.getName() != null && !newDetail.getName().equals(product.getFullName())) {
+                        product.setFullName(newDetail.getName());
+                        hasChange = true;
+                    }
+
+                    // tambahkan field lain di sini bila ada
                 }
 
-                productRepository.save(product);
+                // =========================
+                // UPDATE STOK (HANYA JIKA QTY BERUBAH)
+                // =========================
+                if (delta != 0) {
+                    long newStock = product.getStock() + delta;
+                    product.setStock(newStock);
+                    hasChange = true;
+
+                    stockMovementService.insertKartuStok(new AdjustStockDTO(
+                            product,
+                            purchasing.getPurchasingNumber(),
+                            TipeKartuStok.KOREKSI_PEMBELIAN,
+                            delta > 0 ? delta : 0L,
+                            delta < 0 ? Math.abs(delta) : 0L,
+                            newStock,
+                            clientData
+                    ));
+                }
 
                 // =========================
-                // KARTU STOK
+                // SAVE JIKA ADA PERUBAHAN APA PUN
                 // =========================
-                stockMovementService.insertKartuStok(new AdjustStockDTO(
-                        product,
-                        purchasing.getPurchasingNumber(),
-                        TipeKartuStok.KOREKSI_PEMBELIAN,
-                        delta > 0 ? delta : 0L,            // IN
-                        delta < 0 ? Math.abs(delta) : 0L, // OUT
-                        newStock,
-                        clientData
-                ));
+                if (hasChange) {
+                    productRepository.save(product);
+                }
             }
 
             // =========================
