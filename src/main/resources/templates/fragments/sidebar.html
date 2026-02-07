@@ -330,6 +330,14 @@
                     </a>
                 </li>
 
+                <li class="nav-item"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="${activePage} == 'branch' ? ' active'">
+                    <a th:href="@{/branch}" class="nav-link">
+                        <span class="nav-link-title">Manage Cabang Toko</span>
+                    </a>
+                </li>
+
                 <!-- Settings -->
                 <li class="nav-item"
                     th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
