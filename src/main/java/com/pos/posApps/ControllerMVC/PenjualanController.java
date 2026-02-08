@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
+import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 
 @Controller
 @RequestMapping("penjualan")
@@ -58,9 +59,9 @@ public class PenjualanController {
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
 
         if (search == null || search.isEmpty()) {
-            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, customerId, PageRequest.of(page, size));
+            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, listOf(customerId), PageRequest.of(page, size));
         } else {
-            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, customerId, search, PageRequest.of(page, size));
+            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, listOf(customerId), search, PageRequest.of(page, size));
         }
 
         model.addAttribute("penjualanData", penjualanData.getContent());

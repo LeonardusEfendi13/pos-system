@@ -20,7 +20,7 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             "AND t.transactionDetailEntities IS NOT EMPTY " +
             "AND t.deletedAt IS NULL " +
             "AND t.createdAt BETWEEN :startDate AND :endDate " +
-            "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId) " +
+            "AND (:customerId IS NULL OR t.customerEntity.customerId IN :customerId) " +
             "AND (" +
             "    LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "    OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))" +
@@ -30,14 +30,14 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             @Param("clientId") Long clientId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("customerId") Long customerId,
+            @Param("customerId") List<Long> customerId,
             @Param("search") String search,
             Pageable pageable
     );
 
     List<TransactionEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate);
 
-    Page<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, Long customerId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
+    Page<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdInAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, List<Long> customerId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 

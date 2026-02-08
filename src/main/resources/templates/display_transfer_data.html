@@ -100,6 +100,15 @@
         #userTable tbody tr.previewing-row td {
             background-color: #FFA500 !important;
         }
+
+        /* ===========================
+           Navigation
+        ============================ */
+        .nav-link.active {
+          background-color: rgba(255, 255, 255, 0.1); /* putih transparan */
+          color: #e0e7ff;
+          padding-left: calc(1rem - 4px); /* agar padding kiri pas */
+        }
     </style>
 </head>
 <body>
@@ -114,10 +123,10 @@
             </div>
         </div>
         <div class="container-fluid">
-            <h2 style="text-align: center; padding-top: 10px">Riwayat Penjualan</h2>
+            <h2 style="text-align: center; padding-top: 10px">Riwayat Transfer Stok</h2>
 
             <!-- Filter Form -->
-            <form method="get" action="/penjualan" class="row filter-container">
+            <form method="get" action="/transfer/riwayat" class="row filter-container">
                 <div class="col-md-2">
                     <label for="startDate" class="form-label">Tanggal Mulai</label>
                     <input type="date" id="startDate" name="startDate" class="form-control" th:value="${startDate}"/>
@@ -127,9 +136,9 @@
                     <input type="date" id="endDate" name="endDate" class="form-control" th:value="${endDate}"/>
                 </div>
                 <div class="col-md-3">
-                    <label for="customerId" class="form-label">Pelanggan</label>
+                    <label for="customerId" class="form-label">Toko Cabang</label>
                     <select id="customerId" name="customerId" class="form-select">
-                        <option value="">-- Semua Pelanggan --</option>
+                        <option value="">-- Semua Toko Cabang --</option>
                         <option th:each="customer : ${customerData}" th:value="${customer.customerId}"
                                 th:text="${customer.name}" th:selected="${customer.customerId == customerId}"></option>
                     </select>
