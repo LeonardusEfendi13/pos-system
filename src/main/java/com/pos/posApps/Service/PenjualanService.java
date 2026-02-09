@@ -79,18 +79,17 @@ public class PenjualanService {
     }
 
     // File: PenjualanService.java
-
-    public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, Pageable pageable) {
+    public Page<PenjualanDTO> getPenjualanData(Long clientId, LocalDateTime startDate, LocalDateTime endDate, List<Long> customerId, Pageable pageable) {
         Page<TransactionEntity> transactionData;
-        if (customerId == null) {
+        if (customerId == null || customerId.isEmpty()) {
             transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate, pageable);
         } else {
-            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
+            transactionData = transactionRepository.findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdInAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(clientId, customerId, startDate, endDate, pageable);
         }
         return transactionData.map(this::convertToDTO);
     }
 
-    public Page<PenjualanDTO> searchPenjualanData( Long clientId, LocalDateTime startDate, LocalDateTime endDate, Long customerId, String search, Pageable pageable) {
+    public Page<PenjualanDTO> searchPenjualanData( Long clientId, LocalDateTime startDate, LocalDateTime endDate, List<Long> customerId, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
         if (trimmedSearch.isEmpty()) {
@@ -191,7 +190,6 @@ public class PenjualanService {
         //Restore stock from old transaction
         List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
         for (TransactionDetailEntity old : oldTransactions) {
-//            ProductEntity product = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(old.getFullName(), old.getShortName(), clientData.getClientId());
             ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());
             if (product != null) {
                 Long restoredStock = product.getStock() + old.getQty();

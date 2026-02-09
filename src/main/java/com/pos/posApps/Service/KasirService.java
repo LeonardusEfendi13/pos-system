@@ -65,8 +65,12 @@ public class KasirService {
     }
 
     @Transactional
-    public ResponseInBoolean createTransaction(CreateTransactionRequest req, AccountEntity accountData) {
+    public ResponseInBoolean createTransaction(CreateTransactionRequest req, AccountEntity accountData, boolean isBranch) {
         String lastProduct = "Tanya Leon";
+        TipeKartuStok tipeKartuStok = TipeKartuStok.PENJUALAN;
+        if(isBranch){
+            tipeKartuStok = TipeKartuStok.TRANSFER_STOK;
+        }
         ClientEntity clientData = accountData.getClientEntity();
         try {
             //Get Customer Entity
@@ -96,7 +100,6 @@ public class KasirService {
                 System.out.println("Nama Barang : " + dtos.getName());
 
                 //Get product Entity
-//                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 entityManager.refresh(productEntity);
 
@@ -129,7 +132,7 @@ public class KasirService {
                 stockMovementService.insertKartuStok(new AdjustStockDTO(
                         productEntity,
                         generatedNotaNumber,
-                        TipeKartuStok.PENJUALAN,
+                        tipeKartuStok,
                         0L,
                         dtos.getQty(),
                         newStock,
@@ -151,8 +154,13 @@ public class KasirService {
     public ResponseInBoolean editTransaction(
             Long transactionId,
             CreateTransactionRequest req,
-            AccountEntity accountData
+            AccountEntity accountData,
+            boolean isBranch
     ) {
+        TipeKartuStok tipeKartuStok = TipeKartuStok.KOREKSI_PENJUALAN;
+        if(isBranch){
+            tipeKartuStok = TipeKartuStok.KOREKSI_TRANSFER_STOK;
+        }
         String lastProduct = "-";
         ClientEntity clientData = accountData.getClientEntity();
         try {
@@ -258,7 +266,7 @@ public class KasirService {
                 stockMovementService.insertKartuStok(new AdjustStockDTO(
                         product,
                         transaction.getTransactionNumber(),
-                        TipeKartuStok.KOREKSI_PENJUALAN,
+                        tipeKartuStok,
                         delta < 0 ? Math.abs(delta) : 0L,
                         delta > 0 ? delta : 0L,
                         newStock,
