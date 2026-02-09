@@ -1365,7 +1365,7 @@
                     "Harga tidak boleh lebih rendah dari harga beli: " +
                     formatRupiah(hargaBeli)
                 );
-                input.value = formatRupiah(product.productPricesDTO[0].price); // Koreksi nilai input
+                input.value = formatRupiah(product.hargaBeli); // Koreksi nilai input
                 updateTotalRow(row);
                 return; // Hentikan fungsi agar tidak memformat ulang nilai yang sudah dikoreksi
             }
@@ -1945,22 +1945,22 @@
     }
 
     function getPriceByQty(product, qty) {
-        let chosenPrice = product.productPricesDTO[0].price; // default first tier
+<!--        let chosenPrice = product.productPricesDTO[0].price; // default first tier-->
+        let chosenPrice = product.hargaBeli;
+<!--        for (let i = 0; i < product.productPricesDTO.length; i++) {-->
+<!--            const tier = product.productPricesDTO[i];-->
 
-        for (let i = 0; i < product.productPricesDTO.length; i++) {
-            const tier = product.productPricesDTO[i];
+<!--            // if qty fits inside this tier, use it and stop-->
+<!--            if (qty <= tier.maximalCount && tier.price > 0) {-->
+<!--                chosenPrice = tier.price;-->
+<!--                return chosenPrice;-->
+<!--            }-->
 
-            // if qty fits inside this tier, use it and stop
-            if (qty <= tier.maximalCount && tier.price > 0) {
-                chosenPrice = tier.price;
-                return chosenPrice;
-            }
-
-            // if qty is bigger, keep moving, but always carry forward the latest valid price
-            if (tier.price > 0) {
-                chosenPrice = tier.price;
-            }
-        }
+<!--            // if qty is bigger, keep moving, but always carry forward the latest valid price-->
+<!--            if (tier.price > 0) {-->
+<!--                chosenPrice = tier.price;-->
+<!--            }-->
+<!--        }-->
 
         return chosenPrice; // at the end, it's the last tier
     }
@@ -2210,7 +2210,7 @@
                     ${product.fullName}
                 </td>
                 <td style="width:15%;white-space:nowrap;overflow:hidden;">
-                    Rp ${product.productPricesDTO[0].price.toLocaleString("id-ID")}
+                    Rp ${product.hargaBeli.price.toLocaleString("id-ID")}
                 </td>
                 <td style="width:7%;text-align:center">
                     ${product.stok}
@@ -3475,7 +3475,7 @@
   <span class="client-telp"></span><br />
 </div>
 <div class="col text-center">
-<span style="font-weight: bold; font-size: 14px; font-style: italic">FAKTUR JUAL</span>
+<span style="font-weight: bold; font-size: 14px; font-style: italic">FAKTUR TRANSFER STOK</span>
 </div>
 <div class="col" style="margin-right:14px;border: 1px solid black; padding: 5px;">
 <div class="row">

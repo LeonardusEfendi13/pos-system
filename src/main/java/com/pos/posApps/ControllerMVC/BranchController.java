@@ -35,6 +35,7 @@ public class BranchController {
     private CustomerService customerService;
     private ClientService clientService;
     private PenjualanService penjualanService;
+    private ProductService productService;
 
     @GetMapping
     public String showBranches(HttpSession session, Model model) {
@@ -196,7 +197,7 @@ public class BranchController {
         }
 
         Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
-        List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
+        List<CustomerEntity> customerEntities = branchService.getAllCabangToko();
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
         model.addAttribute("clientSettingData", clientSettingData);
         PenjualanDTO penjualanData = (transactionId != null)
@@ -211,6 +212,6 @@ public class BranchController {
         model.addAttribute("customerData", customerEntities);
         model.addAttribute("settingData", clientSettingData);
 
-        return "display_kasir_penjualan";
+        return "display_kasir_transfer_stok";
     }
 }
