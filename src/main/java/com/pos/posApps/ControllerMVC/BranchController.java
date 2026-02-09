@@ -184,4 +184,33 @@ public class BranchController {
         model.addAttribute("sidebarData", sidebarData);
         return "display_transfer_data";
     }
+
+    @GetMapping("/transfer/kasir")
+    public String displayKasirTransfer(Model model, HttpSession session, Long transactionId, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
+        Long clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+
+        Page<ProductDTO> productEntity = productService.getProductData(clientId, PageRequest.of(page, size), null, false);
+        List<CustomerEntity> customerEntities = customerService.getCustomerList(clientId);
+        ClientDTO clientSettingData = clientService.getClientSettings(clientId);
+        model.addAttribute("clientSettingData", clientSettingData);
+        PenjualanDTO penjualanData = (transactionId != null)
+                ? penjualanService.getPenjualanDataById(clientId, transactionId)
+                : new PenjualanDTO();
+
+        model.addAttribute("penjualanData", penjualanData);
+        model.addAttribute("activePage", "kasir");
+        model.addAttribute("productData", productEntity.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productEntity.getTotalPages());
+        model.addAttribute("customerData", customerEntities);
+        model.addAttribute("settingData", clientSettingData);
+
+        return "display_kasir_penjualan";
+    }
 }
