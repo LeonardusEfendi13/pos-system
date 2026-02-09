@@ -214,4 +214,26 @@ public class BranchController {
 
         return "display_kasir_transfer_stok";
     }
+
+    @PostMapping("/transfer/delete/{transactionId}")
+    public String deletePenjualan(@PathVariable("transactionId") Long transactionId, HttpSession session, RedirectAttributes redirectAttributes) {
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accEntity = authService.validateToken(token);
+        ClientEntity clientData = accEntity.getClientEntity();
+        if (clientData.getClientId() == null) {
+            return "redirect:/login";
+        }
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            boolean isDeleted = penjualanService.deletePenjualan(transactionId, clientData);
+            if (isDeleted) {
+                redirectAttributes.addFlashAttribute("status", "success");
+                redirectAttributes.addFlashAttribute("message", "Data Deleted");
+                return "redirect:/branch/transfer/riwayat";
+            }
+            redirectAttributes.addFlashAttribute("status", "failed");
+            redirectAttributes.addFlashAttribute("message", "Failed to delete data");
+            return "redirect:/branch/transfer/riwayat";
+        }
+        return "redirect:/login";
+    }
 }

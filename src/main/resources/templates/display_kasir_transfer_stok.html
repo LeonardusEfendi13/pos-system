@@ -296,7 +296,7 @@
             </div>
         </div>
         <a
-                th:href="@{/penjualan}"
+                th:href="@{/branch/transfer/riwayat}"
                 class="btn btn-warning d-flex align-items-center"
                 onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
         >
@@ -548,8 +548,8 @@
 <div id="contextMenu">
     <ul>
         <li onclick="deleteRow()">🗑️ Hapus Baris</li>
-        <li onclick="reprintBill()">🖨️ Cetak Ulang Nota</li>
-        <li onclick="getRevenue()">💲 Pendapatan Hari Ini</li>
+<!--        <li onclick="reprintBill()">🖨️ Cetak Ulang Nota</li>-->
+<!--        <li onclick="getRevenue()">💲 Pendapatan Hari Ini</li>-->
     </ul>
 </div>
 
@@ -939,7 +939,7 @@
     async function reprintBill() {
         try {
             // ⚡ Fetch 10 transaksi terakhir dari backend
-            const response = await fetch("/api/kasir/transaction/list");
+            const response = await fetch("/api/branch/kasir/transaction/list");
 
             if (!response.ok) throw new Error("Gagal fetch transaksi");
 
@@ -950,336 +950,6 @@
         }
 
         document.getElementById("contextMenu").style.display = "none";
-    }
-
-    async function getRevenue() {
-        try {
-            const response = await fetch("/api/kasir/transaction/revenue");
-            if (!response.ok) throw new Error("Gagal fetch revenue transaksi");
-
-            const totalRevenue = await response.text();
-
-            // 💰 Format the revenue (optional)
-            const formatted = new Intl.NumberFormat("id-ID", {
-                style: "currency",
-                currency: "IDR",
-                minimumFractionDigits: 0,
-            }).format(totalRevenue);
-
-            // 🎯 Set the value inside the modal
-            document.getElementById("revenueValue").textContent = formatted;
-
-            // 📦 Show the modal using Bootstrap's JS API
-            const modal = new bootstrap.Modal(
-                document.getElementById("revenueModal")
-            );
-            modal.show();
-        } catch (err) {
-            alert("Error: " + err.message);
-        }
-
-        document.getElementById("contextMenu").style.display = "none";
-    }
-
-    function setupRowSelection() {
-        const tbody = document.querySelector("#reprintTable tbody");
-        const rows = tbody.querySelectorAll("tr");
-
-        rows.forEach((row, index) => {
-            row.tabIndex = 0; // Make row focusable via keyboard
-
-            // Handle click to select
-            row.addEventListener("click", () => {
-                clearSelection();
-                row.classList.add("table-active");
-                row.focus();
-
-                // ✅ Load detail data when row is selected
-                const trx = row._transactionData;
-                if (trx && trx.transactionDetailDTOS) {
-                    loadDetailTable(trx.transactionDetailDTOS);
-                } else {
-                    loadDetailTable([]); // fallback if no items
-                }
-            });
-
-            // Handle keyboard navigation
-            row.addEventListener("keydown", (e) => {
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    if (rows[index + 1]) {
-                        rows[index + 1].click(); // click triggers focus + detail load
-                    }
-                } else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    if (rows[index - 1]) {
-                        rows[index - 1].click(); // click triggers focus + detail load
-                    }
-                }
-            });
-        });
-    }
-
-    // Clear previously selected row
-    function clearSelection() {
-        const selected = document.querySelector(
-            "#reprintTable tbody tr.table-active"
-        );
-        if (selected) selected.classList.remove("table-active");
-    }
-
-    function showReprintModal(transactions) {
-        const tbody = document.querySelector("#reprintTable tbody");
-        tbody.innerHTML = "";
-
-        if (transactions && transactions.length !== 0) {
-            transactions.forEach((trx) => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td style="width:150px;line-height:10px">${trx.transactionNumber}</td>
-                    <td style="text-align:end;">${formatRupiah(trx.totalPrice || 0)}</td>
-                `;
-                tr.style.cursor = "pointer";
-                tr.style.display = "table";
-                tr.style.width = "100%";
-                tr.style.tableLayout = "fixed";
-
-                tr._transactionData = trx;
-
-                tr.addEventListener("dblclick", () => {
-                    // Assign and convert needed values
-                    trx.transactionDetailDTOS = trx.transactionDetailDTOS.map((item, index) => ({
-                        no: index + 1,
-                        ...item,
-                        price: item.price.toLocaleString("id-ID"),
-                        total: item.total.toLocaleString("id-ID"),
-                    }));
-
-                    trx.grandTotal = trx.totalPrice;
-                    trx.paymentAmount = formatRupiah(trx.totalPrice);
-                    trx.returnAmount = 0;
-                    trx.customer_name = trx.customerDTO.customerName;
-                    trx.customer_alamat = trx.customerDTO.customerAlamat;
-
-                    const date = new Date(trx.tanggalJual);
-                    const formattedDateTime = `${date.toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                    })} ${date.toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                    })}`;
-
-                    trx.tanggal = formattedDateTime;
-                    trx.inv_number = trx.transactionNumber;
-
-                    generateReceiptContent(trx); // render content to #receiptContent
-
-                    // Wait for the DOM to update
-                    setTimeout(() => {
-                        const originalContent = document.body.innerHTML;
-                        const receiptHtml = document.getElementById("receiptContent").innerHTML;
-
-                        // Replace the entire body with the receipt
-                        document.body.innerHTML = `
-                            <html>
-                            <head>
-                                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-                                <style>
-                                  @page {
-                                    size: A4 portrait;
-                                    margin: 0mm;
-                                  }
-
-                                  @media print {
-                                      * {
-                                        font-size: 13px !important;
-                                      }
-
-                                      html, body {
-                                        margin: 0;
-                                        padding: 0;
-                                        width: 210mm;
-                                        height: 297mm;
-                                      }
-
-                                      .print-page {
-                                        width: 200mm;
-                                        height: 148.5mm; /* A5 landscape area */
-                                        page-break-after: always; /* lanjut ke halaman baru */
-                                        overflow: hidden;
-                                        padding-top: 10mm;
-                                      }
-
-                                     .print-page::after {
-                                        content: "";
-                                        display: block;
-                                        height: 148.5mm; /* isi separuh bawah A4 */
-                                        background: white;
-                                      }
-
-                                      .print-page:first-of-type {
-                                            margin-top: -6mm !important;
-                                        }
-
-                                      .print-page:last-child {
-                                        page-break-after: auto; /* halaman terakhir tidak perlu break */
-                                      }
-                                    }
-
-                                  body {
-                                    font-family: Arial, sans-serif;
-                                    font-size: 11px !important;
-                                    margin: 0 !important;
-                                    padding: 0 !important;
-                                  }
-
-                                  table {
-                                    width: 100% !important;
-                                    border-collapse: collapse;
-                                    table-layout: fixed;
-                                    border: 1px solid black;
-                                    border-top: none;
-                                  }
-
-                                  th, td {
-                                    border-top: none;
-                                    border-bottom: none;
-                                    border-left: 1px solid black;
-                                    border-right: 1px solid black;
-                                    padding: 1px 4px;
-                                    font-size: 10px;
-                                    height: 18px !important;
-                                    line-height: 12px;
-                                    vertical-align: middle;
-                                    white-space: nowrap;
-                                    overflow: hidden;
-                                    text-overflow: clip;
-                                    margin: 0;
-                                  }
-
-                                  table thead tr {
-                                    border-bottom: 1px solid #000;
-                                  }
-
-                                  th {
-                                    font-weight: bold;
-                                    text-align: center;
-                                    vertical-align: middle;
-                                  }
-                                </style>
-
-                            </head>
-                            <body>${receiptHtml}</body>
-                            </html>
-                        `;
-
-                        // Print
-                        window.print();
-
-                        // Restore original body after print
-                        setTimeout(() => {
-                            document.body.innerHTML = originalContent;
-                            alert("Berhasil mencetak nota!");
-                            window.location.href = "/kasir";
-                        }, 500);
-                    }, 100);
-                });
-
-                tbody.appendChild(tr);
-            });
-        } else {
-            const tr = document.createElement("tr");
-            tr.style.display = "table";
-            tr.style.width = "100%";
-            tr.style.tableLayout = "fixed";
-            tr.innerHTML = `
-                <td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">
-                    No data available.
-                </td>
-            `;
-            tbody.appendChild(tr);
-        }
-
-        setupRowSelection(); // setup click & keyboard navigation
-
-        const modalElement = document.getElementById("reprintModal");
-        const modal = new bootstrap.Modal(modalElement);
-
-        // Show the modal
-        modal.show();
-
-        // After modal is fully shown, focus first row
-        modalElement.addEventListener(
-            "shown.bs.modal",
-            () => {
-                const firstRow = tbody.querySelector("tr");
-                if (firstRow) {
-                    clearSelection();
-                    firstRow.classList.add("table-active");
-                    firstRow.focus();
-
-                    // ✅ Load the detail table immediately for the first row
-                    const trx = firstRow._transactionData;
-
-                    if (trx && trx.transactionDetailDTOS) {
-                        loadDetailTable(trx.transactionDetailDTOS);
-                    } else {
-                        loadDetailTable([]);
-                    }
-                }
-            },
-            { once: true }
-        );
-    }
-
-
-    function loadDetailTable(items) {
-        const detailBody = document.querySelector("#detailTable tbody");
-        detailBody.innerHTML = "";
-
-        if (!items || items.length === 0) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-      <td colspan="4" style="text-align:center; padding: 20px; font-style: italic;">
-        No item data available.
-      </td>
-    `;
-            detailBody.appendChild(tr);
-            return;
-        }
-
-        items.forEach((item) => {
-            const tr = document.createElement("tr");
-            tr.style.height = "30px"; // or any fixed value
-
-            tr.innerHTML = `
-      <td style="width: 350px;white-space: nowrap;overflow: hidden;">${
-                item.name
-            }</td>
-      <td style="text-align: center; width: 50px;">${item.qty}</td>
-      <td style="text-align: end;width: 150px; ">${formatRupiah(
-                item.price
-            )}</td>
-      <td style="text-align: end;width: 150px;">${formatRupiah(
-                item.total
-            )}</td>
-    `;
-            document.querySelector("#detailTable tbody").appendChild(tr);
-        });
-    }
-
-    // Hide modal and backdrop
-    function hideReprintModal() {
-        document.getElementById("reprintModal").style.display = "none";
-        document.getElementById("reprintModalBackdrop").style.display = "none";
-    }
-
-    // Button to open modal with transactions
-    function openReprint() {
-        showReprintModal(transactions);
     }
 
     const transactionNumberDisplay = document.getElementById(
@@ -2645,7 +2315,7 @@
                 masterTransactions.transactionDetailDTOS !== null
             ) {
                 response = await fetch(
-                    `api/kasir/edit/${masterTransactions.transactionId}`,
+                    `/api/branch/kasir/edit/${masterTransactions.transactionId}`,
                     {
                         method: "POST",
                         headers: {
@@ -2655,7 +2325,7 @@
                     }
                 );
             } else {
-                response = await fetch("api/kasir/add", {
+                response = await fetch("/api/branch/kasir/add", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -2810,25 +2480,13 @@
                     setTimeout(() => {
                         document.body.innerHTML = originalContent;
                         alert("Transaction saved successfully!");
+                        window.location.href = "/branch/transfer/riwayat";
 
-                        // Optional: redirect after printing
-                        if (
-                            masterTransactions.transactionId !== null &&
-                            masterTransactions.transactionDetailDTOS !== null
-                        ) {
-                            window.location.href = "/penjualan";
-                        } else {
-                            window.location.href = "/kasir";
-                        }
                     }, 500); // Delay restore to ensure print dialog completes
                 }, 100); // Short delay to ensure DOM is ready
             } else {
                 alert("Transaction saved successfully!");
-                window.location.href =
-                    masterTransactions.transactionId !== null &&
-                    masterTransactions.transactionDetailDTOS !== null
-                        ? "/penjualan"
-                        : "/kasir";
+                window.location.href = "/branch/transfer/riwayat";
             }
         } catch (error) {
             console.error("Failed to save transaction:", error.message);

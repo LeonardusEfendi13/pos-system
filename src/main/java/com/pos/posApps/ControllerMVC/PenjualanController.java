@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
+import static java.util.Collections.emptyList;
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 
 @Controller
@@ -58,12 +59,16 @@ public class PenjualanController {
         List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
 
-        if (search == null || search.isEmpty()) {
-            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, listOf(customerId), PageRequest.of(page, size));
-        } else {
-            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, listOf(customerId), search, PageRequest.of(page, size));
+        List<Long> custIds = emptyList();
+        if(customerId != null){
+            custIds = listOf(customerId);
         }
 
+        if (search == null || search.isEmpty()) {
+            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, custIds, PageRequest.of(page, size));
+        } else {
+            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, custIds, search, PageRequest.of(page, size));
+        }
         model.addAttribute("penjualanData", penjualanData.getContent());
         model.addAttribute("customerId", customerId);
         model.addAttribute("customerData", customerData);
