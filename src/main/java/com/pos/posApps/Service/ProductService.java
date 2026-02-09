@@ -321,7 +321,6 @@ public class ProductService {
     }
 
     public SearchContextDTO parseKeyword(String input) {
-
         String normalized = input.toLowerCase().trim();
         List<String> tokens = new ArrayList<>(List.of(normalized.split("\\s+")));
 
@@ -331,6 +330,7 @@ public class ProductService {
 
         for (String t : tokens) {
             if (t.isBlank()) continue;
+            if (!isVehicleCandidate(t)) continue;
 
             boolean exists = vehicleRepository.existsByModelContainingIgnoreCase(t);
             if (exists) {
@@ -398,6 +398,12 @@ public class ProductService {
         ctx.setProductKeyword(String.join(" ", productTokens).trim());
 
         return ctx;
+    }
+
+    boolean isVehicleCandidate(String t) {
+        return
+                t.length() >= 2 &&
+                        t.matches(".*[a-zA-Z].*"); // must contain letters
     }
 
     public List<ProductDTO> searchProductByKeyword(

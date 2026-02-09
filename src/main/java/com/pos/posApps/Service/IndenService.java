@@ -251,7 +251,7 @@ public class IndenService {
                 message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
                         .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di Anugrah Motor Tanjung Enim.\n");
                 message.append("Kami ingin menginformasikan bahwa pesanan anda telah tiba dan sudah tersedia di toko kami.");
-                message.append("\n\nSilakan datang ke lokasi kami untuk pengambilan barang. Terima kasih\n\n");
+                message.append("\n\nSilakan datang ke toko kami untuk pengambilan barang. Terima kasih\n\n");
                 message.append("--Pesan ini dibuat secara otomatis--");
             }
             return new ResponseForWhatsapp(true, "Berhasil memperbarui status data inden.", isOpenWa, phoneNumber, message.toString());
