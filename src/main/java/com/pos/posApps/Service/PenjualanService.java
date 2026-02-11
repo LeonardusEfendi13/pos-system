@@ -96,6 +96,11 @@ public class PenjualanService {
             return getPenjualanData(clientId, startDate, endDate, customerId, pageable);
         }
 
+        System.out.println("Cust ids: " + customerId);
+        if(customerId.isEmpty()){
+            customerId =  null;
+        }
+
         Page<TransactionEntity> transactionData = transactionRepository
                 .searchTransactions(
                         clientId,
