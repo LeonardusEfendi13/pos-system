@@ -120,7 +120,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="preorder, iterStat : ${preorderData}">
+                    <tr th:each="preorder, iterStat : ${preorderData}" th:attr="data-id=${preorder.preorderId}">
                         <td th:text="${(currentPage * size) + iterStat.index + 1}">1</td>
                         <td th:text="${#temporals.format(preorder.createdAt, 'dd MMMM yyyy', T(java.util.Locale).forLanguageTag('id'))}">
                             Tanggal Jual
@@ -172,7 +172,7 @@
         </div>
     </div>
     <div id="contextMenu" class="dropdown-menu" style="position:absolute; display:none; z-index:10000;">
-        <a class="dropdown-item" href="#" id="contextLunaskan">
+        <a class="dropdown-item" href="#" id="contextNotakan">
             Jadikan Nota Pembelian
         </a>
     </div>
@@ -240,23 +240,22 @@
     });
 
     document.addEventListener("DOMContentLoaded", function () {
-        const $contextMenu = $('#contextMenu');
-
+        let selectedRowId = null;
         $('#userTable tbody').on('contextmenu', 'tr', function (e) {
             e.preventDefault();
-<!--            selectedPembelianId = $(this).data('id');-->
-<!--            const isKredit = $(this).data('iskredit');-->
-<!--            const isLunas = $(this).data('islunas');-->
 
-<!--            $menuItem.toggleClass('disabled', !(isKredit && !isLunas));-->
-            $contextMenu.css({ display: 'block', left: e.pageX, top: e.pageY });
-        });
+            selectedRowId = $(this).data('id');
 
-        $(document).on('click', function () {
-            $contextMenu.hide();
+            // SET href di sini
+            $('#contextNotakan').attr('href', '/preorder/convert/' + selectedRowId);
+
+            $('#contextMenu').css({
+                display: 'block',
+                left: e.pageX,
+                top: e.pageY
+            });
         });
     });
-
 
 </script>
 </body>
