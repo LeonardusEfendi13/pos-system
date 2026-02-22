@@ -20,4 +20,8 @@ public class CreatePurchasingRequest {
     private boolean isCash;
     @JsonProperty("isPaid")
     private boolean isPaid;
+
+    @JsonProperty("isConverting")
+    private boolean isConverting;
+
 }

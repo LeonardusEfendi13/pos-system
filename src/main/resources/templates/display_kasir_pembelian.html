@@ -2498,15 +2498,12 @@
        totalPrice: grandTotal,
        isCash: isCash,
        poDate: document.getElementById("poDate").value,
-       poDueDate: poDueDate
+       poDueDate: poDueDate,
+       isConverting: false
      };
 
      sellTableBody.querySelectorAll("tr").forEach((row) => {
        const code = row.querySelector(".code-input").value;
-<!--       const product = masterProducts.find(p => p.shortName === code);-->
-<!--       if (!code || !product) {-->
-<!--         return;-->
-<!--       }-->
        if (code) {
          transactionData.pembelianDetailDTOS.push({
            code: code,
