@@ -1,0 +1,30 @@
+
+package com.pos.posApps.DTO.Dtos;
+
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ConvertToPembelianDTO {
+    private Long pembelianId;
+    private String noFaktur;
+    private LocalDateTime tanggalBeli;
+    private boolean isCash;
+    private LocalDateTime tanggalTempo;
+    private BigDecimal totalPrice;
+    private BigDecimal totalDisc;
+    private SupplierDTO supplierDTO;
+    private boolean isPaid;
+    private BigDecimal subtotal;
+    private List<PembelianDetailDTO> pembelianDetailDTOS;
+    private String accountName;
+    private Long preorderId;
+}

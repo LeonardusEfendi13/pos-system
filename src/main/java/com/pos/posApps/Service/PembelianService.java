@@ -220,11 +220,14 @@ public class PembelianService {
     public ResponseInBoolean createTransaction(CreatePurchasingRequest req, AccountEntity accountData) {
         String lastProduct = "Tanya Leon";
         ClientEntity clientData = accountData.getClientEntity();
+
         //Update data preorder kalau memang converting
         if(req.isConverting()){
-            //todo
             //Ambil code dan full name, cocokan, liat qty dari req.. pokoknya nanti qty_preorder - qty_req.. Kalau hasilnya <= 0, remove dari preorder.
-            preorderService.updatePreorderByConvertedData();
+            Boolean isPreorderUpdated = preorderService.updatePreorderByConvertedData(req.getPembelianDetailDTOS(), req.getPreorderId(), accountData.getClientEntity().getClientId());
+            if(!isPreorderUpdated){
+                return new ResponseInBoolean(false, "Gagal update data preorder");
+            }
         }
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());

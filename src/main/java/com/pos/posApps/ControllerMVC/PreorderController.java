@@ -1,9 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.PembelianDTO;
-import com.pos.posApps.DTO.Dtos.PreorderDTO;
-import com.pos.posApps.DTO.Dtos.ProductDTO;
-import com.pos.posApps.DTO.Dtos.SidebarDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
@@ -61,7 +58,7 @@ public class PreorderController {
         } catch (Exception e) {
             return "redirect:/login";
         }
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
@@ -196,10 +193,9 @@ public class PreorderController {
         if(authService.hasAccessToModifyData(accountEntity.getRole())){
             List<ProductDTO> productPage = productService.getProductData(clientEntity.getClientId(), PageRequest.of(0, 20), null, true).getContent();
             PreorderDTO preorderData = preorderService.getPreorderDataById(clientEntity.getClientId(), preorderId);
-            PembelianDTO pembelianData = preorderService.prepareDataForKasirPembelian(clientEntity.getClientId(), preorderData);
+            ConvertToPembelianDTO pembelianData = preorderService.prepareDataForKasirPembelian(clientEntity.getClientId(), preorderData, preorderId);
             List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
             List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientEntity.getClientId());
-            System.out.println("Pembelian data : " + pembelianData);
             model.addAttribute("pembelianData", pembelianData);
             model.addAttribute("productData", productPage);
             model.addAttribute("vehicleData", vehicleEntity);

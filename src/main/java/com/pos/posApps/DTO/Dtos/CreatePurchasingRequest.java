@@ -24,4 +24,6 @@ public class CreatePurchasingRequest {
     @JsonProperty("isConverting")
     private boolean isConverting;
 
+    private Long preorderId;
+
 }
