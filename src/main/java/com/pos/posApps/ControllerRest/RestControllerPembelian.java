@@ -51,7 +51,6 @@ public class RestControllerPembelian {
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
-//            clientData = authService.validateToken(token).getClientEntity();
             accountData = authService.validateToken(token);
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
@@ -65,7 +64,6 @@ public class RestControllerPembelian {
 
     @PostMapping("/edit/{purchasingId}")
     public ResponseEntity<String> editTransaction(@PathVariable("purchasingId") Long purchasingId, @RequestBody CreatePurchasingRequest req, HttpSession session) {
-//        ClientEntity clientData;
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);

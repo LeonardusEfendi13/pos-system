@@ -1,8 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.PreorderDTO;
-import com.pos.posApps.DTO.Dtos.ProductDTO;
-import com.pos.posApps.DTO.Dtos.SidebarDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Service.*;
 import jakarta.servlet.http.HttpSession;
@@ -60,7 +58,7 @@ public class PreorderController {
         } catch (Exception e) {
             return "redirect:/login";
         }
-        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().minusDays(7).toString() : startDate;
+        startDate = (startDate == null || startDate.isBlank()) ? LocalDate.now().withDayOfMonth(1).toString() : startDate;
         endDate = (endDate == null || endDate.isBlank()) ? LocalDate.now().toString() : endDate;
 
         LocalDateTime inputStartDate = LocalDate.parse(startDate).atStartOfDay();
@@ -180,6 +178,29 @@ public class PreorderController {
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Failed to delete data");
             return "redirect:/preorder";
+        }
+        return "redirect:/login";
+    }
+
+    @GetMapping("/convert/{preorderId}")
+    public String convertToPurchasings(@PathVariable("preorderId") Long preorderId, HttpSession session, RedirectAttributes redirectAttributes, Model model){
+        String token = (String) session.getAttribute(authSessionKey);
+        AccountEntity accountEntity = authService.validateToken(token);
+        ClientEntity clientEntity = accountEntity.getClientEntity();
+        if(clientEntity.getClientId() == null){
+            return "redirect:/login";
+        }
+        if(authService.hasAccessToModifyData(accountEntity.getRole())){
+            List<ProductDTO> productPage = productService.getProductData(clientEntity.getClientId(), PageRequest.of(0, 20), null, true).getContent();
+            PreorderDTO preorderData = preorderService.getPreorderDataById(clientEntity.getClientId(), preorderId);
+            ConvertToPembelianDTO pembelianData = preorderService.prepareDataForKasirPembelian(clientEntity.getClientId(), preorderData, preorderId);
+            List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
+            List<SupplierEntity> supplierEntities = supplierService.getSupplierList(clientEntity.getClientId());
+            model.addAttribute("pembelianData", pembelianData);
+            model.addAttribute("productData", productPage);
+            model.addAttribute("vehicleData", vehicleEntity);
+            model.addAttribute("supplierData", supplierEntities);
+            return "display_kasir_convert_pembelian";
         }
         return "redirect:/login";
     }

@@ -137,8 +137,6 @@ public class AccountController {
             redirectAttributes.addFlashAttribute("message", "Failed to Delete Account");
             return "redirect:/user";
         }
-
-        //todo add redirect attributes
         return "redirect:/login";
     }
 }

@@ -192,4 +192,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @Param("field") String field
     );
 
+    List<ProductEntity> findAllByShortNameInAndClientEntity_ClientIdAndDeletedAtIsNull(
+            List<String> shortNames, Long clientId);
+
 }

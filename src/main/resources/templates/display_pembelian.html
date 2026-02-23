@@ -136,12 +136,35 @@
             content: " *";
             color: red;
         }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white; /* solid background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        #loadingOverlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 <div class="page">
     <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
     <div class="page-wrapper">
+        <div id="loadingOverlay">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
         <div class="container-fluid">
             <h2 style="text-align:center; padding-top:10px">Riwayat Pembelian</h2>
 
@@ -404,6 +427,14 @@
 
     pembelianData.forEach(function (p) {
       detailsMap[p.pembelianId] = p.pembelianDetailDTOS;
+    });
+</script>
+<script>
+    // Hide spinner once everything is loaded
+    window.addEventListener("load", () => {
+        const overlay = document.getElementById("loadingOverlay");
+        overlay.classList.add("hidden");
+        setTimeout(() => overlay.remove(), 400); // Remove from DOM after fade out
     });
 </script>
 <!--Populate Bukti Bayar-->

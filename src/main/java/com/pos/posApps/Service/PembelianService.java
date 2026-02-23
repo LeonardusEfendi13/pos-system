@@ -48,6 +48,9 @@ public class PembelianService {
     @Autowired
     BuktiBayarRepository buktiBayarRepository;
 
+    @Autowired
+    PreorderService preorderService;
+
     public Page<PembelianDTO> getPembelianData(
             AccountEntity accountData,
             LocalDateTime startDate,
@@ -217,6 +220,15 @@ public class PembelianService {
     public ResponseInBoolean createTransaction(CreatePurchasingRequest req, AccountEntity accountData) {
         String lastProduct = "Tanya Leon";
         ClientEntity clientData = accountData.getClientEntity();
+
+        //Update data preorder kalau memang converting
+        if(req.isConverting()){
+            //Ambil code dan full name, cocokan, liat qty dari req.. pokoknya nanti qty_preorder - qty_req.. Kalau hasilnya <= 0, remove dari preorder.
+            Boolean isPreorderUpdated = preorderService.updatePreorderByConvertedData(req.getPembelianDetailDTOS(), req.getPreorderId(), accountData.getClientEntity().getClientId());
+            if(!isPreorderUpdated){
+                return new ResponseInBoolean(false, "Gagal update data preorder");
+            }
+        }
         //Cek no faktur
         Optional<PurchasingEntity> pembelian = purchasingRepository.findFirstByPurchasingNumberAndClientEntity_ClientIdAndDeletedAtIsNull(req.getPurchasingNumber(), clientData.getClientId());
         if (pembelian.isPresent()) {
@@ -228,10 +240,6 @@ public class PembelianService {
             if (supplierEntity.isEmpty()) {
                 return new ResponseInBoolean(false, "Supplier Tidak ada");
             }
-            //Get last Transaction id
-//            Long lastPurchasingId = purchasingRepository.findFirstByClientEntity_ClientIdAndDeletedAtIsNullOrderByPurchasingIdDesc(clientData.getClientId()).map(PurchasingEntity::getPurchasingId).orElse(0L);
-//            Long newPurchasingId = Generator.generateId(lastPurchasingId);
-
             //insert the transaction data
             PurchasingEntity purchasingEntity = new PurchasingEntity();
             purchasingEntity.setPurchasingNumber(req.getPurchasingNumber());
@@ -250,17 +258,11 @@ public class PembelianService {
             purchasingEntity.setAccountEntity(accountData);
             purchasingRepository.save(purchasingEntity);
 
-            //Insert all the transaction details
-//            Long lastTransactionDetailId = purchasingDetailRepository.findFirstByDeletedAtIsNullOrderByPurchasingDetailIdDesc().map(PurchasingDetailEntity::getPurchasingDetailId).orElse(0L);
-//            Long newPurchasingDetailId = Generator.generateId(lastTransactionDetailId);
-
             for (PurchasingDetailDTO dtos : req.getPembelianDetailDTOS()) {
-//                ProductEntity productEntity = productRepository.findFirstByFullNameAndShortNameAndDeletedAtIsNullAndClientEntity_ClientId(dtos.getName(), dtos.getCode(), clientData.getClientId());
                 ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
 
                 PurchasingDetailEntity purchasingDetailEntity = new PurchasingDetailEntity();
                 lastProduct = dtos.getCode();
-//                purchasingDetailEntity.setPurchasingDetailId(newPurchasingDetailId);
                 purchasingDetailEntity.setShortName(dtos.getCode());
                 purchasingDetailEntity.setFullName(dtos.getName());
                 purchasingDetailEntity.setQty(dtos.getQty());
@@ -286,7 +288,6 @@ public class PembelianService {
                     }
                 }
                 purchasingDetailRepository.save(purchasingDetailEntity);
-//                newPurchasingDetailId = Generator.generateId(newPurchasingDetailId);
                 //Update product stock
                 Long newStock = productEntity.getStock() + dtos.getQty();
                 productEntity.setSupplierPrice(dtos.getPrice());
