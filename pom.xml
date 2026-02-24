@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.pos</groupId>
 	<artifactId>posApps</artifactId>
-	<version>1.5.0</version>
+	<version>1.5.1</version>
 	<name>posApps</name>
 	<description>Home made POS Application</description>
 	<url/>
