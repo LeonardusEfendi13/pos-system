@@ -284,6 +284,10 @@ public class PreorderService {
                     preorderDetailRepository.delete(preorderDetailData);
                 }
             }
+
+            if(newTotalPrice.equals(BigDecimal.ZERO)){
+                preorderEntity.setDeletedAt(getCurrentTimestamp());
+            }
             //Save new total price
             preorderEntity.setTotalPrice(newTotalPrice);
             preorderRepository.save(preorderEntity);
