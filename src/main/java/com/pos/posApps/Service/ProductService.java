@@ -210,6 +210,7 @@ public class ProductService {
             return new ResponseInBoolean(true, "Berhasil tambah produk baru");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            System.out.println("Exception : " + e.getMessage());
             return new ResponseInBoolean(false, "Gagal insert produk, hubungi admin!");
         }
 
@@ -255,7 +256,7 @@ public class ProductService {
             productEntity.setFullName(req.getFullName());
             productEntity.setSupplierPrice(req.getSupplierPrice());
             productEntity.setSupplierEntity(supplierEntity);
-            productEntity.setStock(req.getStock());
+            productEntity.setStock(req.getStock() != null ? req.getStock() : 0L);
             productEntity.setMinimumStock(req.getMinimumStock());
             productRepository.save(productEntity);
 

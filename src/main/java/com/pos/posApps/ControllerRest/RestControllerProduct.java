@@ -1,6 +1,7 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
+import com.pos.posApps.DTO.Dtos.EditProductRequest;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.AccountEntity;
@@ -13,7 +14,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +63,32 @@ public class RestControllerProduct {
                 return ResponseEntity.ok(isInserted.getMessage());
             }
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(isInserted.getMessage());
+        }
+        return ResponseEntity.status(UNAUTHORIZED).body("Anda tidak memiliki akses untuk ini!");
+    }
+
+    @PostMapping("/edit")
+    public ResponseEntity<String> editProducts(HttpSession session, @RequestBody EditProductRequest req, RedirectAttributes redirectAttributes, String search) {
+        AccountEntity accEntity;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            accEntity = authService.validateToken(token);
+            if (accEntity.getClientEntity().getClientId() == null) {
+                redirectAttributes.addFlashAttribute("status", true);
+                redirectAttributes.addFlashAttribute("message", "Session Expired");
+                return ResponseEntity.status(UNAUTHORIZED).body("Harap login ulang");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).body("Harap login ulang");
+        }
+        String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
+
+        if (authService.hasAccessToModifyData(accEntity.getRole())) {
+            ResponseInBoolean isEdited = productService.editProducts(req, accEntity.getClientEntity());
+            if(isEdited.isStatus()){
+                return ResponseEntity.ok(isEdited.getMessage());
+            }
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(isEdited.getMessage());
         }
         return ResponseEntity.status(UNAUTHORIZED).body("Anda tidak memiliki akses untuk ini!");
     }

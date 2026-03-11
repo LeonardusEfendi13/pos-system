@@ -486,7 +486,7 @@
                             </table>
                         </div>
                         <div class="modal-footer py-2">
-                            <button type="submit" class="btn btn-primary" id="addProductForm">Simpan</button>
+                            <button type="button" class="btn btn-primary" id="addProductForm">Simpan</button>
                             <button
                                     type="button"
                                     class="btn btn-secondary"
@@ -615,275 +615,320 @@
     }
     /*]]>*/
 </script>
-<script>
-    $(document).ready(function () {
-        const barangModal = document.getElementById('barangModal');
-        const barangForm = document.getElementById('barangForm');
-        const rupiahFormatter = new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0
+<script th:inline="none">
+    function parseRupiah(rupiahString) {
+      if (!rupiahString) return 0;
+      return parseFloat(
+        rupiahString.replace(/^Rp\s*|\./g, "").replace(",", ".") || 0,
+      );
+    }
+$(document).ready(function () {
+    const barangModal = document.getElementById('barangModal');
+    const barangForm = document.getElementById('barangForm');
+    const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+    });
+
+    const hargaBeliInput = document.getElementById("supplierPrice");
+    const hargaJual1 = document.getElementById("hargaJual1");
+    const hargaJual2 = document.getElementById("hargaJual2");
+    const hargaJual3 = document.getElementById("hargaJual3");
+    const pct1 = document.getElementById("pct1");
+    const pct2 = document.getElementById("pct2");
+    const pct3 = document.getElementById("pct3");
+    const rupiahInputs = document.querySelectorAll(".rupiah-input");
+    const rupiahPrices = document.querySelectorAll(".rupiah-price");
+
+    // --- Helper Functions ---
+    function updatePercentage(hargaJualInput, pctOutput) {
+        const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+        const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
+        const hargaJual = parseCurrency(hargaJualRaw);
+
+        const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
+        const result = calculatedPct.toFixed(2);
+        pctOutput.value = result;
+    }
+
+    function updateHargaJual(pctInput, jualOutput) {
+        const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
+        const percentage = parseFloat(pctInput.value) || 0;
+        const calculatedHargaJual = hargaBeli + (hargaBeli * (percentage / 100));
+        jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
+    }
+
+    function parseCurrency(input) {
+        if (!input) return 0;
+
+        // Remove currency symbol and spaces
+        let cleaned = input.replace(/[^0-9.,]/g, '');
+
+        // Remove thousands separator
+        cleaned = cleaned.replace(/\./g, '');
+
+        // Replace decimal comma with dot
+        cleaned = cleaned.replace(/,/g, '.');
+
+        return parseFloat(cleaned) || 0;
+    }
+
+    function cleanRupiahToNumber(value) {
+        return value.replace(/[^0-9]/g, '');
+    }
+
+    function clearForm() {
+        barangForm.reset();
+        $('#modalLabel').text('Tambah Master Barang & Jasa');
+        $('#barangForm').attr('action', '/api/product/add');
+
+        $('#productId').val(''); // Clear the hidden ID for new products
+
+        // 🔥 CLEAR COMPATIBLE VEHICLE CHIPS
+        $('#vehicleChips').empty();
+
+        // Optional: hide inline form if open
+        $('#vehicleInlineForm').addClass('d-none');
+        $('#shortName').focus();
+    }
+
+    function populateForm(data) {
+        $('#modalLabel').text('Edit Master Barang & Jasa');
+        $('#barangForm').attr('action', '/api/product/edit');
+        $('#productId').val(data.productId); // Set the hidden ID for editing
+        // Populate other fields
+        $('#shortName').val(data.shortName);
+        $('#fullName').val(data.fullName);
+        $('#supplierId').val(data.supplierId);
+        $('#stok').val(data.stok);
+        $('#minimumStock').val(data.minimumStock);
+        $('#supplierPrice').val(rupiahFormatter.format(data.hargaBeli));
+
+       // ===== productPricesDTO SAFE ACCESS =====
+        const prices = data.productPricesDTO || [];
+
+        const p1 = prices[0] || {};
+        const p2 = prices[1] || {};
+        const p3 = prices[2] || {};
+
+        $('#hargaJual1').val(p1.price ? rupiahFormatter.format(p1.price) : '');
+        $('#hargaJual2').val(p2.price ? rupiahFormatter.format(p2.price) : '');
+        $('#hargaJual3').val(p3.price ? rupiahFormatter.format(p3.price) : '');
+
+        $('#pct1').val(p1.percentage ?? '');
+        $('#pct2').val(p2.percentage ?? '');
+        $('#pct3').val(p3.percentage ?? '');
+
+        $('#maxqty1').val(p1.maximalCount ?? '');
+        $('#maxqty2').val(p2.maximalCount ?? '');
+        $('#maxqty3').val(p3.maximalCount ?? '');
+
+        const container = document.getElementById("vehicleChips");
+        container.innerHTML = "";  // clear old chips
+        vehicleIndex = 0;          // reset index for this modal
+
+        const compatible = data.compatibleProductsDTOS || [];
+
+        compatible.forEach((cp) => {
+            const chip = document.createElement("div");
+            chip.className = "vehicle-chip";
+
+            chip.innerHTML = `
+                <div class="chip-text">
+                    <span class="chip-title">${cp.model}</span>
+                    <span class="chip-year">${cp.yearStart} – ${cp.yearEnd}</span>
+                </div>
+
+                <button type="button"
+                        class="chip-remove"
+                        onclick="this.closest('.vehicle-chip').remove()">
+                    &times;
+                </button>
+
+                <input type="hidden" name="compatibleVehicles[${vehicleIndex}].vehicleId" value="${cp.vehicleId}">
+                <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearStart" value="${cp.yearStart}">
+                <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearEnd" value="${cp.yearEnd}">
+            `;
+
+            container.appendChild(chip);
+            vehicleIndex++;
         });
+    }
 
-        const hargaBeliInput = document.getElementById("supplierPrice");
-        const hargaJual1 = document.getElementById("hargaJual1");
-        const hargaJual2 = document.getElementById("hargaJual2");
-        const hargaJual3 = document.getElementById("hargaJual3");
-        const pct1 = document.getElementById("pct1");
-        const pct2 = document.getElementById("pct2");
-        const pct3 = document.getElementById("pct3");
-        const rupiahInputs = document.querySelectorAll(".rupiah-input");
-        const rupiahPrices = document.querySelectorAll(".rupiah-price");
+    // Listener for the "Add Product" button to open the modal and clear the form.
+    $('#add-barang-btn').on('click', function () {
+        clearForm();
+        $('#barangModal').modal('show');
+    });
 
-        // --- Helper Functions ---
-        function updatePercentage(hargaJualInput, pctOutput) {
-            const hargaBeli = parseCurrency(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
-            const hargaJualRaw = (hargaJualInput.value || "").toString().replace(/[^0-9.]/g, '');
-            const hargaJual = parseCurrency(hargaJualRaw);
+    // Listener for the "Edit" buttons to open the modal and populate the form.
+    // The data attributes on these buttons are crucial for this to work.
+    $('.edit-barang-btn').on('click', function () {
+        const data = $(this).data();
+        const id = $(this).data('productid');
+        const product = productData.find(p => p.productId === id);
+        populateForm(product);
+        $('#barangModal').modal('show');
+    });
 
-            const calculatedPct = ((hargaJual - hargaBeli) / hargaBeli) * 100;
-            const result = calculatedPct.toFixed(2);
-            pctOutput.value = result;
-        }
+    // Event listeners for price and percentage inputs (remains the same)
+    hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
+    hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
+    hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));
+    pct1.addEventListener('input', () => updateHargaJual(pct1, hargaJual1));
+    pct2.addEventListener('input', () => updateHargaJual(pct2, hargaJual2));
+    pct3.addEventListener('input', () => updateHargaJual(pct3, hargaJual3));
 
-        function updateHargaJual(pctInput, jualOutput) {
-            const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^0-9]/g, '')) || 0;
-            const percentage = parseFloat(pctInput.value) || 0;
-            const calculatedHargaJual = hargaBeli + (hargaBeli * (percentage / 100));
-            jualOutput.value = rupiahFormatter.format(calculatedHargaJual);
-        }
-
-        function parseCurrency(input) {
-            if (!input) return 0;
-
-            // Remove currency symbol and spaces
-            let cleaned = input.replace(/[^0-9.,]/g, '');
-
-            // Remove thousands separator
-            cleaned = cleaned.replace(/\./g, '');
-
-            // Replace decimal comma with dot
-            cleaned = cleaned.replace(/,/g, '.');
-
-            return parseFloat(cleaned) || 0;
-        }
-
-        function cleanRupiahToNumber(value) {
-            return value.replace(/[^0-9]/g, '');
-        }
-
-        function clearForm() {
-            barangForm.reset();
-            $('#modalLabel').text('Tambah Master Barang & Jasa');
-            $('#barangForm').attr('action', '/products/add');
-            $('#productId').val(''); // Clear the hidden ID for new products
-
-            // 🔥 CLEAR COMPATIBLE VEHICLE CHIPS
-            $('#vehicleChips').empty();
-
-            // Optional: hide inline form if open
-            $('#vehicleInlineForm').addClass('d-none');
-            $('#shortName').focus();
-        }
-
-        function populateForm(data) {
-            $('#modalLabel').text('Edit Master Barang & Jasa');
-            $('#barangForm').attr('action', '/products/edit');
-            $('#productId').val(data.productId); // Set the hidden ID for editing
-            // Populate other fields
-            $('#shortName').val(data.shortName);
-            $('#fullName').val(data.fullName);
-            $('#supplierId').val(data.supplierId);
-            $('#stok').val(data.stok);
-            $('#minimumStock').val(data.minimumStock);
-            $('#supplierPrice').val(rupiahFormatter.format(data.hargaBeli));
-
-           // ===== productPricesDTO SAFE ACCESS =====
-            const prices = data.productPricesDTO || [];
-
-            const p1 = prices[0] || {};
-            const p2 = prices[1] || {};
-            const p3 = prices[2] || {};
-
-            $('#hargaJual1').val(p1.price ? rupiahFormatter.format(p1.price) : '');
-            $('#hargaJual2').val(p2.price ? rupiahFormatter.format(p2.price) : '');
-            $('#hargaJual3').val(p3.price ? rupiahFormatter.format(p3.price) : '');
-
-            $('#pct1').val(p1.percentage ?? '');
-            $('#pct2').val(p2.percentage ?? '');
-            $('#pct3').val(p3.percentage ?? '');
-
-            $('#maxqty1').val(p1.maximalCount ?? '');
-            $('#maxqty2').val(p2.maximalCount ?? '');
-            $('#maxqty3').val(p3.maximalCount ?? '');
-
-            const container = document.getElementById("vehicleChips");
-            container.innerHTML = "";  // clear old chips
-            vehicleIndex = 0;          // reset index for this modal
-
-            const compatible = data.compatibleProductsDTOS || [];
-
-            compatible.forEach((cp) => {
-                const chip = document.createElement("div");
-                chip.className = "vehicle-chip";
-
-                chip.innerHTML = `
-                    <div class="chip-text">
-                        <span class="chip-title">${cp.model}</span>
-                        <span class="chip-year">${cp.yearStart} – ${cp.yearEnd}</span>
-                    </div>
-
-                    <button type="button"
-                            class="chip-remove"
-                            onclick="this.closest('.vehicle-chip').remove()">
-                        &times;
-                    </button>
-
-                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].vehicleId" value="${cp.vehicleId}">
-                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearStart" value="${cp.yearStart}">
-                    <input type="hidden" name="compatibleVehicles[${vehicleIndex}].yearEnd" value="${cp.yearEnd}">
-                `;
-
-                container.appendChild(chip);
-                vehicleIndex++;
-            });
-        }
-
-        // Listener for the "Add Product" button to open the modal and clear the form.
-        $('#add-barang-btn').on('click', function () {
-            clearForm();
-            $('#barangModal').modal('show');
+    // Event listeners for Rupiah formatting (remains the same)
+    rupiahInputs.forEach(function (input) {
+        input.addEventListener("input", function () {
+            let rawValue = this.value.replace(/[^0-9]/g, '');
+            this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
         });
-
-        // Listener for the "Edit" buttons to open the modal and populate the form.
-        // The data attributes on these buttons are crucial for this to work.
-        $('.edit-barang-btn').on('click', function () {
-            const data = $(this).data();
-            const id = $(this).data('productid');
-            const product = productData.find(p => p.productId === id);
-            populateForm(product);
-            $('#barangModal').modal('show');
-        });
-
-        // Event listeners for price and percentage inputs (remains the same)
-        hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
-        hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
-        hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));
-        pct1.addEventListener('input', () => updateHargaJual(pct1, hargaJual1));
-        pct2.addEventListener('input', () => updateHargaJual(pct2, hargaJual2));
-        pct3.addEventListener('input', () => updateHargaJual(pct3, hargaJual3));
-
-        // Event listeners for Rupiah formatting (remains the same)
-        rupiahInputs.forEach(function (input) {
-            input.addEventListener("input", function () {
-                let rawValue = this.value.replace(/[^0-9]/g, '');
-                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
-            });
-            input.addEventListener("blur", function () {
-                let rawValue = this.value.replace(/[^0-9]/g, '');
-                this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
-            });
-        });
-
-        document.querySelectorAll('.rupiah-price').forEach(element => {
-            const price = parseFloat(element.getAttribute('data-price'));
-            if (!isNaN(price)) {
-                element.textContent = rupiahFormatter.format(price);
-            }
-        });
-
-        // Form submission listener to clean up Rupiah values before submission.
-        document.getElementById("addProductForm").addEventListener("click", function (e) {
-            e.preventDefault();
-
-            const form = document.getElementById("barangForm");
-
-            // 1️⃣ Convert all text inputs to uppercase
-            form.querySelectorAll("input[type='text']").forEach(input => {
-                if (input.value && input.value.trim() !== "") {
-                    input.value = input.value.toUpperCase();
-                }
-            });
-
-            // 2️⃣ Clean Rupiah values before submitting
-            rupiahInputs.forEach(input => {
-                if (!input?.value || input.value.trim() === "") return;
-                const cleaned = cleanRupiahToNumber(input.value);
-                input.value = cleaned;
-            });
-
-            // 3️⃣ Submit form
-            form.submit();
-        });
-
-
-        <!--        Handle maxqty-->
-        const dirtyFlags = {
-            maxqty2: false,
-            maxqty3: false
-        };
-
-        function onInputChange() {
-            dirtyFlags[this.id] = true; // User changed the value, mark dirty
-        }
-
-        function validateOnBlur() {
-            const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
-            const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
-            const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
-
-            if (this.id === 'maxqty2') {
-                if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
-                    alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
-                    dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
-                    this.focus(); // refocus to fix
-                }
-            }
-
-            if (this.id === 'maxqty3') {
-                if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
-                    alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
-                    dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
-                    this.focus(); // refocus to fix
-                }
-            }
-        }
-
-        const maxqty2Input = document.getElementById('maxqty2');
-        const maxqty3Input = document.getElementById('maxqty3');
-
-        maxqty2Input.addEventListener('input', onInputChange);
-        maxqty3Input.addEventListener('input', onInputChange);
-
-        maxqty2Input.addEventListener('blur', validateOnBlur);
-        maxqty3Input.addEventListener('blur', validateOnBlur);
-
-        $('#productTable').DataTable({
-            paging: false,
-            pageLength: 10,
-            lengthMenu: [5, 10, 25, 50],
-            ordering: true,
-            order: [],
-            info: false,
-            searching: false,
-            scrollX: true,
-            language: {
-                zeroRecords: "Data tidak ditemukan"
-            }
-        });
-
-        const $searchInput = $('#searchInput');
-        const baseUrl = '/products';
-
-        document.getElementById("searchKey").value = $searchInput.val();
-
-        $('#searchButton').on('click', function(e) {
-            if ($searchInput.val().trim() === '') {
-                e.preventDefault();
-                window.location.href = baseUrl;
-            }
+        input.addEventListener("blur", function () {
+            let rawValue = this.value.replace(/[^0-9]/g, '');
+            this.value = rawValue ? rupiahFormatter.format(rawValue) : '';
         });
     });
+
+    document.querySelectorAll('.rupiah-price').forEach(element => {
+        const price = parseFloat(element.getAttribute('data-price'));
+        if (!isNaN(price)) {
+            element.textContent = rupiahFormatter.format(price);
+        }
+    });
+
+    // Form submission listener to clean up Rupiah values before submission.
+    document.getElementById("addProductForm")
+        .addEventListener("click", async function (e) {
+
+        e.preventDefault();
+
+        const form = document.getElementById("barangForm");
+
+        // 1️⃣ uppercase
+        form.querySelectorAll("input[type='text']").forEach(input => {
+            if (input.value && input.value.trim() !== "") {
+                input.value = input.value.toUpperCase();
+            }
+        });
+
+        // 2️⃣ clean rupiah
+        rupiahInputs.forEach(input => {
+            if (!input?.value || input.value.trim() === "") return;
+            input.value = cleanRupiahToNumber(input.value);
+        });
+
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => {
+          const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+          if (match) {
+            const [, arrName, index, field] = match;
+            jsonData[arrName] = jsonData[arrName] || [];
+            jsonData[arrName][index] = jsonData[arrName][index] || {};
+            jsonData[arrName][index][field] =
+              field === "price" ? parseRupiah(value) : value;
+          } else {
+            jsonData[key] = key.toLowerCase().includes("price")
+              ? parseRupiah(value)
+              : value;
+          }
+        });
+
+        try {
+            const endpoint = form.getAttribute("action");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(jsonData),
+            });
+          const responseText = await response.text();
+
+          if (!response.ok) {
+            throw new Error(responseText || "Failed to save product");
+          }
+          alert(responseText);
+          form.reset();
+          location.reload();
+        } catch (err) {
+            console.log("Error ", err);
+            alert(err.message);
+        }
+    });
+
+
+    <!--        Handle maxqty-->
+    const dirtyFlags = {
+        maxqty2: false,
+        maxqty3: false
+    };
+
+    function onInputChange() {
+        dirtyFlags[this.id] = true; // User changed the value, mark dirty
+    }
+
+    function validateOnBlur() {
+        const maxqty1 = parseInt(document.getElementById('maxqty1').value) || 0;
+        const maxqty2 = parseInt(document.getElementById('maxqty2').value) || 0;
+        const maxqty3 = parseInt(document.getElementById('maxqty3').value) || 0;
+
+        if (this.id === 'maxqty2') {
+            if (dirtyFlags.maxqty2 && !(maxqty2 > maxqty1)) {
+                alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+                dirtyFlags.maxqty2 = false;  // reset dirty flag after alert
+                this.focus(); // refocus to fix
+            }
+        }
+
+        if (this.id === 'maxqty3') {
+            if (dirtyFlags.maxqty3 && !(maxqty3 > maxqty2 && maxqty3 > maxqty1)) {
+                alert('Maks Qty tidak boleh lebih kecil dari nilai sebelumnya');
+                dirtyFlags.maxqty3 = false;  // reset dirty flag after alert
+                this.focus(); // refocus to fix
+            }
+        }
+    }
+
+    const maxqty2Input = document.getElementById('maxqty2');
+    const maxqty3Input = document.getElementById('maxqty3');
+
+    maxqty2Input.addEventListener('input', onInputChange);
+    maxqty3Input.addEventListener('input', onInputChange);
+
+    maxqty2Input.addEventListener('blur', validateOnBlur);
+    maxqty3Input.addEventListener('blur', validateOnBlur);
+
+    $('#productTable').DataTable({
+        paging: false,
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50],
+        ordering: true,
+        order: [],
+        info: false,
+        searching: false,
+        scrollX: true,
+        language: {
+            zeroRecords: "Data tidak ditemukan"
+        }
+    });
+
+    const $searchInput = $('#searchInput');
+    const baseUrl = '/products';
+
+    document.getElementById("searchKey").value = $searchInput.val();
+
+    $('#searchButton').on('click', function(e) {
+        if ($searchInput.val().trim() === '') {
+            e.preventDefault();
+            window.location.href = baseUrl;
+        }
+    });
+});
 </script>
 </body>
 </html>
