@@ -17,7 +17,7 @@ public class VehicleService {
 
     public List<VehicleEntity> getVehicleList(String brand){
         if(brand == null || brand.isBlank()){
-            return vehicleRepository.findAll();
+            return vehicleRepository.findAllOrderByModelAsc();
         }
         return vehicleRepository.findAllByBrandOrderByModelAsc(brand);
     }
