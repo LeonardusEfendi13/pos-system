@@ -1028,17 +1028,27 @@
         const jsonData = {};
 
         formData.forEach((value, key) => {
+            // 1. Clean the value and check if it's empty
+            const trimmedValue = typeof value === 'string' ? value.trim() : value;
+
+            // If value is empty, null, or just whitespace, skip this iteration
+            if (!trimmedValue && trimmedValue !== 0) return;
+
             const match = key.match(/^([^\[]+)\[(\d+)]\.(.+)$/);
+
             if (match) {
                 const [, arrName, index, field] = match;
                 jsonData[arrName] = jsonData[arrName] || [];
                 jsonData[arrName][index] = jsonData[arrName][index] || {};
+
+                // Use trimmedValue for the assignment
                 jsonData[arrName][index][field] =
-                    field === "price" ? parseRupiah(value) : value;
+                    field === "price" ? parseRupiah(trimmedValue) : trimmedValue;
             } else {
+                // Use trimmedValue for the assignment
                 jsonData[key] = key.toLowerCase().includes("price")
-                    ? parseRupiah(value)
-                    : value;
+                    ? parseRupiah(trimmedValue)
+                    : trimmedValue;
             }
         });
 
@@ -1160,6 +1170,12 @@
         });
 
         // Event listeners for price and percentage inputs (remains the same)
+        hargaBeliInput.addEventListener('input', () => {
+            // When Purchase Price changes, recalculate all percentages
+            updatePercentage(hargaJual1, pct1);
+            updatePercentage(hargaJual2, pct2);
+            updatePercentage(hargaJual3, pct3);
+        });
         hargaJual1.addEventListener("input", () =>
             updatePercentage(hargaJual1, pct1)
         );
