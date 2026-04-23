@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerRest;
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
+import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
@@ -46,12 +47,16 @@ public class RestControllerCashier {
     @GetMapping("/transaction/revenue")
     public ResponseEntity<BigDecimal> getRevenue(HttpSession session){
         ClientEntity clientData;
+        AccountEntity accountEntity;
         try {
             String token = (String) session.getAttribute(authSessionKey);
-            clientData = authService.validateToken(token).getClientEntity();
-            BigDecimal revenue = penjualanService.getTotalRevenues(clientData.getClientId());
+            accountEntity = authService.validateToken(token);
+            clientData = accountEntity.getClientEntity();
+            BigDecimal revenue = BigDecimal.ZERO;
+            if(accountEntity.getRole() == Roles.SUPER_ADMIN){
+                revenue = penjualanService.getTotalRevenues(clientData.getClientId());
+            }
             return ResponseEntity.ok(revenue);
-
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body(BigDecimal.ZERO);
         }
