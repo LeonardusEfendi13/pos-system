@@ -152,6 +152,7 @@
                         <th>Nama Barang</th>
                         <th>Minimum Stock</th>
                         <th>Stock</th>
+                        <th>Harga Beli</th>
                         <th style="text-align:center">
                             <input type="checkbox" id="select-all"/>
                             <label for="select-all" style="margin-left: 5px;">
@@ -168,6 +169,7 @@
                         <td th:text="${product.fullName}">Nama</td>
                         <td th:text="${product.minimumStock}">0</td>
                         <td th:text="${product.stok}">0</td>
+                        <td class="rupiah" th:text="${product.hargaBeli}">Rp 0</td>
                         <td class="text-center">
                             <input type="checkbox" name="selectedProducts"
                                    th:value="${product.productId}"
@@ -265,6 +267,16 @@
 
 <!-- Main JS (placed at bottom so DOM is present) -->
 <script>
+    document.querySelectorAll(".rupiah").forEach(el => {
+        const value = Number(el.textContent);
+
+        el.textContent = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0
+        }).format(value);
+    });
+
     // Wait for deferred scripts (bootstrap/jQuery) to load if they were deferred.
     (function () {
         // Utility: currency formatting (IDR)
