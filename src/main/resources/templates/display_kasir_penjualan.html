@@ -1533,6 +1533,75 @@
         priceInputEl._recalcListener = listener;
     }
 
+    <!--Start Apply for KING customer-->
+    let activeCustomer = null;
+
+    customerSelect.addEventListener("change", async function () {
+        const customerId = this.value;
+
+        activeCustomer = masterCustomers.find(
+            c => String(c.customerId) === String(customerId)
+        ) || null;
+
+        // kalau bukan king, stop
+        if (!activeCustomer || !activeCustomer.king) return;
+
+        // update semua row lama
+        const rows = [...document.querySelectorAll("#sellTableBody tr")];
+
+        for (const row of rows) {
+            await applyKingPriceToRow(row);
+        }
+    });
+
+    async function applyKingPriceToRow(row) {
+        if (!activeCustomer || !activeCustomer.king) return;
+        const codeInput = row.querySelector(".code-input");
+        const priceInput = row.querySelector(".price-input");
+        if (!codeInput || !priceInput) return;
+
+        const kode = codeInput.value.trim();
+        if (!kode) return;
+
+        try {
+            const res = await fetch(
+                `/api/price-list/king?kode=${encodeURIComponent(kode)}`
+            );
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            if (data != 0) {
+                // ✅ pakai harga king
+                priceInput.value = formatRupiah(data);
+                row.dataset.lockKingPrice = "true";
+
+                updateTotalRow(row);
+
+                priceInput.style.backgroundColor = "#39ff14";
+
+                clearTimeout(priceInput._markTimer);
+                priceInput._markTimer = setTimeout(() => {
+                    priceInput.style.backgroundColor = "";
+                }, 2000);
+
+            } else {
+                // ✅ fallback ke tiering normal
+                row.dataset.lockKingPrice = "false";
+
+                const qty = parseInt(row.querySelector(".qty-input").value || "1");
+                const newPrice = getPriceByQty(product, qty);
+
+                priceInput.value = formatRupiah(newPrice);
+                updateTotalRow(row);
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     function addNewRow(focus = true) {
         const rows = sellTableBody.querySelectorAll("tr");
         if (rows.length > 0) {
@@ -1555,7 +1624,7 @@
   <td><input type="number" class="form-control form-control-sm qty-input" min="1" autocomplete="off"/></td>
   <td><input type="text" class="form-control form-control-sm price-input" autocomplete="off"/></td>
   <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" autocomplete="off"/></td>
-  <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" autocomplete="off"/></td>
+  <td><input type="text" class="form-control form-control-sm discount-amount-input" min="0" autocomplete="off"/></td>
   <td class="total-cell"></td>
   <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" autocomplete="off" disabled/></td>
 <td>
@@ -1570,6 +1639,12 @@
         const codeInput = row.querySelector(".code-input");
         const nameInput = row.querySelector(".name-input");
         const priceInput = row.querySelector(".price-input");
+        const discAmountInput = row.querySelector(".discount-amount-input");
+        discAmountInput.addEventListener("blur", () => {
+            const val = parseRupiah(discAmountInput.value);
+            discAmountInput.value = formatRupiah(val);
+        });
+
         // ✅ Hanya izinkan angka pada price-input
         priceInput.addEventListener("keypress", (e) => {
           const char = String.fromCharCode(e.which);
@@ -1650,7 +1725,6 @@
 
         const qtyInput = row.querySelector(".qty-input");
         const discPercentInput = row.querySelector(".discount-percent-input");
-        const discAmountInput = row.querySelector(".discount-amount-input");
         const cekHargaBtn = row.querySelector(".cek-harga-btn");
         const pctSuggestInput = row.querySelector(".pct-suggest-input");
 
@@ -1811,16 +1885,38 @@
 
         qtyInput.addEventListener("input", () => {
             const code = codeInput.value.trim();
+
             const product =
-                masterProducts.find((p) => p.shortName === code) ||
-                dynamicProductsCache.find((p) => p.shortName === code);
+                masterProducts.find(p => p.shortName === code) ||
+                dynamicProductsCache.find(p => p.shortName === code);
 
-            let qty = parseInt(qtyInput.value);
-            if (product && qty > 0) {
-                let newPrice = getPriceByQty(product, qty);
-                priceInput.value = formatRupiah(newPrice);
-                recalculateProfitPercentage(priceInput, product.hargaBeli);
+            let qty = parseInt(qtyInput.value) || 0;
 
+            // kalau bukan king price → tiering jalan
+            if (row.dataset.lockKingPrice !== "true") {
+                if (product && qty > 0) {
+                    let newPrice = getPriceByQty(product, qty);
+                    priceInput.value = formatRupiah(newPrice);
+                }
+            }
+
+            const price = parseRupiah(priceInput.value);
+            const subtotal = price * qty;
+
+            const discPercent = parseFloat(discPercentInput.value) || 0;
+            const discAmount = parseFloat(discAmountInput.value) || 0;
+
+            // kalau ada disc %, recalc disc Rp
+            if (discPercent > 0) {
+                discAmountInput.value = formatRupiah(Math.round(
+                    subtotal * discPercent / 100
+                ));
+            }
+            // kalau pakai disc Rp manual, recalc %
+            else if (discAmount > 0 && subtotal > 0) {
+                discPercentInput.value = (
+                    discAmount / subtotal * 100
+                ).toFixed(2);
             }
 
             updateTotalRow(row);
@@ -1906,7 +2002,7 @@
             const discountPercent = parseFloat(discPercentInput.value) || 0;
             if (price * qty > 0) {
                 const discountAmount = price * qty * (discountPercent / 100);
-                discAmountInput.value = Math.round(discountAmount);
+                discAmountInput.value = formatRupiah(Math.round(discountAmount));
             }
             updateTotalRow(row);
         });
@@ -1977,6 +2073,9 @@
         row.querySelector(".discount-amount-input").value = 0;
         row.querySelector(".stok-input").value = product.stok;
         updateTotalRow(row);
+        setTimeout(() => {
+            applyKingPriceToRow(row);
+        }, 0);
     }
 
     function updateTotalRow(r) {
@@ -2622,9 +2721,7 @@
                     name: row.querySelector(".name-input").value,
                     price: parseRupiah(row.querySelector(".price-input").value),
                     qty: parseInt(row.querySelector(".qty-input").value),
-                    discAmount: parseFloat(
-                        row.querySelector(".discount-amount-input").value
-                    ),
+                    discAmount: parseRupiah(row.querySelector(".discount-amount-input").value),
                     total: parseFloat(
                         row
                             .querySelector(".total-cell")
@@ -2952,12 +3049,12 @@
     <td><input type="text" class="form-control form-control-sm price-input" value="${formatRupiah(
                 detail.price
             )}" autocomplete="off"/></td>
-    <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${
-                (detail.discAmount / (detail.total + detail.discAmount)) * 100
+    <td><input type="number" class="form-control form-control-sm discount-percent-input" min="0" max="100" value="${(
+                (detail.discAmount / (detail.total + detail.discAmount)) * 100).toFixed(2)
             }" autocomplete="off"/></td>
-    <td><input type="number" class="form-control form-control-sm discount-amount-input" min="0" value="${
+    <td><input type="text" class="form-control form-control-sm discount-amount-input" min="0" value="${formatRupiah(
                 detail.discAmount
-            }" autocomplete="off"></td>
+            )}" autocomplete="off"></td>
     <td class="total-cell">${formatRupiah(detail.total)}</td>
     <td><input type="text" style="text-align:center" class="form-control form-control-sm stok-input" min="0" value="N/A" autocomplete="off" disabled/></td>
     <td>
@@ -2973,6 +3070,12 @@
             const codeInput = row.querySelector(".code-input");
             const qtyInput = row.querySelector(".qty-input");
             const priceInput = row.querySelector(".price-input");
+            const discAmountInput = row.querySelector(".discount-amount-input");
+            discAmountInput.addEventListener("blur", () => {
+                const val = parseRupiah(discAmountInput.value);
+                discAmountInput.value = formatRupiah(val);
+            });
+
             // ✅ Hanya izinkan angka pada price-input
             priceInput.addEventListener("keypress", (e) => {
               const char = String.fromCharCode(e.which);
@@ -3038,7 +3141,6 @@
             });
 
             const discPercentInput = row.querySelector(".discount-percent-input");
-            const discAmountInput = row.querySelector(".discount-amount-input");
             const cekHargaBtn = row.querySelector(".cek-harga-btn");
 
             // --- Tombol cek harga
@@ -3198,15 +3300,38 @@
 
             qtyInput.addEventListener("input", () => {
                 const code = codeInput.value.trim();
-                const product =
-                    masterProducts.find((p) => p.shortName === code) ||
-                    dynamicProductsCache.find((p) => p.shortName === code);
 
-                let qty = parseInt(qtyInput.value);
-                if (product && qty > 0) {
-                    let finalPrice = getPriceByQty(product, qty);
-                    priceInput.value = formatRupiah(finalPrice);
-                    recalculateProfitPercentage(priceInput, product.hargaBeli);
+                const product =
+                    masterProducts.find(p => p.shortName === code) ||
+                    dynamicProductsCache.find(p => p.shortName === code);
+
+                let qty = parseInt(qtyInput.value) || 0;
+
+                // kalau bukan king price → tiering jalan
+                if (row.dataset.lockKingPrice !== "true") {
+                    if (product && qty > 0) {
+                        let newPrice = getPriceByQty(product, qty);
+                        priceInput.value = formatRupiah(newPrice);
+                    }
+                }
+
+                const price = parseRupiah(priceInput.value);
+                const subtotal = price * qty;
+
+                const discPercent = parseFloat(discPercentInput.value) || 0;
+                const discAmount = parseFloat(discAmountInput.value) || 0;
+
+                // kalau ada disc %, recalc disc Rp
+                if (discPercent > 0) {
+                    discAmountInput.value = formatRupiah(Math.round(
+                        subtotal * discPercent / 100
+                    ));
+                }
+                // kalau pakai disc Rp manual, recalc %
+                else if (discAmount > 0 && subtotal > 0) {
+                    discPercentInput.value = (
+                        discAmount / subtotal * 100
+                    ).toFixed(2);
                 }
 
                 updateTotalRow(row);
@@ -3292,7 +3417,7 @@
                 const discountPercent = parseFloat(discPercentInput.value) || 0;
                 if (price * qty > 0) {
                     const discountAmount = price * qty * (discountPercent / 100);
-                    discAmountInput.value = Math.round(discountAmount);
+                    discAmountInput.value = formatRupiah(Math.round(discountAmount));
                 }
                 updateTotalRow(row);
             });
