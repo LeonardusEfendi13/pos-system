@@ -48,4 +48,14 @@ public class PriceListService {
         }
         return new SuggestedPricesDTO();
     }
+
+    public BigDecimal getKingPrice(String partNumber){
+        partNumber = partNumber.trim().toUpperCase();
+        Optional<PriceListEntity> priceListEntityOpt = priceListRepository.findAllByPartNumber(partNumber);
+        if(priceListEntityOpt.isEmpty()){
+            return BigDecimal.ZERO;
+        }
+        PriceListEntity priceListEntity = priceListEntityOpt.get();
+        return priceListEntity.getHargaJual();
+    }
 }
