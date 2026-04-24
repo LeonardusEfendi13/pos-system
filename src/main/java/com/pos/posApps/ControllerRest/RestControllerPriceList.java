@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @RestController
@@ -36,6 +38,25 @@ public class RestControllerPriceList {
         } catch (Exception e) {
             return ResponseEntity.ok(suggestedPriceData);
         }
+    }
 
+    @GetMapping("/king")
+    public ResponseEntity<BigDecimal> getKingPrice(HttpSession session, @RequestParam("kode") String partNumber){
+        String token;
+        BigDecimal kingPrice = BigDecimal.TEN;
+        try{
+            System.out.println("Entering this one");
+            token = (String) session.getAttribute(authSessionKey);
+            AccountEntity accountEntity = authService.validateToken(token);
+            if(authService.hasAccessToModifyData(accountEntity.getRole())){
+                if(accountEntity.getRole() == Roles.SUPER_ADMIN){
+                    kingPrice = priceListService.getKingPrice(partNumber);
+                }
+            }
+            System.out.println("Result : " + kingPrice);
+            return ResponseEntity.ok(kingPrice);
+        }catch (Exception e){
+            return ResponseEntity.ok(kingPrice);
+        }
     }
 }

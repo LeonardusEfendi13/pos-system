@@ -773,6 +773,12 @@ $(document).ready(function () {
     });
 
     // Event listeners for price and percentage inputs (remains the same)
+    hargaBeliInput.addEventListener('input', () => {
+        // When Purchase Price changes, recalculate all percentages
+        updatePercentage(hargaJual1, pct1);
+        updatePercentage(hargaJual2, pct2);
+        updatePercentage(hargaJual3, pct3);
+    });
     hargaJual1.addEventListener('input', () => updatePercentage(hargaJual1, pct1));
     hargaJual2.addEventListener('input', () => updatePercentage(hargaJual2, pct2));
     hargaJual3.addEventListener('input', () => updatePercentage(hargaJual3, pct3));

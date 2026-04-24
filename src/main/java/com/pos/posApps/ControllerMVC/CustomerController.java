@@ -1,5 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
@@ -56,6 +57,7 @@ public class CustomerController {
             HttpSession session,
             @Valid String customerName,
             @Valid String customerAlamat,
+            @Valid Boolean isKing,
             RedirectAttributes redirectAttributes) {
         ClientEntity clientData;
         AccountEntity accEntity;
@@ -70,14 +72,10 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            boolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientData);
-            if (isInserted) {
-                redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Customer Created");
-                return "redirect:/customer";
-            }
+            ResponseInBoolean isInserted = customerService.doCreateCustomer(customerName, customerAlamat, clientData, isKing);
+            redirectAttributes.addFlashAttribute("message", isInserted.getMessage());
+            return "redirect:/customer";
         }
-        redirectAttributes.addFlashAttribute("status", "failed");
         redirectAttributes.addFlashAttribute("message", "Failed to Create Customer");
         return "redirect:/customer";
     }
@@ -88,6 +86,7 @@ public class CustomerController {
             @Valid Long customerId,
             @Valid String customerName,
             @Valid String customerAlamat,
+            @Valid Boolean isKing,
             RedirectAttributes redirectAttributes
     ) {
         Long clientId;
@@ -103,19 +102,11 @@ public class CustomerController {
         }
 
         if (authService.hasAccessToModifyData(role)) {
-            boolean isUpdated = customerService.doUpdateCustomer(customerId, customerName, clientId, customerAlamat);
-            if (isUpdated) {
-                redirectAttributes.addFlashAttribute("status", "success");
-                redirectAttributes.addFlashAttribute("message", "Customer Updated");
-                return "redirect:/customer";
-            }
-
-            redirectAttributes.addFlashAttribute("status", "failed");
-            redirectAttributes.addFlashAttribute("message", "Failed to update Customer");
+            ResponseInBoolean isUpdated = customerService.doUpdateCustomer(customerId, customerName, clientId, customerAlamat, isKing);
+            redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
             return "redirect:/customer";
         }
-        redirectAttributes.addFlashAttribute("status", "failed");
-        redirectAttributes.addFlashAttribute("message", "No Access to Edit Account");
+        redirectAttributes.addFlashAttribute("message", "No Access to Edit Customer data");
         return "redirect:/login";
     }
 
