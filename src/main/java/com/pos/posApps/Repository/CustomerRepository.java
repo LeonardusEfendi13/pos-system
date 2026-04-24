@@ -13,7 +13,7 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> 
 
     Optional<CustomerEntity> findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(Long customerId, Long clientId);
 
-    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(Long clientId);
+    List<CustomerEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByName(Long clientId);
 
     List<CustomerEntity> findAllByClientEntity_ClientIdOrderByCustomerIdDesc(Long clientId);
 }

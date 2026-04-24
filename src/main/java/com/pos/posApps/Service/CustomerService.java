@@ -2,7 +2,6 @@ package com.pos.posApps.Service;
 
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;
-import com.pos.posApps.Repository.ClientRepository;
 import com.pos.posApps.Repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,7 +52,7 @@ public class CustomerService {
     }
 
     public List<CustomerEntity> getCustomerList(Long clientId) {
-        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByCustomerIdDesc(clientId);
+        return customerRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByName(clientId);
     }
 
     public boolean deleteCustomer(Long customerId, Long clientId) {
