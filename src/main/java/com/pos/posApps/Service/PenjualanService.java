@@ -207,7 +207,8 @@ public class PenjualanService {
                         old.getQty(),
                         0L,
                         restoredStock,
-                        clientData
+                        clientData,
+                        getCurrentTimestamp()
                 ));
             }
             old.setDeletedAt(getCurrentTimestamp());

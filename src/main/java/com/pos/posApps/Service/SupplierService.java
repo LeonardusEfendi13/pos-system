@@ -27,7 +27,7 @@ public class SupplierService {
     }
 
     public List<SupplierEntity> getSupplierList(Long clientId){
-        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(clientId);
+        return supplierRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierNameAsc(clientId);
     }
 
     @Transactional

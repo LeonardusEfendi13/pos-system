@@ -98,7 +98,8 @@ public class ProductService {
                 data.getQtyIn(),
                 data.getQtyOut(),
                 data.getSaldo(),
-                data.getCreatedAt()
+                data.getCreatedAt(),
+                data.getInvDate()
         )).collect(Collectors.toList());
     }
 
@@ -196,7 +197,8 @@ public class ProductService {
                     0L,
                     0L,
                     req.getStock(),
-                    clientData
+                    clientData,
+                    getCurrentTimestamp()
             ));
 
             for (ProductPricesDTO productPricesData : req.getProductPricesDTO()) {
@@ -242,7 +244,8 @@ public class ProductService {
                         0L,
                         0L,
                         req.getStock(),
-                        clientEntity
+                        clientEntity,
+                        getCurrentTimestamp()
                 ));
             }
 

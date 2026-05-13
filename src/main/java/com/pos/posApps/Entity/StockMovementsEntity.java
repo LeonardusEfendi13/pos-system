@@ -53,5 +53,9 @@ public class StockMovementsEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+
+    @Column(name = "inv_date")
+    private LocalDateTime invDate;
+
 }
 

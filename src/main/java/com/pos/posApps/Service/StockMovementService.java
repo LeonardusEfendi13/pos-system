@@ -23,7 +23,7 @@ public class StockMovementService {
         stockMovementsEntity.setSaldo(adjustStockDTO.getSaldo());
         stockMovementsEntity.setProductEntity(adjustStockDTO.getProductEntity());
         stockMovementsEntity.setClientEntity(adjustStockDTO.getClientData());
-
+        stockMovementsEntity.setInvDate(adjustStockDTO.getInvoiceDate());
         stockMovementsRepository.save(stockMovementsEntity);
     }
 }

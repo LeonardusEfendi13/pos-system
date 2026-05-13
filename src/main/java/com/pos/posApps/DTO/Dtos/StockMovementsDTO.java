@@ -19,4 +19,5 @@ public class StockMovementsDTO {
     private Long qtyOut;
     private Long saldo;
     private LocalDateTime createdAt;
+    private LocalDateTime invDate;
 }

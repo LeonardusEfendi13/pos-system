@@ -125,7 +125,8 @@
                     <thead class="sticky-top">
                     <tr>
                         <th scope="col">No</th>
-                        <th scope="col">Tanggal</th>
+                        <th scope="col">Tanggal Input</th>
+                        <th scope="col">Tanggal Invoice</th>
                         <th scope="col">No. Faktur</th>
                         <th scope="col">Tipe</th>
                         <th scope="col">Masuk</th>
@@ -141,6 +142,7 @@
                             Tanggal Jual
                         </td>
                         <td>-</td>
+                        <td>-</td>
                         <td>SALDO AWAL</td>
                         <td>0</td>
                         <td>0</td>
@@ -150,6 +152,7 @@
                     <tr th:each="stok, iterStat : ${kartuStok}">
                         <td th:text="${(currentPage * size) + iterStat.count + 1}">2</td>
                         <td th:text="${#temporals.format(stok.createdAt, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
+                        <td th:text="${#temporals.format(stok.invDate, 'dd MMMM yyyy HH:mm', T(java.util.Locale).forLanguageTag('id'))}">Tanggal Jual</td>
                         <td th:text="${stok.referenceNo}">000000</td>
                         <td th:text="${stok.tipeKartuStok}">Tipe Kartu Stok</td>
                         <td th:text="${stok.qtyIn}">-2</td>

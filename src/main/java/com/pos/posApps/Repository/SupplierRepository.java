@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface SupplierRepository extends JpaRepository<SupplierEntity, Long> {
     Optional<SupplierEntity> findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(Long supplierId, Long clientId);
 
-    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierIdDesc(Long clientId);
+    List<SupplierEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderBySupplierNameAsc(Long clientId);
 
     SupplierEntity findFirstBySupplierNameIgnoreCaseAndClientEntity_ClientIdAndDeletedAtIsNull(String supplierName, Long clientId);
 

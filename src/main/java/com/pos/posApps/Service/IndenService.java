@@ -214,7 +214,8 @@ public class IndenService {
                             0L,
                             dtos.getQty(),
                             newStock,
-                            clientData
+                            clientData,
+                            getCurrentTimestamp()
                     ));
                     System.out.println("Stock After : " + newStock);
                     System.out.println();

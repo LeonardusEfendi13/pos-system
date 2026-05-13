@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 
+import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+
 @Service
 public class KasirService {
     @PersistenceContext
@@ -136,7 +138,8 @@ public class KasirService {
                         0L,
                         dtos.getQty(),
                         newStock,
-                        clientData
+                        clientData,
+                        getCurrentTimestamp()
                 ));
                 System.out.println("Stock After : " + newStock);
                 System.out.println();
@@ -270,7 +273,8 @@ public class KasirService {
                         delta < 0 ? Math.abs(delta) : 0L,
                         delta > 0 ? delta : 0L,
                         newStock,
-                        clientData
+                        clientData,
+                        getCurrentTimestamp()
                 ));
             }
 

@@ -203,7 +203,8 @@ public class PembelianService {
                         0L,
                         old.getQty(),
                         restoredStock,
-                        clientData
+                        clientData,
+                        getCurrentTimestamp()
                 ));
             }
             old.setDeletedAt(getCurrentTimestamp());
@@ -320,7 +321,8 @@ public class PembelianService {
                         dtos.getQty(),
                         0L,
                         newStock,
-                        clientData
+                        clientData,
+                        LocalDate.parse(req.getPoDate()).atStartOfDay()
                 ));
             }
             return new ResponseInBoolean(true, "Berhasil simpan data");
@@ -473,7 +475,8 @@ public class PembelianService {
                             delta > 0 ? delta : 0L,
                             delta < 0 ? Math.abs(delta) : 0L,
                             newStock,
-                            clientData
+                            clientData,
+                            LocalDate.parse(req.getPoDate()).atStartOfDay()
                     ));
                 }
 
