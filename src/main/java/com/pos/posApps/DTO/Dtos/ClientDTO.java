@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,4 +16,5 @@ public class ClientDTO {
     private String kota;
     private String noTelp;
     private String catatan;
+    private BigDecimal kingDisc;
 }

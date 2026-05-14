@@ -8,6 +8,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,4 +44,7 @@ public class ClientEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "king_disc")
+    private BigDecimal kingDisc;
 }

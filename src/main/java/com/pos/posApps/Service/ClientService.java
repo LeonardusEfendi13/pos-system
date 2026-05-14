@@ -3,13 +3,14 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.ClientDTO;
 import com.pos.posApps.DTO.Dtos.CreateClientRequest;
 import com.pos.posApps.DTO.Dtos.EditClientRequest;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
@@ -34,7 +35,8 @@ public class ClientService {
                     clientEntity.getAlamat(),
                     clientEntity.getKota(),
                     clientEntity.getNoTelp(),
-                    clientEntity.getCatatan()
+                    clientEntity.getCatatan(),
+                    clientEntity.getKingDisc()
             );
 
         } catch (Exception e) {
@@ -42,14 +44,14 @@ public class ClientService {
         }
     }
 
-    public boolean updateClientField(Long clientId, String fieldKey, String fieldValue) {
+    public ResponseInBoolean updateClientField(Long clientId, String fieldKey, String fieldValue) {
         try {
             Optional<ClientEntity> clientOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);
 
-            if (clientOpt.isEmpty()) return false;
+            if (clientOpt.isEmpty()) return new ResponseInBoolean(false, "Data client tidak ditemukan");
 
             ClientEntity client = clientOpt.get();
-
+            System.out.println("fields : " + fieldKey + " | " + fieldValue);
             // Update manually based on key (since no reflection)
             switch (fieldKey) {
                 case "NAMA" -> client.setName(fieldValue);
@@ -57,14 +59,19 @@ public class ClientService {
                 case "KOTA" -> client.setKota(fieldValue);
                 case "NOMOR HP" -> client.setNoTelp(fieldValue);
                 case "CATATAN" -> client.setCatatan(fieldValue);
+                case "KING DISC" -> {
+                    String cleanValue = fieldValue.replaceAll("[^\\d.]", "");
+                    BigDecimal kingDisc = new BigDecimal(cleanValue);
+                    client.setKingDisc(kingDisc);
+                }
                 // You may want to block editing "Created At" and others
                 default -> throw new IllegalArgumentException("Invalid field key: " + fieldKey);
             }
             clientRepository.save(client);
-            return true;
+            return new ResponseInBoolean(true, "Berhasil update setting");
         } catch (Exception e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return false;
+            System.out.println(e.getMessage());
+            return new ResponseInBoolean(false, e.getMessage());
         }
     }
 
