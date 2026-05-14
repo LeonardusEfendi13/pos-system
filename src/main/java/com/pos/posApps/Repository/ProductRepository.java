@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             "    LOWER(p.shortName) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "    OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%'))" +
             ") " +
-            "ORDER BY p.productId DESC")
+            "ORDER BY p.fullName ASC")
     Page<ProductEntity> searchProducts(
             @Param("clientId") Long clientId,
             @Param("search") String search,
@@ -32,14 +33,17 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     );
 
     @Query("""
-                SELECT DISTINCT p FROM ProductEntity p
-                JOIN p.productPricesEntity prices
+                SELECT p FROM ProductEntity p
                 WHERE p.clientEntity.clientId = :clientId
                   AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
                   AND p.deletedAt IS NULL
-                ORDER BY p.fullName
+                ORDER BY p.fullName ASC
             """)
-    Page<ProductEntity> findAllWithPricesByClientId(@Param("clientId") Long clientId, Pageable pageable, @Param("supplierId") Long supplierId);
+    Page<ProductEntity> findAllWithPricesByClientId(
+            @Param("clientId") Long clientId,
+            Pageable pageable,
+            @Param("supplierId") Long supplierId
+    );
 
     @Query("""
                 SELECT p FROM ProductEntity p
