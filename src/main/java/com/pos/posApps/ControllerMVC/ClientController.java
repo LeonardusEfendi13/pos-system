@@ -1,6 +1,7 @@
 package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.ClientDTO;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
@@ -40,12 +41,17 @@ public class ClientController {
 
         ClientDTO clientData = clientService.getClientSettings(clientId);
         //Convert DTO into Hash Map
+        String kingDisc = "0";
+        if(clientData.getKingDisc() != null){
+            kingDisc = clientData.getKingDisc().toString();
+        }
         Map<String, String> clientSettings = new LinkedHashMap<>();
         clientSettings.put("NAMA", clientData.getName());
         clientSettings.put("ALAMAT", clientData.getAlamat());
         clientSettings.put("KOTA", clientData.getKota());
         clientSettings.put("NOMOR HP", clientData.getNoTelp());
         clientSettings.put("CATATAN", clientData.getCatatan());
+        clientSettings.put("KING DISC", kingDisc + "%");
 
         model.addAttribute("settingData", clientSettings);
         model.addAttribute("activePage", "setting");
@@ -68,19 +74,17 @@ public class ClientController {
             accEntity = authService.validateToken(token);
             clientId = accEntity.getClientEntity().getClientId();
 
-            boolean isUpdated = clientService.updateClientField(clientId, fieldKey, fieldValue);
-            if(!isUpdated){
-                redirectAttributes.addFlashAttribute("status", "failed");
-                redirectAttributes.addFlashAttribute("message", "Failed to update");
-                return "redirect:/setting";
-            }
-            redirectAttributes.addFlashAttribute("status", "success");
-            redirectAttributes.addFlashAttribute("message", "Success to update");
+            ResponseInBoolean isUpdated = clientService.updateClientField(clientId, fieldKey, fieldValue);
+            System.out.println("Status : "+ isUpdated);
+            redirectAttributes.addFlashAttribute("status", isUpdated.isStatus());
+            redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
             return "redirect:/setting";
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("status", "failed");
             redirectAttributes.addFlashAttribute("message", "Session Expired");
+            System.out.println("depan : " + e.getMessage());
+
             return "redirect:/login";
         }
     }

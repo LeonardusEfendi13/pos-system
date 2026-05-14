@@ -45,15 +45,13 @@ public class RestControllerPriceList {
         String token;
         BigDecimal kingPrice = BigDecimal.TEN;
         try{
-            System.out.println("Entering this one");
             token = (String) session.getAttribute(authSessionKey);
             AccountEntity accountEntity = authService.validateToken(token);
             if(authService.hasAccessToModifyData(accountEntity.getRole())){
                 if(accountEntity.getRole() == Roles.SUPER_ADMIN){
-                    kingPrice = priceListService.getKingPrice(partNumber);
+                    kingPrice = priceListService.getKingPrice(partNumber, accountEntity);
                 }
             }
-            System.out.println("Result : " + kingPrice);
             return ResponseEntity.ok(kingPrice);
         }catch (Exception e){
             return ResponseEntity.ok(kingPrice);

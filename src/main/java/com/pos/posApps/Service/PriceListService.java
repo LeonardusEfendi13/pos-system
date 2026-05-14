@@ -1,6 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.SuggestedPricesDTO;
+import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.PriceListEntity;
 import com.pos.posApps.Repository.PriceListRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,13 +50,15 @@ public class PriceListService {
         return new SuggestedPricesDTO();
     }
 
-    public BigDecimal getKingPrice(String partNumber){
+    public BigDecimal getKingPrice(String partNumber, AccountEntity accountEntity){
+        BigDecimal kingDisc = accountEntity.getClientEntity().getKingDisc();
         partNumber = partNumber.trim().toUpperCase();
         Optional<PriceListEntity> priceListEntityOpt = priceListRepository.findAllByPartNumber(partNumber);
         if(priceListEntityOpt.isEmpty()){
             return BigDecimal.ZERO;
         }
         PriceListEntity priceListEntity = priceListEntityOpt.get();
-        return priceListEntity.getHargaJual();
+        BigDecimal listPrice = priceListEntity.getHargaJual();
+        return listPrice.subtract(listPrice.multiply(kingDisc).divide(BigDecimal.valueOf(100), 3, RoundingMode.HALF_UP));
     }
 }
