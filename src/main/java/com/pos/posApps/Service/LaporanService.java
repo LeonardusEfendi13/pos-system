@@ -59,6 +59,7 @@ public class LaporanService {
         Page<Long> productIdsPage = productRepository.findProductIds(clientId, pageable);
         List<ProductEntity> products = productRepository.findAllById(productIdsPage.getContent());
         List<LaporanNilaiPersediaanDTO> dtos = products.stream()
+                .sorted(Comparator.comparing(ProductEntity::getFullName))
                 .map(product -> new LaporanNilaiPersediaanDTO(
                         product.getShortName(),
                         product.getFullName(),
@@ -288,7 +289,7 @@ public class LaporanService {
                 ") pp ON pp.product_id = p.product_id " +
                 "WHERE p.client_id = ? " +
                 "AND p.deleted_at IS NULL " +
-                "ORDER BY p.stock DESC";
+                "ORDER BY p.full_name ASC";
 
         try {
             //Get total asset
