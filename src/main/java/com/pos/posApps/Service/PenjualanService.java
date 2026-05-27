@@ -34,7 +34,8 @@ public class PenjualanService {
     public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
+//        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().toList();
+        List<TransactionEntity> transactionData = transactionRepository.findFilteredTransactions(clientId, startDate, endDate).stream().toList();
         return transactionData.stream()
                 .map(TransactionEntity::getTotalPrice)
                 .filter(Objects::nonNull)
@@ -48,7 +49,9 @@ public class PenjualanService {
 //        For testing only
 //        LocalDateTime startDate = LocalDate.parse("2025-09-13").atStartOfDay();
 //        LocalDateTime endDate = LocalDate.parse("2025-09-13").atTime(23, 59, 59);
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(20).toList();
+//        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate).stream().limit(20).toList();
+        List<TransactionEntity> transactionData = transactionRepository.findFilteredTransactions(clientId, startDate, endDate).stream().limit(20).toList();
+
         return transactionData.stream().map(transactions -> new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(

@@ -41,7 +41,7 @@ public class HomeService {
 
         // Fetch all transaction Data by todays date
         List<TransactionEntity> transactionData =
-                transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(
+                transactionRepository.findFilteredTransactions(
                         clientId, startDate, endDate
                 );
 
@@ -75,7 +75,7 @@ public class HomeService {
 
     public List<HomeCustomerDTO> getTop5Customer(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
         //Fetch all transactions
-        List<TransactionEntity> transactionData = transactionRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(clientId, startDate, endDate);
+        List<TransactionEntity> transactionData = transactionRepository.findFilteredTransactions(clientId, startDate, endDate);
 
         //Populate totalPrice using customer's Id
         Map<Long, BigDecimal> firstCustomerMap = new HashMap<>();

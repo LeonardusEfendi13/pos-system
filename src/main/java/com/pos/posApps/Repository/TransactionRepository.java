@@ -35,7 +35,25 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             Pageable pageable
     );
 
-    List<TransactionEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate);
+
+    @Query(value = """
+    SELECT t.*
+    FROM transaction t
+    WHERE t.client_id = :clientId
+      AND NOT EXISTS (
+          SELECT 1
+          FROM branch b
+          WHERE b.customer_id = t.customer_id
+      )
+      AND t.deleted_at IS NULL
+      AND t.created_at BETWEEN :startDate AND :endDate
+    ORDER BY t.transaction_id DESC
+""", nativeQuery = true)
+    List<TransactionEntity> findFilteredTransactions(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
 
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdInAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, List<Long> customerId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 
@@ -63,16 +81,21 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     );
 
     @Query(value = """
-                SELECT
-                    TO_CHAR(t.created_at, :dateFormat) AS label,
-                    SUM(t.total_price) AS value
-                FROM transaction t
-                WHERE t.client_id = :clientId
-                  AND t.deleted_at IS NULL
-                  AND t.created_at BETWEEN :start AND :end
-                GROUP BY label
-                ORDER BY label
-            """, nativeQuery = true)
+            SELECT
+                TO_CHAR(t.created_at, :dateFormat) AS label,
+                SUM(t.total_price) AS value
+            FROM transaction t
+            WHERE t.client_id = :clientId
+              AND NOT EXISTS (
+                          SELECT 1
+                          FROM branch b
+                          WHERE b.customer_id = t.customer_id
+                      )
+              AND t.deleted_at IS NULL
+              AND t.created_at BETWEEN :start AND :end
+            GROUP BY label
+            ORDER BY label
+        """, nativeQuery = true)
     List<ChartPointView> getPendapatanChart(
             Long clientId,
             LocalDateTime start,
@@ -114,6 +137,11 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             JOIN transaction_detail d
                  ON d.transaction_id = t.transaction_id
             WHERE t.client_id = :clientId
+             AND NOT EXISTS (
+                      SELECT 1
+                      FROM branch b
+                      WHERE b.customer_id = t.customer_id
+                  )
               AND t.deleted_at IS NULL
               AND d.deleted_at IS NULL
               AND t.created_at BETWEEN :startDate AND :endDate
