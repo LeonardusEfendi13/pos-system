@@ -78,7 +78,7 @@ public class KasirService {
             //Get Customer Entity
             Optional<CustomerEntity> customerEntityOpt = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getCustomerId(), clientData.getClientId());
             if (customerEntityOpt.isEmpty()) {
-                return new ResponseInBoolean(true, "Customer tidak ada");
+                return new ResponseInBoolean(false, "Customer tidak ada");
             }
 
             CustomerEntity customerEntity = customerEntityOpt.get();
