@@ -1,7 +1,7 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.SuggestedPricesDTO;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.PriceListService;

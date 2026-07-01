@@ -1,6 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

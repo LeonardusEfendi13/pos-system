@@ -1,6 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
-import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
+import com.pos.posApps.DTO.Enum.TipeKartuStok;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.ProductEntity;
 import lombok.AllArgsConstructor;

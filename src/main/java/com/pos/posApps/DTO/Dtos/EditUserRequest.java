@@ -1,6 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import lombok.Data;
 
 @Data

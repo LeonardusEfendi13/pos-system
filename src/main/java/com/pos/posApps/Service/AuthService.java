@@ -1,6 +1,6 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;

@@ -2,7 +2,7 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.LoginRequest;
 import com.pos.posApps.DTO.Dtos.UserDTO;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.LoginTokenService;

@@ -4,7 +4,7 @@ import com.pos.posApps.DTO.Dtos.EditUserRequest;
 import com.pos.posApps.DTO.Dtos.RegisterRequest;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.DTO.Dtos.UserDTO;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AccountService;

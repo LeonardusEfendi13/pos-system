@@ -1,7 +1,7 @@
 package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.*;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.CustomerEntity;

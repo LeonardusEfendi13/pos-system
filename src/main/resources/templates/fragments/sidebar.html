@@ -383,13 +383,59 @@
                     </a>
                 </li>
 
-                <!-- Settings -->
+                <!-- Data Center -->
                 <li class="nav-item"
                     th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
                     th:classappend="${activePage} == 'dataCenter' ? ' active'">
                     <a class="nav-link" th:href="@{/data_center}">
                         <span class="nav-link-title">Data Center</span>
                     </a>
+                </li>
+
+
+
+                <!--Karyawan-->
+                <li class="nav-item dropdown"
+                    th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                    th:classappend="(${activePage} == 'dashboardKaryawan' or ${activePage} == 'absensiKaryawan' or ${activePage} == 'gajianKaryawan') ? ' active' : ''">
+                    <a class="nav-link dropdown-toggle"
+                       href="#sidebar-karyawan"
+                       data-bs-toggle="collapse"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="sidebar-karyawan"
+                       th:classappend="(${activePage} == 'dashboardKaryawan' or ${activePage} == 'absensiKaryawan' or ${activePage} == 'gajianKaryawan') ? '' : ' collapsed'">
+                        <span class="nav-link-title">Karyawan</span>
+                    </a>
+
+                    <div class="collapse"
+                         th:if="${sidebarData.role.name() == 'SUPER_ADMIN'}"
+                         id="sidebar-karyawan"
+                         th:classappend="(${activePage} == 'dashboardKaryawan' or ${activePage} == 'absensiKaryawan' or ${activePage} == 'gajianKaryawan') ? ' show' : ''">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/staff"
+                                   th:classappend="${activePage} == 'dashboardKaryawan' ? ' active' : ''">
+                                    Dashboard Karyawan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/staff/absensi"
+                                   th:classappend="${activePage} == 'absensiKaryawan' ? ' active' : ''">
+                                    Absensi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="/staff/gaji"
+                                   th:classappend="${activePage} == 'gajianKaryawan' ? ' active' : ''">
+                                    Gaji
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
             </ul>

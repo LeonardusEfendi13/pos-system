@@ -1,6 +1,5 @@
 package com.pos.posApps.Entity;
 
-import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

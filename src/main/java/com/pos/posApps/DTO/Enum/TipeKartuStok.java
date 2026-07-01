@@ -1,4 +1,4 @@
-package com.pos.posApps.DTO.Enum.EnumRole;
+package com.pos.posApps.DTO.Enum;
 
 public enum TipeKartuStok {
     PEMBELIAN,

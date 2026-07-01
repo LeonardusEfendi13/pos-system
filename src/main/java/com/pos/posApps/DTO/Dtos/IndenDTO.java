@@ -1,7 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
 
-import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

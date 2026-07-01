@@ -1,6 +1,5 @@
 package com.pos.posApps.Repository;
 
-import com.pos.posApps.DTO.Enum.EnumRole.StatusInden;
 import com.pos.posApps.Entity.IndenEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,7 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.*;
-import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
+import com.pos.posApps.DTO.Enum.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import jakarta.persistence.EntityManager;

@@ -3,7 +3,7 @@ package com.pos.posApps.ControllerRest;
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.DTO.Enum.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;

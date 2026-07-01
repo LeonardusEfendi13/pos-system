@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karyawan Dashboard</title>
+
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+    />
+
+    <style>
+        /* =========================
+             DESIGN SYSTEM
+          ========================= */
+
+        :root {
+          --bg: #f6f7fb;
+          --card: #ffffff;
+          --text: #0f172a;
+          --muted: #64748b;
+          --border: #e5e7eb;
+
+          --primary: #2563eb;
+          --success: #16a34a;
+          --danger: #dc2626;
+          --warning: #f59e0b;
+
+          --radius: 16px;
+        }
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: "Inter", sans-serif;
+        }
+
+        body {
+          background: var(--bg);
+          color: var(--text);
+        }
+
+        /* =========================
+             LAYOUT
+          ========================= */
+
+        .wrapper {
+          display: flex;
+          min-height: 100vh;
+        }
+
+        /* sidebar placeholder (karena kamu sudah punya sidebar) */
+        .sidebar {
+          width: 260px;
+          background: #111827;
+          color: white;
+          padding: 20px;
+        }
+
+        /* content */
+        .content {
+          flex: 1;
+          padding: 28px;
+        }
+
+        /* =========================
+             HEADER
+          ========================= */
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 22px;
+        }
+
+        .header h1 {
+          font-size: 26px;
+          font-weight: 700;
+        }
+
+        .header p {
+          color: var(--muted);
+          margin-top: 4px;
+        }
+
+        /* button */
+        .btn {
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 10px 16px;
+          border-radius: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+
+        .btn:hover {
+          transform: translateY(-1px);
+        }
+
+        /* =========================
+             GRID STATS
+          ========================= */
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+          margin-top: 18px;
+        }
+
+        .card {
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 18px;
+          transition: 0.2s;
+        }
+
+        .card:hover {
+          transform: translateY(-2px);
+        }
+
+        .card .label {
+          font-size: 13px;
+          color: var(--muted);
+        }
+
+        .card .value {
+          font-size: 22px;
+          font-weight: 700;
+          margin-top: 8px;
+        }
+
+        .emp-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          background: white;
+          border: 1px solid var(--border);
+          border-radius: 16px;
+
+          padding: 14px 16px;
+
+          transition: 0.2s;
+        }
+
+        .emp-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .avatar {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: white;
+          font-weight: 600;
+          font-size: 13px;
+        }
+
+        .emp-info {
+          flex: 1;
+          margin-left: 12px;
+        }
+
+        .emp-name {
+          font-weight: 600;
+          font-size: 15px;
+        }
+
+        .emp-meta {
+          font-size: 13px;
+          color: var(--muted);
+          margin-top: 2px;
+        }
+
+        .emp-status {
+          font-size: 12px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-weight: 600;
+          margin-right: 10px;
+        }
+
+        .emp-status.active {
+          background: #dcfce7;
+          color: #16a34a;
+        }
+
+        .emp-status.resigned {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+
+        .emp-action button {
+          border: none;
+          background: #f1f5f9;
+          padding: 8px 12px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+
+        .emp-action button:hover {
+          background: #e2e8f0;
+        }
+
+        /* responsive */
+        @media (max-width: 900px) {
+          .grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 500px) {
+          .grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .page-btn {
+          border: 1px solid var(--border);
+          background: white;
+          padding: 8px 12px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-size: 13px;
+          transition: 0.2s;
+        }
+
+        .page-btn:hover {
+          background: #f1f5f9;
+        }
+
+        .page-btn.active {
+          background: var(--primary);
+          color: white;
+          border-color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrapper">
+    <!-- SIDEBAR (placeholder) -->
+    <div class="sidebar">SIDEBAR POS</div>
+
+    <!-- CONTENT -->
+    <div class="content">
+        <!-- =========================
+     HEADER
+========================== -->
+
+        <div class="header">
+            <div>
+                <h1>Karyawan</h1>
+                <p>Kelola seluruh data karyawan toko</p>
+            </div>
+
+            <button class="btn">+ Tambah Karyawan</button>
+        </div>
+
+        <!-- =========================
+             STATISTICS
+        ========================== -->
+
+        <div class="grid">
+            <div class="card">
+                <div class="label">Total Karyawan</div>
+                <div class="value">18</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Karyawan Aktif</div>
+                <div class="value" style="color: var(--success)">16</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Resign</div>
+                <div class="value" style="color: var(--danger)">2</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Payroll Bulan Ini</div>
+                <div class="value" style="font-size: 18px; color: var(--primary)">
+                    Rp 72.500.000
+                </div>
+            </div>
+        </div>
+        <!-- =========================
+     TOOLBAR
+========================== -->
+
+        <div
+                style="
+            margin-top: 22px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+            <!-- SEARCH -->
+            <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Cari nama, NIK, atau jabatan..."
+                    style="
+              width: 100%;
+              max-width: 420px;
+              padding: 12px 14px;
+              border-radius: 12px;
+              border: 1px solid var(--border);
+              outline: none;
+              background: white;
+            "
+            />
+
+            <!-- OPTIONAL FILTER PLACEHOLDER -->
+            <select
+                    style="
+              padding: 12px 14px;
+              border-radius: 12px;
+              border: 1px solid var(--border);
+              background: white;
+              color: var(--text);
+            "
+            >
+                <option>Semua Jabatan</option>
+                <option>Kasir</option>
+                <option>Gudang</option>
+                <option>Admin</option>
+                <option>Supervisor</option>
+            </select>
+        </div>
+
+        <!-- =========================
+             LIST CONTAINER
+        ========================== -->
+
+        <div
+                style="
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          "
+        >
+            <!-- =========================
+       EMPLOYEE CARD 1
+  ========================== -->
+
+            <div class="emp-card">
+                <div class="avatar" style="background: #2563eb">AS</div>
+
+                <div class="emp-info">
+                    <div class="emp-name">Andi Saputra</div>
+
+                    <div class="emp-meta">Kasir • Join 10 Jan 2024</div>
+                </div>
+
+                <div class="emp-status active">Aktif</div>
+
+                <div class="emp-action">
+                    <button>Detail</button>
+                </div>
+            </div>
+
+            <!-- EMPLOYEE CARD 2 -->
+
+            <div class="emp-card">
+                <div class="avatar" style="background: #16a34a">BS</div>
+
+                <div class="emp-info">
+                    <div class="emp-name">Budi Santoso</div>
+
+                    <div class="emp-meta">Gudang • Join 15 Mar 2023</div>
+                </div>
+
+                <div class="emp-status active">Aktif</div>
+
+                <div class="emp-action">
+                    <button>Detail</button>
+                </div>
+            </div>
+
+            <!-- EMPLOYEE CARD 3 -->
+
+            <div class="emp-card">
+                <div class="avatar" style="background: #f59e0b">DP</div>
+
+                <div class="emp-info">
+                    <div class="emp-name">Dedi Pratama</div>
+
+                    <div class="emp-meta">Supervisor • Join 02 Feb 2022</div>
+                </div>
+
+                <div class="emp-status active">Aktif</div>
+
+                <div class="emp-action">
+                    <button>Detail</button>
+                </div>
+            </div>
+
+            <!-- EMPLOYEE CARD 4 -->
+
+            <div class="emp-card">
+                <div class="avatar" style="background: #dc2626">SR</div>
+
+                <div class="emp-info">
+                    <div class="emp-name">Sinta Rahma</div>
+
+                    <div class="emp-meta">Admin • Join 08 Nov 2021</div>
+                </div>
+
+                <div class="emp-status resigned">Resign</div>
+
+                <div class="emp-action">
+                    <button>Detail</button>
+                </div>
+            </div>
+
+            <!-- =========================PAGINATION========================== -->
+
+            <div
+                    style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 18px;
+            "
+            >
+                <div style="color: var(--muted); font-size: 13px">
+                    Menampilkan 1 - 4 dari 18 karyawan
+                </div>
+
+                <div style="display: flex; gap: 8px">
+                    <button class="page-btn">Prev</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">Next</button>
+                </div>
+            </div>
+            <div
+                    id="emptyState"
+                    style="
+              display: none;
+              text-align: center;
+              padding: 40px;
+              color: var(--muted);
+            "
+            >
+                <div style="font-size: 40px">👤</div>
+                <div style="margin-top: 10px">Karyawan tidak ditemukan</div>
+            </div>
+        </div>
+        <!-- list container -->
+    </div>
+    <!-- content -->
+</div>
+<!-- wrapper -->
+</body>
+<script>
+    const searchInput = document.getElementById("searchInput");
+    const cards = document.querySelectorAll(".emp-card");
+    const emptyState = document.getElementById("emptyState");
+
+    searchInput.addEventListener("input", function () {
+      let keyword = this.value.toLowerCase();
+      let found = 0;
+
+      cards.forEach((card) => {
+        let text = card.innerText.toLowerCase();
+
+        if (text.includes(keyword)) {
+          card.style.display = "flex";
+          found++;
+        } else {
+          card.style.display = "none";
+        }
+      });
+
+      if (found === 0) {
+        emptyState.style.display = "block";
+      } else {
+        emptyState.style.display = "none";
+      }
+    });
+</script>
+</html>
