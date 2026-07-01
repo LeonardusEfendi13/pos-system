@@ -66,6 +66,7 @@ public class PenjualanService {
                 transactions.getCreatedAt(),
                 transactions.getTransactionDetailEntities().stream()
                         .map(transactionDetail -> new TransactionDetailDTO(
+                                transactionDetail.getProductId(),
                                 transactionDetail.getShortName(),
                                 transactionDetail.getFullName(),
                                 transactionDetail.getPrice(),
@@ -137,6 +138,7 @@ public class PenjualanService {
                 transactions.getCreatedAt(),
                 transactions.getTransactionDetailEntities().stream()
                         .map(transactionDetail -> new TransactionDetailDTO(
+                                transactionDetail.getProductId(),
                                 transactionDetail.getShortName(),
                                 transactionDetail.getFullName(),
                                 transactionDetail.getPrice(),
@@ -171,6 +173,7 @@ public class PenjualanService {
                 transactions.getCreatedAt(),
                 transactions.getTransactionDetailEntities().stream()
                         .map(transactionDetail -> new TransactionDetailDTO(
+                                transactionDetail.getProductId(),
                                 transactionDetail.getShortName(),
                                 transactionDetail.getFullName(),
                                 transactionDetail.getPrice(),

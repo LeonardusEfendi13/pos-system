@@ -439,6 +439,7 @@
                                                 class="form-control form-control-sm"
                                                 name="productPricesDTO[1].percentage"
                                                 id="pct2"
+                                                step="0.01"
                                                 value="0"
                                         />
                                     </td>
@@ -470,6 +471,7 @@
                                                 id="pct3"
                                                 name="productPricesDTO[2].percentage"
                                                 value="0"
+                                                step="0.01"
                                         />
                                     </td>
                                     <td>
@@ -616,6 +618,23 @@
     /*]]>*/
 </script>
 <script th:inline="none">
+    const barangModal = document.getElementById("barangModal");
+
+    function handleEnter(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            document.getElementById("addProductForm").click();
+        }
+    }
+
+    barangModal.addEventListener("shown.bs.modal", () => {
+        document.addEventListener("keydown", handleEnter);
+    });
+
+    barangModal.addEventListener("hidden.bs.modal", () => {
+        document.removeEventListener("keydown", handleEnter);
+    });
+
     function parseRupiah(rupiahString) {
       if (!rupiahString) return 0;
       return parseFloat(
@@ -812,6 +831,10 @@ $(document).ready(function () {
         e.preventDefault();
 
         const form = document.getElementById("barangForm");
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
         // 1️⃣ uppercase
         form.querySelectorAll("input[type='text']").forEach(input => {

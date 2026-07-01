@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class PreorderDetailDTO {
     private Long preorderDetailId;
+    private Long productId;
     private String code;
     private String name;
     private Long qty;

@@ -58,4 +58,7 @@ public class TransactionDetailEntity {
 
     @Column(name = "total_profit")
     private BigDecimal totalProfit;
+
+    @Column(name = "product_id")
+    private Long productId;
 }

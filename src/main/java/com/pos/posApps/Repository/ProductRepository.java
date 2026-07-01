@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -198,5 +199,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     List<ProductEntity> findAllByShortNameInAndClientEntity_ClientIdAndDeletedAtIsNull(
             List<String> shortNames, Long clientId);
+
+    List<ProductEntity> findAllByProductIdInAndDeletedAtIsNull(Collection<Long> productIds);
 
 }

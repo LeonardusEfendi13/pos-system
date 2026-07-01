@@ -50,4 +50,7 @@ public class PreorderDetailEntity {
     @ManyToOne
     @JoinColumn(name = "preorder_id")
     private PreorderEntity preorderEntity;
+
+    @Column(name = "product_id")
+    private Long productId;
 }

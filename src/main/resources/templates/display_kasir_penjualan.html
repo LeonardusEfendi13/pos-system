@@ -1619,7 +1619,10 @@
 
         row.innerHTML = `
   <td class="row-number">${rowNumber}</td>
-  <td><input type="text" class="form-control code-input" autocomplete="off"/></td>
+  <td>
+    <input type="text" class="form-control code-input" autocomplete="off"/>
+    <input type="hidden" class="product-id-input" autocomplete="off"/>
+  </td>
   <td><input type="text" class="form-control form-control-sm name-input" readonly autocomplete="off"/></td>
   <td><input type="number" class="form-control form-control-sm qty-input" min="1" autocomplete="off"/></td>
   <td><input type="text" class="form-control form-control-sm price-input" autocomplete="off"/></td>
@@ -2064,7 +2067,7 @@
     function fillProductRow(row, product) {
         const qty = 1; // default qty
         const price = getPriceByQty(product, qty);
-
+        row.querySelector(".product-id-input").value = product.productId;
         row.querySelector(".code-input").value = product.shortName;
         row.querySelector(".name-input").value = product.fullName;
         row.querySelector(".price-input").value = formatRupiah(price);
@@ -2715,8 +2718,10 @@
 
         sellTableBody.querySelectorAll("tr").forEach((row) => {
             const code = row.querySelector(".code-input").value;
-            if (code) {
+            const productId = Number(row.querySelector(".product-id-input").value);
+            if (code && productId) {
                 transactionData.transactionDetailDTOS.push({
+                    productId : productId,
                     code: code,
                     name: row.querySelector(".name-input").value,
                     price: parseRupiah(row.querySelector(".price-input").value),
@@ -3037,9 +3042,12 @@
             const row = document.createElement("tr");
             row.innerHTML = `
     <td class="row-number">${index + 1}</td>
-    <td><input type="text" class="form-control form-control-sm code-input" value="${
+    <td>
+        <input type="text" class="form-control form-control-sm code-input" value="${
                 detail.code
-            }" autocomplete="off"/></td>
+            }" autocomplete="off"/>
+        <input type="hidden" class="product-id-input" value=${detail.productId} autocomplete="off"/>
+    </td>
     <td><input type="text" class="form-control form-control-sm name-input" readonly value="${
                 detail.name
             }" autocomplete="off"/></td>

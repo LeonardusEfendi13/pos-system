@@ -127,6 +127,7 @@ public class PreorderController {
         }
         List<VehicleEntity> vehicleEntity = vehicleService.getVehicleList(null);
         model.addAttribute("vehicleData", vehicleEntity);
+        System.out.println("PREORDER DATA UNTUK BUKA KASIR : " + preorderData);
         model.addAttribute("preorderData", preorderData);
         model.addAttribute("activePage", "preorderTambah");
         model.addAttribute("productData", productEntity.getContent());
