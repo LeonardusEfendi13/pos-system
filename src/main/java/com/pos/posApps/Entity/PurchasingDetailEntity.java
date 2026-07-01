@@ -69,4 +69,7 @@ public class PurchasingDetailEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "product_id")
+    private Long productId;
 }

@@ -23,5 +23,6 @@ public class PembelianDetailDTO {
     private BigDecimal hargaJual1;
     private BigDecimal hargaJual2;
     private BigDecimal hargaJual3;
+    private Long productId;
 
 }

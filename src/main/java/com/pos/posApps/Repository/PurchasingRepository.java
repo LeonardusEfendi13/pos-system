@@ -88,4 +88,5 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             LocalDateTime end,
             String dateFormat
     );
+
 }

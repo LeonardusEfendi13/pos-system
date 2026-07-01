@@ -61,7 +61,7 @@ public class PreorderService {
     }
 
     public PreorderDTO getPreorderDataById(Long clientId, Long preorderId) {
-        Optional<PreorderEntity> preorderOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndPreorderDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, preorderId);
+        Optional<PreorderEntity> preorderOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndDeletedAtIsNull(clientId, preorderId);
         if (preorderOpt.isEmpty()) {
             return null;
         }
@@ -79,6 +79,7 @@ public class PreorderService {
                 preorders.getPreorderDetailEntities().stream()
                         .map(preorderDetail -> new PreorderDetailDTO(
                                 preorderDetail.getPreorderDetailId(),
+                                preorderDetail.getProductId(),
                                 preorderDetail.getShortName(),
                                 preorderDetail.getFullName(),
                                 preorderDetail.getQuantity(),
@@ -118,9 +119,16 @@ public class PreorderService {
             }
 
             for (PreorderDetailDTO dtos : req.getPreorderDetailDTOS()) {
+                Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(dtos.getProductId());
+                if(productEntityOpt.isEmpty()){
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(false, "Produk " + dtos.getName() + " tidak ditemukan");
+                }
+                ProductEntity productEntity = productEntityOpt.get();
                 PreorderDetailEntity preorderDetailEntity = new PreorderDetailEntity();
-                preorderDetailEntity.setShortName(dtos.getCode());
-                preorderDetailEntity.setFullName(dtos.getName());
+                preorderDetailEntity.setProductId(dtos.getProductId());
+                preorderDetailEntity.setShortName(productEntity.getShortName());
+                preorderDetailEntity.setFullName(productEntity.getFullName());
                 preorderDetailEntity.setQuantity(dtos.getQty());
                 preorderDetailEntity.setPrice(dtos.getPrice());
                 preorderDetailEntity.setDiscountAmount(dtos.getDiscAmount());
@@ -131,6 +139,7 @@ public class PreorderService {
             return new ResponseInBoolean(true, "Preorder berhasil dibuat");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            System.out.println("Error : " + e.getMessage());
             return new ResponseInBoolean(false, e.getMessage());
         }
     }
@@ -138,6 +147,7 @@ public class PreorderService {
     @Transactional
     public ResponseInBoolean editTransaction(Long preorderId, CreatePreorderRequest req, Long clientId) {
         try {
+            System.out.println("Data awal : " + req);
             //Get Supplier Entity
             Optional<SupplierEntity> supplierEntityOpt = supplierRepository.findFirstBySupplierIdAndDeletedAtIsNullAndClientEntity_ClientId(req.getSupplierId(), clientId);
             if (supplierEntityOpt.isEmpty()) {
@@ -146,13 +156,14 @@ public class PreorderService {
             SupplierEntity supplierEntity = supplierEntityOpt.get();
 
             //Check if transaction exist
-            Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndPreorderDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, preorderId);
+            Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndDeletedAtIsNull(clientId, preorderId);
 
             if (preorderEntityOpt.isEmpty()) {
                 return new ResponseInBoolean(false, "Data transaksi tidak ditemukan");
             }
             PreorderEntity preorderEntity = preorderEntityOpt.get();
 
+            System.out.println("Amana sampe sini hrsnya");
             //insert the transaction data
             preorderEntity.setSupplierEntity(supplierEntity);
             preorderEntity.setTotalPrice(req.getTotalPrice());
@@ -160,19 +171,32 @@ public class PreorderService {
             preorderEntity.setSubtotal(req.getSubtotal());
             preorderRepository.save(preorderEntity);
 
+            System.out.println("otw delete");
+
             //Delete all product prices related to product id
             preorderDetailRepository.deleteAllByPreorderEntity_PreorderId(preorderId);
+
+            System.out.println("otw sort : " + req.getPreorderDetailDTOS());
+
 
             // ✅ Sort preorder details alphabetically by name (A–Z)
             if (req.getPreorderDetailDTOS() != null && !req.getPreorderDetailDTOS().isEmpty()) {
                 req.getPreorderDetailDTOS().sort(Comparator.comparing(PreorderDetailDTO::getName, String.CASE_INSENSITIVE_ORDER));
             }
+            System.out.println("otw loop : " + req.getPreorderDetailDTOS());
 
             for (PreorderDetailDTO dtos : req.getPreorderDetailDTOS()) {
                 if (dtos != null) {
+                    Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(dtos.getProductId());
+                    if(productEntityOpt.isEmpty()){
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                        return new ResponseInBoolean(false, "Produk " + dtos.getName() + " tidak ditemukan");
+                    }
+                    ProductEntity productEntity = productEntityOpt.get();
                     PreorderDetailEntity preorderDetailEntity = new PreorderDetailEntity();
-                    preorderDetailEntity.setShortName(dtos.getCode());
-                    preorderDetailEntity.setFullName(dtos.getName());
+                    preorderDetailEntity.setProductId(dtos.getProductId());
+                    preorderDetailEntity.setShortName(productEntity.getShortName());
+                    preorderDetailEntity.setFullName(productEntity.getFullName());
                     preorderDetailEntity.setQuantity(dtos.getQty());
                     preorderDetailEntity.setPrice(dtos.getPrice());
                     preorderDetailEntity.setDiscountAmount(dtos.getDiscAmount());
@@ -232,7 +256,8 @@ public class PreorderService {
                     productData.getProductPricesEntity().get(2).getPercentage(),
                     productData.getProductPricesEntity().get(0).getPrice(),
                     productData.getProductPricesEntity().get(1).getPrice(),
-                    productData.getProductPricesEntity().get(2).getPrice()
+                    productData.getProductPricesEntity().get(2).getPrice(),
+                    productData.getProductId()
             ));
         }
         return new ConvertToPembelianDTO(
@@ -259,7 +284,7 @@ public class PreorderService {
     public Boolean updatePreorderByConvertedData(List<PurchasingDetailDTO> req, Long preorderId, Long clientId){
         try{
             //Get preorder data
-            Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndPreorderDetailEntitiesIsNotNullAndDeletedAtIsNull(clientId, preorderId);
+            Optional<PreorderEntity> preorderEntityOpt = preorderRepository.findFirstByClientEntity_ClientIdAndPreorderIdAndDeletedAtIsNull(clientId, preorderId);
             if(preorderEntityOpt.isEmpty()){
                 return false;
             }

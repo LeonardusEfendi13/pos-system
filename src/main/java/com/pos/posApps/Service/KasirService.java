@@ -100,20 +100,23 @@ public class KasirService {
             for (TransactionDetailDTO dtos : req.getTransactionDetailDTOS()) {
                 System.out.println("Part Number : " + dtos.getCode());
                 System.out.println("Nama Barang : " + dtos.getName());
+                System.out.println("Product Id : " + dtos.getProductId());
 
                 //Get product Entity
-                ProductEntity productEntity = productRepository.findAndLockProduct(dtos.getName(), dtos.getCode(), clientData.getClientId());
+                Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(dtos.getProductId());
+                if(productEntityOpt.isEmpty()){
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseInBoolean(false, "Produk " + dtos.getName() + " tidak ditemukan");
+                }
+                ProductEntity productEntity = productEntityOpt.get();
                 entityManager.refresh(productEntity);
 
-                if (productEntity == null) {
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
-                }
                 System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
                 lastProduct = dtos.getCode();
                 TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
-                transactionDetailEntity.setShortName(dtos.getCode());
-                transactionDetailEntity.setFullName(dtos.getName());
+                transactionDetailEntity.setProductId(dtos.getProductId());
+                transactionDetailEntity.setShortName(productEntity.getShortName());
+                transactionDetailEntity.setFullName(productEntity.getFullName());
                 transactionDetailEntity.setQty(dtos.getQty());
                 transactionDetailEntity.setPrice(dtos.getPrice());
                 transactionDetailEntity.setDiscountAmount(dtos.getDiscAmount());
@@ -158,38 +161,28 @@ public class KasirService {
             Long transactionId,
             CreateTransactionRequest req,
             AccountEntity accountData,
-            boolean isBranch
-    ) {
-        TipeKartuStok tipeKartuStok = TipeKartuStok.KOREKSI_PENJUALAN;
-        if(isBranch){
-            tipeKartuStok = TipeKartuStok.KOREKSI_TRANSFER_STOK;
-        }
+            boolean isBranch) {
+
+        TipeKartuStok tipeKartuStok = isBranch
+                ? TipeKartuStok.KOREKSI_TRANSFER_STOK
+                : TipeKartuStok.KOREKSI_PENJUALAN;
+
         String lastProduct = "-";
         ClientEntity clientData = accountData.getClientEntity();
+
         try {
-            // =========================
-            // 1. VALIDASI CUSTOMER
-            // =========================
+
             CustomerEntity customer = customerRepository
                     .findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(
                             req.getCustomerId(),
-                            clientData.getClientId()
-                    )
+                            clientData.getClientId())
                     .orElseThrow(() -> new RuntimeException("Customer tidak ditemukan"));
 
-            // =========================
-            // 2. VALIDASI TRANSAKSI
-            // =========================
             TransactionEntity transaction = transactionRepository
                     .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(
-                            clientData.getClientId(),
-                            transactionId
-                    )
+                            clientData.getClientId(), transactionId)
                     .orElseThrow(() -> new RuntimeException("Transaksi tidak ditemukan"));
 
-            // =========================
-            // 3. UPDATE HEADER TRANSAKSI
-            // =========================
             transaction.setCustomerEntity(customer);
             transaction.setTotalPrice(req.getTotalPrice());
             transaction.setTotalDiscount(req.getTotalDisc());
@@ -197,111 +190,95 @@ public class KasirService {
             transaction.setAccountEntity(accountData);
             transactionRepository.save(transaction);
 
-            // =========================
-            // 4. MAP DETAIL LAMA
-            // =========================
             List<TransactionDetailEntity> oldDetails =
-                    transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
+                    transactionDetailRepository
+                            .findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
 
-            Map<String, TransactionDetailEntity> oldDetailMap = new HashMap<>();
-            for (TransactionDetailEntity d : oldDetails) {
-                oldDetailMap.put(d.getShortName(), d);
-            }
+            Map<Long, TransactionDetailEntity> oldMap = oldDetails.stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                            TransactionDetailEntity::getProductId,
+                            java.util.function.Function.identity()));
 
-            // =========================
-            // 5. MAP DETAIL BARU
-            // =========================
-            Map<String, TransactionDetailDTO> newDetailMap = new HashMap<>();
-            for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
-                newDetailMap.put(dto.getCode(), dto);
-            }
+            Map<Long, TransactionDetailDTO> newMap = req.getTransactionDetailDTOS().stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                            TransactionDetailDTO::getProductId,
+                            java.util.function.Function.identity()));
 
-            // =========================
-            // 6. UNION SEMUA PRODUK
-            // =========================
-            Set<String> allProductCodes = new HashSet<>();
-            allProductCodes.addAll(oldDetailMap.keySet());
-            allProductCodes.addAll(newDetailMap.keySet());
+            Set<Long> productIds = new HashSet<>();
+            productIds.addAll(oldMap.keySet());
+            productIds.addAll(newMap.keySet());
 
-            // =========================
-            // 7. LOOP PER PRODUK (DELTA)
-            // =========================
-            for (String code : allProductCodes) {
+            Map<Long, ProductEntity> productCache = new HashMap<>();
 
-                TransactionDetailEntity oldDetail = oldDetailMap.get(code);
-                TransactionDetailDTO newDetail = newDetailMap.get(code);
+            for (Long productId : productIds) {
 
-                long oldQty = oldDetail != null ? oldDetail.getQty() : 0;
-                long newQty = newDetail != null ? newDetail.getQty() : 0;
+                TransactionDetailEntity oldDetail = oldMap.get(productId);
+                TransactionDetailDTO newDetail = newMap.get(productId);
+
+                long oldQty = oldDetail == null ? 0 : oldDetail.getQty();
+                long newQty = newDetail == null ? 0 : newDetail.getQty();
 
                 long delta = newQty - oldQty;
 
-                // Qty sama → SKIP TOTAL
                 if (delta == 0) {
                     continue;
                 }
 
-                lastProduct = code;
+                lastProduct = String.valueOf(productId);
 
-                // =========================
-                // 8. LOCK PRODUCT
-                // =========================
-                ProductEntity product = productRepository.findAndLockProduct(
-                        newDetail != null ? newDetail.getName() : oldDetail.getFullName(),
-                        code,
-                        clientData.getClientId()
-                );
+                ProductEntity product = productRepository
+                        .findFirstByProductIdAndDeletedAtIsNull(productId)
+                        .orElseThrow(() -> new RuntimeException("Produk ID " + productId + " tidak ditemukan"));
 
-                if (product == null) {
-                    throw new RuntimeException("Produk " + code + " tidak ditemukan");
-                }
-
-                // =========================
-                // 10. UPDATE STOCK
-                // =========================
                 long newStock = product.getStock() - delta;
+
+//                if (newStock < 0) {
+//                    throw new RuntimeException(product.getFullName() + " stok tidak mencukupi");
+//                }
+
                 product.setStock(newStock);
                 productRepository.save(product);
 
-                // =========================
-                // 11. KARTU STOCK
-                // =========================
-                stockMovementService.insertKartuStok(new AdjustStockDTO(
-                        product,
-                        transaction.getTransactionNumber(),
-                        tipeKartuStok,
-                        delta < 0 ? Math.abs(delta) : 0L,
-                        delta > 0 ? delta : 0L,
-                        newStock,
-                        clientData,
-                        getCurrentTimestamp()
-                ));
+                productCache.put(productId, product);
+
+                stockMovementService.insertKartuStok(
+                        new AdjustStockDTO(
+                                product,
+                                transaction.getTransactionNumber(),
+                                tipeKartuStok,
+                                delta < 0 ? -delta : 0,
+                                delta > 0 ? delta : 0,
+                                newStock,
+                                clientData,
+                                getCurrentTimestamp()));
             }
 
-            // =========================
-            // 12. REPLACE DETAIL TRANSAKSI
-            // =========================
             transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
 
             for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
-                ProductEntity product = productRepository.findAndLockProduct(
-                        dto.getName(),
-                        dto.getCode(),
-                        clientData.getClientId()
-                );
+
+                ProductEntity product = productCache.get(dto.getProductId());
+
+                if (product == null) {
+                    product = productRepository
+                            .findFirstByProductIdAndDeletedAtIsNull(dto.getProductId())
+                            .orElseThrow(() -> new RuntimeException("Produk tidak ditemukan"));
+                }
 
                 TransactionDetailEntity detail = new TransactionDetailEntity();
-                detail.setShortName(dto.getCode());
-                detail.setFullName(dto.getName());
+                detail.setTransactionEntity(transaction);
+                detail.setProductId(product.getProductId());
+                detail.setShortName(product.getShortName());
+                detail.setFullName(product.getFullName());
                 detail.setQty(dto.getQty());
                 detail.setPrice(dto.getPrice());
                 detail.setDiscountAmount(dto.getDiscAmount());
                 detail.setTotalPrice(dto.getTotal());
-                detail.setTransactionEntity(transaction);
                 detail.setBasicPrice(product.getSupplierPrice());
 
                 BigDecimal totalBasic = product.getSupplierPrice()
                         .multiply(BigDecimal.valueOf(dto.getQty()));
+
                 detail.setTotalProfit(dto.getTotal().subtract(totalBasic));
 
                 transactionDetailRepository.save(detail);
@@ -315,5 +292,200 @@ public class KasirService {
                     e.getMessage() + " (ERROR di produk: " + lastProduct + ")");
         }
     }
+
+//    @Transactional
+//    public ResponseInBoolean editTransaction(
+//            Long transactionId,
+//            CreateTransactionRequest req,
+//            AccountEntity accountData,
+//            boolean isBranch
+//    ) {
+//        System.out.println("REQ ISINYA APA : " + req);
+//        TipeKartuStok tipeKartuStok = TipeKartuStok.KOREKSI_PENJUALAN;
+//        if(isBranch){
+//            tipeKartuStok = TipeKartuStok.KOREKSI_TRANSFER_STOK;
+//        }
+//        String lastProduct = "-";
+//        ClientEntity clientData = accountData.getClientEntity();
+//        try {
+//            // =========================
+//            // 1. VALIDASI CUSTOMER
+//            // =========================
+//            CustomerEntity customer = customerRepository
+//                    .findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(
+//                            req.getCustomerId(),
+//                            clientData.getClientId()
+//                    )
+//                    .orElseThrow(() -> new RuntimeException("Customer tidak ditemukan"));
+//
+//            // =========================
+//            // 2. VALIDASI TRANSAKSI
+//            // =========================
+//            TransactionEntity transaction = transactionRepository
+//                    .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(
+//                            clientData.getClientId(),
+//                            transactionId
+//                    )
+//                    .orElseThrow(() -> new RuntimeException("Transaksi tidak ditemukan"));
+//
+//            // =========================
+//            // 3. UPDATE HEADER TRANSAKSI
+//            // =========================
+//            transaction.setCustomerEntity(customer);
+//            transaction.setTotalPrice(req.getTotalPrice());
+//            transaction.setTotalDiscount(req.getTotalDisc());
+//            transaction.setSubtotal(req.getSubtotal());
+//            transaction.setAccountEntity(accountData);
+//            transactionRepository.save(transaction);
+//
+//            // =========================
+//            // 4. MAP DETAIL LAMA
+//            // =========================
+//            List<TransactionDetailEntity> oldDetails =
+//                    transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
+//
+//            Map<String, TransactionDetailEntity> oldDetailMap = new HashMap<>();
+//            System.out.println("Getting the old detail map");
+//            for (TransactionDetailEntity d : oldDetails) {
+//                System.out.println("Product id ini : " + d.getProductId());
+//                oldDetailMap.put(String.valueOf(d.getProductId()), d);
+//            }
+//            System.out.println("Old detail map : " + oldDetailMap.size());
+//
+//
+//            // =========================
+//            // 5. MAP DETAIL BARU
+//            // =========================
+//            System.out.println("Getting the new detail map");
+//
+//            Map<String, TransactionDetailDTO> newDetailMap = new HashMap<>();
+//            for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+//                System.out.println("Product data yg ini apa : " + dto);
+//                newDetailMap.put(String.valueOf(dto.getProductId()), dto);
+//            }
+//            System.out.println("New detail map : " + newDetailMap.size());
+//
+//            // =========================
+//            // 6. UNION SEMUA PRODUK
+//            // =========================
+//            Set<String> allProductCodes = new HashSet<>();
+//            allProductCodes.addAll(oldDetailMap.keySet());
+//            allProductCodes.addAll(newDetailMap.keySet());
+//
+//            // =========================
+//            // 7. LOOP PER PRODUK (DELTA)
+//            // =========================
+//            System.out.println("Start the loop");
+//            for (String code : allProductCodes) {
+//                System.out.println("Code : " + code);
+//                TransactionDetailEntity oldDetail = oldDetailMap.get(code);
+//                TransactionDetailDTO newDetail = newDetailMap.get(code);
+//
+//                long oldQty = oldDetail != null ? oldDetail.getQty() : 0;
+//                long newQty = newDetail != null ? newDetail.getQty() : 0;
+//
+//                long delta = newQty - oldQty;
+//
+//                // Qty sama → SKIP TOTAL
+//                if (delta == 0) {
+//                    continue;
+//                }
+//
+//                lastProduct = code;
+//
+//                // =========================
+//                // 8. LOCK PRODUCT
+//                // =========================
+//                Long productId = newDetail != null ? newDetail.getProductId() : oldDetail.getProductId();
+//                System.out.println("Start locking the product, with id : " + productId);
+//
+//                Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(productId);
+//                if(productEntityOpt.isEmpty()){
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Produk " + newDetail.getName() + " tidak ditemukan");
+//                }
+//                ProductEntity product = productEntityOpt.get();
+////                ProductEntity product = productRepository.findAndLockProduct(
+////                        newDetail != null ? newDetail.getName() : oldDetail.getFullName(),
+////                        code,
+////                        clientData.getClientId()
+////                );
+//
+//                if (product == null) {
+//                    throw new RuntimeException("Produk " + code + " tidak ditemukan");
+//                }
+//                System.out.println("otwupdate stock");
+//
+//
+//                // =========================
+//                // 10. UPDATE STOCK
+//                // =========================
+//                long newStock = product.getStock() - delta;
+//                product.setStock(newStock);
+//                productRepository.save(product);
+//
+//                // =========================
+//                // 11. KARTU STOCK
+//                // =========================
+//                stockMovementService.insertKartuStok(new AdjustStockDTO(
+//                        product,
+//                        transaction.getTransactionNumber(),
+//                        tipeKartuStok,
+//                        delta < 0 ? Math.abs(delta) : 0L,
+//                        delta > 0 ? delta : 0L,
+//                        newStock,
+//                        clientData,
+//                        getCurrentTimestamp()
+//                ));
+//            }
+//
+//            // =========================
+//            // 12. REPLACE DETAIL TRANSAKSI
+//            // =========================
+//            transactionDetailRepository.deleteAllByTransactionEntity_TransactionId(transactionId);
+//
+//            System.out.println("otw loop ini");
+//
+//            for (TransactionDetailDTO dto : req.getTransactionDetailDTOS()) {
+////                ProductEntity product = productRepository.findAndLockProduct(
+////                        dto.getName(),
+////                        dto.getCode(),
+////                        clientData.getClientId()
+////                );
+//                System.out.println("otw get producdt lagi");
+//
+//                Optional<ProductEntity> productEntityOpt = productRepository.findFirstByProductIdAndDeletedAtIsNull(dto.getProductId());
+//                if(productEntityOpt.isEmpty()){
+//                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//                    return new ResponseInBoolean(false, "Produk " + dto.getName() + " tidak ditemukan");
+//                }
+//                ProductEntity product = productEntityOpt.get();
+//
+//                TransactionDetailEntity detail = new TransactionDetailEntity();
+//                detail.setProductId(product.getProductId());
+//                detail.setShortName(product.getShortName());
+//                detail.setFullName(product.getFullName());
+//                detail.setQty(dto.getQty());
+//                detail.setPrice(dto.getPrice());
+//                detail.setDiscountAmount(dto.getDiscAmount());
+//                detail.setTotalPrice(dto.getTotal());
+//                detail.setTransactionEntity(transaction);
+//                detail.setBasicPrice(product.getSupplierPrice());
+//
+//                BigDecimal totalBasic = product.getSupplierPrice()
+//                        .multiply(BigDecimal.valueOf(dto.getQty()));
+//                detail.setTotalProfit(dto.getTotal().subtract(totalBasic));
+//
+//                transactionDetailRepository.save(detail);
+//            }
+//
+//            return new ResponseInBoolean(true, transaction.getTransactionNumber());
+//
+//        } catch (Exception e) {
+//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//            return new ResponseInBoolean(false,
+//                    e.getMessage() + " (ERROR di produk: " + lastProduct + ")");
+//        }
+//    }
 
 }
