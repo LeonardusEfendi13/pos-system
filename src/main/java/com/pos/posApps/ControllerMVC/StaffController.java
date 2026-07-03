@@ -2,6 +2,7 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.CreateStaffRequest;
 import com.pos.posApps.DTO.Dtos.DashboardKaryawanDTO;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 
 @Controller
@@ -51,7 +53,7 @@ public class StaffController {
 
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public String addStaff(HttpSession session, Model model, RedirectAttributes redirectAttributes, CreateStaffRequest req){
         AccountEntity accountEntity;
         String token;
@@ -64,13 +66,14 @@ public class StaffController {
 
         if (authService.hasAccessToModifyData(accountEntity.getRole())) {
             SidebarDTO sidebarData = sidebarService.getSidebarData(accountEntity.getClientEntity().getClientId(), token);
-            DashboardKaryawanDTO dashboardKaryawanDTO = staffService.getDashboardData();
-            model.addAttribute("sidebarData", sidebarData);
-            model.addAttribute("activePage", "dashboardKaryawan");
-            model.addAttribute("dashboardData", dashboardKaryawanDTO);
-            return "display_dashboard_karyawan";
+            ResponseInBoolean isAdded = staffService.addStaffData(req);
+            redirectAttributes.addFlashAttribute("status", isAdded.isStatus());
+            redirectAttributes.addFlashAttribute("message", isAdded.getMessage());
+            redirectAttributes.addFlashAttribute("sidebarData", sidebarData);
+            System.out.println("all done");
+            return "redirect:/staff";
         }
-        redirectAttributes.addFlashAttribute("status", true);
+        redirectAttributes.addFlashAttribute("status", false);
         redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
         return "redirect:/login";
 

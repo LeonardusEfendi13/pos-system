@@ -1,13 +1,22 @@
 package com.pos.posApps.Service;
 
+import com.pos.posApps.DTO.Dtos.CreateStaffRequest;
 import com.pos.posApps.DTO.Dtos.DashboardKaryawanDTO;
+import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.DTO.Dtos.StaffDTO;
+import com.pos.posApps.DTO.Enum.Jabatan;
+import com.pos.posApps.DTO.Enum.JenisKelamin;
+import com.pos.posApps.DTO.Enum.Pendidikan;
 import com.pos.posApps.Entity.StaffEntity;
 import com.pos.posApps.Repository.StaffRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -47,67 +56,33 @@ public class StaffService {
         );
     }
 
-//    public List<VehicleEntity> getVehicleList(String brand){
-//        if(brand == null || brand.isBlank()){
-//            return vehicleRepository.findAllOrderByModelAsc();
-//        }
-//        return vehicleRepository.findAllByBrandOrderByModelAsc(brand);
-//    }
-//
-//    @Transactional
-//    public ResponseInBoolean insertVehicle(String name, String brand, String partNumber){
-//        try{
-//            Optional<VehicleEntity> vehicleEntityOpt = vehicleRepository.findFirstByModelIgnoreCaseAndBrandIgnoreCase(name, brand);
-//            if(vehicleEntityOpt.isPresent()){
-//                //Berarti data udah ada
-//                return new ResponseInBoolean(true, "Data Sudah ada");
-//            }
-//
-//            VehicleEntity vehicleEntity = new VehicleEntity();
-//            vehicleEntity.setBrand(brand);
-//            vehicleEntity.setModel(name);
-//            vehicleEntity.setKnownPartNumber(partNumber);
-//            vehicleRepository.save(vehicleEntity);
-//            return new ResponseInBoolean(true, "Data Berhasil dibuat");
-//        }catch (Exception e){
-//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//            return new ResponseInBoolean(false, "Gagal insert data, hubungi admin : " + e.getMessage());
-//        }
-//    }
-//
-//    @Transactional
-//    public ResponseInBoolean editVehicle(Long vehicleId, String name, String brand, String partNumber){
-//        try{
-//            //Will throw exception when data is null
-//            VehicleEntity vehicleEntity = vehicleRepository.findFirstById(vehicleId);
-//
-//            // Check if another vehicle with the same name & brand exists (excluding the current one)
-//            boolean vehicleExists = vehicleRepository.existsByModelIgnoreCaseAndBrandIgnoreCaseAndIdNot(name, brand, vehicleId);
-//
-//            if (vehicleExists) {
-//                return new ResponseInBoolean(true, "Data sudah ada"); // Duplicate data exists
-//            }
-//
-//            vehicleEntity.setModel(name);
-//            vehicleEntity.setBrand(brand);
-//            vehicleEntity.setKnownPartNumber(partNumber);
-//            vehicleRepository.save(vehicleEntity);
-//            return new ResponseInBoolean(true, "Berhasil update data");
-//        }catch (Exception e){
-//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//            return new ResponseInBoolean(false, "Gagal update data");
-//        }
-//    }
-//
-//    @Transactional
-//    public Boolean deleteVehicle(Long vehicleId){
-//        try{
-//            //Will throw exception when data is null
-//            vehicleRepository.deleteById(vehicleId);
-//            return true;
-//        }catch (Exception e){
-//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//            return false;
-//        }
-//    }
+    @Transactional
+    public ResponseInBoolean addStaffData(CreateStaffRequest req){
+        System.out.println("req : "+ req);
+        try{
+            LocalDateTime tglLahir = LocalDate.parse(req.getTanggalLahir()).atStartOfDay();
+            LocalDateTime tglJoin = LocalDate.parse(req.getTanggalJoin()).atStartOfDay();
+            StaffEntity staffEntity = new StaffEntity();
+            staffEntity.setNik(req.getNik());
+            staffEntity.setNama(req.getNama());
+            staffEntity.setTempatLahir(req.getTempatLahir());
+            staffEntity.setTanggalLahir(tglLahir);
+            staffEntity.setNoHp(req.getNoHp());
+            staffEntity.setNoHpDarurat(req.getNoHpDarurat());
+            staffEntity.setJabatan(Jabatan.valueOf(req.getJabatan()));
+            staffEntity.setJenisKelamin(JenisKelamin.valueOf(req.getJenisKelamin()));
+            staffEntity.setTanggalJoin(tglJoin);
+            staffEntity.setGaji(BigDecimal.valueOf(Long.parseLong(req.getGaji())));
+            staffEntity.setPendidikanTerakhir(Pendidikan.valueOf(req.getPendidikanTerakhir()));
+            staffRepository.save(staffEntity);
+            System.out.println("All ok");
+            return new ResponseInBoolean(true, "Berhasil menambahkan karyawan");
+        }catch (Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            System.out.println("Error di addStatffData : " + e.getMessage());
+            return new ResponseInBoolean(false, "Error : "+ e.getMessage());
+        }
+
+    }
+
 }

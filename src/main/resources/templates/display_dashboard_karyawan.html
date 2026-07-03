@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Karyawan Dashboard</title>
 
-<!--    <link-->
-<!--            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"-->
-<!--            rel="stylesheet"-->
-<!--    />-->
+    <!--    <link-->
+    <!--            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"-->
+    <!--            rel="stylesheet"-->
+    <!--    />-->
 
     <!-- Bootstrap 5 -->
     <link
@@ -302,12 +302,16 @@
     <!-- CONTENT -->
     <div class="content page-wrapper">
         <!-- Modal Tambah Karyawan -->
-        <div class="modal fade" id="modalTambahKaryawan" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalTambahKaryawanLabel" aria-hidden="true">            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content" style="border-radius: var(--radius); border: none; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);">
+        <div class="modal fade" id="modalTambahKaryawan" data-bs-backdrop="static" data-bs-keyboard="false"
+             tabindex="-1" aria-labelledby="modalTambahKaryawanLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content"
+                     style="border-radius: var(--radius); border: none; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);">
 
                     <!-- Modal Header -->
                     <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 20px;">
-                        <h5 class="modal-title" id="modalTambahKaryawanLabel" style="font-weight: 700; font-size: 18px;">
+                        <h5 class="modal-title" id="modalTambahKaryawanLabel"
+                            style="font-weight: 700; font-size: 18px;">
                             👤 Tambah Karyawan Baru
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -320,67 +324,90 @@
 
                                 <!-- NIK -->
                                 <div class="col-md-6">
-                                    <label class="form-label font-weight-medium" style="font-size: 13px; color: var(--muted);">Nomor Induk Kependudukan (NIK)</label>
-                                    <input type="text" class="form-control" name="nik" placeholder="Masukkan nomor induk kependudukan " required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label font-weight-medium"
+                                           style="font-size: 13px; color: var(--muted);">Nomor Induk Kependudukan
+                                        (NIK)</label>
+                                    <input type="text" class="form-control" name="nik"
+                                           placeholder="Masukkan nomor induk kependudukan " required
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Nama Lengkap -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Nama Lengkap</label>
-                                    <input type="text" class="form-control" name="nama" placeholder="Masukkan nama lengkap" required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Nama
+                                        Lengkap</label>
+                                    <input type="text" class="form-control" name="nama"
+                                           placeholder="Masukkan nama lengkap" required
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Tempat Lahir -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tempat Lahir</label>
-                                    <input type="text" class="form-control" name="tempatLahir" placeholder="Masukkan tempat lahir" required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tempat
+                                        Lahir</label>
+                                    <input type="text" class="form-control" name="tempatLahir"
+                                           placeholder="Masukkan tempat lahir" required
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Tanggal Lahir -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tempat Lahir</label>
-                                    <input type="date" class="form-control" name="tanggalLahir" placeholder="Masukkan tanggal lahir" max="2010-12-31" required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tempat
+                                        Lahir</label>
+                                    <input type="date" class="form-control" name="tanggalLahir"
+                                           placeholder="Masukkan tanggal lahir" max="2010-12-31" required
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- noHp -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">No. Hp</label>
-                                    <input type="number" class="form-control" name="noHp" placeholder="08xxxxxxxxx" required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">No.
+                                        Hp</label>
+                                    <input type="number" class="form-control" name="noHp" placeholder="08xxxxxxxxx"
+                                           required style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Nomor Hp Darurat -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Nomor darurat</label>
-                                    <input type="number" class="form-control" name="noHpDarurat" placeholder="08xxxxxxxxx" style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Nomor
+                                        darurat</label>
+                                    <input type="number" class="form-control" name="noHpDarurat"
+                                           placeholder="08xxxxxxxxx" style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Jabatan -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Jabatan</label>
-                                    <select class="form-select" name="jabatan" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <label class="form-label"
+                                           style="font-size: 13px; color: var(--muted);">Jabatan</label>
+                                    <select class="form-select" name="jabatan" required
+                                            style="border-radius: 10px; padding: 10px 12px;">
                                         <option value="" disabled selected>Pilih Jabatan</option>
                                         <option value="KASIR">Kasir</option>
-                                        <option value="PROBATION">Gudang</option>
-                                        <option value="KARYAWAN_ENTRY">Admin</option>
-                                        <option value="KARYAWAN_JUNIOR">Supervisor</option>
-                                        <option value="KARYAWAN_SENIOR">Supervisor</option>
+                                        <option value="PROBATION">Probation</option>
+                                        <option value="KARYAWAN_ENTRY">Karyawan Entry</option>
+                                        <option value="KARYAWAN_JUNIOR">Karyawan Junior</option>
+                                        <option value="KARYAWAN_SENIOR">Karyawan Senior</option>
                                     </select>
                                 </div>
 
                                 <!-- Jenis Kelamin -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Jenis Kelamin</label>
-                                    <select class="form-select" name="jenisKelamin" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Jenis
+                                        Kelamin</label>
+                                    <select class="form-select" name="jenisKelamin" required
+                                            style="border-radius: 10px; padding: 10px 12px;">
                                         <option value="" disabled selected>Pilih Jenis Kelamin</option>
                                         <option value="PRIA">Pria</option>
                                         <option value="WANITA">Wanita</option>
                                     </select>
                                 </div>
 
-                                <!-- Jenis Kelamin -->
+                                <!-- Pendidikan Terakhir -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Pendidikan Terakhir</label>
-                                    <select class="form-select" name="pendidikanTerakhir" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Pendidikan
+                                        Terakhir</label>
+                                    <select class="form-select" name="pendidikanTerakhir" required
+                                            style="border-radius: 10px; padding: 10px 12px;">
                                         <option value="" disabled selected>Pilih Pendidikan Terakhir</option>
                                         <option value="SD">SD</option>
                                         <option value="SMP">SMP</option>
@@ -392,16 +419,22 @@
 
                                 <!-- Tanggal Bergabung -->
                                 <div class="col-md-6">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tanggal Bergabung</label>
-                                    <input type="date" class="form-control" name="tanggalJoin" required style="border-radius: 10px; padding: 10px 12px;" />
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Tanggal
+                                        Bergabung</label>
+                                    <input type="date" class="form-control" name="tanggalJoin" required
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
                                 </div>
 
                                 <!-- Gaji Pokok -->
                                 <div class="col-md-12">
-                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Gaji Pokok (Rupiah)</label>
+                                    <label class="form-label" style="font-size: 13px; color: var(--muted);">Gaji Pokok
+                                        (Rupiah)</label>
                                     <div class="input-group">
-                                        <span class="input-group-text" style="background: #f1f5f9; border-radius: 10px 0 0 10px;">Rp</span>
-                                        <input type="number" class="form-control" name="gaji" placeholder="Contoh: 4000000" required style="border-radius: 0 10px 10px 0; padding: 10px 12px;" />
+                                        <span class="input-group-text"
+                                              style="background: #f1f5f9; border-radius: 10px 0 0 10px;">Rp</span>
+                                        <input type="number" class="form-control" name="gaji"
+                                               placeholder="Contoh: 4000000" required
+                                               style="border-radius: 0 10px 10px 0; padding: 10px 12px;"/>
                                     </div>
                                 </div>
 
@@ -409,14 +442,32 @@
                         </div>
 
                         <!-- Modal Footer -->
-                        <div class="modal-footer" style="border-top: 1px solid var(--border); padding: 16px 24px; background: #f8fafc;">
-                            <button type="button" class="btn text-secondary" data-bs-dismiss="modal" style="font-weight: 500;">Batal</button>
+                        <div class="modal-footer"
+                             style="border-top: 1px solid var(--border); padding: 16px 24px; background: #f8fafc;">
+                            <button type="button" class="btn text-secondary" data-bs-dismiss="modal"
+                                    style="font-weight: 500;">Batal
+                            </button>
                             <button type="submit" class="button" style="padding: 10px 24px;">Simpan Karyawan</button>
                         </div>
                     </form>
 
                 </div>
             </div>
+        </div>
+
+        <!-- =========================
+     NOTIFIKASI / ALERT SYSTEM
+========================== -->
+        <div th:if="${message}"
+             th:class="${status} ? 'alert alert-success alert-dismissible fade show' : 'alert alert-danger alert-dismissible fade show'"
+             role="alert"
+             style="border-radius: 12px; margin-bottom: 20px; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="d-flex align-items-center">
+                <!-- Jika status mengevaluasi ke true pasang ✅, jika false pasang ❌ -->
+                <span th:text="${status} ? '✅' : '❌'" style="font-size: 18px; margin-right: 10px;"></span>
+                <span th:text="${message}">Pesan Notifikasi</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         <!-- =========================
      HEADER
@@ -445,12 +496,14 @@
 
             <div class="card">
                 <div class="label">Karyawan Aktif</div>
-                <div class="value" style="color: var(--success)"><span th:text="${dashboardData.karyawanAktif}">999 </span></div>
+                <div class="value" style="color: var(--success)"><span
+                        th:text="${dashboardData.karyawanAktif}">999 </span></div>
             </div>
 
             <div class="card">
                 <div class="label">Resign</div>
-                <div class="value" style="color: var(--danger)"><span th:text="${dashboardData.totalResign}"> 2</span></div>
+                <div class="value" style="color: var(--danger)"><span th:text="${dashboardData.totalResign}"> 2</span>
+                </div>
             </div>
 
             <div class="card">
