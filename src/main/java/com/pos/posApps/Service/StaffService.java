@@ -27,8 +27,14 @@ public class StaffService {
     StaffRepository staffRepository;
     public DashboardKaryawanDTO getDashboardData(){
         List<StaffEntity> staffEntityList = staffRepository.findAllByDeletedAtIsNull();
-        List<StaffDTO> staffData = staffEntityList.stream().sorted(Comparator.comparing(StaffEntity::getNama))
-                .map(staff-> new StaffDTO(
+        List<StaffDTO> staffData = staffEntityList.stream()
+                .sorted(
+                        // 1. Urutkan berdasarkan status resign (null diposisikan paling awal/atas)
+                        Comparator.comparing(StaffEntity::getTanggalResign, Comparator.nullsFirst(Comparator.naturalOrder()))
+                                // 2. Jika sama-sama aktif atau sama-sama resign, urutkan berdasarkan nama alfabetis
+                                .thenComparing(StaffEntity::getNama)
+                )
+                .map(staff -> new StaffDTO(
                         staff.getStaffId(),
                         staff.getNama(),
                         staff.getNik(),

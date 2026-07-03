@@ -509,8 +509,7 @@
             <div class="card">
                 <div class="label">Payroll Bulan Ini</div>
                 <div class="value" style="font-size: 18px; color: var(--primary)">
-                    <span th:text="${dashboardData.payroll}">Rp 72.500.000</span>
-                </div>
+                    <span>Rp <th:block th:text="${dashboardData.payroll != null ? #numbers.formatInteger(dashboardData.payroll, 1, 'POINT') : '0'}"></th:block></span>                </div>
             </div>
         </div>
         <!-- =========================
@@ -563,125 +562,55 @@
         <!-- =========================
              LIST CONTAINER
         ========================== -->
+        <!-- =========================
+     LIST CONTAINER
+========================== -->
+        <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 10px;">
 
-        <div
-                style="
-            margin-top: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-          "
-        >
-            <!-- =========================
-       EMPLOYEE CARD 1
-  ========================== -->
+            <!-- Menggunakan th:each untuk looping data dari backend -->
+            <div class="emp-card" th:each="staff : ${dashboardData.listStaff}">
 
-            <div class="emp-card">
-                <div class="avatar" style="background: #2563eb">AS</div>
+                <!-- AVATAR: Mengambil huruf pertama dari kata pertama dan kedua -->
+                <!-- Jika nama hanya 1 kata, Thymeleaf akan aman dengan logika di bawah -->
+                <div class="avatar"
+                     th:style="'background: ' + (${staff.jenisKelamin == 'PRIA'} ? '#2563eb' : '#db2777')"
+                     th:text="${#strings.substring(staff.nama, 0, 1)} + ${#strings.contains(staff.nama, ' ') ? #strings.substring(#strings.arraySplit(staff.nama, ' ')[1], 0, 1) : ''}">
+                    AS
+                </div>
 
+                <!-- INFO STAFF -->
                 <div class="emp-info">
-                    <div class="emp-name">Andi Saputra</div>
+                    <!-- Nama Lengkap -->
+                    <div class="emp-name" th:text="${staff.nama}">Nama Karyawan</div>
 
-                    <div class="emp-meta">Kasir • Join 10 Jan 2024</div>
+                    <!-- Jabatan & Tanggal Gabung (Format: dd MMM yyyy) -->
+                    <div class="emp-meta">
+                        <span th:text="${staff.jabatan}">Jabatan</span> •
+                        Join <span th:text="${#temporals.format(staff.tanggalJoin, 'dd MMM yyyy')}">10 Jan 2024</span>
+                    </div>
                 </div>
 
-                <div class="emp-status active">Aktif</div>
+                <!-- STATUS: Jika tanggalResign null berarti Aktif, jika ada isinya berarti Resign -->
+                <div th:class="${staff.tanggalResign == null} ? 'emp-status active' : 'emp-status resigned'"
+                     th:text="${staff.tanggalResign == null} ? 'Aktif' : 'Resign'">
+                    Aktif
+                </div>
 
+                <!-- AKSYON / DETAIL -->
                 <div class="emp-action">
-                    <button>Detail</button>
+                    <!-- Mengarahkan ke endpoint detail menggunakan staffId -->
+                    <a th:href="@{/staff/detail/{id}(id=${staff.staffId})}" style="text-decoration: none;">
+                        <button type="button">Detail</button>
+                    </a>
                 </div>
             </div>
 
-            <!-- EMPLOYEE CARD 2 -->
-
-            <div class="emp-card">
-                <div class="avatar" style="background: #16a34a">BS</div>
-
-                <div class="emp-info">
-                    <div class="emp-name">Budi Santoso</div>
-
-                    <div class="emp-meta">Gudang • Join 15 Mar 2023</div>
-                </div>
-
-                <div class="emp-status active">Aktif</div>
-
-                <div class="emp-action">
-                    <button>Detail</button>
-                </div>
-            </div>
-
-            <!-- EMPLOYEE CARD 3 -->
-
-            <div class="emp-card">
-                <div class="avatar" style="background: #f59e0b">DP</div>
-
-                <div class="emp-info">
-                    <div class="emp-name">Dedi Pratama</div>
-
-                    <div class="emp-meta">Supervisor • Join 02 Feb 2022</div>
-                </div>
-
-                <div class="emp-status active">Aktif</div>
-
-                <div class="emp-action">
-                    <button>Detail</button>
-                </div>
-            </div>
-
-            <!-- EMPLOYEE CARD 4 -->
-
-            <div class="emp-card">
-                <div class="avatar" style="background: #dc2626">SR</div>
-
-                <div class="emp-info">
-                    <div class="emp-name">Sinta Rahma</div>
-
-                    <div class="emp-meta">Admin • Join 08 Nov 2021</div>
-                </div>
-
-                <div class="emp-status resigned">Resign</div>
-
-                <div class="emp-action">
-                    <button>Detail</button>
-                </div>
-            </div>
-
-            <!-- =========================PAGINATION========================== -->
-
-            <div
-                    style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-top: 18px;
-            "
-            >
-                <div style="color: var(--muted); font-size: 13px">
-                    Menampilkan 1 - 4 dari 18 karyawan
-                </div>
-
-                <div style="display: flex; gap: 8px">
-                    <button class="page-button">Prev</button>
-                    <button class="page-button active">1</button>
-                    <button class="page-button">2</button>
-                    <button class="page-button">3</button>
-                    <button class="page-button">Next</button>
-                </div>
-            </div>
-            <div
-                    id="emptyState"
-                    style="
-              display: none;
-              text-align: center;
-              padding: 40px;
-              color: var(--muted);
-            "
-            >
+            <!-- Tampilkan info jika listStaff kosong -->
+            <div id="emptyState" th:if="${#lists.isEmpty(dashboardData.listStaff)}" style="display: block; text-align: center; padding: 40px; color: var(--muted);">
                 <div style="font-size: 40px">👤</div>
-                <div style="margin-top: 10px">Karyawan tidak ditemukan</div>
+                <div style="margin-top: 10px">Belum ada data karyawan</div>
             </div>
         </div>
-        <!-- list container -->
     </div>
     <!-- content -->
 </div>
