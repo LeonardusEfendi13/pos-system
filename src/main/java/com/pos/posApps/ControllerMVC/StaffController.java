@@ -1,9 +1,6 @@
 package com.pos.posApps.ControllerMVC;
 
-import com.pos.posApps.DTO.Dtos.CreateStaffRequest;
-import com.pos.posApps.DTO.Dtos.DashboardKaryawanDTO;
-import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
-import com.pos.posApps.DTO.Dtos.SidebarDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.SidebarService;
@@ -13,6 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -74,6 +72,30 @@ public class StaffController {
             return "redirect:/staff";
         }
         redirectAttributes.addFlashAttribute("status", false);
+        redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
+        return "redirect:/login";
+    }
+
+    @GetMapping("/detail/{karyawanId}")
+    public String displayStaffDetail(@PathVariable("karyawanId") Long karyawanId, HttpSession session, Model model, RedirectAttributes redirectAttributes){
+        AccountEntity accountEntity;
+        String token;
+        try{
+            token = (String) session.getAttribute(authSessionKey);
+            accountEntity = authService.validateToken(token);
+        }catch (Exception e){
+            return "redirect:/login";
+        }
+
+        if (authService.hasAccessToModifyData(accountEntity.getRole())) {
+            SidebarDTO sidebarData = sidebarService.getSidebarData(accountEntity.getClientEntity().getClientId(), token);
+            StaffDTO staffData = staffService.getStaffDetail(karyawanId);
+            model.addAttribute("sidebarData", sidebarData);
+            model.addAttribute("activePage", "dashboardKaryawan");
+            model.addAttribute("staff", staffData);
+            return "display_detail_karyawan";
+        }
+        redirectAttributes.addFlashAttribute("status", true);
         redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
         return "redirect:/login";
 

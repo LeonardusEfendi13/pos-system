@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface StaffRepository extends JpaRepository<StaffEntity, Long> {
     List<StaffEntity> findAllByDeletedAtIsNull();
+
+    StaffEntity findFirstByStaffIdAndDeletedAtIsNull(Long staffId);
 }

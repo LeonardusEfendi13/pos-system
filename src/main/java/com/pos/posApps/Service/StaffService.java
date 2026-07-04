@@ -25,7 +25,8 @@ import java.util.Objects;
 public class StaffService {
     @Autowired
     StaffRepository staffRepository;
-    public DashboardKaryawanDTO getDashboardData(){
+
+    public DashboardKaryawanDTO getDashboardData() {
         List<StaffEntity> staffEntityList = staffRepository.findAllByDeletedAtIsNull();
         List<StaffDTO> staffData = staffEntityList.stream()
                 .sorted(
@@ -50,7 +51,7 @@ public class StaffService {
                         staff.getPendidikanTerakhir().toString()
                 )).toList();
         Long totalKaryawan = (long) staffData.size();
-        Long karyawanAktif = staffData.stream().filter(staff-> staff.getTanggalResign() == null).count();
+        Long karyawanAktif = staffData.stream().filter(staff -> staff.getTanggalResign() == null).count();
         Long karyawanResign = staffData.stream().filter(staff -> staff.getTanggalResign() != null).count();
         BigDecimal payroll = staffData.stream().filter(staff -> staff.getTanggalResign() == null).map(StaffDTO::getGaji).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new DashboardKaryawanDTO(
@@ -63,9 +64,9 @@ public class StaffService {
     }
 
     @Transactional
-    public ResponseInBoolean addStaffData(CreateStaffRequest req){
-        System.out.println("req : "+ req);
-        try{
+    public ResponseInBoolean addStaffData(CreateStaffRequest req) {
+        System.out.println("req : " + req);
+        try {
             LocalDateTime tglLahir = LocalDate.parse(req.getTanggalLahir()).atStartOfDay();
             LocalDateTime tglJoin = LocalDate.parse(req.getTanggalJoin()).atStartOfDay();
             StaffEntity staffEntity = new StaffEntity();
@@ -83,12 +84,35 @@ public class StaffService {
             staffRepository.save(staffEntity);
             System.out.println("All ok");
             return new ResponseInBoolean(true, "Berhasil menambahkan karyawan");
-        }catch (Exception e){
+        } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             System.out.println("Error di addStatffData : " + e.getMessage());
-            return new ResponseInBoolean(false, "Error : "+ e.getMessage());
+            return new ResponseInBoolean(false, "Error : " + e.getMessage());
         }
+    }
 
+    public StaffDTO getStaffDetail(Long staffId) {
+        try {
+            StaffEntity staffData = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
+            return new StaffDTO(
+                    staffData.getStaffId(),
+                    staffData.getNama(),
+                    staffData.getNik(),
+                    staffData.getTempatLahir(),
+                    staffData.getTanggalLahir(),
+                    staffData.getTanggalJoin(),
+                    staffData.getTanggalResign(),
+                    staffData.getJabatan().toString(),
+                    staffData.getGaji(),
+                    staffData.getNoHp(),
+                    staffData.getNoHpDarurat(),
+                    staffData.getJenisKelamin().toString(),
+                    staffData.getPendidikanTerakhir().toString()
+            );
+        } catch (Exception e) {
+            System.out.println("Error getStaff Detail : " + e.getMessage());
+            return new StaffDTO();
+        }
     }
 
 }
