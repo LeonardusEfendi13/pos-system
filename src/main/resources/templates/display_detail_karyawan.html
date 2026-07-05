@@ -5,9 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="'Detail Karyawan - ' + ${staff.nama}">Detail Karyawan</title>
 
-    <!-- Menggunakan CSS yang sama dengan dashboard kamu -->
+    <!-- 1. Cukup panggil CSS Sekali saja -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css"/>
+
+    <!-- 2. Panggil jQuery jika kamu butuh DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- 3. MUAT JAVASCRIPT UTAMA (Urutan ini krusial: Bootstrap Bundle Baru Tabler) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
 
     <style>
         :root {
@@ -120,6 +127,20 @@
 
     <!-- CONTENT WRAPPER -->
     <div class="content page-wrapper">
+        <!-- =========================
+        NOTIFIKASI / ALERT SYSTEM
+        ========================== -->
+        <div th:if="${message}"
+             th:class="${status} ? 'alert alert-success alert-dismissible fade show' : 'alert alert-danger alert-dismissible fade show'"
+             role="alert"
+             style="border-radius: 12px; margin-bottom: 20px; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="d-flex align-items-center">
+                <!-- Jika status mengevaluasi ke true pasang ✅, jika false pasang ❌ -->
+                <span th:text="${status} ? '✅' : '❌'" style="font-size: 18px; margin-right: 10px;"></span>
+                <span th:text="${message}" style="font-weight: bold">Pesan Notifikasi</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
 
         <!-- Tombol Kembali -->
         <div class="mb-4">
@@ -259,70 +280,291 @@
 
                 <!-- UTILITY ACTIONS (Opsional) -->
                 <div class="d-flex gap-2 justify-content-end">
-                    <button class="btn btn-outline-secondary btn-md" style="border-radius: 10px;">
+                    <button class="btn btn-outline-secondary btn-md" style="border-radius: 10px;"
+                            data-bs-toggle="modal" data-bs-target="#modalEditKaryawan">
                         ✏️ Edit Data
-                    </button>
-                    <button class="btn btn-outline-danger btn-md" style="border-radius: 10px;"
-                            th:if="${staff.tanggalResign == null}">
-                        ❌ Set Resign
                     </button>
                 </div>
             </div>
 
         </div>
+    </div>
+    <!-- =========================
+     MODAL EDIT KARYAWAN
+========================== -->
+    <div class="modal fade" id="modalEditKaryawan" data-bs-backdrop="static" data-bs-keyboard="false"
+         tabindex="-1" aria-labelledby="modalEditKaryawanLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content"
+                 style="border-radius: var(--radius); border: none; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);">
 
+                <!-- Modal Header -->
+                <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 20px;">
+                    <h5 class="modal-title" id="modalEditKaryawanLabel" style="font-weight: 700; font-size: 18px;">
+                        ✏️ Edit Data Karyawan
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body (Form) -->
+                <!-- Kirim ID staff lewat URL agar backend tahu data mana yang di-update -->
+                <form th:action="@{/staff/edit/{staffId}(staffId=${staff.staffId})}" method="POST">
+                    <div class="modal-body" style="padding: 24px; background: #fdfdfd text-start;">
+                        <div class="row g-3">
+
+                            <!-- NIK (Readonly jika NIK tidak boleh diubah, atau hapus 'readonly' jika boleh) -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">NIK</label>
+                                <input type="text" class="form-control" name="nik" th:value="${staff.nik}"
+                                       style="border-radius: 10px; padding: 10px 12px;" required/>
+                            </div>
+
+                            <!-- Nama Lengkap -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Nama Lengkap</label>
+                                <input type="text" class="form-control" name="nama" th:value="${staff.nama}" required
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- Tempat Lahir -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Tempat Lahir</label>
+                                <input type="text" class="form-control" name="tempatLahir" th:value="${staff.tempatLahir}" required
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- Tanggal Lahir -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Tanggal Lahir</label>
+                                <!-- Paksa format ke yyyy-MM-dd menggunakan #temporals.format -->
+                                <input type="date" class="form-control" name="tanggalLahir"
+                                       th:value="${staff.tanggalLahir != null ? #temporals.format(staff.tanggalLahir, 'yyyy-MM-dd') : ''}"
+                                       max="2010-12-31" required
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- No HP -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">No. HP</label>
+                                <input type="number" class="form-control" name="noHp" th:value="${staff.noHp}" required
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- Nomor HP Darurat -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Nomor Darurat</label>
+                                <input type="number" class="form-control" name="noHpDarurat" th:value="${staff.noHpDarurat}"
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- Jabatan -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Jabatan</label>
+                                <select class="form-select" name="jabatan" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <option value="KASIR" th:selected="${staff.jabatan == 'KASIR'}">Kasir</option>
+                                    <option value="PROBATION" th:selected="${staff.jabatan == 'PROBATION'}">Probation</option>
+                                    <option value="KARYAWAN_ENTRY" th:selected="${staff.jabatan == 'KARYAWAN_ENTRY'}">Karyawan Entry</option>
+                                    <option value="KARYAWAN_JUNIOR" th:selected="${staff.jabatan == 'KARYAWAN_JUNIOR'}">Karyawan Junior</option>
+                                    <option value="KARYAWAN_SENIOR" th:selected="${staff.jabatan == 'KARYAWAN_SENIOR'}">Karyawan Senior</option>
+                                </select>
+                            </div>
+
+                            <!-- Jenis Kelamin -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Jenis Kelamin</label>
+                                <select class="form-select" name="jenisKelamin" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <option value="PRIA" th:selected="${staff.jenisKelamin == 'PRIA'}">Pria</option>
+                                    <option value="WANITA" th:selected="${staff.jenisKelamin == 'WANITA'}">Wanita</option>
+                                </select>
+                            </div>
+
+                            <!-- Pendidikan Terakhir -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Pendidikan Terakhir</label>
+                                <select class="form-select" name="pendidikanTerakhir" required style="border-radius: 10px; padding: 10px 12px;">
+                                    <option value="SD" th:selected="${staff.pendidikanTerakhir == 'SD'}">SD</option>
+                                    <option value="SMP" th:selected="${staff.pendidikanTerakhir == 'SMP'}">SMP</option>
+                                    <option value="SMA" th:selected="${staff.pendidikanTerakhir == 'SMA'}">SMA</option>
+                                    <option value="S1" th:selected="${staff.pendidikanTerakhir == 'S1'}">Sarjana / S1</option>
+                                    <option value="TIDAK_SEKOLAH" th:selected="${staff.pendidikanTerakhir == 'TIDAK_SEKOLAH'}">Tidak Sekolah</option>
+                                </select>
+                            </div>
+
+
+                            <!-- Tanggal Bergabung (Lakukan hal yang sama untuk jaga-jaga) -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Tanggal Bergabung</label>
+                                <input type="date" class="form-control" name="tanggalJoin"
+                                       th:value="${staff.tanggalJoin != null ? #temporals.format(staff.tanggalJoin, 'yyyy-MM-dd') : ''}"
+                                       required
+                                       style="border-radius: 10px; padding: 10px 12px;"/>
+                            </div>
+
+                            <!-- Tanggal Resign (Opsional / Bisa Dikosongkan) -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">
+                                    Tanggal Resign <span class="text-danger" style="font-size: 11px;">(Kosongkan jika masih aktif)</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="inputTanggalResign" name="tanggalResign"
+                                           th:value="${staff.tanggalResign != null ? #temporals.format(staff.tanggalResign, 'yyyy-MM-dd') : ''}"
+                                           style="border-radius: 10px 0 0 10px; padding: 10px 12px;"/>
+
+                                    <!-- Tombol untuk clear tanggal jika admin salah input / batal resign -->
+                                    <button class="btn btn-outline-secondary" type="button" id="btnClearResign"
+                                            style="border-radius: 0 10px 10px 0; border-color: var(--border); font-size: 13px;">
+                                        ✕ Batalkan
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Gaji Pokok -->
+                            <div class="col-md-12">
+                                <label class="form-label" style="font-size: 13px; color: var(--muted);">Gaji Pokok (Rupiah)</label>
+                                <div class="input-group">
+                                    <!-- Mengubah type menjadi text agar bisa disisipi titik format ribuan -->
+                                    <input type="text" class="form-control" id="inputGaji" placeholder="Contoh: 4.000.000" required
+                                           th:value="${staff.gaji != null ? #numbers.formatInteger(staff.gaji, 1, 'POINT') : ''}"
+                                           style="border-radius: 10px; padding: 10px 12px;"/>
+
+                                    <!-- Input hidden tersembunyi yang akan mengirim angka murni asli ke backend -->
+                                    <input type="hidden" id="inputGajiRaw" name="gaji" th:value="${staff.gaji}"/>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="modal-footer" style="border-top: 1px solid var(--border); padding: 16px 24px; background: #f8fafc; gap: 10px;">
+                        <!-- Tombol Batal menggunakan gaya minimalis tanpa border kasar -->
+                        <button type="button" class="btn text-secondary" data-bs-dismiss="modal"
+                                style="font-weight: 500; background: transparent; border: none; padding: 10px 20px;">
+                            Batal
+                        </button>
+
+                        <!-- Tombol Simpan yang disesuaikan dengan Design System -->
+                        <button type="submit" class="button"
+                                style="padding: 10px 24px; background: var(--primary); border: none; border-radius: 12px; font-weight: 600; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
     </div>
 </div>
 <script>
+<!--    Untuk modal-->
+    const modalEdit = document.getElementById('modalEditKaryawan');
+    if (modalEdit) {
+        const formEdit = modalEdit.querySelector('form');
+        modalEdit.addEventListener('hidden.bs.modal', function () {
+            formEdit.reset();
+        });
+    }
+
+<!--    Untuk clear form-->
     document.addEventListener("DOMContentLoaded", function () {
-    const displayElement = document.getElementById("displayLamaBekerja");
-    try {
-        const joinInput = document.getElementById("tanggalJoinRaw");
-        const resignInput = document.getElementById("tanggalResignRaw");
+        const inputResign = document.getElementById("inputTanggalResign");
+        const btnClearResign = document.getElementById("btnClearResign");
 
-        // Cek apakah elemen input ada di HTML
-        if (!joinInput || !joinInput.value) {
-        displayElement.innerText = "0 Tahun 0 Bulan";
-        return;
+        if (btnClearResign && inputResign) {
+            btnClearResign.addEventListener("click", function () {
+                // Mengosongkan nilai input tanggal
+                inputResign.value = "";
+            });
         }
+    });
 
-        const joinRaw = joinInput.value;
-        const resignRaw = resignInput ? resignInput.value : "";
+<!--    Untuk format angka gaji-->
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("masukj sini");
+        const inputGaji = document.getElementById("inputGaji");
+        const inputGajiRaw = document.getElementById("inputGajiRaw");
 
-        const dateJoin = new Date(joinRaw);
-        // Jika ada tanggal resign aktifkan tanggal resign, jika tidak pakai hari ini
-        const dateAkhir = (resignRaw && resignRaw !== "") ? new Date(resignRaw) : new Date();
+        if (inputGaji && inputGajiRaw) {
+            // Fungsi untuk mengubah angka menjadi format titik ribuan
+            function formatRupiah(angka) {
+                let numberString = angka.replace(/[^,\d]/g, "").toString(),
+                    split = numberString.split(","),
+                    sisa = split[0].length % 3,
+                    rupiah = split[0].substr(0, sisa),
+                    ribuan = split[0].substr(sisa).match(/\d{3}/gi);
 
-        // Cek validitas tanggal hasil parsing
-        if (isNaN(dateJoin.getTime())) {
-        displayElement.innerText = "Format Tanggal Salah";
-        return;
+                if (ribuan) {
+                    let separator = sisa ? "." : "";
+                    rupiah += separator + ribuan.join(".");
+                }
+
+                return split[1] !== undefined ? rupiah + "," + split[1] : rupiah;
+            }
+
+            // Jalankan format setiap kali user mengetik
+            inputGaji.addEventListener("input", function (e) {
+                // Ambil angka murninya saja (tanpa titik)
+                let rawValue = this.value.replace(/\./g, "");
+
+                // Simpan angka murninya ke hidden input untuk backend
+                inputGajiRaw.value = rawValue;
+
+                // Tampilkan visual ber-titik ke user
+                this.value = formatRupiah(rawValue);
+            });
         }
+    });
 
-        let tahun = dateAkhir.getFullYear() - dateJoin.getFullYear();
-        let bulan = dateAkhir.getMonth() - dateJoin.getMonth();
+<!--Untuk logika lama bekerja dari tgl join -> tanggal resign -->
+    document.addEventListener("DOMContentLoaded", function () {
+        const displayElement = document.getElementById("displayLamaBekerja");
+        try {
+            const joinInput = document.getElementById("tanggalJoinRaw");
+            const resignInput = document.getElementById("tanggalResignRaw");
 
-        // Koreksi pemotongan bulan jika tanggal sekarang belum melewati tanggal join
-        if (dateAkhir.getDate() < dateJoin.getDate()) {
-        bulan--;
-        }
+            // Cek apakah elemen input ada di HTML
+            if (!joinInput || !joinInput.value) {
+            displayElement.innerText = "0 Tahun 0 Bulan";
+            return;
+            }
 
-        if (bulan < 0) {
-        bulan += 12;
-        tahun--;
-        }
+            const joinRaw = joinInput.value;
+            const resignRaw = resignInput ? resignInput.value : "";
 
-        if (tahun < 0) {
-        tahun = 0;
-        bulan = 0;
-        }
+            const dateJoin = new Date(joinRaw);
+            // Jika ada tanggal resign aktifkan tanggal resign, jika tidak pakai hari ini
+            const dateAkhir = (resignRaw && resignRaw !== "") ? new Date(resignRaw) : new Date();
 
-        displayElement.innerText = `${tahun} Tahun ${bulan} Bulan`;
+            // Cek validitas tanggal hasil parsing
+            if (isNaN(dateJoin.getTime())) {
+            displayElement.innerText = "Format Tanggal Salah";
+            return;
+            }
 
-    } catch (error) {
-        console.error("Gagal menghitung masa kerja:", error);
-        displayElement.innerText = "Gagal memuat data";
-        }
+            let tahun = dateAkhir.getFullYear() - dateJoin.getFullYear();
+            let bulan = dateAkhir.getMonth() - dateJoin.getMonth();
+
+            // Koreksi pemotongan bulan jika tanggal sekarang belum melewati tanggal join
+            if (dateAkhir.getDate() < dateJoin.getDate()) {
+            bulan--;
+            }
+
+            if (bulan < 0) {
+            bulan += 12;
+            tahun--;
+            }
+
+            if (tahun < 0) {
+            tahun = 0;
+            bulan = 0;
+            }
+
+            displayElement.innerText = `${tahun} Tahun ${bulan} Bulan`;
+
+        } catch (error) {
+            console.error("Gagal menghitung masa kerja:", error);
+            displayElement.innerText = "Gagal memuat data";
+            }
     });
 </script>
 

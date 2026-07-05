@@ -1,9 +1,6 @@
 package com.pos.posApps.Service;
 
-import com.pos.posApps.DTO.Dtos.CreateStaffRequest;
-import com.pos.posApps.DTO.Dtos.DashboardKaryawanDTO;
-import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
-import com.pos.posApps.DTO.Dtos.StaffDTO;
+import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.Jabatan;
 import com.pos.posApps.DTO.Enum.JenisKelamin;
 import com.pos.posApps.DTO.Enum.Pendidikan;
@@ -112,6 +109,41 @@ public class StaffService {
         } catch (Exception e) {
             System.out.println("Error getStaff Detail : " + e.getMessage());
             return new StaffDTO();
+        }
+    }
+
+    @Transactional
+    public ResponseInBoolean editStaffData(Long staffId, EditStaffRequest req) {
+        System.out.println("req : " + req);
+        try {
+            StaffEntity staffEntity = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
+            LocalDateTime tglLahir = LocalDate.parse(req.getTanggalLahir()).atStartOfDay();
+            LocalDateTime tglJoin = LocalDate.parse(req.getTanggalJoin()).atStartOfDay();
+            LocalDateTime tglResign;
+            if(req.getTanggalResign() == null || req.getTanggalResign().isEmpty()){
+                tglResign = null;
+            }else{
+                tglResign = LocalDate.parse(req.getTanggalResign()).atStartOfDay();
+            }
+            staffEntity.setNik(req.getNik());
+            staffEntity.setNama(req.getNama());
+            staffEntity.setTempatLahir(req.getTempatLahir());
+            staffEntity.setTanggalLahir(tglLahir);
+            staffEntity.setNoHp(req.getNoHp());
+            staffEntity.setNoHpDarurat(req.getNoHpDarurat());
+            staffEntity.setJabatan(Jabatan.valueOf(req.getJabatan()));
+            staffEntity.setJenisKelamin(JenisKelamin.valueOf(req.getJenisKelamin()));
+            staffEntity.setTanggalJoin(tglJoin);
+            staffEntity.setTanggalResign(tglResign);
+            staffEntity.setGaji(BigDecimal.valueOf(Long.parseLong(req.getGaji())));
+            staffEntity.setPendidikanTerakhir(Pendidikan.valueOf(req.getPendidikanTerakhir()));
+            staffRepository.save(staffEntity);
+            System.out.println("All ok");
+            return new ResponseInBoolean(true, "Berhasil edit karyawan : " + req.getNama());
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            System.out.println("Error di addStatffData : " + e.getMessage());
+            return new ResponseInBoolean(false, "Error : " + e.getMessage());
         }
     }
 

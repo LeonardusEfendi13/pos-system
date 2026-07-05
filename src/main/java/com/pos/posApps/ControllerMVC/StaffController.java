@@ -101,6 +101,29 @@ public class StaffController {
 
     }
 
+    @PostMapping("/edit/{staffId}")
+    public String editStaff(@PathVariable("staffId") Long staffId, HttpSession session, RedirectAttributes redirectAttributes, EditStaffRequest req){
+        AccountEntity accountEntity;
+        String token;
+        try{
+            token = (String) session.getAttribute(authSessionKey);
+            accountEntity = authService.validateToken(token);
+        }catch (Exception e){
+            return "redirect:/login";
+        }
+
+        if (authService.hasAccessToModifyData(accountEntity.getRole())) {
+            ResponseInBoolean isEdited = staffService.editStaffData(staffId, req);
+            redirectAttributes.addFlashAttribute("status", isEdited.isStatus());
+            redirectAttributes.addFlashAttribute("message", isEdited.getMessage());
+            System.out.println("all done");
+            return "redirect:/staff/detail/"+staffId;
+        }
+        redirectAttributes.addFlashAttribute("status", false);
+        redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
+        return "redirect:/login";
+    }
+
 //    @PostMapping("/add")
 //    public String addVehicle(String vehicleName, String vehicleBrand, String partNumber, HttpSession session, RedirectAttributes redirectAttributes){
 //        AccountEntity accEntity;
