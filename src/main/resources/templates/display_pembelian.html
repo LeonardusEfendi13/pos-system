@@ -230,7 +230,9 @@
                         <div class="card-body text-center">
                             <h6 class="card-title">
                                 Total Pembelian
-                                <span id="totalBeliDisplay" class="card-text fw-bold text-primary">Rp0</span>
+                                <span id="totalBeliDisplay" class="card-text fw-bold text-primary"
+                                      th:data-total="${totalPembelian}">
+                                </span>
                             </h6>
                         </div>
                     </div>
@@ -440,20 +442,14 @@
 <!--Populate Bukti Bayar-->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        const totalBeli = Number(document.getElementById("totalBeliDisplay").dataset.total);
 
-        let total = 0;
-        if (Array.isArray(pembelianData)) {
-            pembelianData.forEach(p => {
-                total += p.totalPrice || 0;
-            });
-        }
-        const formatted = new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0
-        }).format(total);
-
-        document.getElementById("totalBeliDisplay").textContent = formatted;
+        document.getElementById("totalBeliDisplay").textContent =
+            new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0
+            }).format(totalBeli);
 
         // ==========================
         // 🔧 FilePond Setup

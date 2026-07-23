@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -63,6 +64,16 @@ public class PembelianController {
         } else {
             pembelianData = pembelianService.searchPembelianData(accountData, inputStartDate, inputEndDate, supplierId, lunas, tunai, search, PageRequest.of(page, size));
         }
+
+        BigDecimal totalPembelian = pembelianService.getTotalPurchasing(
+                accountData.getClientEntity().getClientId(),
+                supplierId,
+                lunas,
+                tunai,
+                inputStartDate,
+                inputEndDate
+        );
+        model.addAttribute("totalPembelian", totalPembelian);
 
         model.addAttribute("pembelianData", pembelianData.getContent());
         model.addAttribute("supplierId", supplierId);

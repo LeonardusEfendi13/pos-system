@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,26 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(p.totalPrice), 0)
+        FROM PurchasingEntity p
+        WHERE p.clientEntity.clientId = :clientId
+          AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
+          AND (:lunas IS NULL OR p.isPaid = :lunas)
+          AND (:tunai IS NULL OR p.isCash = :tunai)
+          AND p.purchasingDetailEntities IS NOT EMPTY
+          AND p.deletedAt IS NULL
+          AND p.poDate BETWEEN :startDate AND :endDate
+    """)
+    BigDecimal sumPurchasingData(
+            @Param("clientId") Long clientId,
+            @Param("supplierId") Long supplierId,
+            @Param("lunas") Boolean lunas,
+            @Param("tunai") Boolean tunai,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
     );
     List<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate);
 
