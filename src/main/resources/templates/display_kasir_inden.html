@@ -345,7 +345,9 @@
                 <div class="col-md-4">
                     <label class="form-label" style="font-weight: bold">Data Customer</label>
                     <input type="text" class="form-control" name="customerName" id="customerName"
-                           placeholder="Nama Customer" autocomplete="off" required>
+                           placeholder="Nama Customer" autocomplete="off" required
+                           style="text-transform: uppercase;"
+                           oninput="this.value = this.value.toUpperCase()">
                     <br>
                     <input type="number" class="form-control" name="customerPhone" id="customerPhone"
                            placeholder="No. Hp Customer" autocomplete="off" required>
@@ -3494,6 +3496,7 @@
                 }, 100); // Short delay to ensure DOM is ready
             } else {
                 alert("Transaction saved successfully!");
+
                 window.location.href = "/inden";
             }
         } catch (error) {
