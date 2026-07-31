@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class StaffService {
@@ -90,22 +91,27 @@ public class StaffService {
 
     public StaffDTO getStaffDetail(Long staffId) {
         try {
-            StaffEntity staffData = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
-            return new StaffDTO(
-                    staffData.getStaffId(),
-                    staffData.getNama(),
-                    staffData.getNik(),
-                    staffData.getTempatLahir(),
-                    staffData.getTanggalLahir(),
-                    staffData.getTanggalJoin(),
-                    staffData.getTanggalResign(),
-                    staffData.getJabatan().toString(),
-                    staffData.getGaji(),
-                    staffData.getNoHp(),
-                    staffData.getNoHpDarurat(),
-                    staffData.getJenisKelamin().toString(),
-                    staffData.getPendidikanTerakhir().toString()
-            );
+            Optional<StaffEntity> staffDataopt = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
+            if(staffDataopt.isEmpty()){
+                return new StaffDTO();
+            }else {
+                StaffEntity staffData = staffDataopt.get();
+                return new StaffDTO(
+                        staffData.getStaffId(),
+                        staffData.getNama(),
+                        staffData.getNik(),
+                        staffData.getTempatLahir(),
+                        staffData.getTanggalLahir(),
+                        staffData.getTanggalJoin(),
+                        staffData.getTanggalResign(),
+                        staffData.getJabatan().toString(),
+                        staffData.getGaji(),
+                        staffData.getNoHp(),
+                        staffData.getNoHpDarurat(),
+                        staffData.getJenisKelamin().toString(),
+                        staffData.getPendidikanTerakhir().toString()
+                );
+            }
         } catch (Exception e) {
             System.out.println("Error getStaff Detail : " + e.getMessage());
             return new StaffDTO();
@@ -116,7 +122,11 @@ public class StaffService {
     public ResponseInBoolean editStaffData(Long staffId, EditStaffRequest req) {
         System.out.println("req : " + req);
         try {
-            StaffEntity staffEntity = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
+            Optional<StaffEntity> staffEntityOpt = staffRepository.findFirstByStaffIdAndDeletedAtIsNull(staffId);
+            if(staffEntityOpt.isEmpty()){
+                return new ResponseInBoolean(false, "Data karyawan tidak ditemukan");
+            }
+            StaffEntity staffEntity = staffEntityOpt.get();
             LocalDateTime tglLahir = LocalDate.parse(req.getTanggalLahir()).atStartOfDay();
             LocalDateTime tglJoin = LocalDate.parse(req.getTanggalJoin()).atStartOfDay();
             LocalDateTime tglResign;
@@ -145,6 +155,34 @@ public class StaffService {
             System.out.println("Error di addStatffData : " + e.getMessage());
             return new ResponseInBoolean(false, "Error : " + e.getMessage());
         }
+    }
+
+    public List<StaffDTO> getStaffData(){
+        List<StaffEntity> staffEntityList = staffRepository.findAllByDeletedAtIsNull();
+        List<StaffDTO> staffData = staffEntityList.stream()
+                .sorted(
+                        // 1. Urutkan berdasarkan status resign (null diposisikan paling awal/atas)
+                        Comparator.comparing(StaffEntity::getTanggalResign, Comparator.nullsFirst(Comparator.naturalOrder()))
+                                // 2. Jika sama-sama aktif atau sama-sama resign, urutkan berdasarkan nama alfabetis
+                                .thenComparing(StaffEntity::getNama)
+                )
+                .map(staff -> new StaffDTO(
+                        staff.getStaffId(),
+                        staff.getNama(),
+                        staff.getNik(),
+                        staff.getTempatLahir(),
+                        staff.getTanggalLahir(),
+                        staff.getTanggalJoin(),
+                        staff.getTanggalResign(),
+                        staff.getJabatan().toString(),
+                        staff.getGaji(),
+                        staff.getNoHp(),
+                        staff.getNoHpDarurat(),
+                        staff.getJenisKelamin().toString(),
+                        staff.getPendidikanTerakhir().toString()
+                )).toList();
+
+        return staffData;
     }
 
 }

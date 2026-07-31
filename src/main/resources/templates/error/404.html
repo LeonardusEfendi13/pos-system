@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Under Maintenance</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #d9534f;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+        .btn-back {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛠️ Under Maintenance</h1>
+    <p>Fitur atau halaman yang Anda tuju sedang dalam pengembangan / tidak tersedia.</p>
+
+    <!-- Ubah elemen <a> menjadi <button> dengan event onclick -->
+    <button onclick="goBack()" class="btn-back">⬅️ Kembali ke Menu Sebelumnya</button>
+</div>
+
+<script>
+    function goBack() {
+        // Memeriksa apakah ada riwayat halaman sebelumnya dari domain yang sama
+        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            window.history.back();
+        } else {
+            // Fallback: Jika user langsung akses via ketik URL / bookmark (tanpa halaman sebelumnya)
+            window.location.href = '/';
+        }
+    }
+</script>
+</body>
+</html>
