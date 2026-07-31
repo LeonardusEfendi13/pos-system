@@ -19,8 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.pos.posApps.Util.Generator.formatPhoneTo62;
-import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+import static com.pos.posApps.Util.Generator.*;
 
 @Service
 public class IndenService {
@@ -137,7 +136,7 @@ public class IndenService {
     }
 
     @Transactional
-    public ResponseForWhatsapp updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData) {
+    public ResponseForWhatsapp updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData, ClientEntity clientEntity) {
         try {
             boolean isOpenWa = false;
             ClientEntity clientData = accountData.getClientEntity();
@@ -224,10 +223,18 @@ public class IndenService {
             String phoneNumber = formatPhoneTo62(indenEntity.getCustomerPhone());
             StringBuilder message = new StringBuilder();
             List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
+            String namaToko = clientEntity.getName();
+            String kota = clientEntity.getKota();
             if (newStatusInden.equalsIgnoreCase(StatusInden.TERCATAT.name())) {
                 isOpenWa = true;
                 message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
-                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di Anugrah Motor Tanjung Enim.\n")
+                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di ").append(namaToko).append(" ").append(kota).append(".\n\n")
+
+                        // --- PERUBAHAN DI SINI ---
+                        .append("Total pesanan : ").append(formatRupiah(indenEntity.getTotalPrice())).append("\n")
+                        .append("Deposit : ").append(formatRupiah(indenEntity.getDeposit())).append("\n")
+                        .append("Sisa pembayaran : ").append(formatRupiah(indenEntity.getTotalPrice().subtract(indenEntity.getDeposit()))).append("\n\n")
+
                         .append("Detail Pesanan:\n");
                 int no = 1;
                 for (IndenDetailEntity item : indenDetailEntities) {
@@ -243,14 +250,14 @@ public class IndenService {
             } else if (newStatusInden.equalsIgnoreCase(StatusInden.KOSONG.name())) {
                 isOpenWa = true;
                 message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
-                        .append("Kami dari Anugrah Motor Tanjung Enim menyampaikan permohonan maaf terkait pesanan nomor ").append(indenEntity.getIndenNumber()).append(".\n\n");
+                        .append("Kami dari ").append(namaToko).append(" ").append(kota).append(" menyampaikan permohonan maaf terkait pesanan nomor ").append(indenEntity.getIndenNumber()).append(".\n\n");
                 message.append("Saat ini, pesanan Anda tidak dapat kami proses dikarenakan stok barang tersebut sedang kosong. Sehubungan dengan hal tersebut, mohon kesediaan Anda untuk datang ke toko kami guna proses pengembalian deposit (refund).");
                 message.append("\n\nTerima kasih atas pengertiannya.\n\n");
                 message.append("--Pesan ini dibuat secara otomatis--");
             } else if (newStatusInden.equalsIgnoreCase(StatusInden.DITERIMA.name())) {
                 isOpenWa = true;
                 message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
-                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di Anugrah Motor Tanjung Enim.\n");
+                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di ").append(namaToko).append(" ").append(kota).append(".\n\n");
                 message.append("Kami ingin menginformasikan bahwa pesanan anda telah tiba dan sudah tersedia di toko kami.");
                 message.append("\n\nSilakan datang ke toko kami untuk pengambilan barang. Terima kasih\n\n");
                 message.append("--Pesan ini dibuat secara otomatis--");
@@ -258,9 +265,9 @@ public class IndenService {
             return new ResponseForWhatsapp(true, "Berhasil memperbarui status data inden.", isOpenWa, phoneNumber, message.toString());
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            System.out.println("Ada apa ni bang : " + e.getMessage());
             return new ResponseForWhatsapp(false, e.getMessage(), false, "", "");
         }
-
     }
 
     @Transactional

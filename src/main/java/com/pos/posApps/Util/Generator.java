@@ -1,11 +1,14 @@
 package com.pos.posApps.Util;
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Locale;
 
 public class Generator {
     //Account = ACC
@@ -62,5 +65,14 @@ public class Generator {
         }
 
         return cleaned; // fallback kalau ternyata bukan 0
+    }
+
+    public static String formatRupiah(BigDecimal amount) {
+        if (amount == null) {
+            return "Rp0";
+        }
+        // Menggunakan Locale Indonesia untuk pemisah ribuan titik (.)
+        NumberFormat formatter = NumberFormat.getInstance(new Locale("id", "ID"));
+        return "Rp" + formatter.format(amount);
     }
 }
