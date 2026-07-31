@@ -4265,5 +4265,13 @@
         });
     }
 </script>
+<script>
+    window.addEventListener('beforeunload', (event) => {
+        event.preventDefault();
+
+        event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
+        return event.returnValue;
+    });
+</script>
 </body>
 </html>
