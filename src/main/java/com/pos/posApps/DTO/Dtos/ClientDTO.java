@@ -16,5 +16,6 @@ public class ClientDTO {
     private String kota;
     private String noTelp;
     private String catatan;
-    private BigDecimal kingDisc;
+    private BigDecimal kingDiscYmh;
+    private BigDecimal kingDiscHnd;
 }

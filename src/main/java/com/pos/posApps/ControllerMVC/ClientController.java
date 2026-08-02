@@ -41,9 +41,24 @@ public class ClientController {
 
         ClientDTO clientData = clientService.getClientSettings(clientId);
         //Convert DTO into Hash Map
-        String kingDisc = "0";
-        if(clientData.getKingDisc() != null){
-            kingDisc = clientData.getKingDisc().toString();
+        Map<String, String> clientSettings = getStringStringMap(clientData);
+
+
+        model.addAttribute("settingData", clientSettings);
+        model.addAttribute("activePage", "setting");
+        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
+        model.addAttribute("sidebarData", sidebarData);
+        return "display_setting";
+    }
+
+    private static Map<String, String> getStringStringMap(ClientDTO clientData) {
+        String kingDiscYmh = "0";
+        String kingDiscHnd = "0";
+        if(clientData.getKingDiscYmh() != null){
+            kingDiscYmh = clientData.getKingDiscYmh().toString();
+        }
+        if(clientData.getKingDiscYmh() != null){
+            kingDiscHnd = clientData.getKingDiscHnd().toString();
         }
         Map<String, String> clientSettings = new LinkedHashMap<>();
         clientSettings.put("NAMA", clientData.getName());
@@ -51,13 +66,9 @@ public class ClientController {
         clientSettings.put("KOTA", clientData.getKota());
         clientSettings.put("NOMOR HP", clientData.getNoTelp());
         clientSettings.put("CATATAN", clientData.getCatatan());
-        clientSettings.put("KING DISC", kingDisc + "%");
-
-        model.addAttribute("settingData", clientSettings);
-        model.addAttribute("activePage", "setting");
-        SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
-        model.addAttribute("sidebarData", sidebarData);
-        return "display_setting";
+        clientSettings.put("KING DISC YAMAHA", kingDiscYmh + "%");
+        clientSettings.put("KING DISC HONDA", kingDiscHnd + "%");
+        return clientSettings;
     }
 
     @PostMapping("/update")
@@ -75,8 +86,7 @@ public class ClientController {
             clientId = accEntity.getClientEntity().getClientId();
 
             ResponseInBoolean isUpdated = clientService.updateClientField(clientId, fieldKey, fieldValue);
-            System.out.println("Status : "+ isUpdated);
-            redirectAttributes.addFlashAttribute("status", isUpdated.isStatus());
+            redirectAttributes.addFlashAttribute("status", true);
             redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());
             return "redirect:/setting";
 
