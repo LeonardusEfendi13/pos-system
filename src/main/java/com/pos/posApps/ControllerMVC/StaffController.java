@@ -51,7 +51,6 @@ public class StaffController {
         redirectAttributes.addFlashAttribute("status", true);
         redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
         return "redirect:/login";
-
     }
 
     @PostMapping("/add")
@@ -236,5 +235,30 @@ public class StaffController {
         }
         // Kembalikan ke halaman utama absensi
         return "redirect:/staff/attendance";
+    }
+
+    @GetMapping("/payroll")
+    public String displayPayroll(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        AccountEntity accountEntity;
+        String token;
+        try {
+            token = (String) session.getAttribute(authSessionKey);
+            accountEntity = authService.validateToken(token);
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+
+        if (authService.hasAccessToModifyData(accountEntity.getRole())) {
+            SidebarDTO sidebarData = sidebarService.getSidebarData(accountEntity.getClientEntity().getClientId(), token);
+            DashboardKaryawanDTO dashboardKaryawanDTO = staffService.getDashboardData();
+            model.addAttribute("sidebarData", sidebarData);
+            model.addAttribute("activePage", "dashboardKaryawan");
+            model.addAttribute("dashboardData", dashboardKaryawanDTO);
+            return "payroll";
+        }
+        redirectAttributes.addFlashAttribute("status", true);
+        redirectAttributes.addFlashAttribute("message", "Anda tidak punya akses!");
+        return "redirect:/login";
+
     }
 }
