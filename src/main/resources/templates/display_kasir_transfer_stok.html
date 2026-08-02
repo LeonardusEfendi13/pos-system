@@ -298,7 +298,6 @@
         <a
                 th:href="@{/branch/transfer/riwayat}"
                 class="btn btn-warning d-flex align-items-center"
-                onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
         >
             Kembali
         </a>
@@ -2345,6 +2344,7 @@
             if (!response.ok) {
                 throw new Error(`${result}`);
             }
+            isAllowedToNavigate = true;
             const data = {
                 inv_number: result,
                 customer_name: selectedCustomer.name,
@@ -3278,9 +3278,12 @@
     }
 </script>
 <script>
+    let isAllowedToNavigate = false;
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
-
+        if (isAllowedToNavigate) {
+            return;
+        }
         event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
         return event.returnValue;
     });

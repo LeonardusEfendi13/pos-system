@@ -355,7 +355,6 @@
             <a
                     th:href="@{/pembelian}"
                     class="btn btn-warning"
-                    onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >Kembali
             </a>
         </div>
@@ -2579,6 +2578,7 @@
         const errorMessage = await response.text();
         throw new Error(`${errorMessage}`);
       }
+      isAllowedToNavigate = true;
 
       const result = await response.text();
       alert("Transaction saved successfully!");
@@ -3008,9 +3008,12 @@
     });
 </script>
 <script>
+    let isAllowedToNavigate = false;
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
-
+        if (isAllowedToNavigate) {
+            return;
+        }
         event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
         return event.returnValue;
     });

@@ -359,7 +359,6 @@
             <a
                     th:href="@{/inden}"
                     class="btn btn-warning d-flex align-items-center"
-                    onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >
                 Kembali
             </a>
@@ -3249,9 +3248,6 @@
             ) || 0;
         const paymentAmount = parseRupiah(paymentAmountInput.value);
         const returnAmount = parseRupiah(returnAmountInput.value);
-        console.log("Otw save");
-        console.log("payment : ", paymentAmount);
-        console.log("return : ", returnAmount);
 
         const inputCustomerName = customerName.value;
         const inputCustomerPhone = customerPhone.value;
@@ -3354,6 +3350,7 @@
             if (!response.ok) {
                 throw new Error(`${result}`);
             }
+            isAllowedToNavigate = true;
             const data = {
                 inv_number: result,
                 customer_name: inputCustomerName,
@@ -4269,8 +4266,12 @@
     }
 </script>
 <script>
+    let isAllowedToNavigate = false;
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
+        if (isAllowedToNavigate) {
+            return;
+        }
 
         event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
         return event.returnValue;

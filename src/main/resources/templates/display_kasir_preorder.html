@@ -322,7 +322,6 @@
             <a
                     th:href="@{/preorder}"
                     class="btn btn-warning"
-                    onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >Kembali
             </a>
         </div>
@@ -2374,6 +2373,7 @@
             if (!response.ok) {
                 throw new Error(`${result}`);
             }
+            isAllowedToNavigate = true;
 
             const data = {
                 inv_number: result,
@@ -2755,8 +2755,12 @@
     });
 </script>
 <script>
+    let isAllowedToNavigate = false;
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
+        if (isAllowedToNavigate) {
+            return;
+        }
 
         event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
         return event.returnValue;
