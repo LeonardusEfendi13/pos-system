@@ -36,7 +36,8 @@ public class ClientService {
                     clientEntity.getKota(),
                     clientEntity.getNoTelp(),
                     clientEntity.getCatatan(),
-                    clientEntity.getKingDisc()
+                    clientEntity.getKingDiscYmh(),
+                    clientEntity.getKingDiscHnd()
             );
 
         } catch (Exception e) {
@@ -52,6 +53,7 @@ public class ClientService {
 
             ClientEntity client = clientOpt.get();
             System.out.println("fields : " + fieldKey + " | " + fieldValue);
+
             // Update manually based on key (since no reflection)
             switch (fieldKey) {
                 case "NAMA" -> client.setName(fieldValue);
@@ -59,19 +61,29 @@ public class ClientService {
                 case "KOTA" -> client.setKota(fieldValue);
                 case "NOMOR HP" -> client.setNoTelp(fieldValue);
                 case "CATATAN" -> client.setCatatan(fieldValue);
-                case "KING DISC" -> {
+                case "KING DISC YAMAHA" -> {
                     String cleanValue = fieldValue.replaceAll("[^\\d.]", "");
                     BigDecimal kingDisc = new BigDecimal(cleanValue);
-                    client.setKingDisc(kingDisc);
+                    if(kingDisc.compareTo(BigDecimal.valueOf(95))>0){
+                        return new ResponseInBoolean(false, "King Discount tidak boleh lebih besar dari 95%");
+                    }
+                    client.setKingDiscYmh(kingDisc);
                 }
-                // You may want to block editing "Created At" and others
+                case "KING DISC HONDA" -> {
+                    String cleanValue = fieldValue.replaceAll("[^\\d.]", "");
+                    BigDecimal kingDisc = new BigDecimal(cleanValue);
+                    if(kingDisc.compareTo(BigDecimal.valueOf(95))>0){
+                        return new ResponseInBoolean(false, "King Discount tidak boleh lebih besar dari 95%");
+                    }
+                    client.setKingDiscHnd(kingDisc);
+                }
                 default -> throw new IllegalArgumentException("Invalid field key: " + fieldKey);
             }
             clientRepository.save(client);
             return new ResponseInBoolean(true, "Berhasil update setting");
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            return new ResponseInBoolean(false, e.getMessage());
+            return new ResponseInBoolean(false, "Gagal Update data, ada yg salah nih : " + e.getMessage());
         }
     }
 

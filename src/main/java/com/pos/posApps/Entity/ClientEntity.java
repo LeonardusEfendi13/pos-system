@@ -45,6 +45,9 @@ public class ClientEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "king_disc")
-    private BigDecimal kingDisc;
+    @Column(name = "king_disc_ymh")
+    private BigDecimal kingDiscYmh;
+
+    @Column(name = "king_disc_hnd")
+    private BigDecimal kingDiscHnd;
 }
