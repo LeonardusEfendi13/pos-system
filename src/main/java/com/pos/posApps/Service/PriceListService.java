@@ -51,7 +51,9 @@ public class PriceListService {
     }
 
     public BigDecimal getKingPrice(String partNumber, AccountEntity accountEntity){
-        BigDecimal kingDisc = accountEntity.getClientEntity().getKingDisc();
+        BigDecimal kingDiscHonda = accountEntity.getClientEntity().getKingDiscHnd();
+        BigDecimal kingDiscYamaha= accountEntity.getClientEntity().getKingDiscYmh();
+
         partNumber = partNumber.trim().toUpperCase();
         Optional<PriceListEntity> priceListEntityOpt = priceListRepository.findAllByPartNumber(partNumber);
         if(priceListEntityOpt.isEmpty()){
@@ -59,6 +61,15 @@ public class PriceListService {
         }
         PriceListEntity priceListEntity = priceListEntityOpt.get();
         BigDecimal listPrice = priceListEntity.getHargaJual();
+        BigDecimal kingDisc = BigDecimal.ZERO;
+        if (priceListEntity.getMerk().equalsIgnoreCase("HONDA")) {
+            System.out.println("Entering honda : " + kingDiscHonda);
+            kingDisc= kingDiscHonda;
+        }else if(priceListEntity.getMerk().equalsIgnoreCase("YAMAHA")){
+            System.out.println("Entering ymh : " + kingDiscYamaha);
+            kingDisc = kingDiscYamaha;
+        }
+        System.out.println("King disc : " + kingDisc);
         return listPrice.subtract(listPrice.multiply(kingDisc).divide(BigDecimal.valueOf(100), 3, RoundingMode.HALF_UP));
     }
 }

@@ -115,6 +115,16 @@
 <!--    For Draggable modals-->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var status = /*[[${status}]]*/ false;
+    var message = /*[[${message}]]*/ "Unknown message";
+
+    if (status == 'true') {
+        alert(message);
+    }
+    /*]]>*/
+</script>
 <script>
     $(document).ready(function () {
       $("#addSupplierModal").draggable();

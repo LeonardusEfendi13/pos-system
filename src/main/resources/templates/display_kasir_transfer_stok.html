@@ -3280,10 +3280,11 @@
 <script>
     let isAllowedToNavigate = false;
     window.addEventListener('beforeunload', (event) => {
-        event.preventDefault();
         if (isAllowedToNavigate) {
             return;
         }
+        event.preventDefault();
+
         event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
         return event.returnValue;
     });
