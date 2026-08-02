@@ -298,11 +298,11 @@
         <a
                 th:href="@{/penjualan}"
                 class="btn btn-warning d-flex align-items-center"
-                onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
         >
             Kembali
         </a>
     </div>
+
 
     <div class="table-responsive mb-3 scrollable-table">
         <table class="table table-bordered" id="sellTable">
@@ -2770,6 +2770,7 @@
             if (!response.ok) {
                 throw new Error(`${result}`);
             }
+            isAllowedToNavigate = true;
             const data = {
                 inv_number: result,
                 customer_name: selectedCustomer.name,
@@ -3741,6 +3742,18 @@
             root.appendChild(pageDiv);
         });
     }
+</script>
+<script>
+    let isAllowedToNavigate = false;
+    window.addEventListener('beforeunload', (event) => {
+        if(isAllowedToNavigate){
+            return;
+        }
+        event.preventDefault();
+
+        event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
+        return event.returnValue;
+    });
 </script>
 </body>
 </html>

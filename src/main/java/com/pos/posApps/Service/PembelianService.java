@@ -69,6 +69,24 @@ public class PembelianService {
         return purchasingData.map(this::convertToDTO);
     }
 
+    public BigDecimal getTotalPurchasing(
+            Long clientId,
+            Long supplierId,
+            Boolean lunas,
+            Boolean tunai,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        return purchasingRepository.sumPurchasingData(
+                clientId,
+                supplierId,
+                lunas,
+                tunai,
+                startDate,
+                endDate
+        );
+    }
+
     public Page<PembelianDTO> searchPembelianData(AccountEntity accountData, LocalDateTime startDate, LocalDateTime endDate, Long supplierId, Boolean lunas, Boolean tunai, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
         Long clientId = accountData.getClientEntity().getClientId();

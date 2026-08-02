@@ -345,7 +345,9 @@
                 <div class="col-md-4">
                     <label class="form-label" style="font-weight: bold">Data Customer</label>
                     <input type="text" class="form-control" name="customerName" id="customerName"
-                           placeholder="Nama Customer" autocomplete="off" required>
+                           placeholder="Nama Customer" autocomplete="off" required
+                           style="text-transform: uppercase;"
+                           oninput="this.value = this.value.toUpperCase()">
                     <br>
                     <input type="number" class="form-control" name="customerPhone" id="customerPhone"
                            placeholder="No. Hp Customer" autocomplete="off" required>
@@ -357,7 +359,6 @@
             <a
                     th:href="@{/inden}"
                     class="btn btn-warning d-flex align-items-center"
-                    onclick="return confirm('Apakah anda yakin ingin kembali ke main menu?');"
             >
                 Kembali
             </a>
@@ -3247,9 +3248,6 @@
             ) || 0;
         const paymentAmount = parseRupiah(paymentAmountInput.value);
         const returnAmount = parseRupiah(returnAmountInput.value);
-        console.log("Otw save");
-        console.log("payment : ", paymentAmount);
-        console.log("return : ", returnAmount);
 
         const inputCustomerName = customerName.value;
         const inputCustomerPhone = customerPhone.value;
@@ -3352,6 +3350,7 @@
             if (!response.ok) {
                 throw new Error(`${result}`);
             }
+            isAllowedToNavigate = true;
             const data = {
                 inv_number: result,
                 customer_name: inputCustomerName,
@@ -3494,6 +3493,7 @@
                 }, 100); // Short delay to ensure DOM is ready
             } else {
                 alert("Transaction saved successfully!");
+
                 window.location.href = "/inden";
             }
         } catch (error) {
@@ -4264,6 +4264,18 @@
             root.appendChild(pageDiv);
         });
     }
+</script>
+<script>
+    let isAllowedToNavigate = false;
+    window.addEventListener('beforeunload', (event) => {
+        event.preventDefault();
+        if (isAllowedToNavigate) {
+            return;
+        }
+
+        event.returnValue = 'Masih ada transaksi berlangsung. Yakin ingin keluar?';
+        return event.returnValue;
+    });
 </script>
 </body>
 </html>
