@@ -160,7 +160,7 @@
 
 <body>
 <div class="wrapper">
-    <!-- SIDEBAR FRAGMENT PERSIS SEPERTI DASHBOARD KARYAWAN -->
+    <!-- SIDEBAR FRAGMENT -->
     <aside th:replace="~{fragments/sidebar :: sidebar(sidebarData=${sidebarData})}"></aside>
 
     <!-- CONTENT PAGE WRAPPER -->
@@ -195,13 +195,13 @@
 
                     <form th:action="@{/payroll/save}" th:object="${payrollForm}" method="post">
 
-                        <!-- Pilih Karyawan -->
+                        <!-- Pilih Karyawan (Key disesuaikan: staffId) -->
                         <div class="mb-3">
                             <label class="form-label" style="font-size: 13px; color: var(--muted);">Pilih Karyawan / Staff</label>
                             <select class="form-select" th:field="*{employeeId}" required style="border-radius: 10px; padding: 10px 12px;">
                                 <option value="" selected disabled>-- Pilih Karyawan --</option>
                                 <option th:each="staff : ${staffList}"
-                                        th:value="${staff.id}"
+                                        th:value="${staff.staffId}"
                                         th:text="${staff.nama + ' (' + staff.jabatan + ')'}"></option>
                             </select>
                         </div>
@@ -241,24 +241,24 @@
 
                                     <!-- Badge Status Komponen -->
                                     <div>
-                                        <span th:if="${comp.type.name() == 'PENAMBAHAN' && !comp.isIncentiveType}" class="badge-allowance">Tunjangan</span>
-                                        <span th:if="${comp.type.name() == 'POTONGAN'}" class="badge-deduction">Potongan</span>
+                                        <span th:if="${comp.type.name() == 'SETORAN' && !comp.isIncentiveType}" class="badge-allowance">Tunjangan</span>
+                                        <span th:if="${comp.type.name() == 'PENCAIRAN'}" class="badge-deduction">Potongan</span>
                                         <span th:if="${comp.isIncentiveType}" class="badge-incentive">Tabungan Insentif</span>
                                     </div>
                                 </div>
 
-                                <!-- Hidden Component ID -->
-                                <input type="hidden" th:name="|details[${stat.index}].componentId|" th:value="${comp.id}" />
+                                <!-- Hidden Component ID (Thymeleaf Binding) -->
+                                <input type="hidden" th:field="*{details[__${stat.index}__].componentId}" th:value="${comp.komponenGajiId}" />
 
                                 <!-- Meta Attributes untuk JS Calculator -->
                                 <input type="hidden" class="comp-type" th:value="${comp.type}" th:data-incentive="${comp.isIncentiveType}" />
 
-                                <!-- Input Nominal -->
+                                <!-- Input Nominal (Thymeleaf Binding) -->
                                 <div class="input-group">
                                     <span class="input-group-text" style="background: #f1f5f9; border-radius: 10px 0 0 10px;">Rp</span>
                                     <input type="text"
                                            class="form-control salary-input"
-                                           th:name="|details[${stat.index}].amount|"
+                                           th:field="*{details[__${stat.index}__].amount}"
                                            placeholder="0"
                                            oninput="handleInputSalary(this)"
                                            style="border-radius: 0 10px 10px 0; padding: 10px 12px;"/>
@@ -307,7 +307,7 @@
                             </thead>
                             <tbody>
                             <tr th:each="balance : ${incentiveBalances}">
-                                <td class="fw-bold" th:text="${balance.staffNama}">Budi Santoso</td>
+                                <td class="fw-bold" th:text="${balance.staffName}">Budi Santoso</td>
                                 <td class="text-muted" th:text="${balance.jabatan}">Kasir Utama</td>
                                 <td class="text-end fw-bold text-success"
                                     th:text="'Rp ' + ${#numbers.formatInteger(balance.currentBalance, 1, 'POINT')}">
@@ -337,7 +337,7 @@
                             </thead>
                             <tbody>
                             <tr th:each="p : ${payrollHistory}">
-                                <td th:text="${p.month + '/' + p.year}">08/2026</td>
+                                <td th:text="${(p.month < 10 ? '0' + p.month : p.month) + '/' + p.year}">08/2026</td>
                                 <td th:text="${p.staffNama}">Budi Santoso</td>
                                 <td class="text-end fw-bold"
                                     th:text="'Rp ' + ${#numbers.formatInteger(p.totalPaid, 1, 'POINT')}">Rp 4.500.000</td>
@@ -368,7 +368,7 @@
                             <div class="mb-3">
                                 <label class="form-label" style="font-size: 13px; color: var(--muted);">Pilih Staff</label>
                                 <select name="employeeId" class="form-select" required style="border-radius: 10px; padding: 10px 12px;">
-                                    <option th:each="staff : ${staffList}" th:value="${staff.id}" th:text="${staff.nama}"></option>
+                                    <option th:each="staff : ${staffList}" th:value="${staff.staffId}" th:text="${staff.nama}"></option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -423,7 +423,7 @@
             const rawValue = input.value.replace(/\./g, '');
             const amount = parseFloat(rawValue) || 0;
 
-            const isPENAMBAHAN = metaType.value === 'PENAMBAHAN';
+            const isPENAMBAHAN = metaType.value === 'SETORAN';
             const isIncentive = metaType.getAttribute('data-incentive') === 'true';
 
             if (isIncentive) {

@@ -2,6 +2,8 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.AccountEntity;
+import com.pos.posApps.Entity.KomponenGajiEntity;
+import com.pos.posApps.Entity.StaffEntity;
 import com.pos.posApps.Service.AttendanceService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.SidebarService;
@@ -250,10 +252,27 @@ public class StaffController {
 
         if (authService.hasAccessToModifyData(accountEntity.getRole())) {
             SidebarDTO sidebarData = sidebarService.getSidebarData(accountEntity.getClientEntity().getClientId(), token);
-            DashboardKaryawanDTO dashboardKaryawanDTO = staffService.getDashboardData();
             model.addAttribute("sidebarData", sidebarData);
-            model.addAttribute("activePage", "dashboardKaryawan");
-            model.addAttribute("dashboardData", dashboardKaryawanDTO);
+            model.addAttribute("activePage", "payroll");
+
+//            Ambil master komponen gaji
+            List<KomponenGajiEntity> komponenGajiEntities = staffService.getAllActiveKomponenGaji();
+            PayrollFormDTO form = new PayrollFormDTO();
+//            Insert ke payrollForm
+            for (KomponenGajiEntity komponen: komponenGajiEntities){
+                PayrollDetailDTO detail = new PayrollDetailDTO();
+                detail.setKomponenGajiId(komponen.getKomponenGajiId());
+                form.getDetails().add(detail);
+            }
+            model.addAttribute("payrollForm", form);
+            model.addAttribute("componentList", komponenGajiEntities);
+
+//            Get StaffList
+            List<StaffDTO> staffEntityList = staffService.getStaffData();
+            model.addAttribute("staffList", staffEntityList);
+
+            model.addAttribute("incentiveBalances", staffService.getAllInsentiveBalance());
+            model.addAttribute("payrollHistory", staffService.getPayrollHistory());
             return "payroll";
         }
         redirectAttributes.addFlashAttribute("status", true);

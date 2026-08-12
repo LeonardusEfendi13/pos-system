@@ -3,10 +3,19 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.Jabatan;
 import com.pos.posApps.DTO.Enum.JenisKelamin;
+import com.pos.posApps.DTO.Enum.JenisTransaksiInsentive;
 import com.pos.posApps.DTO.Enum.Pendidikan;
+import com.pos.posApps.Entity.InsentiveLogEntity;
+import com.pos.posApps.Entity.KomponenGajiEntity;
+import com.pos.posApps.Entity.PayrollEntity;
 import com.pos.posApps.Entity.StaffEntity;
+import com.pos.posApps.Repository.InsentiveLogRepository;
+import com.pos.posApps.Repository.KomponenGajiRepository;
+import com.pos.posApps.Repository.PayrollRepository;
 import com.pos.posApps.Repository.StaffRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -18,11 +27,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class StaffService {
     @Autowired
     StaffRepository staffRepository;
+
+    @Autowired
+    KomponenGajiRepository komponenGajiRepository;
+
+    @Autowired
+    InsentiveLogRepository insentiveLogRepository;
+
+    @Autowired
+    PayrollRepository payrollRepository;
 
     public DashboardKaryawanDTO getDashboardData() {
         List<StaffEntity> staffEntityList = staffRepository.findAllByDeletedAtIsNull();
@@ -183,6 +202,38 @@ public class StaffService {
                 )).toList();
 
         return staffData;
+    }
+
+    public List<KomponenGajiEntity> getAllActiveKomponenGaji(){
+        return komponenGajiRepository.findByIsActiveAndDeletedAtIsNull(true);
+    }
+
+    public List<InsentiveLogDTO> getAllInsentiveBalance(){
+        List<StaffEntity> allStaff = staffRepository.findAllByDeletedAtIsNull();
+        return allStaff.stream().map(staff->{
+            BigDecimal totalPencairan = insentiveLogRepository.sumNominalByStaffIdAndJenis(staff.getStaffId(), JenisTransaksiInsentive.PENCAIRAN);
+            BigDecimal totalSetoran = insentiveLogRepository.sumNominalByStaffIdAndJenis(staff.getStaffId(), JenisTransaksiInsentive.SETORAN);
+            BigDecimal currentBalance = totalSetoran.subtract(totalPencairan);
+
+            return new InsentiveLogDTO(
+                    staff.getStaffId(),
+                    staff.getNama(),
+                    staff.getJabatan(),
+                    currentBalance
+            );
+        }).collect(Collectors.toList());
+    }
+
+    public List<PayrollHistoryDTO> getPayrollHistory(){
+        Pageable pageable = PageRequest.of(0, 10);
+        List<PayrollEntity> payrollEntities = payrollRepository.findByDeletedAtIsNullOrderByCreatedAtDesc(pageable);
+        return payrollEntities.stream().map(p -> new PayrollHistoryDTO(
+                p.getPayrollId(),
+                p.getPayrollMonth(),
+                p.getPayrollYear(),
+                p.getStaffEntity() != null ? p.getStaffEntity().getNama() : "-",
+                p.getTotalPayroll()
+        )).collect(Collectors.toList());
     }
 
 }
