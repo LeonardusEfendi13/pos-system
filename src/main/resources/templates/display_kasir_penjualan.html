@@ -2713,6 +2713,7 @@
                     .replace(",", ".")
             ),
             totalDisc: parseFloat(grandDiscountAmount.value) || 0,
+            totalDiscPct : grandDiscountPercent.value || 0,
             totalPrice: grandTotal,
         };
 
@@ -2789,6 +2790,7 @@
                 totalDisc: transactionData.totalDisc,
                 paymentAmount: paymentAmountInput.value,
                 returnAmount: paymentAmount - grandTotal,
+                totalDiscPct : transactionData.totalDiscPct,
                 transactionDetailDTOS: transactionData.transactionDetailDTOS.map(
                     (item, index) => ({
                         no: index + 1,
@@ -3719,9 +3721,13 @@
 <div class="row"><div class="col-6">Total</div><div class="col-6 text-end">${data.subtotal.toLocaleString(
                 "id-ID"
             )}</div></div>
-<div class="row"><div class="col-6">Discount</div><div class="col-6 text-end">${data.totalDisc.toLocaleString(
-                "id-ID"
-            )}</div></div>
+<!--<div class="row"><div class="col-6">Disc (%)</div><div class="col-6 text-end">${data.totalDiscPct}</div></div>-->
+<div class="row">
+    <div class="col-6">Discount</div>
+    <div class="col-6 text-end">
+        ${data.totalDiscPct}% (-${data.totalDisc.toLocaleString("id-ID")})
+    </div>
+</div>
 <div class="row"><div class="col-6">Grand Total</div><div class="col-6 text-end">${data.grandTotal.toLocaleString(
                 "id-ID"
             )}</div></div>
