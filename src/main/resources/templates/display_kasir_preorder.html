@@ -1350,15 +1350,19 @@
             const currentRow = activeElement.closest("tr");
             const currentRows = [...sellTableBody.querySelectorAll("tr")];
             const currentRowIndex = currentRows.indexOf(currentRow);
-            const editableInputs = [
-                ...currentRow.querySelectorAll("input:not([readonly])"),
+
+            // ✅ AMBIL SEMUA INPUT (Termasuk yang readonly)
+            // Kita hanya mengabaikan input type hidden dan input disabled
+            const allInputs = [
+                ...currentRow.querySelectorAll("input:not([type='hidden']):not([disabled])")
             ];
-            const currentEditableIndex = editableInputs.indexOf(activeElement);
+            const currentIndex = allInputs.indexOf(activeElement);
+
+            if (currentIndex === -1) return;
 
             let nextRowIndex = currentRowIndex;
-            let nextEditableIndex = currentEditableIndex;
+            let nextInputIndex = currentIndex;
 
-            // Logika Navigasi
             switch (e.key) {
                 case "ArrowUp":
                     e.preventDefault();
@@ -1369,38 +1373,31 @@
                     nextRowIndex = currentRowIndex + 1;
                     if (nextRowIndex >= currentRows.length) {
                         addNewRow();
-                        nextRowIndex = currentRows.length;
+                        nextRowIndex = currentRows.length - 1;
                     }
                     break;
                 case "ArrowLeft":
                     e.preventDefault();
-                    nextEditableIndex = Math.max(0, currentEditableIndex - 1);
+                    nextInputIndex = Math.max(0, currentIndex - 1);
                     break;
                 case "ArrowRight":
                     e.preventDefault();
-                    nextEditableIndex = Math.min(
-                        editableInputs.length - 1,
-                        currentEditableIndex + 1
-                    );
+                    nextInputIndex = Math.min(allInputs.length - 1, currentIndex + 1);
                     break;
                 default:
                     return;
             }
 
-            // Fokuskan ke elemen berikutnya
-            const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
-            const targetEditableInputs = [
-                ...targetRow.querySelectorAll("input:not([readonly])"),
-            ];
-            const targetInput = targetEditableInputs[nextEditableIndex];
-            if (targetInput) {
-                targetInput.focus();
-                if (
-                    e.key === "ArrowLeft" ||
-                    e.key === "ArrowRight" ||
-                    e.key === "ArrowUp" ||
-                    e.key === "ArrowDown"
-                ) {
+            // Pindahkan fokus ke input target
+            const targetRow = currentRows[nextRowIndex] || sellTableBody.querySelectorAll("tr")[nextRowIndex];
+            if (targetRow) {
+                const targetInputs = [
+                    ...targetRow.querySelectorAll("input:not([type='hidden']):not([disabled])")
+                ];
+                const targetInput = targetInputs[nextInputIndex];
+
+                if (targetInput) {
+                    targetInput.focus();
                     targetInput.select();
                 }
             }

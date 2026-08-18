@@ -1221,94 +1221,174 @@
             alert('Failed to check invoice number');
         });
     }
-    document.addEventListener("keydown", (e) => {
-        // 🚫 Ignore if modal is visible
-        const productModalEl = document.getElementById("productModal");
-        if (productModalEl && productModalEl.classList.contains("show")) return;
+<!--    document.addEventListener("keydown", (e) => {-->
+<!--        // 🚫 Ignore if modal is visible-->
+<!--        const productModalEl = document.getElementById("productModal");-->
+<!--        if (productModalEl && productModalEl.classList.contains("show")) return;-->
 
-        const activeElement = document.activeElement;
-        const isInputInTable = activeElement?.closest("#sellTableBody");
-        if (!isInputInTable) return;
+<!--        const activeElement = document.activeElement;-->
+<!--        const isInputInTable = activeElement?.closest("#sellTableBody");-->
+<!--        if (!isInputInTable) return;-->
 
+<!--        const currentRow = activeElement.closest("tr");-->
+<!--        let currentRows = [...sellTableBody.querySelectorAll("tr")];-->
+<!--        let currentRowIndex = currentRows.indexOf(currentRow);-->
+
+<!--        const editableInputs = [...currentRow.querySelectorAll("input:not([readonly])")];-->
+<!--        const currentEditableIndex = editableInputs.indexOf(activeElement);-->
+
+<!--        let nextRowIndex = currentRowIndex;-->
+<!--        let nextEditableIndex = currentEditableIndex;-->
+
+<!--        switch (e.key) {-->
+<!--            case "Enter":-->
+<!--                e.preventDefault();-->
+<!--                // go to next row-->
+<!--                nextRowIndex = currentRowIndex + 1;-->
+<!--                if (nextRowIndex >= currentRows.length) {-->
+<!--                    addNewRow(false); // no auto-focus-->
+<!--                    currentRows = [...sellTableBody.querySelectorAll("tr")]; // requery-->
+<!--                    nextRowIndex = currentRows.length - 1;-->
+<!--                }-->
+<!--                break;-->
+
+<!--            case "ArrowDown":-->
+<!--                e.preventDefault();-->
+<!--                nextRowIndex = currentRowIndex + 1;-->
+<!--                if (nextRowIndex >= currentRows.length) {-->
+<!--                    addNewRow(false);-->
+<!--                    currentRows = [...sellTableBody.querySelectorAll("tr")];-->
+<!--                    nextRowIndex = currentRows.length - 1;-->
+<!--                }-->
+<!--                break;-->
+
+<!--            case "ArrowUp":-->
+<!--                e.preventDefault();-->
+<!--                nextRowIndex = Math.max(0, currentRowIndex - 1);-->
+<!--                break;-->
+
+<!--            case "ArrowLeft":-->
+<!--                e.preventDefault();-->
+<!--                nextEditableIndex = Math.max(0, currentEditableIndex - 1);-->
+<!--                break;-->
+
+<!--            case "ArrowRight":-->
+<!--                e.preventDefault();-->
+<!--                nextEditableIndex = Math.min(-->
+<!--                    editableInputs.length - 1,-->
+<!--                    currentEditableIndex + 1-->
+<!--                );-->
+<!--                break;-->
+
+<!--            default:-->
+<!--                return;-->
+<!--        }-->
+
+<!--        // 🧭 Focus target cell-->
+<!--        const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];-->
+<!--        if (!targetRow) return;-->
+
+<!--        const targetEditableInputs = [-->
+<!--            ...targetRow.querySelectorAll("input:not([readonly])"),-->
+<!--        ];-->
+
+<!--        // Keep same column index when moving up/down-->
+<!--        if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Enter") {-->
+<!--            const sameColumnInput = targetEditableInputs[currentEditableIndex];-->
+<!--            if (sameColumnInput) {-->
+<!--                sameColumnInput.focus();-->
+<!--                sameColumnInput.select();-->
+<!--                return;-->
+<!--            }-->
+<!--        }-->
+
+<!--        // For left/right, go within same row-->
+<!--        const targetInput = targetEditableInputs[nextEditableIndex];-->
+<!--        if (targetInput) {-->
+<!--            targetInput.focus();-->
+<!--            targetInput.select();-->
+<!--        }-->
+<!--    });-->
+document.addEventListener("keydown", (e) => {
+    // Hanya jalankan jika modal produk tidak terlihat
+    const productModalEl = document.getElementById("productModal");
+    if (productModalEl && productModalEl.classList.contains("show")) {
+        return;
+    }
+
+    const activeElement = document.activeElement;
+    const isInputInTable = activeElement && activeElement.closest("#sellTableBody");
+
+    if (e.key === "Enter" && isInputInTable) {
+        e.preventDefault();
         const currentRow = activeElement.closest("tr");
-        let currentRows = [...sellTableBody.querySelectorAll("tr")];
-        let currentRowIndex = currentRows.indexOf(currentRow);
+        const nextRow = currentRow.nextElementSibling;
 
-        const editableInputs = [...currentRow.querySelectorAll("input:not([readonly])")];
-        const currentEditableIndex = editableInputs.indexOf(activeElement);
+        if (nextRow) {
+            nextRow.querySelector(".code-input").focus();
+        } else {
+            addNewRow();
+        }
+        return;
+    }
+
+    if (isInputInTable) {
+        const currentRow = activeElement.closest("tr");
+        const currentRows = [...sellTableBody.querySelectorAll("tr")];
+        const currentRowIndex = currentRows.indexOf(currentRow);
+
+        // ✅ AMBIL SEMUA INPUT (Termasuk yang readonly)
+        // Kita hanya mengabaikan input type hidden dan input disabled
+        const allInputs = [
+            ...currentRow.querySelectorAll("input:not([type='hidden']):not([disabled])")
+        ];
+        const currentIndex = allInputs.indexOf(activeElement);
+
+        if (currentIndex === -1) return;
 
         let nextRowIndex = currentRowIndex;
-        let nextEditableIndex = currentEditableIndex;
+        let nextInputIndex = currentIndex;
 
         switch (e.key) {
-            case "Enter":
-                e.preventDefault();
-                // go to next row
-                nextRowIndex = currentRowIndex + 1;
-                if (nextRowIndex >= currentRows.length) {
-                    addNewRow(false); // no auto-focus
-                    currentRows = [...sellTableBody.querySelectorAll("tr")]; // requery
-                    nextRowIndex = currentRows.length - 1;
-                }
-                break;
-
-            case "ArrowDown":
-                e.preventDefault();
-                nextRowIndex = currentRowIndex + 1;
-                if (nextRowIndex >= currentRows.length) {
-                    addNewRow(false);
-                    currentRows = [...sellTableBody.querySelectorAll("tr")];
-                    nextRowIndex = currentRows.length - 1;
-                }
-                break;
-
             case "ArrowUp":
                 e.preventDefault();
                 nextRowIndex = Math.max(0, currentRowIndex - 1);
                 break;
-
+            case "ArrowDown":
+                e.preventDefault();
+                nextRowIndex = currentRowIndex + 1;
+                if (nextRowIndex >= currentRows.length) {
+                    addNewRow();
+                    nextRowIndex = currentRows.length - 1;
+                }
+                break;
             case "ArrowLeft":
                 e.preventDefault();
-                nextEditableIndex = Math.max(0, currentEditableIndex - 1);
+                nextInputIndex = Math.max(0, currentIndex - 1);
                 break;
-
             case "ArrowRight":
                 e.preventDefault();
-                nextEditableIndex = Math.min(
-                    editableInputs.length - 1,
-                    currentEditableIndex + 1
-                );
+                nextInputIndex = Math.min(allInputs.length - 1, currentIndex + 1);
                 break;
-
             default:
                 return;
         }
 
-        // 🧭 Focus target cell
-        const targetRow = sellTableBody.querySelectorAll("tr")[nextRowIndex];
-        if (!targetRow) return;
+        // Pindahkan fokus ke input target
+        const targetRow = currentRows[nextRowIndex] || sellTableBody.querySelectorAll("tr")[nextRowIndex];
+        if (targetRow) {
+            const targetInputs = [
+                ...targetRow.querySelectorAll("input:not([type='hidden']):not([disabled])")
+            ];
+            const targetInput = targetInputs[nextInputIndex];
 
-        const targetEditableInputs = [
-            ...targetRow.querySelectorAll("input:not([readonly])"),
-        ];
-
-        // Keep same column index when moving up/down
-        if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Enter") {
-            const sameColumnInput = targetEditableInputs[currentEditableIndex];
-            if (sameColumnInput) {
-                sameColumnInput.focus();
-                sameColumnInput.select();
-                return;
+            if (targetInput) {
+                targetInput.focus();
+                targetInput.select();
             }
         }
-
-        // For left/right, go within same row
-        const targetInput = targetEditableInputs[nextEditableIndex];
-        if (targetInput) {
-            targetInput.focus();
-            targetInput.select();
-        }
-    });
+    }
+});
 
      document.addEventListener("DOMContentLoaded", () => {
       const addButton = document.getElementById("add-barang-btn");
