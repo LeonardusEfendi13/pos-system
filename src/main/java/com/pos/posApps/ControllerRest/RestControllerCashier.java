@@ -128,11 +128,16 @@ public class RestControllerCashier {
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
 
-        ResponseInBoolean response = kasirService.createTransaction(req, accountData, false);
-        if(response.isStatus()){
-            return ResponseEntity.ok(response.getMessage());
+        try {
+            ResponseInBoolean response = kasirService.createTransaction(req, accountData, false);
+            if (response.isStatus()) {
+                return ResponseEntity.ok(response.getMessage());
+            }
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR)
+                    .body(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
         }
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
     }
 
     @PostMapping("/edit/{transactionId}")
