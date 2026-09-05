@@ -22,6 +22,7 @@ import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
@@ -30,6 +31,44 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class RestControllerProduct {
     private AuthService authService;
     private ProductService productService;
+
+    @GetMapping("/find")
+    public ResponseEntity<?> findProduct(
+            HttpSession session,
+            @RequestParam String keyword,
+            @RequestParam Boolean isPurchasing) {
+        Long clientId;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            clientId = authService.validateToken(token).getClientEntity().getClientId();
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "Unauthorized access"));
+        }
+        try {
+            ProductDTO data = productService.findProductByCode(
+                    clientId, keyword.toUpperCase(), isPurchasing);
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            return ResponseEntity.status(NOT_FOUND)
+                    .body(java.util.Map.of("message", "Barang tidak ditemukan"));
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchProducts(
+            HttpSession session,
+            @RequestParam String keyword,
+            @RequestParam(required = false) String field) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            return ResponseEntity.ok(
+                    productService.searchProductByKeyword(clientId, keyword, field));
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).body(java.util.List.of());
+        }
+    }
 
     @GetMapping("/list")
     public ResponseEntity<List<ProductDTO>> getProductList(HttpSession session){
