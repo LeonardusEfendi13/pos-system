@@ -1,12 +1,17 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateTransactionRequest;
+import com.pos.posApps.DTO.Dtos.KasirBootstrapDTO;
+import com.pos.posApps.DTO.Dtos.KasirClientDTO;
+import com.pos.posApps.DTO.Dtos.KasirCustomerDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.ClientService;
+import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
@@ -20,6 +25,7 @@ import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
@@ -29,6 +35,38 @@ public class RestControllerCashier {
     private AuthService authService;
     private KasirService kasirService;
     private PenjualanService penjualanService;
+    private CustomerService customerService;
+    private ClientService clientService;
+
+    @GetMapping("/bootstrap")
+    public ResponseEntity<KasirBootstrapDTO> bootstrap(
+            HttpSession session,
+            @RequestParam(required = false) Long transactionId) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            var account = authService.validateToken(token);
+            Long clientId = account.getClientEntity().getClientId();
+            var customers = customerService.getCustomerList(clientId).stream()
+                    .map(c -> new KasirCustomerDTO(
+                            c.getCustomerId(), c.getName(), c.getAlamat(), c.isKing()))
+                    .toList();
+            var settings = clientService.getClientSettings(clientId);
+            KasirClientDTO client = settings == null
+                    ? new KasirClientDTO("", "", "", "")
+                    : new KasirClientDTO(
+                            settings.getName(),
+                            settings.getAlamat(),
+                            settings.getKota(),
+                            settings.getNoTelp());
+            PenjualanDTO transaction = null;
+            if (transactionId != null) {
+                transaction = penjualanService.getPenjualanDataById(clientId, transactionId);
+            }
+            return ResponseEntity.ok(new KasirBootstrapDTO(customers, client, transaction));
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
+    }
 
     @GetMapping("/transaction/list")
     public ResponseEntity<List<PenjualanDTO>> getList(HttpSession session){
@@ -59,6 +97,23 @@ public class RestControllerCashier {
             return ResponseEntity.ok(revenue);
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body(BigDecimal.ZERO);
+        }
+    }
+
+    @GetMapping("/transaction/{transactionId}")
+    public ResponseEntity<PenjualanDTO> getTransaction(
+            HttpSession session,
+            @PathVariable Long transactionId) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            PenjualanDTO data = penjualanService.getPenjualanDataById(clientId, transactionId);
+            if (data == null) {
+                return ResponseEntity.status(NOT_FOUND).build();
+            }
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
         }
     }
 
