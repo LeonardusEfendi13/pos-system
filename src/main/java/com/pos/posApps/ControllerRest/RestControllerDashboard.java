@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerRest;
 import com.pos.posApps.DTO.Dtos.Home.ChartDTO;
 import com.pos.posApps.DTO.Dtos.Home.DashboardApiResponse;
 import com.pos.posApps.DTO.Dtos.Home.DashboardHomeCustomerDTO;
+import com.pos.posApps.DTO.Dtos.Home.DashboardHomeSupplierDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
 import com.pos.posApps.DTO.Dtos.SidebarDTO;
@@ -11,6 +12,7 @@ import com.pos.posApps.DTO.Enum.EnumRole.Roles;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.DashboardCustomerService;
+import com.pos.posApps.Service.DashboardSupplierService;
 import com.pos.posApps.Service.HomeService;
 import com.pos.posApps.Service.SidebarService;
 import jakarta.servlet.http.HttpSession;
@@ -37,6 +39,7 @@ public class RestControllerDashboard {
     private AuthService authService;
     private HomeService homeService;
     private DashboardCustomerService dashboardCustomerService;
+    private DashboardSupplierService dashboardSupplierService;
     private SidebarService sidebarService;
     private AccountService accountService;
 
@@ -79,6 +82,8 @@ public class RestControllerDashboard {
         List<HomeProductDTO> homeProductData = homeService.getTop10Product(finalStartDate, finalEndDate);
         List<DashboardHomeCustomerDTO> homeCustomerData =
                 dashboardCustomerService.getTop10CustomerWithProfit(clientId, finalStartDate, finalEndDate);
+        List<DashboardHomeSupplierDTO> homeSupplierData =
+                dashboardSupplierService.getTopSuppliers(clientId, finalStartDate, finalEndDate);
         ChartDTO chartDatas = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
 
@@ -88,6 +93,7 @@ public class RestControllerDashboard {
                 chartDatas,
                 homeProductData,
                 homeCustomerData,
+                homeSupplierData,
                 finalStartDate.toLocalDate().toString(),
                 finalEndDate.toLocalDate().toString(),
                 periodFilter
