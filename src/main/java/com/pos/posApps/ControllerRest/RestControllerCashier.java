@@ -52,12 +52,13 @@ public class RestControllerCashier {
                     .toList();
             var settings = clientService.getClientSettings(clientId);
             KasirClientDTO client = settings == null
-                    ? new KasirClientDTO("", "", "", "")
+                    ? new KasirClientDTO("", "", "", "", "")
                     : new KasirClientDTO(
                             settings.getName(),
                             settings.getAlamat(),
                             settings.getKota(),
-                            settings.getNoTelp());
+                            settings.getNoTelp(),
+                            settings.getCatatan() == null ? "" : settings.getCatatan());
             PenjualanDTO transaction = null;
             if (transactionId != null) {
                 transaction = penjualanService.getPenjualanDataById(clientId, transactionId);
