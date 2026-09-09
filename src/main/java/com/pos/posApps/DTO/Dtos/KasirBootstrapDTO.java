@@ -13,4 +13,5 @@ public class KasirBootstrapDTO {
     private List<KasirCustomerDTO> customers;
     private KasirClientDTO client;
     private PenjualanDTO transaction;
+    private String role;
 }

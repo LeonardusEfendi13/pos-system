@@ -63,7 +63,12 @@ public class RestControllerCashier {
             if (transactionId != null) {
                 transaction = penjualanService.getPenjualanDataById(clientId, transactionId);
             }
-            return ResponseEntity.ok(new KasirBootstrapDTO(customers, client, transaction));
+            return ResponseEntity.ok(
+                    new KasirBootstrapDTO(
+                            customers,
+                            client,
+                            transaction,
+                            account.getRole().name()));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }
