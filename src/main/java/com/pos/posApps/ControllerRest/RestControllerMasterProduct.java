@@ -2,10 +2,13 @@ package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
+import com.pos.posApps.DTO.Dtos.KartuStokProductDTO;
+import com.pos.posApps.DTO.Dtos.KartuStokResponseDTO;
 import com.pos.posApps.DTO.Dtos.MasterProductLookupsDTO;
 import com.pos.posApps.DTO.Dtos.PagedResponse;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
+import com.pos.posApps.DTO.Dtos.StockMovementsDTO;
 import com.pos.posApps.DTO.Dtos.SupplierLookupDTO;
 import com.pos.posApps.DTO.Dtos.VehicleLookupDTO;
 import com.pos.posApps.Entity.AccountEntity;
@@ -28,6 +31,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
+import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -109,6 +118,62 @@ public class RestControllerMasterProduct {
         return ResponseEntity.ok(body);
     }
 
+    @GetMapping("/kartu-stok")
+    public ResponseEntity<KartuStokResponseDTO> kartuStok(
+            HttpSession session,
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        AccountEntity account;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            account = authService.validateToken(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
+
+        LocalDate start = parseIsoDate(startDate, LocalDate.now().minusDays(7));
+        LocalDate end = parseIsoDate(endDate, LocalDate.now());
+        LocalDateTime inputStartDate = start.atStartOfDay();
+        LocalDateTime inputEndDate = end.atTime(23, 59, 59);
+
+        KartuStokResponseDTO body = emptyKartuStok(account);
+        if (productId == null) {
+            return ResponseEntity.ok(body);
+        }
+
+        Long clientId = account.getClientEntity().getClientId();
+        ProductDTO product = productService.findProductById(productId);
+        if (product.getProductId() != null) {
+            body.setProduct(new KartuStokProductDTO(
+                    product.getProductId(),
+                    product.getShortName(),
+                    product.getFullName(),
+                    product.getStok()
+            ));
+        }
+
+        List<StockMovementsDTO> movements = productService.getStockMovementData(
+                clientId, productId, inputStartDate, inputEndDate);
+        Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
+        long qtyInTotal = movements.stream()
+                .mapToLong(item -> item.getQtyIn() == null ? 0L : item.getQtyIn())
+                .sum();
+        long qtyOutTotal = movements.stream()
+                .mapToLong(item -> item.getQtyOut() == null ? 0L : item.getQtyOut())
+                .sum();
+        Long lastSaldo = movements.isEmpty()
+                ? stockAwal
+                : movements.get(movements.size() - 1).getSaldo();
+
+        body.setMovements(movements);
+        body.setStockAwal(stockAwal == null ? 0L : stockAwal);
+        body.setQtyInTotal(qtyInTotal);
+        body.setQtyOutTotal(qtyOutTotal);
+        body.setSaldoAkhir(lastSaldo == null ? 0L : lastSaldo);
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping
     public ResponseEntity<ResponseInBoolean> add(HttpSession session, @RequestBody CreateProductRequest req) {
         return mutate(session, () -> productService.insertProducts(req, currentClient(session)));
@@ -187,6 +252,31 @@ public class RestControllerMasterProduct {
             default -> "fullName";
         };
         return desc ? Sort.by(property).descending() : Sort.by(property).ascending();
+    }
+
+    private KartuStokResponseDTO emptyKartuStok(AccountEntity account) {
+        KartuStokResponseDTO body = new KartuStokResponseDTO();
+        body.setRole(account.getRole().name());
+        body.setAccountName(account.getName());
+        body.setProduct(null);
+        body.setStockAwal(0L);
+        body.setQtyInTotal(0L);
+        body.setQtyOutTotal(0L);
+        body.setSaldoAkhir(0L);
+        body.setMovements(Collections.emptyList());
+        return body;
+    }
+
+    private LocalDate parseIsoDate(String value, LocalDate fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            return fallback;
+        }
     }
 
     @FunctionalInterface
