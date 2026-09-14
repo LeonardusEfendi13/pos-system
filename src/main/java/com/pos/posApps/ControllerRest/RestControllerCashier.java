@@ -12,6 +12,7 @@ import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ClientService;
 import com.pos.posApps.Service.CustomerService;
+import com.pos.posApps.Service.HomeService;
 import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
@@ -35,6 +36,7 @@ public class RestControllerCashier {
     private AuthService authService;
     private KasirService kasirService;
     private PenjualanService penjualanService;
+    private HomeService homeService;
     private CustomerService customerService;
     private ClientService clientService;
 
@@ -106,6 +108,24 @@ public class RestControllerCashier {
         }
     }
 
+    @GetMapping("/transaction/profit")
+    public ResponseEntity<BigDecimal> getProfit(HttpSession session) {
+        ClientEntity clientData;
+        AccountEntity accountEntity;
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            accountEntity = authService.validateToken(token);
+            clientData = accountEntity.getClientEntity();
+            BigDecimal profit = BigDecimal.ZERO;
+            if (accountEntity.getRole() == Roles.SUPER_ADMIN) {
+                profit = homeService.getHomeTopBarData(clientData.getClientId()).getTotalProfit();
+            }
+            return ResponseEntity.ok(profit);
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).body(BigDecimal.ZERO);
+        }
+    }
+
     @GetMapping("/transaction/{transactionId}")
     public ResponseEntity<PenjualanDTO> getTransaction(
             HttpSession session,
@@ -124,42 +144,45 @@ public class RestControllerCashier {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addTransaction(@RequestBody CreateTransactionRequest req, HttpSession session){
+    public ResponseEntity<ResponseInBoolean> addTransaction(@RequestBody CreateTransactionRequest req, HttpSession session){
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accountData = authService.validateToken(token);
 
         } catch (Exception e) {
-            return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
+            return ResponseEntity.status(UNAUTHORIZED)
+                    .body(new ResponseInBoolean(false, "Sesi berakhir. Silakan login kembali."));
         }
 
         try {
             ResponseInBoolean response = kasirService.createTransaction(req, accountData, false);
             if (response.isStatus()) {
-                return ResponseEntity.ok(response.getMessage());
+                return ResponseEntity.ok(response);
             }
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
-                    .body(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+                    .body(new ResponseInBoolean(false,
+                            e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
         }
     }
 
     @PostMapping("/edit/{transactionId}")
-    public ResponseEntity<String> editTransaction(@PathVariable("transactionId") Long transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
+    public ResponseEntity<ResponseInBoolean> editTransaction(@PathVariable("transactionId") Long transactionId, @RequestBody CreateTransactionRequest req, HttpSession session){
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
             accountData = authService.validateToken(token);
         } catch (Exception e) {
-            return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
+            return ResponseEntity.status(UNAUTHORIZED)
+                    .body(new ResponseInBoolean(false, "Sesi berakhir. Silakan login kembali."));
         }
 
         ResponseInBoolean response = kasirService.editTransaction(transactionId, req, accountData, false);
         if(response.isStatus()){
-            return ResponseEntity.ok(response.getMessage());
+            return ResponseEntity.ok(response);
         }
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
     }
 }

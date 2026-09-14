@@ -51,7 +51,7 @@ public class RestControllerProduct {
             return ResponseEntity.ok(data);
         } catch (Exception e) {
             return ResponseEntity.status(NOT_FOUND)
-                    .body(java.util.Map.of("message", "Barang tidak ditemukan"));
+                    .body(new ResponseInBoolean(false, "Barang tidak ditemukan"));
         }
     }
 

@@ -24,8 +24,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             "AND (" +
             "    LOWER(p.shortName) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "    OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%'))" +
-            ") " +
-            "ORDER BY p.fullName ASC")
+            ")")
     Page<ProductEntity> searchProducts(
             @Param("clientId") Long clientId,
             @Param("search") String search,
@@ -38,7 +37,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
                 WHERE p.clientEntity.clientId = :clientId
                   AND (:supplierId IS NULL OR p.supplierEntity.supplierId = :supplierId)
                   AND p.deletedAt IS NULL
-                ORDER BY p.fullName ASC
             """)
     Page<ProductEntity> findAllWithPricesByClientId(
             @Param("clientId") Long clientId,
@@ -201,5 +199,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             List<String> shortNames, Long clientId);
 
     List<ProductEntity> findAllByProductIdInAndDeletedAtIsNull(Collection<Long> productIds);
+
+    boolean existsByCategoryEntity_CategoryIdAndDeletedAtIsNull(Long categoryId);
 
 }

@@ -33,6 +33,10 @@ public class ProductEntity {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierEntity;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private CategoryEntity categoryEntity;
+
     @OneToMany(mappedBy = "productEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("productPricesId ASC")
     private List<ProductPricesEntity> productPricesEntity;

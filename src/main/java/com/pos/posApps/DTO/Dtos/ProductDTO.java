@@ -21,4 +21,7 @@ public class ProductDTO {
     private Long supplierId;
     private Long minimumStock;
     private List<CompatibleProductsDTO> compatibleProductsDTOS;
+    private Long categoryId;
+    private String categoryName;
+    private Long parentCategoryId;
 }

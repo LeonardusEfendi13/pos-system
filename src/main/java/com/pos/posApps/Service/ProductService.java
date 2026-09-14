@@ -44,7 +44,12 @@ public class ProductService {
     @Autowired
     VehicleRepository vehicleRepository;
 
+    @Autowired
+    CategoryRepository categoryRepository;
+
     private ProductDTO convertToDTO(ProductEntity product) {
+        CategoryEntity category = product.getCategoryEntity();
+        CategoryEntity parent = category == null ? null : category.getParent();
         return new ProductDTO(
                 product.getProductId(),
                 product.getShortName(),
@@ -74,8 +79,27 @@ public class ProductService {
                                                 cp.getYearEnd(),
                                                 cp.getVehicleEntity() != null ? cp.getVehicleEntity().getModel() : null
                                         ))
-                                .collect(Collectors.toList())
+                                .collect(Collectors.toList()),
+                category == null ? null : category.getCategoryId(),
+                category == null ? null : category.getName(),
+                parent == null ? null : parent.getCategoryId()
         );
+    }
+
+    private ResponseInBoolean applyCategory(ProductEntity product, Long categoryId, Long clientId) {
+        // Null means the field was omitted (kasir add/edit). Do not clear an existing category.
+        if (categoryId == null) {
+            return null;
+        }
+
+        Optional<CategoryEntity> categoryOpt = categoryRepository
+                .findFirstByCategoryIdAndClientEntity_ClientIdAndDeletedAtIsNull(categoryId, clientId);
+        if (categoryOpt.isEmpty()) {
+            return new ResponseInBoolean(false, "Kategori tidak ditemukan");
+        }
+
+        product.setCategoryEntity(categoryOpt.get());
+        return null;
     }
 
     public ProductDTO findProductById(Long productId) {
@@ -175,6 +199,10 @@ public class ProductService {
             newProduct.setStock(req.getStock() != null ? req.getStock() : 0L);
             newProduct.setMinimumStock(req.getMinimumStock());
             newProduct.setClientEntity(clientData);
+            ResponseInBoolean categoryResult = applyCategory(newProduct, req.getCategoryId(), clientData.getClientId());
+            if (categoryResult != null) {
+                return categoryResult;
+            }
             productRepository.save(newProduct);
 
             //Start insert compatible Product
@@ -261,6 +289,10 @@ public class ProductService {
             productEntity.setSupplierEntity(supplierEntity);
             productEntity.setStock(req.getStock() != null ? req.getStock() : 0L);
             productEntity.setMinimumStock(req.getMinimumStock());
+            ResponseInBoolean categoryResult = applyCategory(productEntity, req.getCategoryId(), clientEntity.getClientId());
+            if (categoryResult != null) {
+                return categoryResult;
+            }
             productRepository.save(productEntity);
 
             //Delete all product prices related to product id

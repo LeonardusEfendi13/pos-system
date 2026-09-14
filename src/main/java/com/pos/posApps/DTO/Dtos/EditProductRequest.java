@@ -34,6 +34,8 @@ public class EditProductRequest {
 
     private List<ProductPricesDTO> productPricesDTO;
 
-    private  List<CompatibleProductsDTO> compatibleVehicles;
+    private List<CompatibleProductsDTO> compatibleVehicles;
+
+    private Long categoryId;
 
 }

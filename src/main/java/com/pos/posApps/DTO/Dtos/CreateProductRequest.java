@@ -34,4 +34,6 @@ public class CreateProductRequest {
 
     private List<CompatibleProductsDTO> compatibleVehicles;
 
+    private Long categoryId;
+
 }
