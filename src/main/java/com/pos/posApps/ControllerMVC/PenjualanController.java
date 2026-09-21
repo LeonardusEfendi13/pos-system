@@ -19,10 +19,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
-import static java.util.Collections.emptyList;
-import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
+import static com.pos.posApps.Util.PenjualanHistoryCustomerFilter.cabangIdsOf;
 
 @Controller
 @RequestMapping("penjualan")
@@ -33,6 +33,7 @@ public class PenjualanController {
     private CustomerService customerService;
     private ClientService clientService;
     private SidebarService sidebarService;
+    private BranchService branchService;
 
     private int safeSize(Integer size) {
         return (size == null || size <= 0) ? 10 : size;
@@ -56,18 +57,35 @@ public class PenjualanController {
         LocalDateTime inputEndDate = LocalDate.parse(endDate).atTime(23, 59, 59);
 
         Page<PenjualanDTO> penjualanData;
-        List<CustomerEntity> customerData = customerService.getCustomerList(clientId);
+        List<Long> cabangIds = cabangIdsOf(
+                branchService.getAllCabangToko().stream()
+                        .filter(Objects::nonNull)
+                        .map(CustomerEntity::getCustomerId)
+                        .toList()
+        );
+        List<CustomerEntity> customerData = customerService.getCustomerList(clientId).stream()
+                .filter(customer -> customer.getCustomerId() != null
+                        && !cabangIds.contains(customer.getCustomerId()))
+                .toList();
         ClientDTO clientSettingData = clientService.getClientSettings(clientId);
 
-        List<Long> custIds = emptyList();
-        if(customerId != null){
-            custIds = listOf(customerId);
-        }
-
         if (search == null || search.isEmpty()) {
-            penjualanData = penjualanService.getPenjualanData(clientId, inputStartDate, inputEndDate, custIds, PageRequest.of(page, size));
+            penjualanData = penjualanService.getPenjualanHistoryData(
+                    clientId,
+                    inputStartDate,
+                    inputEndDate,
+                    customerId,
+                    cabangIds,
+                    PageRequest.of(page, size));
         } else {
-            penjualanData = penjualanService.searchPenjualanData(clientId, inputStartDate, inputEndDate, custIds, search, PageRequest.of(page, size));
+            penjualanData = penjualanService.searchPenjualanHistoryData(
+                    clientId,
+                    inputStartDate,
+                    inputEndDate,
+                    customerId,
+                    cabangIds,
+                    search,
+                    PageRequest.of(page, size));
         }
         model.addAttribute("penjualanData", penjualanData.getContent());
         model.addAttribute("customerId", customerId);

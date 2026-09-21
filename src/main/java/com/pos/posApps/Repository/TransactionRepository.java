@@ -35,6 +35,26 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             Pageable pageable
     );
 
+    @Query("SELECT t FROM TransactionEntity t " +
+            "WHERE t.clientEntity.clientId = :clientId " +
+            "AND t.transactionDetailEntities IS NOT EMPTY " +
+            "AND t.deletedAt IS NULL " +
+            "AND t.createdAt BETWEEN :startDate AND :endDate " +
+            "AND t.customerEntity.customerId NOT IN :excludeCustomerId " +
+            "AND (" +
+            "    LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "    OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))" +
+            ") " +
+            "ORDER BY t.transactionId DESC")
+    Page<TransactionEntity> searchTransactionsExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeCustomerId") List<Long> excludeCustomerId,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
 
     @Query(value = """
     SELECT t.*
@@ -56,6 +76,20 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     );
 
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdInAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, List<Long> customerId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
+
+    @Query("SELECT t FROM TransactionEntity t " +
+            "WHERE t.clientEntity.clientId = :clientId " +
+            "AND t.deletedAt IS NULL " +
+            "AND t.createdAt BETWEEN :startDate AND :endDate " +
+            "AND t.customerEntity.customerId NOT IN :excludeCustomerId " +
+            "ORDER BY t.transactionId DESC")
+    Page<TransactionEntity> findExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("excludeCustomerId") List<Long> excludeCustomerId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
 
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndDeletedAtIsNullAndCreatedAtBetweenOrderByTransactionIdDesc(Long clientId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 

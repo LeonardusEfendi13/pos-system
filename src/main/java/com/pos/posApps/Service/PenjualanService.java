@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
+import com.pos.posApps.Util.PenjualanHistoryCustomerFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.pos.posApps.Util.Generator.getCurrentTimestamp;
+import static com.pos.posApps.Util.PenjualanHistoryCustomerFilter.resolve;
 
 @Service
 public class PenjualanService {
@@ -93,6 +95,30 @@ public class PenjualanService {
         return transactionData.map(this::convertToDTO);
     }
 
+    public Page<PenjualanDTO> getPenjualanHistoryData(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long selectedCustomerId,
+            List<Long> cabangCustomerIds,
+            Pageable pageable) {
+        PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
+
+        return switch (resolved.mode()) {
+            case EMPTY -> Page.empty(pageable);
+            case ALL -> getPenjualanData(clientId, startDate, endDate, List.of(), pageable);
+            case INCLUDE -> getPenjualanData(clientId, startDate, endDate, resolved.customerIds(), pageable);
+            case EXCLUDE -> transactionRepository
+                    .findExcludingCustomers(
+                            clientId,
+                            resolved.customerIds(),
+                            startDate,
+                            endDate,
+                            pageable)
+                    .map(this::convertToDTO);
+        };
+    }
+
     public Page<PenjualanDTO> searchPenjualanData( Long clientId, LocalDateTime startDate, LocalDateTime endDate, List<Long> customerId, String search, Pageable pageable) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
@@ -115,6 +141,50 @@ public class PenjualanService {
                 );
 
         return transactionData.map(this::convertToDTO);
+    }
+
+    public Page<PenjualanDTO> searchPenjualanHistoryData(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long selectedCustomerId,
+            List<Long> cabangCustomerIds,
+            String search,
+            Pageable pageable) {
+        String trimmedSearch = (search != null) ? search.trim() : "";
+
+        if (trimmedSearch.isEmpty()) {
+            return getPenjualanHistoryData(
+                    clientId,
+                    startDate,
+                    endDate,
+                    selectedCustomerId,
+                    cabangCustomerIds,
+                    pageable);
+        }
+
+        PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
+
+        return switch (resolved.mode()) {
+            case EMPTY -> Page.empty(pageable);
+            case ALL -> searchPenjualanData(clientId, startDate, endDate, List.of(), trimmedSearch, pageable);
+            case INCLUDE -> searchPenjualanData(
+                    clientId,
+                    startDate,
+                    endDate,
+                    resolved.customerIds(),
+                    trimmedSearch,
+                    pageable);
+            case EXCLUDE -> transactionRepository
+                    .searchTransactionsExcludingCustomers(
+                            clientId,
+                            startDate,
+                            endDate,
+                            resolved.customerIds(),
+                            trimmedSearch,
+                            pageable)
+                    .map(this::convertToDTO);
+        };
     }
 
     private PenjualanDTO convertToDTO(TransactionEntity transactions) {

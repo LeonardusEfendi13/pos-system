@@ -12,6 +12,7 @@ import com.pos.posApps.DTO.Dtos.TransactionDetailDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.BranchService;
 import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
@@ -30,12 +31,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
+import static com.pos.posApps.Util.PenjualanHistoryCustomerFilter.cabangIdsOf;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -54,6 +56,7 @@ public class RestControllerPenjualanHistory {
     private AuthService authService;
     private PenjualanService penjualanService;
     private CustomerService customerService;
+    private BranchService branchService;
 
     @GetMapping("/list")
     public ResponseEntity<PenjualanHistoryPageDTO> list(
@@ -77,24 +80,29 @@ public class RestControllerPenjualanHistory {
             LocalDate resolvedEnd = parseOrDefaultEnd(endDate);
             LocalDateTime inputStart = resolvedStart.atStartOfDay();
             LocalDateTime inputEnd = resolvedEnd.atTime(23, 59, 59);
-            List<Long> custIds = customerId == null
-                    ? Collections.emptyList()
-                    : List.of(customerId);
+            List<Long> cabangIds = cabangIdsOf(
+                    branchService.getAllCabangToko().stream()
+                            .filter(Objects::nonNull)
+                            .map(CustomerEntity::getCustomerId)
+                            .toList()
+            );
 
             Page<PenjualanDTO> fetched;
             if (q == null || q.isBlank()) {
-                fetched = penjualanService.getPenjualanData(
+                fetched = penjualanService.getPenjualanHistoryData(
                         clientId,
                         inputStart,
                         inputEnd,
-                        custIds,
+                        customerId,
+                        cabangIds,
                         Pageable.unpaged());
             } else {
-                fetched = penjualanService.searchPenjualanData(
+                fetched = penjualanService.searchPenjualanHistoryData(
                         clientId,
                         inputStart,
                         inputEnd,
-                        custIds,
+                        customerId,
+                        cabangIds,
                         q,
                         Pageable.unpaged());
             }
@@ -110,6 +118,8 @@ public class RestControllerPenjualanHistory {
             List<PenjualanHistoryRowDTO> content = new ArrayList<>(rows.subList(from, to));
 
             var customers = customerService.getCustomerList(clientId).stream()
+                    .filter(customer -> customer.getCustomerId() != null
+                            && !cabangIds.contains(customer.getCustomerId()))
                     .map(this::toCustomerLookup)
                     .toList();
 
