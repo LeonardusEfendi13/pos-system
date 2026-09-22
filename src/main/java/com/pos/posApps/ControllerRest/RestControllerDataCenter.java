@@ -21,7 +21,7 @@ public class RestControllerDataCenter {
 
     @GetMapping(value = "/backup", produces = "application/sql")
     public ResponseEntity<Resource> backup() throws Exception {
-        File file = dataCenterService.backupDatabase("postgres");
+        File file = dataCenterService.backupDatabase();
         Resource resource = new FileSystemResource(file);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

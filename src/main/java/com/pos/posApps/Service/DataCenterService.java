@@ -3,6 +3,7 @@ package com.pos.posApps.Service;
 import com.pos.posApps.Entity.DataCenterLogEntity;
 import com.pos.posApps.Repository.DataCenterLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -22,12 +23,37 @@ public class DataCenterService {
     @Autowired
     private DataCenterLogRepository dataCenterLogRepository;
 
+    @Value("${spring.datasource.url}")
+    private String datasourceUrl;
+
+    @Value("${spring.datasource.username}")
+    private String datasourceUsername;
+
+    @Value("${spring.datasource.password}")
+    private String datasourcePassword;
+
     public List<DataCenterLogEntity> getLogData(){
         return dataCenterLogRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    public File backupDatabase(String dbName)
+    private record PgConnection(String host, String port, String database) {}
+
+    private PgConnection resolvePgConnection() {
+        String normalized = datasourceUrl.replaceFirst("^jdbc:postgresql://", "");
+        String withoutQuery = normalized.split("\\?", 2)[0];
+        String[] hostAndDb = withoutQuery.split("/", 2);
+        String[] hostParts = hostAndDb[0].split(":", 2);
+        String host = hostParts[0];
+        String port = hostParts.length > 1 ? hostParts[1] : "5432";
+        String database = hostAndDb.length > 1 && !hostAndDb[1].isBlank()
+                ? hostAndDb[1]
+                : "postgres";
+        return new PgConnection(host, port, database);
+    }
+
+    public File backupDatabase()
             throws IOException, InterruptedException {
+        PgConnection connection = resolvePgConnection();
 
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -43,18 +69,17 @@ public class DataCenterService {
 
         ProcessBuilder pb = new ProcessBuilder(
                 PG_DUMP,
-                "-h", "localhost",
-                "-p", "5432",
-                "-U", "postgres",
+                "-h", connection.host(),
+                "-p", connection.port(),
+                "-U", datasourceUsername,
                 "-F", "c",              // CUSTOM format (pg_restore)
                 "-b",
                 "--no-owner",
                 "--no-privileges",
-                dbName
+                connection.database()
         );
 
-        // Password from env / config
-        pb.environment().put("PGPASSWORD", "Anjenk132");
+        pb.environment().put("PGPASSWORD", datasourcePassword);
 
         // Write dump to file
         pb.redirectOutput(backupFile);
@@ -83,22 +108,22 @@ public class DataCenterService {
     public void restoreDatabase(
             File dumpFile
     ) throws IOException, InterruptedException {
+        PgConnection connection = resolvePgConnection();
 
         ProcessBuilder pb = new ProcessBuilder(
                 PG_RESTORE,
-                "-h", "localhost",
-                "-p", "5432",
-                "-U", "postgres",
+                "-h", connection.host(),
+                "-p", connection.port(),
+                "-U", datasourceUsername,
                 "--clean",
                 "--if-exists",
                 "--no-owner",
                 "--no-privileges",
-                "-d", "postgres",
+                "-d", connection.database(),
                 dumpFile.getAbsolutePath()
         );
 
-        // Avoid password prompt
-        pb.environment().put("PGPASSWORD", "Anjenk132");
+        pb.environment().put("PGPASSWORD", datasourcePassword);
 
         // Show logs in console
         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
