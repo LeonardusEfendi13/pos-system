@@ -90,7 +90,8 @@ public class RestControllerMasterProduct {
                 productPage.getSize(),
                 productPage.getTotalPages(),
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                null
         ));
     }
 

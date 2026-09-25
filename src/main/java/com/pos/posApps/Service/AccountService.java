@@ -68,8 +68,11 @@ public class AccountService {
         if(accountEntity != null){
             accountEntity.setName(request.getName());
             accountEntity.setUsername(request.getUsername());
-            accountEntity.setUsername(request.getUsername());
             accountEntity.setRole(request.getRole());
+            if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                accountEntity.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+            }
+            accountEntity.setUpdatedAt(getCurrentTimestamp());
             accountRepository.save(accountEntity);
             return true;
         }else{

@@ -80,7 +80,8 @@ public class RestControllerUser {
                 safeSize,
                 totalPages,
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                account.getAccountId()
         ));
     }
 
@@ -92,7 +93,7 @@ public class RestControllerUser {
             String name = trimText(req == null ? null : req.getName());
             String username = trimText(req == null ? null : req.getUsername());
             String password = trimText(req == null ? null : req.getPassword());
-            Roles role = parseAssignableRole(req == null ? null : req.getRole());
+            Roles role = parseAssignableRole(req == null ? null : req.getRole(), account, null);
             if (role == null) {
                 return new ResponseInBoolean(false, "Role tidak valid");
             }
@@ -128,15 +129,23 @@ public class RestControllerUser {
             String name = trimText(req == null ? null : req.getName());
             String username = trimText(req == null ? null : req.getUsername());
             Roles role = req == null ? null : req.getRole();
+            String password = trimText(req == null ? null : req.getPassword());
             ClientEntity client = account.getClientEntity();
-            if (!isAssignableRole(role)) {
+            AccountEntity target = findOwned(userId, client.getClientId());
+            if (target == null) {
+                return new ResponseInBoolean(false, "User tidak ditemukan");
+            }
+            if (account.getRole() == Roles.SUPER_ADMIN
+                    && isProtectedRole(target.getRole())
+                    && !account.getAccountId().equals(target.getAccountId())) {
+                return new ResponseInBoolean(false, "User Super Admin tidak dapat diubah");
+            }
+            Roles assignableRole = resolveAssignableRole(account, role, target);
+            if (assignableRole == null) {
                 return new ResponseInBoolean(false, "Role tidak valid");
             }
             if (name.isEmpty() || username.isEmpty()) {
                 return new ResponseInBoolean(false, "Gagal menyimpan data");
-            }
-            if (findOwned(userId, client.getClientId()) == null) {
-                return new ResponseInBoolean(false, "User tidak ditemukan");
             }
             if (usernameExists(username, userId)) {
                 return new ResponseInBoolean(false, "Username sudah ada");
@@ -146,7 +155,10 @@ public class RestControllerUser {
             update.setId(userId);
             update.setName(name);
             update.setUsername(username);
-            update.setRole(role);
+            update.setRole(assignableRole);
+            if (!password.isEmpty()) {
+                update.setPassword(password);
+            }
             boolean updated = accountService.doUpdateAccount(update);
             if (updated) {
                 return new ResponseInBoolean(true, "User berhasil diubah");
@@ -279,27 +291,49 @@ public class RestControllerUser {
         return value == null ? "" : value.trim();
     }
 
-    private Roles parseAssignableRole(String raw) {
+    private Roles parseAssignableRole(String raw, AccountEntity actor, AccountEntity target) {
         if (raw == null || raw.isBlank()) {
             return null;
         }
 
         try {
-            return toAssignableRole(Roles.valueOf(raw.trim()));
+            return resolveAssignableRole(actor, Roles.valueOf(raw.trim()), target);
         } catch (IllegalArgumentException e) {
             return null;
         }
     }
 
-    private boolean isAssignableRole(Roles role) {
-        return toAssignableRole(role) != null;
-    }
-
-    private Roles toAssignableRole(Roles role) {
+    private Roles resolveAssignableRole(AccountEntity actor, Roles role, AccountEntity target) {
         if (role == null || role == Roles.GOD_ADMIN) {
             return null;
         }
+
+        if (actor.getRole() == Roles.GOD_ADMIN) {
+            return role;
+        }
+
+        if (actor.getRole() != Roles.SUPER_ADMIN) {
+            return null;
+        }
+
+        if (role == Roles.SUPER_ADMIN) {
+            if (target != null
+                    && actor.getAccountId().equals(target.getAccountId())
+                    && target.getRole() == Roles.SUPER_ADMIN) {
+                return Roles.SUPER_ADMIN;
+            }
+            return null;
+        }
+
+        if (target != null && isProtectedRole(target.getRole()) && role != target.getRole()) {
+            return null;
+        }
+
         return role;
+    }
+
+    private boolean isProtectedRole(Roles role) {
+        return role == Roles.SUPER_ADMIN || role == Roles.GOD_ADMIN;
     }
 
     private boolean usernameExists(String username, Long excludeId) {

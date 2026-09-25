@@ -95,7 +95,8 @@ public class RestControllerCustomer {
                 safeSize,
                 totalPages,
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                null
         ));
     }
 

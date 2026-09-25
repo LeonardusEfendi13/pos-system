@@ -68,7 +68,8 @@ public class RestControllerCategory {
                 result.getSize(),
                 result.getTotalPages(),
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                null
         ));
     }
 

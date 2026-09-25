@@ -69,7 +69,8 @@ public class RestControllerDataCenterLog {
                 safeSize,
                 totalPages,
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                null
         ));
     }
 

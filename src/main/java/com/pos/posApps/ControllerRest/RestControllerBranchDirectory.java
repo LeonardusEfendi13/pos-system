@@ -73,7 +73,8 @@ public class RestControllerBranchDirectory {
                 safeSize,
                 totalPages,
                 account.getRole().name(),
-                account.getName()
+                account.getName(),
+                null
         ));
     }
 

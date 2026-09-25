@@ -17,4 +17,6 @@ public class PagedResponse<T> {
     private int totalPages;
     private String role;
     private String accountName;
+    /** Logged-in account id; set on endpoints that need self-identification in the client. */
+    private Long accountId;
 }

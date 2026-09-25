@@ -8,5 +8,6 @@ public class EditUserRequest {
     Long id;
     String name;
     String username;
+    String password;
     Roles role;
 }
