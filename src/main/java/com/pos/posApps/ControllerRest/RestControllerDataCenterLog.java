@@ -28,8 +28,8 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @RequestMapping("api/data-center")
 @AllArgsConstructor
 public class RestControllerDataCenterLog {
-    private static final int DEFAULT_SIZE = 50;
-    private static final int MAX_SIZE = 50;
+    private static final int DEFAULT_SIZE = 200;
+    private static final int MAX_SIZE = 200;
 
     private AuthService authService;
     private DataCenterService dataCenterService;
@@ -39,7 +39,7 @@ public class RestControllerDataCenterLog {
             HttpSession session,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "50") Integer size,
+            @RequestParam(defaultValue = "200") Integer size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir) {
         AccountEntity account = requireAccount(session);

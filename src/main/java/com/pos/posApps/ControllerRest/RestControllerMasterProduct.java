@@ -56,7 +56,7 @@ public class RestControllerMasterProduct {
     public ResponseEntity<PagedResponse<ProductDTO>> list(
             HttpSession session,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "50") Integer size,
+            @RequestParam(defaultValue = "200") Integer size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long supplierIdFilter,
             @RequestParam(required = false) String sort,
@@ -71,7 +71,7 @@ public class RestControllerMasterProduct {
 
         Long clientId = account.getClientEntity().getClientId();
         int safePage = Math.max(page, 0);
-        int safeSize = Math.min(Math.max(size, 1), 50);
+        int safeSize = Math.min(Math.max(size, 1), 200);
         Sort springSort = resolveSort(sort, dir);
         PageRequest pageable = springSort == null
                 ? PageRequest.of(safePage, safeSize, Sort.by("fullName").ascending())

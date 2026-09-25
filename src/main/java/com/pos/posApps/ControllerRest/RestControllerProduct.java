@@ -79,7 +79,7 @@ public class RestControllerProduct {
             String token = (String) session.getAttribute(authSessionKey);
             Long clientId = authService.validateToken(token).getClientEntity().getClientId();
             int safePage = Math.max(page, 0);
-            int safeSize = Math.min(Math.max(size, 1), 50);
+            int safeSize = Math.min(Math.max(size, 1), 200);
             return ResponseEntity.ok(
                     productService
                             .getProductData(clientId, PageRequest.of(safePage, safeSize), null, false)
