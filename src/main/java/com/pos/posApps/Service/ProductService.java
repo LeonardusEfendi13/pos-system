@@ -138,13 +138,17 @@ public class ProductService {
 
     //For master product
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing, Boolean isMasterProduct) {
-        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
+        return getProductData(clientId, pageable, supplierId, isPurchasing, isMasterProduct, null);
+    }
+
+    public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing, Boolean isMasterProduct, Long categoryId) {
+        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId, categoryId);
         return productData.map(this::convertToDTO);
     }
 
     //for non master products
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing) {
-        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId);
+        Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId, null);
         productData.getContent().forEach(product -> {
             SuggestedPricesDTO priceDto = priceListService.getSuggestedPriceByPartNumber(product.getShortName());
             String supplierPriceStr = priceDto.getBasicPrice();
@@ -156,10 +160,14 @@ public class ProductService {
     }
 
     public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable, Long supplierIdFilter) {
+        return searchProductData(clientId, search, pageable, supplierIdFilter, null);
+    }
+
+    public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable, Long supplierIdFilter, Long categoryId) {
         String trimmedSearch = (search != null) ? search.trim() : "";
 
         if (trimmedSearch.isEmpty()) {
-            return getProductData(clientId, pageable, supplierIdFilter, false);
+            return getProductData(clientId, pageable, supplierIdFilter, false, true, categoryId);
         }
 
         Page<ProductEntity> productData = productRepository
@@ -167,7 +175,8 @@ public class ProductService {
                         clientId,
                         trimmedSearch,
                         pageable,
-                        supplierIdFilter
+                        supplierIdFilter,
+                        categoryId
                 );
 
         return productData.map(this::convertToDTO);

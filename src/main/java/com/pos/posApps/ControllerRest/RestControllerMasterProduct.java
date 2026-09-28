@@ -59,6 +59,7 @@ public class RestControllerMasterProduct {
             @RequestParam(defaultValue = "200") Integer size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long supplierIdFilter,
+            @RequestParam(required = false) Long categoryIdFilter,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir) {
         AccountEntity account;
@@ -78,9 +79,9 @@ public class RestControllerMasterProduct {
                 : PageRequest.of(safePage, safeSize, springSort);
         Page<ProductDTO> productPage;
         if (search == null || search.isBlank()) {
-            productPage = productService.getProductData(clientId, pageable, supplierIdFilter, false, true);
+            productPage = productService.getProductData(clientId, pageable, supplierIdFilter, false, true, categoryIdFilter);
         } else {
-            productPage = productService.searchProductData(clientId, search, pageable, supplierIdFilter);
+            productPage = productService.searchProductData(clientId, search, pageable, supplierIdFilter, categoryIdFilter);
         }
 
         return ResponseEntity.ok(new PagedResponse<>(
