@@ -4,7 +4,6 @@ import com.pos.posApps.DTO.Dtos.CreatePreorderRequest;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Service.AuthService;
-import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PreorderService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -19,7 +18,6 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @AllArgsConstructor
 public class RestControllerPreorder {
     private AuthService authService;
-    private KasirService kasirService;
     private PreorderService preorderService;
 
     @PostMapping("/add")

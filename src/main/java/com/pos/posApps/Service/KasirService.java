@@ -41,6 +41,9 @@ public class KasirService {
     @Autowired
     DailyCounterRepository dailyCounterRepository;
 
+    @Autowired
+    ProductSetService productSetService;
+
     @Transactional
     public String generateTodayNota(Long clientId) {
         String todayStr = new SimpleDateFormat("yyyyMMdd").format(new Date());
@@ -94,6 +97,19 @@ public class KasirService {
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionEntity.setAccountEntity(accountData);
             transactionRepository.save(transactionEntity);
+
+            if (!isBranch) {
+                ResponseInBoolean pretelResult = productSetService.applyForSale(
+                        req.getPretelDrafts(),
+                        transactionEntity,
+                        clientData,
+                        generatedNotaNumber
+                );
+                if (!pretelResult.isStatus()) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return pretelResult;
+                }
+            }
 
             System.out.println("=====START LOG ID : " + transactionEntity.getTransactionId() + "=======");
 

@@ -28,7 +28,6 @@ import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 @AllArgsConstructor
 public class BranchController {
 
-    private AccountService accountService;
     private AuthService authService;
     private SidebarService sidebarService;
     private BranchService branchService;

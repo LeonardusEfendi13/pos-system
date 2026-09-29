@@ -12,4 +12,5 @@ public class CreateTransactionRequest {
     private BigDecimal subtotal;
     private BigDecimal totalPrice;
     private BigDecimal totalDisc;
+    private List<PretelDraftDTO> pretelDrafts;
 }

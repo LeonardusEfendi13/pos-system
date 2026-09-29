@@ -30,9 +30,6 @@ public class HomeService {
     private PurchasingRepository purchasingRepository;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
     private CustomerRepository customerRepository;
 
     public HomeTopBarDTO getHomeTopBarData(Long clientId) {

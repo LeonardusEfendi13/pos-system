@@ -78,6 +78,23 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     Optional<ProductEntity> findFirstByProductIdAndDeletedAtIsNull(Long productId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({
+            @QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"),
+            @QueryHint(name = "jakarta.persistence.cache.storeMode", value = "REFRESH")
+    })
+    @Query("""
+            SELECT p
+            FROM ProductEntity p
+            WHERE p.productId = :productId
+              AND p.deletedAt IS NULL
+              AND p.clientEntity.clientId = :clientId
+            """)
+    Optional<ProductEntity> findAndLockByProductId(
+            @Param("productId") Long productId,
+            @Param("clientId") Long clientId
+    );
+
     boolean existsByFullNameAndClientEntity_ClientIdAndDeletedAtIsNullAndProductIdNot(
             String fullName, Long clientId, Long excludedProductId
     );

@@ -47,7 +47,6 @@ public class RestControllerPembelian {
 
     @PostMapping("/add")
     public ResponseEntity<String> addTransaction(@RequestBody CreatePurchasingRequest req, HttpSession session) {
-        ClientEntity clientData;
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);

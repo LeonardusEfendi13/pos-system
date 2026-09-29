@@ -47,6 +47,9 @@ public class ProductService {
     @Autowired
     CategoryRepository categoryRepository;
 
+    @Autowired
+    ProductSetRepository productSetRepository;
+
     private ProductDTO convertToDTO(ProductEntity product) {
         CategoryEntity category = product.getCategoryEntity();
         CategoryEntity parent = category == null ? null : category.getParent();
@@ -82,7 +85,8 @@ public class ProductService {
                                 .collect(Collectors.toList()),
                 category == null ? null : category.getCategoryId(),
                 category == null ? null : category.getName(),
-                parent == null ? null : parent.getCategoryId()
+                parent == null ? null : parent.getCategoryId(),
+                false
         );
     }
 
@@ -143,7 +147,7 @@ public class ProductService {
 
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing, Boolean isMasterProduct, Long categoryId) {
         Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId, categoryId);
-        return productData.map(this::convertToDTO);
+        return markPage(clientId, productData.map(this::convertToDTO));
     }
 
     //for non master products
@@ -156,7 +160,7 @@ public class ProductService {
                 product.setSupplierPrice(new BigDecimal(supplierPriceStr));
             }
         });
-        return productData.map(this::convertToDTO);
+        return markPage(clientId, productData.map(this::convertToDTO));
     }
 
     public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable, Long supplierIdFilter) {
@@ -179,7 +183,7 @@ public class ProductService {
                         categoryId
                 );
 
-        return productData.map(this::convertToDTO);
+        return markPage(clientId, productData.map(this::convertToDTO));
     }
 
     @Transactional
@@ -484,9 +488,9 @@ public class ProductService {
             }
         }
 
-        return result.stream()
+        return markProductSets(clientId, result.stream()
                 .map(this::convertToDTO)
-                .toList();
+                .toList());
     }
 
     private List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
@@ -506,7 +510,24 @@ public class ProductService {
         if (supplierPrice != null && !supplierPrice.isBlank() && isPurchasing) {
             productData.setSupplierPrice(new BigDecimal(supplierPrice));
         }
-        return convertToDTO(productData);
+        return markProductSets(clientId, List.of(convertToDTO(productData))).get(0);
+    }
+
+    private Page<ProductDTO> markPage(Long clientId, Page<ProductDTO> page) {
+        markProductSets(clientId, page.getContent());
+        return page;
+    }
+
+    private List<ProductDTO> markProductSets(Long clientId, List<ProductDTO> rows) {
+        if (rows == null || rows.isEmpty() || clientId == null) {
+            return rows;
+        }
+
+        Set<Long> parents = new HashSet<>(productSetRepository.findActiveParentProductIds(clientId));
+        for (ProductDTO row : rows) {
+            row.setHasProductSet(row.getProductId() != null && parents.contains(row.getProductId()));
+        }
+        return rows;
     }
 
     public List<ProductDTO> getUnderstockProductData(Long clientId, Long supplierId) {

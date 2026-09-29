@@ -14,9 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.util.UriUtils;
-
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -139,7 +136,6 @@ public class RestControllerProduct {
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).body("Harap login ulang");
         }
-        String encodedSearch = UriUtils.encode(search != null ? search : "", StandardCharsets.UTF_8);
 
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
             ResponseInBoolean isEdited = productService.editProducts(req, accEntity.getClientEntity());

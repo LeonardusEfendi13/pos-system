@@ -7,8 +7,6 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.ProductEntity;
 import com.pos.posApps.Entity.PurchasingEntity;
-import com.pos.posApps.Entity.TransactionDetailEntity;
-import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
 import com.pos.posApps.Repository.TransactionRepository;
@@ -31,7 +29,6 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.awt.Color.LIGHT_GRAY;
@@ -276,7 +273,8 @@ public class LaporanService {
         return periods;
     }
 
-    public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outputStream) {
+    @SuppressWarnings("deprecation")
+public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outputStream) {
         Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
         String sql = "SELECT p.short_name, p.full_name, p.stock, p.supplier_price, " +
                 "COALESCE(pp.price, 0) AS harga_jual " +

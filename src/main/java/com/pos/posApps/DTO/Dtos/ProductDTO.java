@@ -24,4 +24,5 @@ public class ProductDTO {
     private Long categoryId;
     private String categoryName;
     private Long parentCategoryId;
+    private Boolean hasProductSet;
 }

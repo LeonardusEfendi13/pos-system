@@ -39,7 +39,6 @@ public class PembelianController {
 
     @GetMapping
     public String showPembelian(HttpSession session, Model model, String startDate, String endDate, Long supplierId, Boolean lunas, Boolean tunai, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "200") Integer size, @RequestParam(required = false) String search) {
-        Long clientId;
         AccountEntity accountData;
         String token;
         try {

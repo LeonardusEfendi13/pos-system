@@ -267,7 +267,7 @@ public class PenjualanService {
         TransactionEntity transactionEntity = transactionEntityOpt.get();
 
 
-        //Restore stock from old transaction
+        // Restore sold lines only. Pretel snapshots stay until that reversal rule is confirmed.
         List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
         for (TransactionDetailEntity old : oldTransactions) {
             ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());

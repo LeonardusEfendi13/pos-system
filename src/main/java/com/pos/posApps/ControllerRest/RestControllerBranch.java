@@ -5,7 +5,6 @@ import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.KasirService;
-import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +19,6 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class RestControllerBranch {
     private AuthService authService;
     private KasirService kasirService;
-    private PenjualanService penjualanService;
 
     @PostMapping("/add")
     public ResponseEntity<String> addTransaction(@RequestBody CreateTransactionRequest req, HttpSession session){
