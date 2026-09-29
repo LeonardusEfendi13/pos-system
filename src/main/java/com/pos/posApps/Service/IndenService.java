@@ -227,26 +227,12 @@ public class IndenService {
             String kota = clientEntity.getKota();
             if (newStatusInden.equalsIgnoreCase(StatusInden.TERCATAT.name())) {
                 isOpenWa = true;
-                message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
-                        .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di ").append(namaToko).append(" ").append(kota).append(".\n\n")
-
-                        // --- PERUBAHAN DI SINI ---
-                        .append("Total pesanan : ").append(formatRupiah(indenEntity.getTotalPrice())).append("\n")
-                        .append("Deposit : ").append(formatRupiah(indenEntity.getDeposit())).append("\n")
-                        .append("Sisa pembayaran : ").append(formatRupiah(indenEntity.getTotalPrice().subtract(indenEntity.getDeposit()))).append("\n\n")
-
-                        .append("Detail Pesanan:\n");
-                int no = 1;
-                for (IndenDetailEntity item : indenDetailEntities) {
-                    message.append(no).append(") ")
-                            .append(item.getShortName()).append(" | ")
-                            .append(item.getFullName()).append(" | ")
-                            .append(item.getQty()).append(" buah")
-                            .append("\n");
-                    no++;
-                }
-                message.append("\nPesanan Anda telah masuk ke sistem kami. Mohon menunggu info selanjutnya.\n\n");
-                message.append("--Pesan ini dibuat secara otomatis--");
+                message.append(buildTercatatWhatsappMessage(
+                        indenEntity,
+                        namaToko,
+                        kota,
+                        indenDetailEntities
+                ));
             } else if (newStatusInden.equalsIgnoreCase(StatusInden.KOSONG.name())) {
                 isOpenWa = true;
                 message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
@@ -270,8 +256,35 @@ public class IndenService {
         }
     }
 
+    private String buildTercatatWhatsappMessage(
+            IndenEntity indenEntity,
+            String namaToko,
+            String kota,
+            List<IndenDetailEntity> details
+    ) {
+        StringBuilder message = new StringBuilder();
+        message.append("Halo, kak ").append(indenEntity.getCustomerName()).append(".\n\n")
+                .append("Terima kasih telah melakukan pemesanan dengan nomor pesanan (").append(indenEntity.getIndenNumber()).append(") di ").append(namaToko).append(" ").append(kota).append(".\n\n")
+                .append("Total pesanan : ").append(formatRupiah(indenEntity.getTotalPrice())).append("\n")
+                .append("Deposit : ").append(formatRupiah(indenEntity.getDeposit())).append("\n")
+                .append("Sisa pembayaran : ").append(formatRupiah(indenEntity.getTotalPrice().subtract(indenEntity.getDeposit()))).append("\n\n")
+                .append("Detail Pesanan:\n");
+        int no = 1;
+        for (IndenDetailEntity item : details) {
+            message.append(no).append(") ")
+                    .append(item.getShortName()).append(" | ")
+                    .append(item.getFullName()).append(" | ")
+                    .append(item.getQty()).append(" buah")
+                    .append("\n");
+            no++;
+        }
+        message.append("\nPesanan Anda telah masuk ke sistem kami. Mohon menunggu info selanjutnya.\n\n");
+        message.append("--Pesan ini dibuat secara otomatis--");
+        return message.toString();
+    }
+
     @Transactional
-    public ResponseInBoolean createTransaction(CreateIndenRequest req, AccountEntity accountData) {
+    public ResponseForWhatsapp createTransaction(CreateIndenRequest req, AccountEntity accountData) {
         String lastProduct = "Tanya Leon";
         ClientEntity clientData = accountData.getClientEntity();
         try {
@@ -303,7 +316,7 @@ public class IndenService {
 
                 if(productEntity == null){
                     TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return new ResponseInBoolean(true, "Produk " + dtos.getName() + " tidak ditemukan");
+                    return new ResponseForWhatsapp(true, "Produk " + dtos.getName() + " tidak ditemukan", false, "", "");
                 }
 
                 System.out.println("Produk: " + productEntity.getShortName() + "(" +productEntity.getStock() + ") VALID");
@@ -326,10 +339,26 @@ public class IndenService {
             System.out.println("=====END LOG=======");
             System.out.println();
 
-            return new ResponseInBoolean(true, generatedNotaNumber);
+            String phoneNumber = formatPhoneTo62(indenEntity.getCustomerPhone());
+            List<IndenDetailEntity> details = indenDetailRepository
+                    .findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenEntity.getIndenId());
+            String waMessage = buildTercatatWhatsappMessage(
+                    indenEntity,
+                    clientData.getName(),
+                    clientData.getKota(),
+                    details
+            );
+            boolean openWa = phoneNumber != null && !phoneNumber.isBlank();
+            return new ResponseForWhatsapp(
+                    true,
+                    generatedNotaNumber,
+                    openWa,
+                    phoneNumber == null ? "" : phoneNumber,
+                    waMessage
+            );
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, e.getMessage() + ". ERROR KARENA : " + lastProduct);
+            return new ResponseForWhatsapp(false, e.getMessage() + ". ERROR KARENA : " + lastProduct, false, "", "");
         }
     }
 
@@ -350,7 +379,6 @@ public class IndenService {
             inden.setCustomerName(req.getCustomerName());
             inden.setCustomerPhone(req.getCustomerPhone());
             inden.setDeposit(req.getDeposit());
-            inden.setStatusInden(StatusInden.TERCATAT.name());
             indenRepository.save(inden);
 
             indenDetailRepository.deleteAllByIndenEntity_IndenId(indenId);

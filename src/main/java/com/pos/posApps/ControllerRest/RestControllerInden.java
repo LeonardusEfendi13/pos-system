@@ -1,6 +1,7 @@
 package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.CreateIndenRequest;
+import com.pos.posApps.DTO.Dtos.ResponseForWhatsapp;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Service.AuthService;
@@ -21,7 +22,7 @@ public class RestControllerInden {
     private IndenService indenService;
 
     @PostMapping("/add")
-    public ResponseEntity<String> addInden(@RequestBody CreateIndenRequest req, HttpSession session){
+    public ResponseEntity<?> addInden(@RequestBody CreateIndenRequest req, HttpSession session){
         AccountEntity accountData;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -31,11 +32,11 @@ public class RestControllerInden {
             return ResponseEntity.status(UNAUTHORIZED).body("Unauthorized access");
         }
 
-        ResponseInBoolean response = indenService.createTransaction(req, accountData);
+        ResponseForWhatsapp response = indenService.createTransaction(req, accountData);
         if(response.isStatus()){
-            return ResponseEntity.ok(response.getMessage());
+            return ResponseEntity.ok(response);
         }
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response.getMessage());
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
     }
 
     @PostMapping("/edit/{transactionId}")

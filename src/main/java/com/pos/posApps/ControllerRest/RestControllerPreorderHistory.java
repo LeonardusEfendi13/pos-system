@@ -1,8 +1,13 @@
 package com.pos.posApps.ControllerRest;
 
+import com.pos.posApps.DTO.Dtos.PreorderDTO;
+import com.pos.posApps.DTO.Dtos.PreorderDetailDTO;
+import com.pos.posApps.DTO.Dtos.PreorderHistoryDetailDTO;
+import com.pos.posApps.DTO.Dtos.PreorderHistoryLineDTO;
 import com.pos.posApps.DTO.Dtos.PreorderHistoryPageDTO;
 import com.pos.posApps.DTO.Dtos.PreorderHistoryRowDTO;
 import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
+import com.pos.posApps.DTO.Dtos.SupplierDTO;
 import com.pos.posApps.DTO.Dtos.SupplierLookupDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.PreorderEntity;
@@ -32,6 +37,7 @@ import java.util.Set;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
@@ -122,6 +128,23 @@ public class RestControllerPreorderHistory {
         }
     }
 
+    @GetMapping("/{preorderId}")
+    public ResponseEntity<PreorderHistoryDetailDTO> detail(
+            HttpSession session,
+            @PathVariable("preorderId") Long preorderId) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            PreorderDTO data = preorderService.getPreorderDataById(clientId, preorderId);
+            if (data == null) {
+                return ResponseEntity.status(NOT_FOUND).build();
+            }
+            return ResponseEntity.ok(toDetail(data));
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
+    }
+
     @PostMapping("/delete/{preorderId}")
     public ResponseEntity<ResponseInBoolean> delete(
             @PathVariable("preorderId") Long preorderId,
@@ -163,6 +186,35 @@ public class RestControllerPreorderHistory {
                 preorder.getTotalPrice(),
                 supplier == null ? null : supplier.getSupplierId(),
                 supplier == null ? "" : supplier.getSupplierName()
+        );
+    }
+
+    private PreorderHistoryDetailDTO toDetail(PreorderDTO preorder) {
+        SupplierDTO supplier = preorder.getSupplierDTO();
+        List<PreorderDetailDTO> details = preorder.getPreorderDetailDTOS();
+        List<PreorderHistoryLineDTO> lines = details == null
+                ? List.of()
+                : details.stream().map(this::toLine).toList();
+
+        return new PreorderHistoryDetailDTO(
+                preorder.getPreorderId(),
+                preorder.getCreatedAt(),
+                supplier == null ? "" : nullToEmpty(supplier.getSupplierName()),
+                preorder.getSubtotal(),
+                preorder.getTotalDisc(),
+                preorder.getTotalPrice(),
+                lines
+        );
+    }
+
+    private PreorderHistoryLineDTO toLine(PreorderDetailDTO detail) {
+        return new PreorderHistoryLineDTO(
+                nullToEmpty(detail.getCode()),
+                nullToEmpty(detail.getName()),
+                detail.getQty(),
+                detail.getPrice(),
+                detail.getDiscAmount(),
+                detail.getTotal()
         );
     }
 
