@@ -7,9 +7,13 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.pos.posApps.DTO.Dtos.*;
 import com.pos.posApps.Entity.ProductEntity;
 import com.pos.posApps.Entity.PurchasingEntity;
+import com.pos.posApps.Entity.SupplierEntity;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
+import com.pos.posApps.Repository.SupplierRepository;
+import com.pos.posApps.Repository.TransactionDetailRepository;
 import com.pos.posApps.Repository.TransactionRepository;
+import com.pos.posApps.Util.LaporanPenjualanBarangView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -46,6 +50,12 @@ public class LaporanService {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    TransactionDetailRepository transactionDetailRepository;
+
+    @Autowired
+    SupplierRepository supplierRepository;
 
     public String getTotalAsset(long clientId) {
         return formatRupiah(productRepository.sumInventoryValue(clientId));
@@ -204,6 +214,203 @@ public class LaporanService {
         }
 
         return result;
+    }
+
+    public List<LaporanPenjualanPerBarangDTO> getLaporanPenjualanPerBarang(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long supplierId,
+            String q,
+            String sort,
+            String dir
+    ) {
+        if (supplierId != null && findClientSupplier(clientId, supplierId) == null) {
+            return List.of();
+        }
+
+        List<Object[]> raw = transactionDetailRepository.findPenjualanPerBarang(
+                clientId,
+                startDate,
+                endDate,
+                supplierId
+        );
+        List<LaporanPenjualanPerBarangDTO> rows = new ArrayList<>(raw.size());
+
+        for (Object[] row : raw) {
+            rows.add(new LaporanPenjualanPerBarangDTO(
+                    toLong(row[0]),
+                    toText(row[1]),
+                    toText(row[2]),
+                    toText(row[3]),
+                    toLong(row[4]),
+                    toBigDecimal(row[5]),
+                    toBigDecimal(row[6])
+            ));
+        }
+
+        return LaporanPenjualanBarangView.apply(rows, q, sort, dir);
+    }
+
+    public String resolveBarangSupplierName(Long clientId, Long supplierId) {
+        if (supplierId == null) {
+            return null;
+        }
+
+        SupplierEntity supplier = findClientSupplier(clientId, supplierId);
+        if (supplier == null || supplier.getSupplierName() == null) {
+            return null;
+        }
+
+        return supplier.getSupplierName();
+    }
+
+    public LaporanPendapatanBarangDetailDTO getLaporanPenjualanBarangDetail(
+            Long clientId,
+            Long productId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String filterOptions,
+            String role,
+            String accountName
+    ) {
+        ProductLabel label = resolveProductLabel(clientId, productId);
+        if (label == null) {
+            return null;
+        }
+
+        String filter = LaporanPenjualanBarangView.normalizeFilter(filterOptions);
+        List<Object[]> raw = transactionDetailRepository.findPenjualanBarangPerWaktu(
+                clientId,
+                productId,
+                startDate,
+                endDate,
+                filter
+        );
+        Map<String, LaporanPenjualanBarangBucketDTO> found = new HashMap<>();
+
+        for (Object[] row : raw) {
+            String period = toText(row[0]);
+            found.put(period, new LaporanPenjualanBarangBucketDTO(
+                    period,
+                    toLong(row[1]),
+                    toBigDecimal(row[2]),
+                    toBigDecimal(row[3])
+            ));
+        }
+
+        List<LaporanPenjualanBarangBucketDTO> buckets = LaporanPenjualanBarangView.fillBuckets(
+                startDate.toLocalDate(),
+                endDate.toLocalDate(),
+                filter,
+                found
+        );
+
+        return new LaporanPendapatanBarangDetailDTO(
+                productId,
+                label.productName,
+                label.supplierName,
+                buckets,
+                sumQtyBuckets(buckets),
+                sumKotorBuckets(buckets),
+                sumBersihBuckets(buckets),
+                startDate.toLocalDate().toString(),
+                endDate.toLocalDate().toString(),
+                filter,
+                role,
+                accountName
+        );
+    }
+
+    private SupplierEntity findClientSupplier(Long clientId, Long supplierId) {
+        return supplierRepository
+                .findFirstBySupplierIdAndClientEntity_ClientId(supplierId, clientId)
+                .orElse(null);
+    }
+
+    private ProductLabel resolveProductLabel(Long clientId, Long productId) {
+        Optional<ProductEntity> product = productRepository.findByProductIdAndClientId(productId, clientId);
+        if (product.isPresent()) {
+            ProductEntity entity = product.get();
+            String name = firstNonBlank(entity.getFullName(), entity.getShortName(), "Tanpa nama");
+            String supplierName = "";
+            if (entity.getSupplierEntity() != null && entity.getSupplierEntity().getSupplierName() != null) {
+                supplierName = entity.getSupplierEntity().getSupplierName();
+            }
+            return new ProductLabel(name, supplierName);
+        }
+
+        List<String> labels = transactionDetailRepository.findSoldProductLabel(clientId, productId);
+        if (labels.isEmpty() || labels.get(0) == null || labels.get(0).isBlank()) {
+            return null;
+        }
+
+        return new ProductLabel(labels.get(0), "");
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return "Tanpa nama";
+    }
+
+    private static Long sumQtyBuckets(List<LaporanPenjualanBarangBucketDTO> buckets) {
+        long total = 0L;
+        for (LaporanPenjualanBarangBucketDTO bucket : buckets) {
+            total += bucket.getQty() == null ? 0L : bucket.getQty();
+        }
+        return total;
+    }
+
+    private static BigDecimal sumKotorBuckets(List<LaporanPenjualanBarangBucketDTO> buckets) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (LaporanPenjualanBarangBucketDTO bucket : buckets) {
+            total = total.add(bucket.getTotalHargaPenjualan() == null
+                    ? BigDecimal.ZERO
+                    : bucket.getTotalHargaPenjualan());
+        }
+        return total;
+    }
+
+    private static BigDecimal sumBersihBuckets(List<LaporanPenjualanBarangBucketDTO> buckets) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (LaporanPenjualanBarangBucketDTO bucket : buckets) {
+            total = total.add(bucket.getLabaPenjualan() == null
+                    ? BigDecimal.ZERO
+                    : bucket.getLabaPenjualan());
+        }
+        return total;
+    }
+
+    private static Long toLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+
+        return 0L;
+    }
+
+    private static BigDecimal toBigDecimal(Object value) {
+        if (value instanceof BigDecimal decimal) {
+            return decimal;
+        }
+
+        if (value instanceof Number number) {
+            return BigDecimal.valueOf(number.longValue());
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    private static String toText(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private record ProductLabel(String productName, String supplierName) {
     }
 
     public List<LaporanPembelianPerPelangganDTO> getLaporanPembelianDataByCustomer(

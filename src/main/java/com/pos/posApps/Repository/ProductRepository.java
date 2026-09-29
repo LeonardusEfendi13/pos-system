@@ -223,4 +223,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     boolean existsByCategoryEntity_CategoryIdAndDeletedAtIsNull(Long categoryId);
 
+    @Query("""
+            SELECT p FROM ProductEntity p
+            LEFT JOIN FETCH p.supplierEntity
+            WHERE p.productId = :productId
+              AND p.clientEntity.clientId = :clientId
+            """)
+    Optional<ProductEntity> findByProductIdAndClientId(
+            @Param("productId") Long productId,
+            @Param("clientId") Long clientId
+    );
+
 }
