@@ -71,7 +71,8 @@ public class PembelianController {
                 lunas,
                 tunai,
                 inputStartDate,
-                inputEndDate
+                inputEndDate,
+                search
         );
         model.addAttribute("totalPembelian", totalPembelian);
 

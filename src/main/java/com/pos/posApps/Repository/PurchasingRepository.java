@@ -71,6 +71,11 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
           AND p.purchasingDetailEntities IS NOT EMPTY
           AND p.deletedAt IS NULL
           AND p.poDate BETWEEN :startDate AND :endDate
+          AND (
+            :search = ''
+            OR LOWER(p.purchasingNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+            OR LOWER(p.supplierEntity.supplierName) LIKE LOWER(CONCAT('%', :search, '%'))
+          )
     """)
     BigDecimal sumPurchasingData(
             @Param("clientId") Long clientId,
@@ -78,7 +83,8 @@ public interface PurchasingRepository extends JpaRepository<PurchasingEntity, Lo
             @Param("lunas") Boolean lunas,
             @Param("tunai") Boolean tunai,
             @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
+            @Param("endDate") LocalDateTime endDate,
+            @Param("search") String search
     );
     List<PurchasingEntity> findAllByClientEntity_ClientIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNullAndPoDateBetweenOrderByPurchasingIdDesc(Long clientId, LocalDateTime startDate, LocalDateTime endDate);
 

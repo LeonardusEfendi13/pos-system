@@ -116,7 +116,8 @@ public class RestControllerPembelianHistory {
                     lunas,
                     tunai,
                     inputStart,
-                    inputEnd);
+                    inputEnd,
+                    q);
             if (totalPembelian == null) {
                 totalPembelian = BigDecimal.ZERO;
             }

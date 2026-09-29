@@ -75,15 +75,18 @@ public class PembelianService {
             Boolean lunas,
             Boolean tunai,
             LocalDateTime startDate,
-            LocalDateTime endDate
+            LocalDateTime endDate,
+            String search
     ) {
+        String trimmedSearch = search == null ? "" : search.trim();
         return purchasingRepository.sumPurchasingData(
                 clientId,
                 supplierId,
                 lunas,
                 tunai,
                 startDate,
-                endDate
+                endDate,
+                trimmedSearch
         );
     }
 
@@ -417,7 +420,13 @@ public class PembelianService {
             purchasing.setTotalDiscount(req.getTotalDisc());
             purchasing.setSubtotal(req.getSubtotal());
             purchasing.setPoDate(LocalDate.parse(req.getPoDate()).atStartOfDay());
+            boolean wasCash = purchasing.isCash();
             purchasing.setCash(req.isCash());
+            if (req.isCash()) {
+                purchasing.setPaid(true);
+            } else if (wasCash) {
+                purchasing.setPaid(false);
+            }
             purchasing.setAccountEntity(accountData);
 
             if (!req.isCash()) {
