@@ -18,18 +18,25 @@ public interface TransactionDetailRepository extends JpaRepository<TransactionDe
 
     @Query("""
     SELECT new com.pos.posApps.DTO.Dtos.Home.HomeProductDTO(
+        p.productId,
         p.fullName,
         SUM(td.qty)
     )
     FROM TransactionDetailEntity td
-    JOIN ProductEntity p ON p.shortName = td.shortName
+    JOIN td.transactionEntity t
+    JOIN ProductEntity p ON p.productId = td.productId
     WHERE td.deletedAt IS NULL
+      AND t.deletedAt IS NULL
       AND p.deletedAt IS NULL
+      AND td.productId IS NOT NULL
+      AND t.clientEntity.clientId = :clientId
+      AND p.clientEntity.clientId = :clientId
       AND td.createdAt BETWEEN :startDate AND :endDate
-    GROUP BY p.fullName
+    GROUP BY p.productId, p.fullName
     ORDER BY SUM(td.qty) DESC
 """)
     List<HomeProductDTO> findTopProducts(
+            @Param("clientId") Long clientId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable

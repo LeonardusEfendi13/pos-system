@@ -79,7 +79,7 @@ public class RestControllerDashboard {
         LocalDateTime finalEndDate = homeService.adjustEndDate(inputEndDate, periodFilter);
 
         HomeTopBarDTO topBarData = homeService.getHomeTopBarData(clientId);
-        List<HomeProductDTO> homeProductData = homeService.getTop10Product(finalStartDate, finalEndDate);
+        List<HomeProductDTO> homeProductData = homeService.getTop10Product(clientId, finalStartDate, finalEndDate);
         List<DashboardHomeCustomerDTO> homeCustomerData =
                 dashboardCustomerService.getTop10CustomerWithProfit(clientId, finalStartDate, finalEndDate);
         List<DashboardHomeSupplierDTO> homeSupplierData =

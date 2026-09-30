@@ -59,7 +59,7 @@ public class HomeController {
 
         HomeTopBarDTO topBarData = homeService.getHomeTopBarData(clientId);
         //bottleneck di 1 dan 3
-        List<HomeProductDTO> homeProductData = homeService.getTop10Product(finalStartDate, finalEndDate);
+        List<HomeProductDTO> homeProductData = homeService.getTop10Product(clientId, finalStartDate, finalEndDate);
         List<HomeCustomerDTO> homeCustomerData = homeService.getTop5Customer(clientId, finalStartDate, finalEndDate);
         ChartDTO chartData = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);

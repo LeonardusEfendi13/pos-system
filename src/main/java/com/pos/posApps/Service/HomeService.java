@@ -62,8 +62,9 @@ public class HomeService {
 
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
-    public List<HomeProductDTO> getTop10Product(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<HomeProductDTO> getTop10Product(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
         return transactionDetailRepository.findTopProducts(
+                clientId,
                 startDate,
                 endDate,
                 PageRequest.of(0, 10)
