@@ -190,4 +190,9 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             Long customerId,
             String filter
     );
+
+    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionNumberAndDeletedAtIsNull(
+            Long clientId,
+            String transactionNumber
+    );
 }

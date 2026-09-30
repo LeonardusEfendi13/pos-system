@@ -1,6 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.Util.SalePaymentRules;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
@@ -44,6 +45,24 @@ public class KasirService {
     @Autowired
     ProductSetService productSetService;
 
+    @Autowired
+    PaymentMethodService paymentMethodService;
+
+    private ResponseInBoolean applyPaymentMethod(
+            TransactionEntity transaction,
+            Long clientId,
+            Long paymentMethodId,
+            boolean forceDefault
+    ) {
+        PaymentMethodEntity method = paymentMethodService.resolve(clientId, paymentMethodId, forceDefault);
+        if (method == null) {
+            return new ResponseInBoolean(false, "Metode pembayaran tidak ditemukan");
+        }
+
+        paymentMethodService.copyToTransaction(transaction, method);
+        return new ResponseInBoolean(true, "");
+    }
+
     @Transactional
     public String generateTodayNota(Long clientId) {
         String todayStr = new SimpleDateFormat("yyyyMMdd").format(new Date());
@@ -85,6 +104,18 @@ public class KasirService {
             }
 
             CustomerEntity customerEntity = customerEntityOpt.get();
+            SalePaymentRules.Decision payment = SalePaymentRules.resolve(
+                    isBranch,
+                    req.getIsCash(),
+                    req.getPaymentAmount(),
+                    req.getTotalPrice(),
+                    req.getDueDate(),
+                    null,
+                    null
+            );
+            if (!payment.ok()) {
+                return new ResponseInBoolean(false, payment.error());
+            }
             String generatedNotaNumber = generateTodayNota(clientData.getClientId());
 
             //insert the transaction data
@@ -96,6 +127,19 @@ public class KasirService {
             transactionEntity.setTotalDiscount(req.getTotalDisc());
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionEntity.setAccountEntity(accountData);
+            transactionEntity.setCash(payment.cash());
+            transactionEntity.setPaid(payment.paid());
+            transactionEntity.setPaidAmount(payment.paidAmount());
+            transactionEntity.setDueDate(payment.dueDate());
+            ResponseInBoolean methodResult = applyPaymentMethod(
+                    transactionEntity,
+                    clientData.getClientId(),
+                    req.getPaymentMethodId(),
+                    isBranch
+            );
+            if (!methodResult.isStatus()) {
+                return methodResult;
+            }
             transactionRepository.save(transactionEntity);
 
             if (!isBranch) {
@@ -199,11 +243,37 @@ public class KasirService {
                             clientData.getClientId(), transactionId)
                     .orElseThrow(() -> new RuntimeException("Transaksi tidak ditemukan"));
 
+            SalePaymentRules.Decision payment = SalePaymentRules.resolve(
+                    isBranch,
+                    req.getIsCash(),
+                    req.getPaymentAmount(),
+                    req.getTotalPrice(),
+                    req.getDueDate(),
+                    transaction.isCash(),
+                    transaction.isPaid()
+            );
+            if (!payment.ok()) {
+                return new ResponseInBoolean(false, payment.error());
+            }
+
             transaction.setCustomerEntity(customer);
             transaction.setTotalPrice(req.getTotalPrice());
             transaction.setTotalDiscount(req.getTotalDisc());
             transaction.setSubtotal(req.getSubtotal());
             transaction.setAccountEntity(accountData);
+            transaction.setCash(payment.cash());
+            transaction.setPaid(payment.paid());
+            transaction.setPaidAmount(payment.paidAmount());
+            transaction.setDueDate(payment.dueDate());
+            ResponseInBoolean methodResult = applyPaymentMethod(
+                    transaction,
+                    clientData.getClientId(),
+                    req.getPaymentMethodId(),
+                    isBranch
+            );
+            if (!methodResult.isStatus()) {
+                return methodResult;
+            }
             transactionRepository.save(transaction);
 
             List<TransactionDetailEntity> oldDetails =

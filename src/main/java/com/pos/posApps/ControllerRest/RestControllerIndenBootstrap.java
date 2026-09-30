@@ -6,6 +6,7 @@ import com.pos.posApps.DTO.Dtos.KasirClientDTO;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.ClientService;
 import com.pos.posApps.Service.IndenService;
+import com.pos.posApps.Service.PaymentMethodService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class RestControllerIndenBootstrap {
     private AuthService authService;
     private ClientService clientService;
     private IndenService indenService;
+    private PaymentMethodService paymentMethodService;
 
     @GetMapping("/bootstrap")
     public ResponseEntity<IndenBootstrapDTO> bootstrap(
@@ -50,7 +52,8 @@ public class RestControllerIndenBootstrap {
                     new IndenBootstrapDTO(
                             client,
                             inden,
-                            account.getRole().name()));
+                            account.getRole().name(),
+                            paymentMethodService.list(clientId)));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }

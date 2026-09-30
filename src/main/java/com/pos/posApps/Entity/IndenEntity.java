@@ -56,6 +56,36 @@ public class IndenEntity {
     @Column(name = "deposit")
     private BigDecimal deposit;
 
+    @Column(name = "is_cash")
+    private boolean isCash = true;
+
+    @Column(name = "is_paid")
+    private boolean isPaid = true;
+
+    @Column(name = "paid_amount")
+    private BigDecimal paidAmount;
+
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @Column(name = "payment_method_id")
+    private Long paymentMethodId;
+
+    @Column(name = "payment_method_name")
+    private String paymentMethodName;
+
+    @Column(name = "payment_method_type")
+    private String paymentMethodType;
+
+    @Column(name = "payment_method_rekening")
+    private String paymentMethodRekening;
+
+    @Column(name = "bukti_original_name")
+    private String buktiOriginalName;
+
+    @Column(name = "bukti_file_path")
+    private String buktiFilePath;
+
     @Column(name = "status_inden")
     private String statusInden;
 

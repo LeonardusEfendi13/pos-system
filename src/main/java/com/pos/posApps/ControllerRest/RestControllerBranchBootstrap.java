@@ -67,7 +67,8 @@ public class RestControllerBranchBootstrap {
                             customers,
                             client,
                             transaction,
-                            account.getRole().name()));
+                            account.getRole().name(),
+                            List.of()));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }

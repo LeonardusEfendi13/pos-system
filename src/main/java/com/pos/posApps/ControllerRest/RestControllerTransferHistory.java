@@ -117,7 +117,9 @@ public class RestControllerTransferHistory {
                     account.getName(),
                     resolvedStart.toString(),
                     resolvedEnd.toString(),
-                    customerId
+                    customerId,
+                    null,
+                    null
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
@@ -217,7 +219,15 @@ public class RestControllerTransferHistory {
                 penjualan.getTotalPrice(),
                 customer == null ? null : customer.getCustomerId(),
                 customer == null ? "" : nullToEmpty(customer.getCustomerName()),
-                nullToEmpty(penjualan.getAccountName())
+                nullToEmpty(penjualan.getAccountName()),
+                penjualan.isCash(),
+                penjualan.isPaid(),
+                penjualan.getPaidAmount(),
+                penjualan.getDueDate(),
+                penjualan.getPaymentMethodId(),
+                penjualan.getPaymentMethodName(),
+                penjualan.getPaymentMethodType(),
+                penjualan.getPaymentMethodRekening()
         );
     }
 

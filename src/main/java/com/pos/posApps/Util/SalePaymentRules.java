@@ -1,0 +1,86 @@
+package com.pos.posApps.Util;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+
+public final class SalePaymentRules {
+    private SalePaymentRules() {
+    }
+
+    public record Decision(
+            boolean cash,
+            boolean paid,
+            BigDecimal paidAmount,
+            LocalDateTime dueDate,
+            String error
+    ) {
+        public boolean ok() {
+            return error == null;
+        }
+
+        private static Decision failure(String error) {
+            return new Decision(true, false, BigDecimal.ZERO, null, error);
+        }
+
+        private static Decision success(
+                boolean cash,
+                boolean paid,
+                BigDecimal paidAmount,
+                LocalDateTime dueDate
+        ) {
+            return new Decision(cash, paid, paidAmount, dueDate, null);
+        }
+    }
+
+    public static Decision resolve(
+            boolean branch,
+            Boolean requestedCash,
+            BigDecimal paymentAmount,
+            BigDecimal totalPrice,
+            String dueDate,
+            Boolean existingCash,
+            Boolean existingPaid
+    ) {
+        BigDecimal total = totalPrice == null ? BigDecimal.ZERO : totalPrice;
+
+        if (branch) {
+            return Decision.success(true, true, total, null);
+        }
+
+        boolean settledCredit = Boolean.FALSE.equals(existingCash) && Boolean.TRUE.equals(existingPaid);
+        if (settledCredit) {
+            boolean cash = requestedCash == null || requestedCash;
+            return Decision.success(cash, true, total, null);
+        }
+
+        boolean cash = requestedCash == null || requestedCash;
+        BigDecimal tender = paymentAmount == null ? BigDecimal.ZERO : paymentAmount;
+        if (tender.signum() < 0) {
+            return Decision.failure("Jumlah bayar tidak valid.");
+        }
+
+        if (cash) {
+            if (tender.compareTo(total) < 0) {
+                return Decision.failure("Jumlah bayar kurang dari Grand Total.");
+            }
+            return Decision.success(true, true, total, null);
+        }
+
+        if (tender.compareTo(total) >= 0) {
+            return Decision.success(false, true, total, null);
+        }
+
+        if (dueDate == null || dueDate.isBlank()) {
+            return Decision.failure("Jatuh tempo wajib diisi.");
+        }
+
+        try {
+            LocalDate parsed = LocalDate.parse(dueDate.trim());
+            return Decision.success(false, false, tender, parsed.atStartOfDay());
+        } catch (DateTimeParseException exception) {
+            return Decision.failure("Jatuh tempo tidak valid.");
+        }
+    }
+}

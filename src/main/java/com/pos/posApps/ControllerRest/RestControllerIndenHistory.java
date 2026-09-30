@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -179,6 +181,28 @@ public class RestControllerIndenHistory {
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(result);
     }
 
+    @PostMapping("/lunaskan")
+    public ResponseEntity<ResponseInBoolean> lunaskan(
+            @RequestParam Long indenId,
+            @RequestParam Long paymentMethodId,
+            @RequestPart(required = false) MultipartFile buktiPembayaran,
+            HttpSession session
+    ) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            return ResponseEntity.ok(indenService.payInden(
+                    clientId,
+                    indenId,
+                    paymentMethodId,
+                    buktiPembayaran
+            ));
+        } catch (Exception exception) {
+            return ResponseEntity.status(UNAUTHORIZED)
+                    .body(new ResponseInBoolean(false, "Harap login ulang"));
+        }
+    }
+
     private IndenHistoryRowDTO toRow(IndenDTO inden) {
         return new IndenHistoryRowDTO(
                 inden.getId(),
@@ -190,7 +214,15 @@ public class RestControllerIndenHistory {
                 inden.getDeposit(),
                 inden.getSisaBayar(),
                 inden.getCreatedBy(),
-                inden.getStatusInden()
+                inden.getStatusInden(),
+                inden.isCash(),
+                inden.isPaid(),
+                inden.getPaidAmount(),
+                inden.getDueDate(),
+                inden.getPaymentMethodId(),
+                inden.getPaymentMethodName(),
+                inden.getPaymentMethodType(),
+                inden.getPaymentMethodRekening()
         );
     }
 

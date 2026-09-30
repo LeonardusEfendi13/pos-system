@@ -1,5 +1,6 @@
 package com.pos.posApps.DTO.Dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,4 +15,8 @@ public class CreateIndenRequest {
     private String customerName;
     private String customerPhone;
     private BigDecimal deposit;
+    @JsonProperty("isCash")
+    private Boolean isCash;
+    private String dueDate;
+    private Long paymentMethodId;
 }

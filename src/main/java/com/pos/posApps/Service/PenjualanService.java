@@ -10,7 +10,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -32,6 +40,12 @@ public class PenjualanService {
 
     @Autowired
     StockMovementService stockMovementService;
+
+    @Autowired
+    BuktiBayarRepository buktiBayarRepository;
+
+    @Autowired
+    PaymentMethodService paymentMethodService;
 
     public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
@@ -79,7 +93,15 @@ public class PenjualanService {
                                 transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName()
+                transactions.getAccountEntity().getName(),
+                transactions.isCash(),
+                transactions.isPaid(),
+                transactions.getPaidAmount(),
+                transactions.getDueDate(),
+                transactions.getPaymentMethodId(),
+                transactions.getPaymentMethodName(),
+                transactions.getPaymentMethodType(),
+                transactions.getPaymentMethodRekening()
 
         )).collect(Collectors.toList());
     }
@@ -219,7 +241,15 @@ public class PenjualanService {
                                 transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList()),
-                name
+                name,
+                transactions.isCash(),
+                transactions.isPaid(),
+                transactions.getPaidAmount(),
+                transactions.getDueDate(),
+                transactions.getPaymentMethodId(),
+                transactions.getPaymentMethodName(),
+                transactions.getPaymentMethodType(),
+                transactions.getPaymentMethodRekening()
         );
     }
 
@@ -254,7 +284,15 @@ public class PenjualanService {
                                 transactionDetail.getBasicPrice()
                         ))
                         .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName()
+                transactions.getAccountEntity().getName(),
+                transactions.isCash(),
+                transactions.isPaid(),
+                transactions.getPaidAmount(),
+                transactions.getDueDate(),
+                transactions.getPaymentMethodId(),
+                transactions.getPaymentMethodName(),
+                transactions.getPaymentMethodType(),
+                transactions.getPaymentMethodRekening()
         );
     }
 
@@ -295,5 +333,96 @@ public class PenjualanService {
         transactionRepository.save(transactionEntity);
 
         return true;
+    }
+
+    @Transactional
+    public ResponseInBoolean payFaktur(
+            Long clientId,
+            Long transactionId,
+            Long paymentMethodId,
+            MultipartFile buktiPembayaran
+    ) {
+        try {
+            Optional<TransactionEntity> optional = transactionRepository
+                    .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(
+                            clientId,
+                            transactionId
+                    );
+            if (optional.isEmpty()) {
+                return new ResponseInBoolean(false, "Data penjualan tidak ditemukan");
+            }
+
+            TransactionEntity transaction = optional.get();
+            if (transaction.isCash() || transaction.isPaid()) {
+                return new ResponseInBoolean(false, "Faktur tidak bisa dilunaskan");
+            }
+
+            PaymentMethodEntity method = paymentMethodService.resolve(clientId, paymentMethodId, false);
+            if (method == null) {
+                return new ResponseInBoolean(false, "Metode pembayaran tidak ditemukan");
+            }
+
+            boolean transfer = "transfer".equalsIgnoreCase(method.getMethodType());
+            String filePath = null;
+            String originalName = null;
+            if (transfer) {
+                if (buktiPembayaran == null || buktiPembayaran.isEmpty()) {
+                    return new ResponseInBoolean(false, "Bukti pembayaran wajib diisi");
+                }
+
+                originalName = buktiPembayaran.getOriginalFilename();
+                String uploadDir = "uploads/bukti/" + clientId + "/";
+                File dir = new File(uploadDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                String fileName = System.currentTimeMillis() + "_" + originalName;
+                Path path = Paths.get(uploadDir + fileName);
+                Files.copy(buktiPembayaran.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                filePath = uploadDir + fileName;
+            }
+
+            paymentMethodService.copyToTransaction(transaction, method);
+            transaction.setPaid(true);
+            transaction.setPaidAmount(
+                    transaction.getTotalPrice() == null
+                            ? BigDecimal.ZERO
+                            : transaction.getTotalPrice()
+            );
+            transactionRepository.save(transaction);
+
+            BuktiBayarEntity bukti = new BuktiBayarEntity();
+            bukti.setOriginalName(originalName);
+            bukti.setFilePath(filePath);
+            bukti.setTransactionEntity(transaction);
+            bukti.setRekeningAsal("");
+            bukti.setRekeningTujuan(method.getRekening() == null ? "" : method.getRekening());
+            bukti.setJenisBayar(method.getMethodType());
+            buktiBayarRepository.save(bukti);
+
+            return new ResponseInBoolean(true, "Faktur berhasil dilunaskan");
+        } catch (Exception exception) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, "Terjadi kesalahan: " + exception.getMessage());
+        }
+    }
+
+    public BuktiBayarDTO getBuktiPembayaran(Long transactionId) {
+        Optional<BuktiBayarEntity> opt = buktiBayarRepository
+                .findByTransactionEntity_TransactionId(transactionId);
+        if (opt.isEmpty()) {
+            return new BuktiBayarDTO();
+        }
+
+        BuktiBayarEntity data = opt.get();
+        BuktiBayarDTO result = new BuktiBayarDTO();
+        result.setBuktiBayarId(data.getBuktiBayarId());
+        result.setOriginalName(data.getOriginalName());
+        result.setFilePath(data.getFilePath());
+        result.setJenisBayar(data.getJenisBayar());
+        result.setRekeningAsal(data.getRekeningAsal());
+        result.setRekeningTujuan(data.getRekeningTujuan());
+        result.setTanggalBayar(data.getCreatedAt());
+        return result;
     }
 }

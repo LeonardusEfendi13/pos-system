@@ -37,6 +37,10 @@ public class BuktiBayarEntity {
     @JoinColumn(name = "pembelian_id")
     private PurchasingEntity purchasingEntity;
 
+    @ManyToOne
+    @JoinColumn(name = "transaction_id")
+    private TransactionEntity transactionEntity;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

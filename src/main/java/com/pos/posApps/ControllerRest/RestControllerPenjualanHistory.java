@@ -1,5 +1,6 @@
 package com.pos.posApps.ControllerRest;
 
+import com.pos.posApps.DTO.Dtos.BuktiBayarDTO;
 import com.pos.posApps.DTO.Dtos.CustomerDTO;
 import com.pos.posApps.DTO.Dtos.CustomerLookupDTO;
 import com.pos.posApps.DTO.Dtos.PenjualanDTO;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,7 +71,9 @@ public class RestControllerPenjualanHistory {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "50") Integer size,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String dir) {
+            @RequestParam(required = false) String dir,
+            @RequestParam(required = false) String tunai,
+            @RequestParam(required = false) String lunas) {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             AccountEntity account = authService.validateToken(token);
@@ -107,9 +112,17 @@ public class RestControllerPenjualanHistory {
                         Pageable.unpaged());
             }
 
+            Boolean tunaiFlag = parseTriState(tunai);
+            Boolean lunasFlag = parseTriState(lunas);
             List<PenjualanHistoryRowDTO> rows = new ArrayList<>(
                     fetched.getContent().stream().map(this::toRow).toList()
             );
+            if (tunaiFlag != null || lunasFlag != null) {
+                rows = new ArrayList<>(rows.stream()
+                        .filter(row -> (tunaiFlag == null || row.isCash() == tunaiFlag)
+                                && (lunasFlag == null || row.isPaid() == lunasFlag))
+                        .toList());
+            }
             rows = sortRows(rows, sort, dir);
 
             long total = rows.size();
@@ -133,7 +146,9 @@ public class RestControllerPenjualanHistory {
                     account.getName(),
                     resolvedStart.toString(),
                     resolvedEnd.toString(),
-                    customerId
+                    customerId,
+                    tunaiFlag,
+                    lunasFlag
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
@@ -199,8 +214,52 @@ public class RestControllerPenjualanHistory {
                 penjualan.getTotalPrice(),
                 customer == null ? null : customer.getCustomerId(),
                 customer == null ? "" : nullToEmpty(customer.getCustomerName()),
-                nullToEmpty(penjualan.getAccountName())
+                nullToEmpty(penjualan.getAccountName()),
+                penjualan.isCash(),
+                penjualan.isPaid(),
+                penjualan.getPaidAmount(),
+                penjualan.getDueDate(),
+                penjualan.getPaymentMethodId(),
+                penjualan.getPaymentMethodName(),
+                penjualan.getPaymentMethodType(),
+                penjualan.getPaymentMethodRekening()
         );
+    }
+
+    @PostMapping("/lunaskan")
+    public ResponseEntity<ResponseInBoolean> lunaskan(
+            @RequestParam Long transactionId,
+            @RequestParam Long paymentMethodId,
+            @RequestPart(required = false) MultipartFile buktiPembayaran,
+            HttpSession session
+    ) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            return ResponseEntity.ok(penjualanService.payFaktur(
+                    clientId,
+                    transactionId,
+                    paymentMethodId,
+                    buktiPembayaran
+            ));
+        } catch (Exception exception) {
+            return ResponseEntity.status(UNAUTHORIZED)
+                    .body(new ResponseInBoolean(false, "Harap login ulang"));
+        }
+    }
+
+    @GetMapping("/bukti/{transactionId}")
+    public ResponseEntity<BuktiBayarDTO> bukti(
+            @PathVariable("transactionId") Long transactionId,
+            HttpSession session
+    ) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            authService.validateToken(token);
+            return ResponseEntity.ok(penjualanService.getBuktiPembayaran(transactionId));
+        } catch (Exception exception) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
     }
 
     private PenjualanHistoryDetailDTO toDetail(PenjualanDTO penjualan) {
@@ -274,6 +333,16 @@ public class RestControllerPenjualanHistory {
         }
 
         return rows.stream().sorted(comparator).toList();
+    }
+
+    private static Boolean parseTriState(String value) {
+        if ("true".equals(value)) {
+            return true;
+        }
+        if ("false".equals(value)) {
+            return false;
+        }
+        return null;
     }
 
     private static String nullToEmpty(String value) {

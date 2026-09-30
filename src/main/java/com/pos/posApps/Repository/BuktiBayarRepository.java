@@ -8,4 +8,6 @@ import java.util.Optional;
 @Repository
 public interface BuktiBayarRepository extends JpaRepository<BuktiBayarEntity, Long> {
     Optional<BuktiBayarEntity> findByPurchasingEntity_PurchasingId(Long pembelianId);
+
+    Optional<BuktiBayarEntity> findByTransactionEntity_TransactionId(Long transactionId);
 }

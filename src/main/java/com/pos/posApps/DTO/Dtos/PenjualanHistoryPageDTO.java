@@ -20,4 +20,6 @@ public class PenjualanHistoryPageDTO {
     private String startDate;
     private String endDate;
     private Long customerId;
+    private Boolean tunai;
+    private Boolean lunas;
 }

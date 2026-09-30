@@ -14,6 +14,7 @@ import com.pos.posApps.Service.ClientService;
 import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.HomeService;
 import com.pos.posApps.Service.KasirService;
+import com.pos.posApps.Service.PaymentMethodService;
 import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,7 @@ public class RestControllerCashier {
     private HomeService homeService;
     private CustomerService customerService;
     private ClientService clientService;
+    private PaymentMethodService paymentMethodService;
 
     @GetMapping("/bootstrap")
     public ResponseEntity<KasirBootstrapDTO> bootstrap(
@@ -70,7 +72,8 @@ public class RestControllerCashier {
                             customers,
                             client,
                             transaction,
-                            account.getRole().name()));
+                            account.getRole().name(),
+                            paymentMethodService.list(clientId)));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }

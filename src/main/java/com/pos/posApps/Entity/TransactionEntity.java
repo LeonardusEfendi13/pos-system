@@ -41,6 +41,30 @@ public class TransactionEntity {
     @Column(name = "total_discount")
     private BigDecimal totalDiscount;
 
+    @Column(name = "is_cash")
+    private boolean isCash = true;
+
+    @Column(name = "is_paid")
+    private boolean isPaid = true;
+
+    @Column(name = "paid_amount")
+    private BigDecimal paidAmount;
+
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @Column(name = "payment_method_id")
+    private Long paymentMethodId;
+
+    @Column(name = "payment_method_name")
+    private String paymentMethodName;
+
+    @Column(name = "payment_method_type")
+    private String paymentMethodType;
+
+    @Column(name = "payment_method_rekening")
+    private String paymentMethodRekening;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
