@@ -107,10 +107,10 @@ public class ProductSetService {
                             parent.getProductId(),
                             excludeSetId
                     )) {
-                return fail("Barang ini sudah punya group set");
+                return fail("Barang ini sudah punya barang set");
             }
             if (productSetComponentRepository.isActiveComponent(clientId, parent.getProductId(), excludeSetId)) {
-                return fail("Barang induk sudah menjadi komponen group set");
+                return fail("Barang induk sudah menjadi komponen barang set");
             }
 
             List<SaveProductSetComponentRequest> requested = req.getComponents() == null
@@ -146,7 +146,7 @@ public class ProductSetService {
                                 item.getProductId(),
                                 excludeSetId
                         )) {
-                    return fail("Barang anak sudah menjadi induk group set");
+                    return fail("Barang anak sudah menjadi induk barang set");
                 }
 
                 ProductSetComponentEntity component = new ProductSetComponentEntity();
@@ -181,12 +181,12 @@ public class ProductSetService {
             }
 
             String message = req.getProductSetId() == null
-                    ? "Berhasil tambah group set"
-                    : "Berhasil ubah group set";
+                    ? "Berhasil tambah barang set"
+                    : "Berhasil ubah barang set";
             return new ResponseInBoolean(true, message);
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, "Gagal simpan group set");
+            return new ResponseInBoolean(false, "Gagal simpan barang set");
         }
     }
 
@@ -206,10 +206,10 @@ public class ProductSetService {
             entity.setDeletedAt(getCurrentTimestamp());
             retireComponents(entity);
             productSetRepository.save(entity);
-            return new ResponseInBoolean(true, "Berhasil hapus group set");
+            return new ResponseInBoolean(true, "Berhasil hapus barang set");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, "Gagal hapus group set");
+            return new ResponseInBoolean(false, "Gagal hapus barang set");
         }
     }
 
@@ -235,7 +235,7 @@ public class ProductSetService {
             return new ResponseInBoolean(true, "OK");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new ResponseInBoolean(false, "Gagal mempretel group set");
+            return new ResponseInBoolean(false, "Gagal mempretel barang set");
         }
     }
 
@@ -262,12 +262,12 @@ public class ProductSetService {
                         draft.getParentProductId()
                 );
         if (setOpt.isEmpty()) {
-            return fail("Resep group set tidak ditemukan");
+            return fail("Resep barang set tidak ditemukan");
         }
 
         List<ProductSetComponentEntity> recipe = activeComponents(setOpt.get());
         if (recipe.isEmpty()) {
-            return fail("Resep group set tidak ditemukan");
+            return fail("Resep barang set tidak ditemukan");
         }
 
         Map<Long, Long> recipeQty = new HashMap<>();

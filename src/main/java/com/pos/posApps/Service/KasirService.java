@@ -111,7 +111,9 @@ public class KasirService {
                     req.getTotalPrice(),
                     req.getDueDate(),
                     null,
-                    null
+                    null,
+                    LocalDate.now(),
+                    LocalDate.now()
             );
             if (!payment.ok()) {
                 return new ResponseInBoolean(false, payment.error());
@@ -243,6 +245,9 @@ public class KasirService {
                             clientData.getClientId(), transactionId)
                     .orElseThrow(() -> new RuntimeException("Transaksi tidak ditemukan"));
 
+            LocalDate invoiceDate = transaction.getCreatedAt() == null
+                    ? LocalDate.now()
+                    : transaction.getCreatedAt().toLocalDate();
             SalePaymentRules.Decision payment = SalePaymentRules.resolve(
                     isBranch,
                     req.getIsCash(),
@@ -250,7 +255,9 @@ public class KasirService {
                     req.getTotalPrice(),
                     req.getDueDate(),
                     transaction.isCash(),
-                    transaction.isPaid()
+                    transaction.isPaid(),
+                    invoiceDate,
+                    LocalDate.now()
             );
             if (!payment.ok()) {
                 return new ResponseInBoolean(false, payment.error());

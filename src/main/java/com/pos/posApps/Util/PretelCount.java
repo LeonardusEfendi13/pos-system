@@ -56,7 +56,7 @@ public final class PretelCount {
                 return "Komponen pretel tidak ada di resep";
             }
             if (line.recipeQty() != recipeQty) {
-                return "Resep group set berubah. Hapus baris pretel lalu pretel lagi.";
+                return "Resep barang set berubah. Hapus baris pretel lalu pretel lagi.";
             }
             if (line.qty() < 0) {
                 return "Qty pretel tidak valid";

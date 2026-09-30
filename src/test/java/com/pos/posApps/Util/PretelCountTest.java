@@ -60,7 +60,7 @@ class PretelCountTest {
                 Map.of(10L, 2L)
         );
 
-        assertEquals("Resep group set berubah. Hapus baris pretel lalu pretel lagi.", error);
+        assertEquals("Resep barang set berubah. Hapus baris pretel lalu pretel lagi.", error);
     }
 
     @Test

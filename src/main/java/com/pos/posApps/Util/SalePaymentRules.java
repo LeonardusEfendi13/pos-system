@@ -41,7 +41,9 @@ public final class SalePaymentRules {
             BigDecimal totalPrice,
             String dueDate,
             Boolean existingCash,
-            Boolean existingPaid
+            Boolean existingPaid,
+            LocalDate invoiceDate,
+            LocalDate today
     ) {
         BigDecimal total = totalPrice == null ? BigDecimal.ZERO : totalPrice;
 
@@ -78,6 +80,13 @@ public final class SalePaymentRules {
 
         try {
             LocalDate parsed = LocalDate.parse(dueDate.trim());
+            LocalDate currentDay = today == null ? LocalDate.now() : today;
+            LocalDate invoice = invoiceDate == null ? currentDay : invoiceDate;
+            if (!parsed.isAfter(currentDay) || !parsed.isAfter(invoice)) {
+                return Decision.failure(
+                        "Jatuh tempo harus setelah tanggal faktur dan setelah hari ini."
+                );
+            }
             return Decision.success(false, false, tender, parsed.atStartOfDay());
         } catch (DateTimeParseException exception) {
             return Decision.failure("Jatuh tempo tidak valid.");

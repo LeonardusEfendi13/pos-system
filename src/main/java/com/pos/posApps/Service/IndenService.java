@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -341,7 +342,14 @@ public class IndenService {
             indenEntity.setAccountEntity(accountData);
             indenEntity.setCustomerName(req.getCustomerName());
             indenEntity.setCustomerPhone(req.getCustomerPhone());
-            String paymentError = applyIndenPayment(indenEntity, req, clientData.getClientId(), null, null);
+            String paymentError = applyIndenPayment(
+                    indenEntity,
+                    req,
+                    clientData.getClientId(),
+                    null,
+                    null,
+                    LocalDate.now()
+            );
             if (paymentError != null) {
                 return new ResponseForWhatsapp(false, paymentError, false, "", "");
             }
@@ -423,12 +431,16 @@ public class IndenService {
             inden.setAccountEntity(accountData);
             inden.setCustomerName(req.getCustomerName());
             inden.setCustomerPhone(req.getCustomerPhone());
+            LocalDate invoiceDate = inden.getCreatedAt() == null
+                    ? LocalDate.now()
+                    : inden.getCreatedAt().toLocalDate();
             String paymentError = applyIndenPayment(
                     inden,
                     req,
                     clientData.getClientId(),
                     inden.isCash(),
-                    inden.isPaid()
+                    inden.isPaid(),
+                    invoiceDate
             );
             if (paymentError != null) {
                 return new ResponseInBoolean(false, paymentError);
@@ -473,7 +485,8 @@ public class IndenService {
             CreateIndenRequest request,
             Long clientId,
             Boolean existingCash,
-            Boolean existingPaid
+            Boolean existingPaid,
+            LocalDate invoiceDate
     ) {
         SalePaymentRules.Decision payment = SalePaymentRules.resolve(
                 false,
@@ -482,7 +495,9 @@ public class IndenService {
                 request.getTotalPrice(),
                 request.getDueDate(),
                 existingCash,
-                existingPaid
+                existingPaid,
+                invoiceDate,
+                LocalDate.now()
         );
         if (!payment.ok()) {
             return payment.error();
