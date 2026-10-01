@@ -9,5 +9,7 @@ import java.util.Optional;
 public interface BuktiBayarRepository extends JpaRepository<BuktiBayarEntity, Long> {
     Optional<BuktiBayarEntity> findByPurchasingEntity_PurchasingId(Long pembelianId);
 
+    long countByFilePathAndBuktiBayarIdNot(String filePath, Long buktiBayarId);
+
     Optional<BuktiBayarEntity> findByTransactionEntity_TransactionId(Long transactionId);
 }

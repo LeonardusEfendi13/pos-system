@@ -13,6 +13,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -79,7 +82,8 @@ public class RestControllerPembelian {
 
     @PostMapping("/lunaskan")
     public ResponseEntity<String> lunaskanPembelian(
-            @RequestParam Long pembelianId,
+            @RequestParam(required = false) Long pembelianId,
+            @RequestParam(required = false) List<Long> pembelianIds,
             @RequestParam String jenisPembayaran,
             @RequestParam(required = false) String rekeningAsal,
             @RequestParam(required = false) String rekeningTujuan,
@@ -87,7 +91,15 @@ public class RestControllerPembelian {
             HttpSession session
     ) {
         LunaskanPembelianDTO req = new LunaskanPembelianDTO();
-        req.setPembelianId(pembelianId);
+        List<Long> ids = new ArrayList<>();
+        if (pembelianIds != null) {
+            ids.addAll(pembelianIds);
+        }
+        if (ids.isEmpty() && pembelianId != null) {
+            ids.add(pembelianId);
+        }
+        req.setPembelianId(ids.isEmpty() ? pembelianId : ids.get(0));
+        req.setPembelianIds(ids);
         req.setJenisPembayaran(jenisPembayaran);
         req.setRekeningAsal(rekeningAsal);
         req.setRekeningTujuan(rekeningTujuan);
@@ -100,6 +112,21 @@ public class RestControllerPembelian {
             return ResponseEntity.ok(isPaid.getMessage());
         } catch (Exception e) {
             return ResponseEntity.ok("Gagal Bayar Faktur");
+        }
+    }
+
+    @PostMapping("/batalkan-lunas")
+    public ResponseEntity<String> batalkanLunasPembelian(
+            @RequestParam Long pembelianId,
+            HttpSession session
+    ) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+            ResponseInBoolean result = pembelianService.cancelPayFaktur(clientId, pembelianId);
+            return ResponseEntity.ok(result.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.ok("Gagal membatalkan pelunasan");
         }
     }
 

@@ -907,18 +907,51 @@ public class PembelianService {
     @Transactional
     public ResponseInBoolean payFaktur(Long clientId, LunaskanPembelianDTO req) {
         try {
-            // Find target purchasing entity
-            Optional<PurchasingEntity> optional = purchasingRepository
-                    .findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
-                            clientId, req.getPembelianId());
-
-            if (optional.isEmpty()) {
-                return new ResponseInBoolean(false, "Data pembelian tidak ditemukan");
+            LinkedHashSet<Long> ids = new LinkedHashSet<>();
+            if (req.getPembelianIds() != null) {
+                for (Long id : req.getPembelianIds()) {
+                    if (id != null) {
+                        ids.add(id);
+                    }
+                }
+            }
+            if (ids.isEmpty() && req.getPembelianId() != null) {
+                ids.add(req.getPembelianId());
+            }
+            if (ids.isEmpty()) {
+                return new ResponseInBoolean(false, "Gagal lunaskan: data pembelian tidak ditemukan");
             }
 
-            PurchasingEntity purchasingEntity = optional.get();
+            List<PurchasingEntity> rows = new ArrayList<>();
+            Long supplierId = null;
+            for (Long id : ids) {
+                Optional<PurchasingEntity> optional = purchasingRepository
+                        .findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
+                                clientId, id);
 
-            // ===== Handle File Upload =====
+                if (optional.isEmpty()) {
+                    return new ResponseInBoolean(false, "Gagal lunaskan: data pembelian tidak ditemukan");
+                }
+
+                PurchasingEntity purchasingEntity = optional.get();
+                if (purchasingEntity.isCash() || purchasingEntity.isPaid()) {
+                    return new ResponseInBoolean(false, "Gagal lunaskan: hanya faktur kredit yang belum lunas");
+                }
+                if (purchasingEntity.getSupplierEntity() == null
+                        || purchasingEntity.getSupplierEntity().getSupplierId() == null) {
+                    return new ResponseInBoolean(false, "Gagal lunaskan: supplier faktur tidak ditemukan");
+                }
+
+                Long currentSupplierId = purchasingEntity.getSupplierEntity().getSupplierId();
+                if (supplierId == null) {
+                    supplierId = currentSupplierId;
+                } else if (!supplierId.equals(currentSupplierId)) {
+                    return new ResponseInBoolean(false, "Gagal lunaskan: semua faktur harus dari supplier yang sama");
+                }
+
+                rows.add(purchasingEntity);
+            }
+
             String filePath = null;
             String originalName = null;
 
@@ -926,37 +959,76 @@ public class PembelianService {
                 MultipartFile file = req.getBuktiPembayaran();
                 originalName = file.getOriginalFilename();
 
-                // Folder path (can use clientId for separation)
                 String uploadDir = "uploads/bukti/" + clientId + "/";
                 File dir = new File(uploadDir);
                 if (!dir.exists()) dir.mkdirs();
 
-                // Unique file name
                 String fileName = System.currentTimeMillis() + "_" + originalName;
                 Path path = Paths.get(uploadDir + fileName);
 
-                // Save file locally
                 Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
                 filePath = uploadDir + fileName;
             }
 
-            // ===== Update purchasing & save bukti =====
-            purchasingEntity.setPaid(true);
-            purchasingRepository.save(purchasingEntity);
+            for (PurchasingEntity purchasingEntity : rows) {
+                purchasingEntity.setPaid(true);
+                purchasingRepository.save(purchasingEntity);
 
-            // Save Bukti Bayar record if transfer
-            BuktiBayarEntity bukti = new BuktiBayarEntity();
-            bukti.setOriginalName(originalName);
-            bukti.setFilePath(filePath);
-            bukti.setPurchasingEntity(purchasingEntity);
-            bukti.setRekeningAsal(req.getRekeningAsal());
-            bukti.setRekeningTujuan(req.getRekeningTujuan());
-            bukti.setJenisBayar(req.getJenisPembayaran());
-            buktiBayarRepository.save(bukti);
+                BuktiBayarEntity bukti = new BuktiBayarEntity();
+                bukti.setOriginalName(originalName);
+                bukti.setFilePath(filePath);
+                bukti.setPurchasingEntity(purchasingEntity);
+                bukti.setRekeningAsal(req.getRekeningAsal());
+                bukti.setRekeningTujuan(req.getRekeningTujuan());
+                bukti.setJenisBayar(req.getJenisPembayaran());
+                buktiBayarRepository.save(bukti);
+            }
 
             return new ResponseInBoolean(true, "Faktur berhasil dilunaskan");
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, "Terjadi kesalahan: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ResponseInBoolean cancelPayFaktur(Long clientId, Long pembelianId) {
+        try {
+            Optional<PurchasingEntity> optional = purchasingRepository
+                    .findFirstByClientEntity_ClientIdAndPurchasingIdAndPurchasingDetailEntitiesIsNotNullAndDeletedAtIsNull(
+                            clientId, pembelianId);
+
+            if (optional.isEmpty()) {
+                return new ResponseInBoolean(false, "Gagal membatalkan pelunasan: data tidak ditemukan");
+            }
+
+            PurchasingEntity purchasingEntity = optional.get();
+            if (purchasingEntity.isCash() || !purchasingEntity.isPaid()) {
+                return new ResponseInBoolean(false, "Gagal membatalkan pelunasan: faktur ini belum lunas");
+            }
+
+            purchasingEntity.setPaid(false);
+            purchasingRepository.save(purchasingEntity);
+
+            Optional<BuktiBayarEntity> buktiOpt = buktiBayarRepository
+                    .findByPurchasingEntity_PurchasingId(pembelianId);
+            if (buktiOpt.isPresent()) {
+                BuktiBayarEntity bukti = buktiOpt.get();
+                String filePath = bukti.getFilePath();
+                Long buktiId = bukti.getBuktiBayarId();
+                long shared = filePath == null || filePath.isBlank() || buktiId == null
+                        ? 0
+                        : buktiBayarRepository.countByFilePathAndBuktiBayarIdNot(filePath, buktiId);
+                buktiBayarRepository.delete(bukti);
+                if (shared == 0 && filePath != null && !filePath.isBlank()) {
+                    Files.deleteIfExists(Paths.get(filePath));
+                }
+            }
+
+            return new ResponseInBoolean(true, "Pelunasan berhasil dibatalkan");
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
