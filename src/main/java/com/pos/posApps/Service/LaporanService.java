@@ -202,18 +202,57 @@ public class LaporanService {
                 transactionRepository.getLaporanPenjualanRaw(
                         clientId, startDate, endDate
                 );
+        Map<Long, BigDecimal> unpaidByCustomer = new HashMap<>();
+        for (Object[] unpaid : transactionRepository.sumUnpaidTotalByCustomer(
+                clientId, startDate, endDate
+        )) {
+            unpaidByCustomer.put(toLongOrNull(unpaid[0]), toBigDecimal(unpaid[1]));
+        }
 
         List<LaporanPenjualanPerPelangganDTO> result = new ArrayList<>(rows.size());
 
         for (Object[] row : rows) {
+            Long customerId = toLongOrNull(row[0]);
             result.add(new LaporanPenjualanPerPelangganDTO(
-                    (String) row[0],
-                    (BigDecimal) row[1],
-                    (BigDecimal) row[2]
+                    customerId,
+                    (String) row[1],
+                    toBigDecimal(row[2]),
+                    toBigDecimal(row[3]),
+                    toLong(row[4]),
+                    toLong(row[5]),
+                    unpaidByCustomer.getOrDefault(customerId, BigDecimal.ZERO)
             ));
         }
 
         return result;
+    }
+
+    public List<LaporanPelangganTransaksiDTO> getTransaksiPelanggan(
+            Long clientId,
+            Long customerId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        return transactionRepository
+                .findCustomerTransactions(clientId, customerId, startDate, endDate)
+                .stream()
+                .map(transaction -> new LaporanPelangganTransaksiDTO(
+                        transaction.getCreatedAt(),
+                        transaction.getTransactionNumber(),
+                        transaction.getTotalPrice() == null
+                                ? BigDecimal.ZERO
+                                : transaction.getTotalPrice(),
+                        transaction.isPaid()
+                ))
+                .toList();
+    }
+
+    private static Long toLongOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        return toLong(value);
     }
 
     public List<LaporanPenjualanPerBarangDTO> getLaporanPenjualanPerBarang(

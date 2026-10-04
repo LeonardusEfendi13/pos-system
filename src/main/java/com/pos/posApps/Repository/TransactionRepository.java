@@ -138,10 +138,13 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     );
 
     @Query(value = """
-                SELECT 
+                SELECT
+                    c.customer_id AS customerId,
                     COALESCE(c.name, 'Unknown Customer') AS customerName,
-                    SUM(d.total_price)                  AS totalHarga,
-                    SUM(COALESCE(d.total_profit, 0))    AS laba
+                    SUM(d.total_price) AS totalHarga,
+                    SUM(COALESCE(d.total_profit, 0)) AS laba,
+                    COUNT(DISTINCT t.transaction_id) AS transactionCount,
+                    COUNT(DISTINCT CASE WHEN t.is_paid = FALSE THEN t.transaction_id END) AS unpaidInvoiceCount
                 FROM transaction t
                 JOIN transaction_detail d ON d.transaction_id = t.transaction_id
                 LEFT JOIN customer c ON c.customer_id = t.customer_id
@@ -149,13 +152,45 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                   AND t.deleted_at IS NULL
                   AND d.deleted_at IS NULL
                   AND t.created_at BETWEEN :startDate AND :endDate
-                GROUP BY c.name
+                GROUP BY c.customer_id, c.name
                 ORDER BY totalHarga DESC
             """, nativeQuery = true)
     List<Object[]> getLaporanPenjualanRaw(
             Long clientId,
             LocalDateTime startDate,
             LocalDateTime endDate
+    );
+
+    @Query(value = """
+                SELECT
+                    t.customer_id AS customerId,
+                    SUM(COALESCE(t.total_price, 0)) AS unpaidTotal
+                FROM transaction t
+                WHERE t.client_id = :clientId
+                  AND t.deleted_at IS NULL
+                  AND t.is_paid = FALSE
+                  AND t.created_at BETWEEN :startDate AND :endDate
+                GROUP BY t.customer_id
+            """, nativeQuery = true)
+    List<Object[]> sumUnpaidTotalByCustomer(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
+    @Query("""
+            SELECT t FROM TransactionEntity t
+            WHERE t.clientEntity.clientId = :clientId
+              AND t.deletedAt IS NULL
+              AND t.customerEntity.customerId = :customerId
+              AND t.createdAt BETWEEN :startDate AND :endDate
+            ORDER BY t.createdAt DESC, t.transactionId DESC
+            """)
+    List<TransactionEntity> findCustomerTransactions(
+            @Param("clientId") Long clientId,
+            @Param("customerId") Long customerId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
     );
 
     @Query(value = """

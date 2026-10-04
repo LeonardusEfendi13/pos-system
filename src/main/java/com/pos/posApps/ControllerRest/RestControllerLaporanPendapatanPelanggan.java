@@ -1,5 +1,6 @@
 package com.pos.posApps.ControllerRest;
 
+import com.pos.posApps.DTO.Dtos.LaporanPelangganTransaksiDTO;
 import com.pos.posApps.DTO.Dtos.LaporanPendapatanPelangganPageDTO;
 import com.pos.posApps.DTO.Dtos.LaporanPenjualanPerPelangganDTO;
 import com.pos.posApps.Entity.AccountEntity;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,6 +57,29 @@ public class RestControllerLaporanPendapatanPelanggan {
                     resolved.endDate.toString(),
                     account.getRole().name(),
                     account.getName()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
+    }
+
+    @GetMapping("/pendapatan/pelanggan/{customerId}/transaksi")
+    public ResponseEntity<List<LaporanPelangganTransaksiDTO>> transaksiPelanggan(
+            HttpSession session,
+            @PathVariable Long customerId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            String token = (String) session.getAttribute(authSessionKey);
+            AccountEntity account = authService.validateToken(token);
+            Long clientId = account.getClientEntity().getClientId();
+            ResolvedFilter resolved = resolveFilter(startDate, endDate);
+
+            return ResponseEntity.ok(laporanService.getTransaksiPelanggan(
+                    clientId,
+                    customerId,
+                    resolved.startDate.atStartOfDay(),
+                    resolved.endDate.atTime(23, 59, 59)
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();

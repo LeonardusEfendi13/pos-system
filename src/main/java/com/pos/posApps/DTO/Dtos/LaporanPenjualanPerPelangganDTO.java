@@ -11,7 +11,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LaporanPenjualanPerPelangganDTO {
+    private Long customerId;
     private String customerName;
     private BigDecimal totalHargaPenjualan;
     private BigDecimal labaPenjualan;
+    private Long transactionCount;
+    private Long unpaidInvoiceCount;
+    private BigDecimal unpaidTotal;
 }

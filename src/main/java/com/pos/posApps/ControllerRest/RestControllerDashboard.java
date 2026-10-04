@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerRest;
 import com.pos.posApps.DTO.Dtos.Home.ChartDTO;
 import com.pos.posApps.DTO.Dtos.Home.DashboardApiResponse;
 import com.pos.posApps.DTO.Dtos.Home.DashboardHomeCustomerDTO;
+import com.pos.posApps.DTO.Dtos.Home.DashboardHomeReceivableCustomerDTO;
 import com.pos.posApps.DTO.Dtos.Home.DashboardHomeSupplierDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
@@ -84,6 +85,8 @@ public class RestControllerDashboard {
                 dashboardCustomerService.getTop10CustomerWithProfit(clientId, finalStartDate, finalEndDate);
         List<DashboardHomeSupplierDTO> homeSupplierData =
                 dashboardSupplierService.getTopSuppliers(clientId, finalStartDate, finalEndDate);
+        List<DashboardHomeReceivableCustomerDTO> homeReceivableCustomerData =
+                dashboardCustomerService.getTop10UnpaidCustomers(clientId, finalStartDate, finalEndDate);
         ChartDTO chartDatas = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
 
@@ -94,6 +97,7 @@ public class RestControllerDashboard {
                 homeProductData,
                 homeCustomerData,
                 homeSupplierData,
+                homeReceivableCustomerData,
                 finalStartDate.toLocalDate().toString(),
                 finalEndDate.toLocalDate().toString(),
                 periodFilter

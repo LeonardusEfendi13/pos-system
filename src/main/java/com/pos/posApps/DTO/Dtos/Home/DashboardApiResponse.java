@@ -17,6 +17,7 @@ public class DashboardApiResponse {
     private List<HomeProductDTO> homeProductData;
     private List<DashboardHomeCustomerDTO> homeCustomerData;
     private List<DashboardHomeSupplierDTO> homeSupplierData;
+    private List<DashboardHomeReceivableCustomerDTO> homeReceivableCustomerData;
     private String startDate;
     private String endDate;
     private String periodFilter;

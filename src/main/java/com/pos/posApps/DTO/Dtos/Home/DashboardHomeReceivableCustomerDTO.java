@@ -9,9 +9,8 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DashboardHomeCustomerDTO {
+public class DashboardHomeReceivableCustomerDTO {
     private String name;
-    private BigDecimal totalSpending;
-    private BigDecimal totalProfit;
-    private Long invoiceCount;
+    private Long unpaidInvoiceCount;
+    private BigDecimal unpaidTotal;
 }
