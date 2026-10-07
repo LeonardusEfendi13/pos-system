@@ -89,6 +89,9 @@ public class IndenEntity {
     @Column(name = "status_inden")
     private String statusInden;
 
+    @Column(name = "sale_posted", nullable = false)
+    private boolean salePosted = false;
+
     @OneToMany(mappedBy = "indenEntity")
     private List<IndenDetailEntity> indenDetailEntities;
 }

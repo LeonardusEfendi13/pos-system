@@ -146,6 +146,8 @@ public class RestControllerIndenHistory {
     public ResponseEntity<ResponseForWhatsapp> updateStatus(
             @PathVariable("indenId") Long indenId,
             @RequestParam String statusInden,
+            @RequestParam(required = false) Long paymentMethodId,
+            @RequestPart(required = false) MultipartFile buktiPembayaran,
             HttpSession session) {
         AccountEntity account;
         try {
@@ -173,6 +175,8 @@ public class RestControllerIndenHistory {
         ResponseForWhatsapp result = indenService.updateStatusInden(
                 indenId,
                 statusInden,
+                paymentMethodId,
+                buktiPembayaran,
                 account,
                 account.getClientEntity());
         if (result.isStatus()) {

@@ -166,7 +166,14 @@ public class IndenService {
     }
 
     @Transactional
-    public ResponseForWhatsapp updateStatusInden(Long indenId, String newStatusInden, AccountEntity accountData, ClientEntity clientEntity) {
+    public ResponseForWhatsapp updateStatusInden(
+            Long indenId,
+            String newStatusInden,
+            Long paymentMethodId,
+            MultipartFile buktiPembayaran,
+            AccountEntity accountData,
+            ClientEntity clientEntity
+    ) {
         try {
             boolean isOpenWa = false;
             ClientEntity clientData = accountData.getClientEntity();
@@ -176,13 +183,19 @@ public class IndenService {
             }
 
             IndenEntity indenEntity = indenEntityOpt.get();
+            boolean alreadyHandedOver = StatusInden.DISERAHKAN.name()
+                    .equalsIgnoreCase(indenEntity.getStatusInden());
+            boolean saleAlreadyPosted = indenEntity.isSalePosted() || alreadyHandedOver;
+            if (saleAlreadyPosted) {
+                indenEntity.setSalePosted(true);
+            }
 
             indenEntity.setStatusInden(newStatusInden);
             indenRepository.save(indenEntity);
 
             //Insert into transaction
 
-            if (newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name())) {
+            if (newStatusInden.equalsIgnoreCase(StatusInden.DISERAHKAN.name()) && !saleAlreadyPosted) {
                 String lastProduct = "Tanya Leon";
                 List<IndenDetailEntity> indenDetailEntities = indenDetailRepository.findAllByIndenEntity_IndenIdAndDeletedAtIsNullOrderByIndenDetailIdDesc(indenId);
                 if (indenDetailEntities.isEmpty()) {
@@ -190,31 +203,86 @@ public class IndenService {
                     return new ResponseForWhatsapp(false, "Data Inden detail tidak ditemukan", isOpenWa, "", "");
                 }
 
-                //Get Customer Data (Umum = 1)
-                CustomerEntity customerData = customerRepository.findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(1L, clientData.getClientId()).get();
+                BigDecimal totalPrice = indenEntity.getTotalPrice() == null
+                        ? BigDecimal.ZERO
+                        : indenEntity.getTotalPrice();
+                BigDecimal paidSoFar = indenEntity.getPaidAmount() == null
+                        ? BigDecimal.ZERO
+                        : indenEntity.getPaidAmount();
+                BigDecimal remainder = totalPrice.subtract(paidSoFar);
+                if (remainder.signum() < 0) {
+                    remainder = BigDecimal.ZERO;
+                }
+
+                PaymentMethodEntity handoverMethod = null;
+                if (remainder.signum() > 0) {
+                    if (paymentMethodId == null) {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                        return new ResponseForWhatsapp(false, "Metode pembayaran wajib dipilih", isOpenWa, "", "");
+                    }
+                    handoverMethod = paymentMethodService.resolve(
+                            clientData.getClientId(),
+                            paymentMethodId,
+                            false
+                    );
+                    if (handoverMethod == null) {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                        return new ResponseForWhatsapp(false, "Metode pembayaran tidak ditemukan", isOpenWa, "", "");
+                    }
+                } else if (indenEntity.getPaymentMethodId() != null) {
+                    handoverMethod = paymentMethodService.resolve(
+                            clientData.getClientId(),
+                            indenEntity.getPaymentMethodId(),
+                            false
+                    );
+                }
+
+                boolean cash = handoverMethod == null
+                        ? indenEntity.isCash()
+                        : "cash".equalsIgnoreCase(handoverMethod.getMethodType());
+                indenEntity.setCash(cash);
+                indenEntity.setPaid(true);
+                indenEntity.setPaidAmount(totalPrice);
+                indenEntity.setDueDate(null);
+                if (handoverMethod != null) {
+                    paymentMethodService.copyToInden(indenEntity, handoverMethod);
+                }
+                indenEntity.setSalePosted(true);
+                indenRepository.save(indenEntity);
+
+                CustomerEntity customerData = resolveHandoverCustomer(indenEntity, clientData);
+
+                String generatedNotaNumber = kasirService.generateTodayNota(clientData.getClientId());
 
                 //Insert into transaction
                 TransactionEntity transactionEntity = new TransactionEntity();
                 transactionEntity.setClientEntity(clientData);
-                transactionEntity.setTransactionNumber(indenEntity.getIndenNumber());
+                transactionEntity.setTransactionNumber(generatedNotaNumber);
                 transactionEntity.setCustomerEntity(customerData);
                 transactionEntity.setTotalPrice(indenEntity.getTotalPrice());
                 transactionEntity.setTotalDiscount(indenEntity.getTotalDiscount());
                 transactionEntity.setSubtotal(indenEntity.getSubtotal());
                 transactionEntity.setAccountEntity(accountData);
-                transactionEntity.setCash(indenEntity.isCash());
-                transactionEntity.setPaid(indenEntity.isPaid());
-                transactionEntity.setPaidAmount(
-                        indenEntity.getPaidAmount() == null
-                                ? BigDecimal.ZERO
-                                : indenEntity.getPaidAmount()
-                );
-                transactionEntity.setDueDate(indenEntity.getDueDate());
-                transactionEntity.setPaymentMethodId(indenEntity.getPaymentMethodId());
-                transactionEntity.setPaymentMethodName(indenEntity.getPaymentMethodName());
-                transactionEntity.setPaymentMethodType(indenEntity.getPaymentMethodType());
-                transactionEntity.setPaymentMethodRekening(indenEntity.getPaymentMethodRekening());
+                transactionEntity.setCash(cash);
+                transactionEntity.setPaid(true);
+                transactionEntity.setPaidAmount(totalPrice);
+                transactionEntity.setDueDate(null);
+                if (handoverMethod != null) {
+                    paymentMethodService.copyToTransaction(transactionEntity, handoverMethod);
+                } else {
+                    transactionEntity.setPaymentMethodId(indenEntity.getPaymentMethodId());
+                    transactionEntity.setPaymentMethodName(indenEntity.getPaymentMethodName());
+                    transactionEntity.setPaymentMethodType(indenEntity.getPaymentMethodType());
+                    transactionEntity.setPaymentMethodRekening(indenEntity.getPaymentMethodRekening());
+                }
                 transactionRepository.save(transactionEntity);
+                storeTransferBukti(
+                        indenEntity,
+                        clientData.getClientId(),
+                        handoverMethod == null ? null : handoverMethod.getMethodType(),
+                        buktiPembayaran
+                );
+                indenRepository.save(indenEntity);
                 saveIndenBukti(indenEntity, transactionEntity);
 
                 for (IndenDetailEntity dtos : indenDetailEntities) {
@@ -232,6 +300,7 @@ public class IndenService {
                     System.out.println("Produk: " + productEntity.getShortName() + "(" + productEntity.getStock() + ") VALID");
                     lastProduct = dtos.getShortName();
                     TransactionDetailEntity transactionDetailEntity = new TransactionDetailEntity();
+                    transactionDetailEntity.setProductId(productEntity.getProductId());
                     transactionDetailEntity.setShortName(dtos.getShortName());
                     transactionDetailEntity.setFullName(dtos.getFullName());
                     transactionDetailEntity.setQty(dtos.getQty());
@@ -251,7 +320,7 @@ public class IndenService {
                     productRepository.save(productEntity);
                     stockMovementService.insertKartuStok(new AdjustStockDTO(
                             productEntity,
-                            indenEntity.getIndenNumber(),
+                            generatedNotaNumber,
                             TipeKartuStok.PENJUALAN,
                             0L,
                             dtos.getQty(),
@@ -503,6 +572,19 @@ public class IndenService {
             return payment.error();
         }
 
+        inden.setDeposit(payment.paidAmount());
+        inden.setCash(payment.cash());
+        inden.setPaid(payment.paid());
+        inden.setPaidAmount(payment.paidAmount());
+        inden.setDueDate(payment.dueDate());
+
+        if (!payment.cash()) {
+            if (!payment.paid()) {
+                clearIndenPaymentMethod(inden);
+            }
+            return null;
+        }
+
         PaymentMethodEntity method = paymentMethodService.resolve(
                 clientId,
                 request.getPaymentMethodId(),
@@ -512,13 +594,15 @@ public class IndenService {
             return "Metode pembayaran tidak ditemukan";
         }
 
-        inden.setDeposit(payment.paidAmount());
-        inden.setCash(payment.cash());
-        inden.setPaid(payment.paid());
-        inden.setPaidAmount(payment.paidAmount());
-        inden.setDueDate(payment.dueDate());
         paymentMethodService.copyToInden(inden, method);
         return null;
+    }
+
+    private void clearIndenPaymentMethod(IndenEntity inden) {
+        inden.setPaymentMethodId(null);
+        inden.setPaymentMethodName(null);
+        inden.setPaymentMethodType(null);
+        inden.setPaymentMethodRekening(null);
     }
 
     @Transactional
@@ -543,24 +627,7 @@ public class IndenService {
                 return new ResponseInBoolean(false, "Metode pembayaran tidak ditemukan");
             }
 
-            boolean transfer = "transfer".equalsIgnoreCase(method.getMethodType());
-            if (transfer && (buktiPembayaran == null || buktiPembayaran.isEmpty())) {
-                return new ResponseInBoolean(false, "Bukti pembayaran wajib diisi");
-            }
-
-            if (transfer) {
-                String originalName = buktiPembayaran.getOriginalFilename();
-                String uploadDir = "uploads/bukti/" + clientId + "/";
-                File dir = new File(uploadDir);
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                String fileName = System.currentTimeMillis() + "_" + originalName;
-                Path path = Paths.get(uploadDir + fileName);
-                Files.copy(buktiPembayaran.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                inden.setBuktiOriginalName(originalName);
-                inden.setBuktiFilePath(uploadDir + fileName);
-            }
+            storeTransferBukti(inden, clientId, method.getMethodType(), buktiPembayaran);
 
             paymentMethodService.copyToInden(inden, method);
             inden.setPaid(true);
@@ -586,6 +653,47 @@ public class IndenService {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, "Terjadi kesalahan: " + exception.getMessage());
         }
+    }
+
+    private CustomerEntity resolveHandoverCustomer(IndenEntity inden, ClientEntity client) {
+        String name = inden.getCustomerName() == null ? "" : inden.getCustomerName().trim();
+        if (!name.isEmpty()) {
+            CustomerEntity matched = customerRepository
+                    .findByNameAndDeletedAtIsNullAndClientEntity_ClientId(name, client.getClientId());
+            if (matched != null) {
+                return matched;
+            }
+        }
+
+        return customerRepository
+                .findByCustomerIdAndDeletedAtIsNullAndClientEntity_ClientId(1L, client.getClientId())
+                .orElseThrow(() -> new RuntimeException("Customer tidak ditemukan"));
+    }
+
+    private void storeTransferBukti(
+            IndenEntity inden,
+            Long clientId,
+            String methodType,
+            MultipartFile buktiPembayaran
+    ) throws java.io.IOException {
+        if (buktiPembayaran == null || buktiPembayaran.isEmpty()) {
+            return;
+        }
+        if (!"transfer".equalsIgnoreCase(methodType)) {
+            return;
+        }
+
+        String originalName = buktiPembayaran.getOriginalFilename();
+        String uploadDir = "uploads/bukti/" + clientId + "/";
+        File dir = new File(uploadDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        String fileName = System.currentTimeMillis() + "_" + originalName;
+        Path path = Paths.get(uploadDir + fileName);
+        Files.copy(buktiPembayaran.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+        inden.setBuktiOriginalName(originalName);
+        inden.setBuktiFilePath(uploadDir + fileName);
     }
 
     private void saveIndenBukti(IndenEntity inden, TransactionEntity transaction) {

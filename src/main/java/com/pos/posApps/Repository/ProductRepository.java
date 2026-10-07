@@ -78,6 +78,12 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     Optional<ProductEntity> findFirstByProductIdAndDeletedAtIsNull(Long productId);
 
+    Optional<ProductEntity> findFirstByFullNameAndShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(
+            String fullName,
+            String shortName,
+            Long clientId
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({
             @QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"),

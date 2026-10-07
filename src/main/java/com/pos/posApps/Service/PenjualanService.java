@@ -253,38 +253,43 @@ public class PenjualanService {
         );
     }
 
+    @Transactional
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
         Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, penjualanId);
         if (transactionsOpt.isEmpty()) {
             return null;
         }
         TransactionEntity transactions = transactionsOpt.get();
+        CustomerEntity customer = transactions.getCustomerEntity();
+        List<TransactionDetailDTO> details = new ArrayList<>();
+        for (TransactionDetailEntity transactionDetail : transactions.getTransactionDetailEntities()) {
+            Long productId = resolveDetailProductId(clientId, transactionDetail);
+            details.add(new TransactionDetailDTO(
+                    productId,
+                    transactionDetail.getShortName(),
+                    transactionDetail.getFullName(),
+                    transactionDetail.getPrice(),
+                    transactionDetail.getQty(),
+                    transactionDetail.getDiscountAmount(),
+                    transactionDetail.getTotalPrice(),
+                    transactionDetail.getTotalProfit(),
+                    transactionDetail.getBasicPrice()
+            ));
+        }
         return new PenjualanDTO(
                 transactions.getTransactionId(),
                 new CustomerDTO(
-                        transactions.getCustomerEntity().getCustomerId(),
-                        transactions.getCustomerEntity().getName(),
-                        transactions.getCustomerEntity().getAlamat()
+                        customer == null ? null : customer.getCustomerId(),
+                        customer == null ? "" : customer.getName(),
+                        customer == null ? "" : customer.getAlamat()
                 ),
                 transactions.getTransactionNumber(),
                 transactions.getSubtotal(),
                 transactions.getTotalPrice(),
                 transactions.getTotalDiscount(),
                 transactions.getCreatedAt(),
-                transactions.getTransactionDetailEntities().stream()
-                        .map(transactionDetail -> new TransactionDetailDTO(
-                                transactionDetail.getProductId(),
-                                transactionDetail.getShortName(),
-                                transactionDetail.getFullName(),
-                                transactionDetail.getPrice(),
-                                transactionDetail.getQty(),
-                                transactionDetail.getDiscountAmount(),
-                                transactionDetail.getTotalPrice(),
-                                transactionDetail.getTotalProfit(),
-                                transactionDetail.getBasicPrice()
-                        ))
-                        .collect(Collectors.toList()),
-                transactions.getAccountEntity().getName(),
+                details,
+                transactions.getAccountEntity() == null ? "" : transactions.getAccountEntity().getName(),
                 transactions.isCash(),
                 transactions.isPaid(),
                 transactions.getPaidAmount(),
@@ -294,6 +299,27 @@ public class PenjualanService {
                 transactions.getPaymentMethodType(),
                 transactions.getPaymentMethodRekening()
         );
+    }
+
+    private Long resolveDetailProductId(Long clientId, TransactionDetailEntity transactionDetail) {
+        if (transactionDetail.getProductId() != null || transactionDetail.getDeletedAt() != null) {
+            return transactionDetail.getProductId();
+        }
+
+        ProductEntity product = productRepository
+                .findFirstByFullNameAndShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(
+                        transactionDetail.getFullName(),
+                        transactionDetail.getShortName(),
+                        clientId
+                )
+                .orElse(null);
+        if (product == null) {
+            return null;
+        }
+
+        transactionDetail.setProductId(product.getProductId());
+        transactionDetailRepository.save(transactionDetail);
+        return product.getProductId();
     }
 
     @Transactional
@@ -365,11 +391,7 @@ public class PenjualanService {
             boolean transfer = "transfer".equalsIgnoreCase(method.getMethodType());
             String filePath = null;
             String originalName = null;
-            if (transfer) {
-                if (buktiPembayaran == null || buktiPembayaran.isEmpty()) {
-                    return new ResponseInBoolean(false, "Bukti pembayaran wajib diisi");
-                }
-
+            if (transfer && buktiPembayaran != null && !buktiPembayaran.isEmpty()) {
                 originalName = buktiPembayaran.getOriginalFilename();
                 String uploadDir = "uploads/bukti/" + clientId + "/";
                 File dir = new File(uploadDir);

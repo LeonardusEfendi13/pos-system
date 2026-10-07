@@ -126,8 +126,8 @@ public class ProductSetService {
                 if (item == null || item.getProductId() == null) {
                     return fail("Barang komponen tidak ditemukan");
                 }
-                if (item.getQty() == null || item.getQty() < 1) {
-                    return fail("Qty komponen minimal 1");
+                if (item.getQty() == null || item.getQty() == 0) {
+                    return fail("Qty komponen tidak boleh 0");
                 }
                 if (!seen.add(item.getProductId())) {
                     return fail("Komponen yang sama tidak boleh dobel");

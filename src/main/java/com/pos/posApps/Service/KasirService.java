@@ -48,6 +48,9 @@ public class KasirService {
     @Autowired
     PaymentMethodService paymentMethodService;
 
+    @Autowired
+    TransactionPaymentRepository transactionPaymentRepository;
+
     private ResponseInBoolean applyPaymentMethod(
             TransactionEntity transaction,
             Long clientId,
@@ -60,6 +63,152 @@ public class KasirService {
         }
 
         paymentMethodService.copyToTransaction(transaction, method);
+        return new ResponseInBoolean(true, "");
+    }
+
+    private void clearPaymentMethod(TransactionEntity transaction) {
+        transaction.setPaymentMethodId(null);
+        transaction.setPaymentMethodName(null);
+        transaction.setPaymentMethodType(null);
+        transaction.setPaymentMethodRekening(null);
+    }
+
+    private TransactionPaymentEntity paymentRow(
+            TransactionEntity transaction,
+            PaymentMethodEntity method,
+            BigDecimal amount,
+            int sortOrder
+    ) {
+        TransactionPaymentEntity row = new TransactionPaymentEntity();
+        row.setTransactionEntity(transaction);
+        row.setPaymentMethodId(method.getPaymentMethodId());
+        row.setPaymentMethodName(method.getName());
+        row.setPaymentMethodType(method.getMethodType());
+        row.setPaymentMethodRekening(method.getRekening() == null ? "" : method.getRekening());
+        row.setAmount(amount);
+        row.setSortOrder(sortOrder);
+        return row;
+    }
+
+    private void replacePaymentRows(TransactionEntity transaction, List<TransactionPaymentEntity> rows) {
+        if (transaction.getTransactionId() == null) {
+            return;
+        }
+
+        transactionPaymentRepository.deleteAllByTransactionEntity_TransactionId(transaction.getTransactionId());
+        transactionPaymentRepository.flush();
+        for (TransactionPaymentEntity row : rows) {
+            transactionPaymentRepository.save(row);
+        }
+    }
+
+    private ResponseInBoolean applyRecordedPayment(
+            TransactionEntity transaction,
+            CreateTransactionRequest req,
+            Long clientId,
+            boolean isBranch,
+            Boolean existingCash,
+            Boolean existingPaid,
+            LocalDate invoiceDate,
+            List<TransactionPaymentEntity> paymentRows
+    ) {
+        BigDecimal total = req.getTotalPrice() == null ? BigDecimal.ZERO : req.getTotalPrice();
+        List<TransactionPaymentLineDTO> payments = req.getPayments();
+        if (!isBranch && payments != null && !payments.isEmpty()) {
+            if (!Boolean.TRUE.equals(req.getIsCash())) {
+                return new ResponseInBoolean(false, "Pisah pembayaran hanya untuk bayar langsung.");
+            }
+            if (payments.size() != 2) {
+                return new ResponseInBoolean(false, "Pisah pembayaran harus dua metode.");
+            }
+
+            TransactionPaymentLineDTO firstLine = payments.get(0);
+            TransactionPaymentLineDTO secondLine = payments.get(1);
+            BigDecimal firstAmount = firstLine.getAmount() == null ? BigDecimal.ZERO : firstLine.getAmount();
+            BigDecimal secondAmount = secondLine.getAmount() == null ? BigDecimal.ZERO : secondLine.getAmount();
+            if (firstAmount.signum() <= 0 || secondAmount.signum() <= 0) {
+                return new ResponseInBoolean(false, "Nominal tiap metode harus lebih dari 0.");
+            }
+            if (firstAmount.add(secondAmount).compareTo(total) != 0) {
+                return new ResponseInBoolean(false, "Jumlah dua metode harus sama dengan Grand Total.");
+            }
+            if (firstLine.getPaymentMethodId() == null || secondLine.getPaymentMethodId() == null) {
+                return new ResponseInBoolean(false, "Metode pembayaran wajib dipilih.");
+            }
+            if (firstLine.getPaymentMethodId().equals(secondLine.getPaymentMethodId())) {
+                return new ResponseInBoolean(false, "Dua metode pembayaran harus berbeda.");
+            }
+
+            PaymentMethodEntity firstMethod = paymentMethodService.resolve(
+                    clientId,
+                    firstLine.getPaymentMethodId(),
+                    false
+            );
+            PaymentMethodEntity secondMethod = paymentMethodService.resolve(
+                    clientId,
+                    secondLine.getPaymentMethodId(),
+                    false
+            );
+            if (firstMethod == null || secondMethod == null) {
+                return new ResponseInBoolean(false, "Metode pembayaran tidak ditemukan");
+            }
+
+            transaction.setCash(true);
+            transaction.setPaid(true);
+            transaction.setPaidAmount(total);
+            transaction.setDueDate(null);
+            paymentMethodService.copyToTransaction(transaction, firstMethod);
+            transaction.setPaymentMethodName(firstMethod.getName() + " + " + secondMethod.getName());
+            paymentRows.add(paymentRow(transaction, firstMethod, firstAmount, 1));
+            paymentRows.add(paymentRow(transaction, secondMethod, secondAmount, 2));
+            return new ResponseInBoolean(true, "");
+        }
+
+        SalePaymentRules.Decision payment = SalePaymentRules.resolve(
+                isBranch,
+                req.getIsCash(),
+                req.getPaymentAmount(),
+                req.getTotalPrice(),
+                req.getDueDate(),
+                existingCash,
+                existingPaid,
+                invoiceDate,
+                LocalDate.now(),
+                !isBranch
+        );
+        if (!payment.ok()) {
+            return new ResponseInBoolean(false, payment.error());
+        }
+
+        transaction.setCash(payment.cash());
+        transaction.setPaid(payment.paid());
+        transaction.setPaidAmount(payment.paidAmount());
+        transaction.setDueDate(payment.dueDate());
+
+        if (isBranch || payment.cash()) {
+            ResponseInBoolean methodResult = applyPaymentMethod(
+                    transaction,
+                    clientId,
+                    req.getPaymentMethodId(),
+                    isBranch
+            );
+            if (!methodResult.isStatus()) {
+                return methodResult;
+            }
+            if (!isBranch) {
+                PaymentMethodEntity method = paymentMethodService.resolve(
+                        clientId,
+                        req.getPaymentMethodId(),
+                        false
+                );
+                if (method != null) {
+                    paymentRows.add(paymentRow(transaction, method, payment.paidAmount(), 1));
+                }
+            }
+            return new ResponseInBoolean(true, "");
+        }
+
+        clearPaymentMethod(transaction);
         return new ResponseInBoolean(true, "");
     }
 
@@ -104,20 +253,6 @@ public class KasirService {
             }
 
             CustomerEntity customerEntity = customerEntityOpt.get();
-            SalePaymentRules.Decision payment = SalePaymentRules.resolve(
-                    isBranch,
-                    req.getIsCash(),
-                    req.getPaymentAmount(),
-                    req.getTotalPrice(),
-                    req.getDueDate(),
-                    null,
-                    null,
-                    LocalDate.now(),
-                    LocalDate.now()
-            );
-            if (!payment.ok()) {
-                return new ResponseInBoolean(false, payment.error());
-            }
             String generatedNotaNumber = generateTodayNota(clientData.getClientId());
 
             //insert the transaction data
@@ -129,20 +264,24 @@ public class KasirService {
             transactionEntity.setTotalDiscount(req.getTotalDisc());
             transactionEntity.setSubtotal(req.getSubtotal());
             transactionEntity.setAccountEntity(accountData);
-            transactionEntity.setCash(payment.cash());
-            transactionEntity.setPaid(payment.paid());
-            transactionEntity.setPaidAmount(payment.paidAmount());
-            transactionEntity.setDueDate(payment.dueDate());
-            ResponseInBoolean methodResult = applyPaymentMethod(
+            List<TransactionPaymentEntity> paymentRows = new ArrayList<>();
+            ResponseInBoolean paymentResult = applyRecordedPayment(
                     transactionEntity,
+                    req,
                     clientData.getClientId(),
-                    req.getPaymentMethodId(),
-                    isBranch
+                    isBranch,
+                    null,
+                    null,
+                    LocalDate.now(),
+                    paymentRows
             );
-            if (!methodResult.isStatus()) {
-                return methodResult;
+            if (!paymentResult.isStatus()) {
+                return paymentResult;
             }
             transactionRepository.save(transactionEntity);
+            if (!isBranch) {
+                replacePaymentRows(transactionEntity, paymentRows);
+            }
 
             if (!isBranch) {
                 ResponseInBoolean pretelResult = productSetService.applyForSale(
@@ -248,40 +387,30 @@ public class KasirService {
             LocalDate invoiceDate = transaction.getCreatedAt() == null
                     ? LocalDate.now()
                     : transaction.getCreatedAt().toLocalDate();
-            SalePaymentRules.Decision payment = SalePaymentRules.resolve(
-                    isBranch,
-                    req.getIsCash(),
-                    req.getPaymentAmount(),
-                    req.getTotalPrice(),
-                    req.getDueDate(),
-                    transaction.isCash(),
-                    transaction.isPaid(),
-                    invoiceDate,
-                    LocalDate.now()
-            );
-            if (!payment.ok()) {
-                return new ResponseInBoolean(false, payment.error());
-            }
 
             transaction.setCustomerEntity(customer);
             transaction.setTotalPrice(req.getTotalPrice());
             transaction.setTotalDiscount(req.getTotalDisc());
             transaction.setSubtotal(req.getSubtotal());
             transaction.setAccountEntity(accountData);
-            transaction.setCash(payment.cash());
-            transaction.setPaid(payment.paid());
-            transaction.setPaidAmount(payment.paidAmount());
-            transaction.setDueDate(payment.dueDate());
-            ResponseInBoolean methodResult = applyPaymentMethod(
+            List<TransactionPaymentEntity> paymentRows = new ArrayList<>();
+            ResponseInBoolean paymentResult = applyRecordedPayment(
                     transaction,
+                    req,
                     clientData.getClientId(),
-                    req.getPaymentMethodId(),
-                    isBranch
+                    isBranch,
+                    transaction.isCash(),
+                    transaction.isPaid(),
+                    invoiceDate,
+                    paymentRows
             );
-            if (!methodResult.isStatus()) {
-                return methodResult;
+            if (!paymentResult.isStatus()) {
+                return paymentResult;
             }
             transactionRepository.save(transaction);
+            if (!isBranch) {
+                replacePaymentRows(transaction, paymentRows);
+            }
 
             List<TransactionDetailEntity> oldDetails =
                     transactionDetailRepository

@@ -1,0 +1,6 @@
+ALTER TABLE inden
+    ADD COLUMN IF NOT EXISTS sale_posted BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE inden
+SET sale_posted = TRUE
+WHERE UPPER(status_inden) = 'DISERAHKAN';

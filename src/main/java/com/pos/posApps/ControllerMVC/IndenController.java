@@ -166,7 +166,7 @@ public class IndenController {
             return "redirect:/login";
         }
         if (authService.hasAccessToModifyData(accEntity.getRole())) {
-            ResponseForWhatsapp isUpdated = indenService.updateStatusInden(indenId, statusInden, accEntity, clientData);
+            ResponseForWhatsapp isUpdated = indenService.updateStatusInden(indenId, statusInden, null, null, accEntity, clientData);
             if (isUpdated.isStatus()) {
                 redirectAttributes.addFlashAttribute("status", "success");
                 redirectAttributes.addFlashAttribute("message", isUpdated.getMessage());

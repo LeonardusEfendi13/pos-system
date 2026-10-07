@@ -45,6 +45,32 @@ public final class SalePaymentRules {
             LocalDate invoiceDate,
             LocalDate today
     ) {
+        return resolve(
+                branch,
+                requestedCash,
+                paymentAmount,
+                totalPrice,
+                dueDate,
+                existingCash,
+                existingPaid,
+                invoiceDate,
+                today,
+                false
+        );
+    }
+
+    public static Decision resolve(
+            boolean branch,
+            Boolean requestedCash,
+            BigDecimal paymentAmount,
+            BigDecimal totalPrice,
+            String dueDate,
+            Boolean existingCash,
+            Boolean existingPaid,
+            LocalDate invoiceDate,
+            LocalDate today,
+            boolean automaticCreditDueDate
+    ) {
         BigDecimal total = totalPrice == null ? BigDecimal.ZERO : totalPrice;
 
         if (branch) {
@@ -68,6 +94,15 @@ public final class SalePaymentRules {
                 return Decision.failure("Jumlah bayar kurang dari Grand Total.");
             }
             return Decision.success(true, true, total, null);
+        }
+
+        if (automaticCreditDueDate) {
+            if (tender.compareTo(total) > 0) {
+                return Decision.failure("Uang muka tidak boleh melebihi Grand Total.");
+            }
+
+            LocalDate currentDay = today == null ? LocalDate.now() : today;
+            return Decision.success(false, false, tender, currentDay.plusDays(14).atStartOfDay());
         }
 
         if (tender.compareTo(total) >= 0) {

@@ -233,4 +233,54 @@ class SalePaymentRulesTest {
         assertTrue(afterBoth.ok());
         assertEquals(LocalDateTime.of(2026, 10, 1, 0, 0), afterBoth.dueDate());
     }
+
+    @Test
+    void kasirCreditStaysUnpaidWithAFixedDueDate() {
+        SalePaymentRules.Decision partial = SalePaymentRules.resolve(
+                false,
+                false,
+                new BigDecimal("4000"),
+                new BigDecimal("10000"),
+                null,
+                null,
+                null,
+                INVOICE,
+                TODAY,
+                true
+        );
+        SalePaymentRules.Decision covered = SalePaymentRules.resolve(
+                false,
+                false,
+                new BigDecimal("10000"),
+                new BigDecimal("10000"),
+                "2026-09-01",
+                null,
+                null,
+                INVOICE,
+                TODAY,
+                true
+        );
+        SalePaymentRules.Decision overpaid = SalePaymentRules.resolve(
+                false,
+                false,
+                new BigDecimal("15000"),
+                new BigDecimal("10000"),
+                null,
+                null,
+                null,
+                INVOICE,
+                TODAY,
+                true
+        );
+
+        assertTrue(partial.ok());
+        assertFalse(partial.paid());
+        assertEquals(0, partial.paidAmount().compareTo(new BigDecimal("4000")));
+        assertEquals(LocalDateTime.of(2026, 10, 14, 0, 0), partial.dueDate());
+        assertTrue(covered.ok());
+        assertFalse(covered.paid());
+        assertEquals(LocalDateTime.of(2026, 10, 14, 0, 0), covered.dueDate());
+        assertFalse(overpaid.ok());
+        assertEquals("Uang muka tidak boleh melebihi Grand Total.", overpaid.error());
+    }
 }

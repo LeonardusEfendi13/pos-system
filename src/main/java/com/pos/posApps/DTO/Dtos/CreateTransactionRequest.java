@@ -19,4 +19,5 @@ public class CreateTransactionRequest {
     private BigDecimal paymentAmount;
     private String dueDate;
     private Long paymentMethodId;
+    private List<TransactionPaymentLineDTO> payments;
 }
