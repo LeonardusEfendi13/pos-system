@@ -247,7 +247,7 @@
 
         #sellTableBody td{
             padding-top: 0px !important;
-            padding-bottom: 0px !imporant;
+            padding-bottom: 0px !important;
         }
         .total-cell{
             font-size:18px !important;
@@ -1904,7 +1904,7 @@
             const subtotal = price * qty;
 
             const discPercent = parseFloat(discPercentInput.value) || 0;
-            const discAmount = parseFloat(discAmountInput.value) || 0;
+            const discAmount = parseRupiah(discAmountInput.value) || 0;
 
             // kalau ada disc %, recalc disc Rp
             if (discPercent > 0) {
@@ -2011,7 +2011,7 @@
         discAmountInput.addEventListener("input", () => {
             const price = parseRupiah(priceInput.value);
             const qty = parseInt(qtyInput.value) || 0;
-            const discountAmount = parseFloat(discAmountInput.value) || 0;
+            const discountAmount = parseRupiah(discAmountInput.value) || 0;
             if (price * qty > 0) {
                 const discountPercent = (discountAmount / (price * qty)) * 100;
                 discPercentInput.value = isFinite(discountPercent)
@@ -2082,7 +2082,7 @@
         const price = parseRupiah(r.querySelector(".price-input").value);
         const qty = parseInt(r.querySelector(".qty-input").value) || 0;
         const discAmount =
-            parseFloat(r.querySelector(".discount-amount-input").value) || 0;
+            parseRupiah(r.querySelector(".discount-amount-input").value) || 0;
         const subtotal = price * qty;
         const total = subtotal - discAmount;
         r.querySelector(".total-cell").textContent =
@@ -2209,7 +2209,7 @@
             const price = parseRupiah(row.querySelector(".price-input").value);
             const qty = parseInt(row.querySelector(".qty-input").value) || 0;
             const discAmt =
-                parseFloat(row.querySelector(".discount-amount-input").value) || 0;
+                parseRupiah(row.querySelector(".discount-amount-input").value) || 0;
             if (price && qty) {
                 subtotal += price * qty;
                 totalDiscount += discAmt;
@@ -3326,7 +3326,7 @@
                 const subtotal = price * qty;
 
                 const discPercent = parseFloat(discPercentInput.value) || 0;
-                const discAmount = parseFloat(discAmountInput.value) || 0;
+                const discAmount = parseRupiah(discAmountInput.value) || 0;
 
                 // kalau ada disc %, recalc disc Rp
                 if (discPercent > 0) {
@@ -3432,7 +3432,7 @@
             discAmountInput.addEventListener("input", () => {
                 const price = parseRupiah(priceInput.value);
                 const qty = parseInt(qtyInput.value) || 0;
-                const discountAmount = parseFloat(discAmountInput.value) || 0;
+                const discountAmount = parseRupiah(discAmountInput.value) || 0;
                 if (price * qty > 0) {
                     const discountPercent = (discountAmount / (price * qty)) * 100;
                     discPercentInput.value = isFinite(discountPercent)
