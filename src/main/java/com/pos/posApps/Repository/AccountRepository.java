@@ -13,4 +13,6 @@ public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     List<AccountEntity>  findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdDesc(Long clientId);
 
     AccountEntity findByAccountIdAndDeletedAtIsNull(Long id);
+
+    long countByClientRole_ClientRoleIdAndDeletedAtIsNull(Long clientRoleId);
 }

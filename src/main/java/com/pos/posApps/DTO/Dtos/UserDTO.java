@@ -14,4 +14,6 @@ public class UserDTO {
     private String name;
     private String username;
     private Roles role;
+    private Long clientRoleId;
+    private String roleName;
 }

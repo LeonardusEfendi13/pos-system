@@ -10,4 +10,5 @@ public class EditUserRequest {
     String username;
     String password;
     Roles role;
+    Long clientRoleId;
 }

@@ -12,6 +12,11 @@ import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Repository.AccountRepository;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.ClientRoleService;
+import com.pos.posApps.Service.EffectiveAccess;
+import com.pos.posApps.Service.GodAdminCredentials;
+import com.pos.posApps.Service.MenuAccessService;
+import com.pos.posApps.Util.MenuCatalog;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +49,9 @@ public class RestControllerUser {
     private AuthService authService;
     private AccountService accountService;
     private AccountRepository accountRepository;
+    private MenuAccessService menuAccessService;
+    private ClientRoleService clientRoleService;
+    private GodAdminCredentials godAdminCredentials;
 
     @GetMapping
     public ResponseEntity<PagedResponse<UserDTO>> list(
@@ -63,6 +71,7 @@ public class RestControllerUser {
         int safeSize = size == null ? DEFAULT_SIZE : Math.min(Math.max(size, 1), MAX_SIZE);
 
         List<UserDTO> rows = accountService.getUserList(clientId).stream()
+                .filter(row -> !godAdminCredentials.matchesUsername(row.getUsername()))
                 .filter(row -> matchesSearch(row, search))
                 .collect(Collectors.toCollection(ArrayList::new));
         sortRows(rows, sort, dir);
@@ -72,6 +81,8 @@ public class RestControllerUser {
         int to = Math.min(from + safeSize, rows.size());
         List<UserDTO> content = new ArrayList<>(rows.subList(from, to));
         int totalPages = safeSize == 0 ? 0 : (int) Math.ceil((double) total / safeSize);
+        EffectiveAccess access = menuAccessService.resolve(account);
+        String actorRole = access == null ? account.getRole().name() : access.role().name();
 
         return ResponseEntity.ok(new PagedResponse<>(
                 content,
@@ -79,7 +90,7 @@ public class RestControllerUser {
                 safePage,
                 safeSize,
                 totalPages,
-                account.getRole().name(),
+                actorRole,
                 account.getName(),
                 account.getAccountId()
         ));
@@ -93,9 +104,19 @@ public class RestControllerUser {
             String name = trimText(req == null ? null : req.getName());
             String username = trimText(req == null ? null : req.getUsername());
             String password = trimText(req == null ? null : req.getPassword());
-            Roles role = parseAssignableRole(req == null ? null : req.getRole(), account, null);
-            if (role == null) {
-                return new ResponseInBoolean(false, "Role tidak valid");
+            EffectiveAccess actorAccess = menuAccessService.resolve(account);
+            boolean godAdmin = actorAccess != null && actorAccess.godAdmin();
+            Roles role = Roles.SUPER_ADMIN;
+            com.pos.posApps.Entity.ClientRoleEntity clientRole = null;
+            if (!godAdmin) {
+                clientRole = clientRoleService.findOwned(
+                        account.getClientEntity().getClientId(),
+                        req == null ? null : req.getClientRoleId()
+                );
+                if (clientRole == null) {
+                    return new ResponseInBoolean(false, "Role tidak valid");
+                }
+                role = clientRoleService.operationalColumnRole();
             }
             if (name.isEmpty() || username.isEmpty() || password.isEmpty()) {
                 return new ResponseInBoolean(false, "Gagal menyimpan data");
@@ -109,7 +130,7 @@ public class RestControllerUser {
             registerRequest.setUsername(username);
             registerRequest.setPassword(password);
             registerRequest.setRole(role);
-            boolean inserted = accountService.doCreateAccount(registerRequest, account.getClientEntity());
+            boolean inserted = accountService.doCreateAccount(registerRequest, account.getClientEntity(), clientRole);
             if (inserted) {
                 return new ResponseInBoolean(true, "User berhasil ditambah");
             }
@@ -128,21 +149,29 @@ public class RestControllerUser {
             Long userId = req == null ? null : req.getId();
             String name = trimText(req == null ? null : req.getName());
             String username = trimText(req == null ? null : req.getUsername());
-            Roles role = req == null ? null : req.getRole();
             String password = trimText(req == null ? null : req.getPassword());
             ClientEntity client = account.getClientEntity();
             AccountEntity target = findOwned(userId, client.getClientId());
-            if (target == null) {
+            if (target == null || godAdminCredentials.matchesUsername(target.getUsername())) {
                 return new ResponseInBoolean(false, "User tidak ditemukan");
             }
-            if (account.getRole() == Roles.SUPER_ADMIN
-                    && isProtectedRole(target.getRole())
-                    && !account.getAccountId().equals(target.getAccountId())) {
+            EffectiveAccess actorAccess = menuAccessService.resolve(account);
+            boolean godAdmin = actorAccess != null && actorAccess.godAdmin();
+            boolean targetSuper = target.getRole() == Roles.SUPER_ADMIN || target.getRole() == Roles.GOD_ADMIN;
+            if (targetSuper && !godAdmin && !account.getAccountId().equals(target.getAccountId())) {
                 return new ResponseInBoolean(false, "User Super Admin tidak dapat diubah");
             }
-            Roles assignableRole = resolveAssignableRole(account, role, target);
-            if (assignableRole == null) {
-                return new ResponseInBoolean(false, "Role tidak valid");
+            com.pos.posApps.Entity.ClientRoleEntity clientRole = null;
+            Roles assignableRole = target.getRole();
+            if (!targetSuper) {
+                clientRole = clientRoleService.findOwned(
+                        client.getClientId(),
+                        req == null ? null : req.getClientRoleId()
+                );
+                if (clientRole == null) {
+                    return new ResponseInBoolean(false, "Role tidak valid");
+                }
+                assignableRole = clientRoleService.operationalColumnRole();
             }
             if (name.isEmpty() || username.isEmpty()) {
                 return new ResponseInBoolean(false, "Gagal menyimpan data");
@@ -159,7 +188,7 @@ public class RestControllerUser {
             if (!password.isEmpty()) {
                 update.setPassword(password);
             }
-            boolean updated = accountService.doUpdateAccount(update);
+            boolean updated = accountService.doUpdateAccount(update, clientRole, targetSuper);
             if (updated) {
                 return new ResponseInBoolean(true, "User berhasil diubah");
             }
@@ -173,7 +202,7 @@ public class RestControllerUser {
             @PathVariable Long userId) {
         return mutate(session, account -> {
             AccountEntity target = findOwned(userId, account.getClientEntity().getClientId());
-            if (target == null) {
+            if (target == null || godAdminCredentials.matchesUsername(target.getUsername())) {
                 return new ResponseInBoolean(false, "User tidak ditemukan");
             }
             if (target.getRole() == Roles.SUPER_ADMIN || target.getRole() == Roles.GOD_ADMIN) {
@@ -197,7 +226,8 @@ public class RestControllerUser {
             return ResponseEntity.status(UNAUTHORIZED)
                     .body(new ResponseInBoolean(false, "Harap login ulang"));
         }
-        if (!authService.hasAccessToModifyData(account.getRole())) {
+        EffectiveAccess access = menuAccessService.resolve(account);
+        if (access == null || !access.allows(MenuCatalog.USER)) {
             return ResponseEntity.status(UNAUTHORIZED)
                     .body(new ResponseInBoolean(false, "Anda tidak memiliki akses untuk ini!"));
         }
@@ -234,21 +264,18 @@ public class RestControllerUser {
             return true;
         }
 
-        if (roleSearchHaystack(row.getRole()).contains(needle)) {
+        if (roleSearchHaystack(row).contains(needle)) {
             return true;
         }
 
         return row.getUserId() != null && String.valueOf(row.getUserId()).contains(needle);
     }
 
-    private String roleSearchHaystack(Roles role) {
-        if (role == null) {
-            return "";
-        }
-
-        String enumName = role.name().toLowerCase(Locale.ROOT);
+    private String roleSearchHaystack(UserDTO row) {
+        String enumName = row.getRole() == null ? "" : row.getRole().name().toLowerCase(Locale.ROOT);
         String spaced = enumName.replace('_', ' ');
-        return enumName + " " + spaced;
+        String label = row.getRoleName() == null ? "" : row.getRoleName().toLowerCase(Locale.ROOT);
+        return enumName + " " + spaced + " " + label;
     }
 
     private void sortRows(List<UserDTO> rows, String sort, String dir) {
@@ -270,7 +297,7 @@ public class RestControllerUser {
             );
         } else if ("role".equals(sort)) {
             comparator = Comparator.comparing(
-                    row -> row.getRole() == null ? "" : row.getRole().name(),
+                    row -> row.getRoleName() == null ? "" : row.getRoleName(),
                     String.CASE_INSENSITIVE_ORDER
             );
         } else {
@@ -289,51 +316,6 @@ public class RestControllerUser {
 
     private String trimText(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private Roles parseAssignableRole(String raw, AccountEntity actor, AccountEntity target) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-
-        try {
-            return resolveAssignableRole(actor, Roles.valueOf(raw.trim()), target);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    private Roles resolveAssignableRole(AccountEntity actor, Roles role, AccountEntity target) {
-        if (role == null || role == Roles.GOD_ADMIN) {
-            return null;
-        }
-
-        if (actor.getRole() == Roles.GOD_ADMIN) {
-            return role;
-        }
-
-        if (actor.getRole() != Roles.SUPER_ADMIN) {
-            return null;
-        }
-
-        if (role == Roles.SUPER_ADMIN) {
-            if (target != null
-                    && actor.getAccountId().equals(target.getAccountId())
-                    && target.getRole() == Roles.SUPER_ADMIN) {
-                return Roles.SUPER_ADMIN;
-            }
-            return null;
-        }
-
-        if (target != null && isProtectedRole(target.getRole()) && role != target.getRole()) {
-            return null;
-        }
-
-        return role;
-    }
-
-    private boolean isProtectedRole(Roles role) {
-        return role == Roles.SUPER_ADMIN || role == Roles.GOD_ADMIN;
     }
 
     private boolean usernameExists(String username, Long excludeId) {

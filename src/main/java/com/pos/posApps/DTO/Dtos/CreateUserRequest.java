@@ -8,4 +8,5 @@ public class CreateUserRequest {
     private String password;
     private String username;
     private String role;
+    private Long clientRoleId;
 }

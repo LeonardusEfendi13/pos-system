@@ -2,9 +2,10 @@ package com.pos.posApps.ControllerMVC;
 
 import com.pos.posApps.DTO.Dtos.LoginRequest;
 import com.pos.posApps.DTO.Dtos.UserDTO;
-import com.pos.posApps.DTO.Enum.EnumRole.Roles;
+import com.pos.posApps.Service.AccessResolver;
 import com.pos.posApps.Service.AccountService;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.EffectiveAccess;
 import com.pos.posApps.Service.LoginTokenService;
 import com.pos.posApps.Util.Utils;
 import jakarta.servlet.http.HttpSession;
@@ -28,6 +29,8 @@ public class AuthController {
 
     private AccountService accountService;
 
+    private AccessResolver accessResolver;
+
 
     @GetMapping("/")
     public String redirect(HttpSession session) {
@@ -40,15 +43,10 @@ public class AuthController {
         String token = (String) session.getAttribute(authSessionKey);
         if(token != null){
             UserDTO userData = accountService.getCurrentLoggedInUser(token);
-            if(userData == null){
+            if (userData == null) {
                 return "login";
-            }else{
-                if(userData.getRole().equals(Roles.SUPER_ADMIN)){
-                    return "redirect:/home";
-                }else{
-                    return "redirect:/kasir";
-                }
             }
+            return "redirect:" + landingPath(token);
 
         }
         return "login";
@@ -79,12 +77,15 @@ public class AuthController {
         }
         httpSession.setAttribute(authSessionKey, token);
         model.addAttribute("activePage", "dashboard");
-        UserDTO userData = accountService.getCurrentLoggedInUser(token);
-        if(userData.getRole().equals(Roles.SUPER_ADMIN)){
-            return "redirect:/home";
-        }else{
-            return "redirect:/kasir";
+        return "redirect:" + landingPath(token);
+    }
+
+    private String landingPath(String token) {
+        EffectiveAccess access = accessResolver.resolve(authService.validateToken(token));
+        if (access == null) {
+            return "/kasir";
         }
+        return access.landingPath();
     }
 
     @GetMapping("/logout")

@@ -36,6 +36,10 @@ public class AccountEntity {
     @JoinColumn(name = "client_id")
     private ClientEntity clientEntity;
 
+    @ManyToOne
+    @JoinColumn(name = "client_role_id")
+    private ClientRoleEntity clientRole;
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 

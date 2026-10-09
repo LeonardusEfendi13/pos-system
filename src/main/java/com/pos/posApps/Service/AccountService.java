@@ -5,6 +5,7 @@ import com.pos.posApps.DTO.Dtos.RegisterRequest;
 import com.pos.posApps.DTO.Dtos.UserDTO;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientEntity;
+import com.pos.posApps.Entity.ClientRoleEntity;
 import com.pos.posApps.Entity.LoginTokenEntity;
 import com.pos.posApps.Repository.AccountRepository;
 import com.pos.posApps.Repository.LoginTokenRepository;
@@ -31,61 +32,66 @@ public class AccountService {
     private LoginTokenRepository loginTokenRepository;
 
     @Transactional
-    public boolean doCreateAccount(RegisterRequest request, ClientEntity clientData){
-        try{
+    public boolean doCreateAccount(RegisterRequest request, ClientEntity clientData) {
+        return doCreateAccount(request, clientData, null);
+    }
+
+    @Transactional
+    public boolean doCreateAccount(RegisterRequest request, ClientEntity clientData, ClientRoleEntity clientRole) {
+        try {
             AccountEntity accountEntity = accountRepository.findByUsernameAndDeletedAtIsNull(request.getUsername());
-            if(accountEntity != null){
+            if (accountEntity != null) {
                 return false;
             }
             String hashedPassword = passwordEncoder.encode(request.getPassword());
-//            Long lastAccountId = accountRepository.findFirstByOrderByAccountIdDesc().map(AccountEntity::getAccountId).orElse(0L);
-//            Long newAccountId = Generator.generateId(lastAccountId);
 
             AccountEntity newAccountEntity = new AccountEntity();
-//            newAccountEntity.setAccountId(newAccountId);
             newAccountEntity.setName(request.getName());
             newAccountEntity.setUsername(request.getUsername());
             newAccountEntity.setPassword(hashedPassword);
             newAccountEntity.setRole(request.getRole());
+            newAccountEntity.setClientRole(clientRole);
             newAccountEntity.setClientEntity(clientData);
             newAccountEntity.setCreatedAt(getCurrentTimestamp());
             newAccountEntity.setUpdatedAt(getCurrentTimestamp());
             accountRepository.save(newAccountEntity);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return false;
         }
-
     }
 
-    public boolean doUpdateAccount(EditUserRequest request){
+    public boolean doUpdateAccount(EditUserRequest request) {
+        return doUpdateAccount(request, null, false);
+    }
+
+    public boolean doUpdateAccount(EditUserRequest request, ClientRoleEntity clientRole, boolean keepAccess) {
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(request.getId());
-        if(accountEntity != null){
-            accountEntity.setName(request.getName());
-            accountEntity.setUsername(request.getUsername());
-            accountEntity.setRole(request.getRole());
-            if (request.getPassword() != null && !request.getPassword().isBlank()) {
-                accountEntity.setPassword(passwordEncoder.encode(request.getPassword().trim()));
-            }
-            accountEntity.setUpdatedAt(getCurrentTimestamp());
-            accountRepository.save(accountEntity);
-            return true;
-        }else{
+        if (accountEntity == null) {
             return false;
         }
+
+        accountEntity.setName(request.getName());
+        accountEntity.setUsername(request.getUsername());
+        if (!keepAccess) {
+            accountEntity.setRole(request.getRole());
+            accountEntity.setClientRole(clientRole);
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            accountEntity.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+        }
+        accountEntity.setUpdatedAt(getCurrentTimestamp());
+        accountRepository.save(accountEntity);
+        return true;
     }
 
     public List<UserDTO> getUserList(Long clientId){
         List<AccountEntity> accountEntities = accountRepository.findAllByClientEntity_ClientIdAndDeletedAtIsNullOrderByAccountIdDesc(clientId);
-        return accountEntities.stream().map(user -> new UserDTO(
-                user.getAccountId(),
-                user.getName(),
-                user.getUsername(),
-                user.getRole()
-        )).toList();
+        return accountEntities.stream().map(this::toUserDto).toList();
     }
-    public UserDTO getCurrentLoggedInUser(String token){
+
+    public UserDTO getCurrentLoggedInUser(String token) {
         Optional<LoginTokenEntity> loginTokenEntityOptional = loginTokenRepository.findByTokenAndDeletedAtIsNull(token);
         if(loginTokenEntityOptional.isEmpty()){
             return null;
@@ -94,11 +100,21 @@ public class AccountService {
         LoginTokenEntity loginTokenEntity = loginTokenEntityOptional.get();
         Long userId = loginTokenEntity.getAccountEntity().getAccountId();
         AccountEntity accountEntity = accountRepository.findByAccountIdAndDeletedAtIsNull(userId);
+        return toUserDto(accountEntity);
+    }
+
+    private UserDTO toUserDto(AccountEntity user) {
+        Long clientRoleId = user.getClientRole() == null ? null : user.getClientRole().getClientRoleId();
+        String roleName = user.getClientRole() == null
+                ? (user.getRole() == null ? "" : user.getRole().name())
+                : user.getClientRole().getName();
         return new UserDTO(
-                accountEntity.getAccountId(),
-                accountEntity.getName(),
-                accountEntity.getUsername(),
-                accountEntity.getRole()
+                user.getAccountId(),
+                user.getName(),
+                user.getUsername(),
+                user.getRole(),
+                clientRoleId,
+                roleName
         );
     }
 
