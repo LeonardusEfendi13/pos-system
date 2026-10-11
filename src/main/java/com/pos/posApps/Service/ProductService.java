@@ -6,6 +6,7 @@ import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -132,12 +133,77 @@ public class ProductService {
     }
 
 
+    public Page<StockMovementsDTO> getStockMovementPage(
+            Long clientId,
+            Long productId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int page,
+            int size) {
+        return stockMovementsRepository.findKartuStokPage(
+                clientId,
+                productId,
+                startDate,
+                endDate,
+                PageRequest.of(page, size)
+        );
+    }
+
+    public KartuStokTotals summarizeKartuStok(
+            Long clientId,
+            Long productId,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+        List<Object[]> rows = stockMovementsRepository.summarizeKartuStok(
+                clientId,
+                productId,
+                startDate,
+                endDate,
+                String.valueOf(TipeKartuStok.PRETEL.ordinal())
+        );
+        if (rows.isEmpty() || rows.get(0) == null || rows.get(0).length < 3) {
+            return new KartuStokTotals(0L, 0L, 0L);
+        }
+        Object[] row = rows.get(0);
+        return new KartuStokTotals(toLong(row[0]), toLong(row[1]), toLong(row[2]));
+    }
+
+    public Long getSaldoAkhir(
+            Long clientId,
+            Long productId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long stockAwal) {
+        List<Long> saldo = stockMovementsRepository.findLastSaldoInRange(
+                clientId,
+                productId,
+                startDate,
+                endDate,
+                PageRequest.of(0, 1)
+        );
+        if (saldo.isEmpty() || saldo.get(0) == null) {
+            return stockAwal == null ? 0L : stockAwal;
+        }
+        return saldo.get(0);
+    }
+
     public Long getStockAwalProduct(Long productId, LocalDateTime startDate) {
-        List<StockMovementsEntity> stockData = stockMovementsRepository.findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(productId, startDate);
-        return stockData.stream()
-                .max(Comparator.comparing(StockMovementsEntity::getCreatedAt))
-                .map(StockMovementsEntity::getSaldo)
-                .orElse(0L);
+        List<Long> saldo = stockMovementsRepository.findOpeningSaldo(
+                productId,
+                startDate,
+                PageRequest.of(0, 1)
+        );
+        if (saldo.isEmpty() || saldo.get(0) == null) {
+            return 0L;
+        }
+        return saldo.get(0);
+    }
+
+    private static long toLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return 0L;
     }
 
     //For master product

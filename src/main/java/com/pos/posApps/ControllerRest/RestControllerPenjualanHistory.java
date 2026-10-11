@@ -19,7 +19,8 @@ import com.pos.posApps.Service.PenjualanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,11 +31,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -80,7 +78,7 @@ public class RestControllerPenjualanHistory {
             Long clientId = account.getClientEntity().getClientId();
 
             int safePage = page == null || page < 0 ? 0 : page;
-            int safeSize = size == null || size < 1 ? 50 : size;
+            int safeSize = size == null || size < 1 ? 50 : Math.min(size, 200);
             LocalDate resolvedStart = parseOrDefaultStart(startDate);
             LocalDate resolvedEnd = parseOrDefaultEnd(endDate);
             LocalDateTime inputStart = resolvedStart.atStartOfDay();
@@ -92,43 +90,19 @@ public class RestControllerPenjualanHistory {
                             .toList()
             );
 
-            Page<PenjualanDTO> fetched;
-            if (q == null || q.isBlank()) {
-                fetched = penjualanService.getPenjualanHistoryData(
-                        clientId,
-                        inputStart,
-                        inputEnd,
-                        customerId,
-                        cabangIds,
-                        Pageable.unpaged());
-            } else {
-                fetched = penjualanService.searchPenjualanHistoryData(
-                        clientId,
-                        inputStart,
-                        inputEnd,
-                        customerId,
-                        cabangIds,
-                        q,
-                        Pageable.unpaged());
-            }
-
             Boolean tunaiFlag = parseTriState(tunai);
             Boolean lunasFlag = parseTriState(lunas);
-            List<PenjualanHistoryRowDTO> rows = new ArrayList<>(
-                    fetched.getContent().stream().map(this::toRow).toList()
+            Page<PenjualanHistoryRowDTO> fetched = penjualanService.getPenjualanHistoryRows(
+                    clientId,
+                    inputStart,
+                    inputEnd,
+                    customerId,
+                    cabangIds,
+                    tunaiFlag,
+                    lunasFlag,
+                    q,
+                    PageRequest.of(safePage, safeSize, historySort(sort, dir))
             );
-            if (tunaiFlag != null || lunasFlag != null) {
-                rows = new ArrayList<>(rows.stream()
-                        .filter(row -> (tunaiFlag == null || row.isCash() == tunaiFlag)
-                                && (lunasFlag == null || row.isPaid() == lunasFlag))
-                        .toList());
-            }
-            rows = sortRows(rows, sort, dir);
-
-            long total = rows.size();
-            int from = Math.min(safePage * safeSize, rows.size());
-            int to = Math.min(from + safeSize, rows.size());
-            List<PenjualanHistoryRowDTO> content = new ArrayList<>(rows.subList(from, to));
 
             var customers = customerService.getCustomerList(clientId).stream()
                     .filter(customer -> customer.getCustomerId() != null
@@ -137,8 +111,8 @@ public class RestControllerPenjualanHistory {
                     .toList();
 
             return ResponseEntity.ok(new PenjualanHistoryPageDTO(
-                    content,
-                    total,
+                    fetched.getContent(),
+                    fetched.getTotalElements(),
                     safePage,
                     safeSize,
                     customers,
@@ -203,27 +177,6 @@ public class RestControllerPenjualanHistory {
         }
         return ResponseEntity.status(INTERNAL_SERVER_ERROR)
                 .body(new ResponseInBoolean(false, "Gagal hapus data"));
-    }
-
-    private PenjualanHistoryRowDTO toRow(PenjualanDTO penjualan) {
-        CustomerDTO customer = penjualan.getCustomerDTO();
-        return new PenjualanHistoryRowDTO(
-                penjualan.getTransactionId(),
-                penjualan.getTransactionNumber(),
-                penjualan.getTanggalJual(),
-                penjualan.getTotalPrice(),
-                customer == null ? null : customer.getCustomerId(),
-                customer == null ? "" : nullToEmpty(customer.getCustomerName()),
-                nullToEmpty(penjualan.getAccountName()),
-                penjualan.isCash(),
-                penjualan.isPaid(),
-                penjualan.getPaidAmount(),
-                penjualan.getDueDate(),
-                penjualan.getPaymentMethodId(),
-                penjualan.getPaymentMethodName(),
-                penjualan.getPaymentMethodType(),
-                penjualan.getPaymentMethodRekening()
-        );
     }
 
     @PostMapping("/lunaskan")
@@ -298,41 +251,22 @@ public class RestControllerPenjualanHistory {
         );
     }
 
-    private static List<PenjualanHistoryRowDTO> sortRows(
-            List<PenjualanHistoryRowDTO> rows,
-            String sort,
-            String dir) {
-        Comparator<PenjualanHistoryRowDTO> comparator;
-
+    private static Sort historySort(String sort, String dir) {
         if (sort == null || !SORTABLE.contains(sort)) {
-            comparator = Comparator.comparing(
-                    PenjualanHistoryRowDTO::getTransactionId,
-                    Comparator.nullsLast(Long::compareTo)).reversed();
-        } else {
-            comparator = switch (sort) {
-                case "tanggalJual" -> Comparator.comparing(
-                        PenjualanHistoryRowDTO::getTanggalJual,
-                        Comparator.nullsLast(LocalDateTime::compareTo));
-                case "totalPrice" -> Comparator.comparing(
-                        PenjualanHistoryRowDTO::getTotalPrice,
-                        Comparator.nullsLast(BigDecimal::compareTo));
-                case "customerName" -> Comparator.comparing(
-                        row -> nullToEmpty(row.getCustomerName()),
-                        String.CASE_INSENSITIVE_ORDER);
-                case "transactionNumber" -> Comparator.comparing(
-                        row -> nullToEmpty(row.getTransactionNumber()),
-                        String.CASE_INSENSITIVE_ORDER);
-                default -> Comparator.comparing(
-                        PenjualanHistoryRowDTO::getTransactionId,
-                        Comparator.nullsLast(Long::compareTo)).reversed();
-            };
-
-            if ("desc".equalsIgnoreCase(dir)) {
-                comparator = comparator.reversed();
-            }
+            return Sort.by(Sort.Direction.DESC, "transactionId");
         }
 
-        return rows.stream().sorted(comparator).toList();
+        String property = switch (sort) {
+            case "tanggalJual" -> "createdAt";
+            case "totalPrice" -> "totalPrice";
+            case "customerName" -> "customerEntity.name";
+            case "transactionNumber" -> "transactionNumber";
+            default -> "transactionId";
+        };
+        Sort.Direction direction = "desc".equalsIgnoreCase(dir)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        return Sort.by(direction, property);
     }
 
     private static Boolean parseTriState(String value) {

@@ -165,6 +165,54 @@ public class PenjualanService {
         return transactionData.map(this::convertToDTO);
     }
 
+    @Transactional(readOnly = true)
+    public Page<PenjualanHistoryRowDTO> getPenjualanHistoryRows(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long selectedCustomerId,
+            List<Long> cabangCustomerIds,
+            Boolean cash,
+            Boolean paid,
+            String search,
+            Pageable pageable) {
+        String trimmedSearch = search == null ? "" : search.trim();
+        PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
+
+        Page<TransactionEntity> page = switch (resolved.mode()) {
+            case EMPTY -> Page.empty(pageable);
+            case ALL -> transactionRepository.findPenjualanHistoryPage(
+                    clientId,
+                    startDate,
+                    endDate,
+                    null,
+                    cash,
+                    paid,
+                    trimmedSearch,
+                    pageable);
+            case INCLUDE -> transactionRepository.findPenjualanHistoryPage(
+                    clientId,
+                    startDate,
+                    endDate,
+                    resolved.customerIds().get(0),
+                    cash,
+                    paid,
+                    trimmedSearch,
+                    pageable);
+            case EXCLUDE -> transactionRepository.findPenjualanHistoryPageExcludingCustomers(
+                    clientId,
+                    startDate,
+                    endDate,
+                    resolved.customerIds(),
+                    cash,
+                    paid,
+                    trimmedSearch,
+                    pageable);
+        };
+
+        return page.map(this::toHistoryRow);
+    }
+
     public Page<PenjualanDTO> searchPenjualanHistoryData(
             Long clientId,
             LocalDateTime startDate,
@@ -207,6 +255,34 @@ public class PenjualanService {
                             pageable)
                     .map(this::convertToDTO);
         };
+    }
+
+    private PenjualanHistoryRowDTO toHistoryRow(TransactionEntity transaction) {
+        CustomerEntity customer = transaction.getCustomerEntity();
+        String accountName = "Unknown";
+        if (transaction.getAccountEntity() != null
+                && transaction.getAccountEntity().getName() != null
+                && !transaction.getAccountEntity().getName().isBlank()) {
+            accountName = transaction.getAccountEntity().getName();
+        }
+
+        return new PenjualanHistoryRowDTO(
+                transaction.getTransactionId(),
+                transaction.getTransactionNumber(),
+                transaction.getCreatedAt(),
+                transaction.getTotalPrice(),
+                customer == null ? null : customer.getCustomerId(),
+                customer == null ? "" : (customer.getName() == null ? "" : customer.getName()),
+                accountName,
+                transaction.isCash(),
+                transaction.isPaid(),
+                transaction.getPaidAmount(),
+                transaction.getDueDate(),
+                transaction.getPaymentMethodId(),
+                transaction.getPaymentMethodName(),
+                transaction.getPaymentMethodType(),
+                transaction.getPaymentMethodRekening()
+        );
     }
 
     private PenjualanDTO convertToDTO(TransactionEntity transactions) {

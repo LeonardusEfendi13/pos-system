@@ -17,5 +17,9 @@ public class KartuStokResponseDTO {
     private Long qtyInTotal;
     private Long qtyOutTotal;
     private Long saldoAkhir;
+    private Long pretelTotal;
+    private long movementTotal;
+    private int page;
+    private int size;
     private List<StockMovementsDTO> movements;
 }

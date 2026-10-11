@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.CreateProductRequest;
 import com.pos.posApps.DTO.Dtos.EditProductRequest;
 import com.pos.posApps.DTO.Dtos.KartuStokProductDTO;
 import com.pos.posApps.DTO.Dtos.KartuStokResponseDTO;
+import com.pos.posApps.DTO.Dtos.KartuStokTotals;
 import com.pos.posApps.DTO.Dtos.MasterProductLookupsDTO;
 import com.pos.posApps.DTO.Dtos.PagedResponse;
 import com.pos.posApps.DTO.Dtos.ProductDTO;
@@ -36,7 +37,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
-import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -125,7 +125,9 @@ public class RestControllerMasterProduct {
             HttpSession session,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) String endDate,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "50") Integer size) {
         AccountEntity account;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -134,17 +136,22 @@ public class RestControllerMasterProduct {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }
 
+        int safePage = page == null || page < 0 ? 0 : page;
+        int safeSize = size == null || size < 1 ? 50 : Math.min(size, 200);
         LocalDate start = parseIsoDate(startDate, LocalDate.now().minusDays(7));
         LocalDate end = parseIsoDate(endDate, LocalDate.now());
         LocalDateTime inputStartDate = start.atStartOfDay();
         LocalDateTime inputEndDate = end.atTime(23, 59, 59);
+        Long clientId = account.getClientEntity().getClientId();
 
         KartuStokResponseDTO body = emptyKartuStok(account);
+        body.setPage(safePage);
+        body.setSize(safeSize);
+
         if (productId == null) {
             return ResponseEntity.ok(body);
         }
 
-        Long clientId = account.getClientEntity().getClientId();
         ProductDTO product = productService.findProductById(productId);
         if (product.getProductId() != null) {
             body.setProduct(new KartuStokProductDTO(
@@ -155,24 +162,36 @@ public class RestControllerMasterProduct {
             ));
         }
 
-        List<StockMovementsDTO> movements = productService.getStockMovementData(
-                clientId, productId, inputStartDate, inputEndDate);
+        Page<StockMovementsDTO> movementPage = productService.getStockMovementPage(
+                clientId,
+                productId,
+                inputStartDate,
+                inputEndDate,
+                safePage,
+                safeSize
+        );
+        KartuStokTotals totals = productService.summarizeKartuStok(
+                clientId,
+                productId,
+                inputStartDate,
+                inputEndDate
+        );
         Long stockAwal = productService.getStockAwalProduct(productId, inputStartDate);
-        long qtyInTotal = movements.stream()
-                .mapToLong(item -> item.getQtyIn() == null ? 0L : item.getQtyIn())
-                .sum();
-        long qtyOutTotal = movements.stream()
-                .mapToLong(item -> item.getQtyOut() == null ? 0L : item.getQtyOut())
-                .sum();
-        Long lastSaldo = movements.isEmpty()
-                ? stockAwal
-                : movements.get(movements.size() - 1).getSaldo();
+        Long saldoAkhir = productService.getSaldoAkhir(
+                clientId,
+                productId,
+                inputStartDate,
+                inputEndDate,
+                stockAwal
+        );
 
-        body.setMovements(movements);
+        body.setMovements(movementPage.getContent());
+        body.setMovementTotal(movementPage.getTotalElements());
         body.setStockAwal(stockAwal == null ? 0L : stockAwal);
-        body.setQtyInTotal(qtyInTotal);
-        body.setQtyOutTotal(qtyOutTotal);
-        body.setSaldoAkhir(lastSaldo == null ? 0L : lastSaldo);
+        body.setQtyInTotal(totals.getQtyIn() == null ? 0L : totals.getQtyIn());
+        body.setQtyOutTotal(totals.getQtyOut() == null ? 0L : totals.getQtyOut());
+        body.setPretelTotal(totals.getPretel() == null ? 0L : totals.getPretel());
+        body.setSaldoAkhir(saldoAkhir == null ? 0L : saldoAkhir);
         return ResponseEntity.ok(body);
     }
 
@@ -265,6 +284,10 @@ public class RestControllerMasterProduct {
         body.setQtyInTotal(0L);
         body.setQtyOutTotal(0L);
         body.setSaldoAkhir(0L);
+        body.setPretelTotal(0L);
+        body.setMovementTotal(0L);
+        body.setPage(0);
+        body.setSize(50);
         body.setMovements(Collections.emptyList());
         return body;
     }

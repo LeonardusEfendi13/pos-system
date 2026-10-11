@@ -4,6 +4,7 @@ import com.pos.posApps.DTO.Dtos.ChartPointView;
 import com.pos.posApps.Entity.TransactionEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -224,6 +225,64 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             LocalDateTime endDate,
             Long customerId,
             String filter
+    );
+
+    String PENJUALAN_HISTORY_WHERE = """
+            WHERE t.clientEntity.clientId = :clientId
+              AND t.deletedAt IS NULL
+              AND t.createdAt BETWEEN :startDate AND :endDate
+              AND (:cash IS NULL OR t.isCash = :cash)
+              AND (:paid IS NULL OR t.isPaid = :paid)
+              AND (
+                :search = ''
+                OR LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR EXISTS (
+                  SELECT 1 FROM TransactionDetailEntity d
+                  WHERE d.transactionEntity = t
+                    AND d.deletedAt IS NULL
+                    AND (
+                      LOWER(d.shortName) LIKE LOWER(CONCAT('%', :search, '%'))
+                      OR LOWER(d.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    )
+                )
+              )
+            """;
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)"
+    )
+    Page<TransactionEntity> findPenjualanHistoryPage(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("customerId") Long customerId,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds"
+    )
+    Page<TransactionEntity> findPenjualanHistoryPageExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
     );
 
     Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionNumberAndDeletedAtIsNull(
