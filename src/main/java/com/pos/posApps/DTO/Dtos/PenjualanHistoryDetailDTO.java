@@ -19,4 +19,5 @@ public class PenjualanHistoryDetailDTO {
     private String customerName;
     private String accountName;
     private List<PenjualanHistoryLineDTO> lines;
+    private List<PenjualanHistoryPaymentDTO> payments;
 }

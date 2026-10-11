@@ -25,6 +25,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import java.awt.*;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -105,12 +106,36 @@ public class LaporanService {
                         row -> (String) row[0],
                         row -> new LaporanPenjualanPerWaktuDTO(
                                 (String) row[0],
-                                (BigDecimal) row[1],
-                                (BigDecimal) row[2]
+                                money(row[1]),
+                                money(row[2]),
+                                BigDecimal.ZERO,
+                                BigDecimal.ZERO,
+                                BigDecimal.ZERO,
+                                BigDecimal.ZERO
                         )
                 ));
 
         // 3️⃣ Generate semua periode (tetap perlu)
+        List<Object[]> methodRows = transactionRepository.getLaporanPenjualanMetodePerWaktuRaw(
+                clientId, startDate, endDate, customerId, filter
+        );
+        for (Object[] row : methodRows) {
+            String period = (String) row[0];
+            LaporanPenjualanPerWaktuDTO dto = dbMap.computeIfAbsent(
+                    period,
+                    key -> new LaporanPenjualanPerWaktuDTO(
+                            key,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO
+                    )
+            );
+            addMethodAmount(dto, row[1] == null ? "cash" : row[1].toString(), money(row[2]));
+        }
+
         List<String> allPeriods =
                 generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filter);
 
@@ -124,13 +149,74 @@ public class LaporanService {
                     dbMap.getOrDefault(
                             period,
                             new LaporanPenjualanPerWaktuDTO(
-                                    period, BigDecimal.ZERO, BigDecimal.ZERO
+                                    period,
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO,
+                                    BigDecimal.ZERO
                             )
                     )
             );
         }
 
         return new ArrayList<>(finalMap.values());
+    }
+
+    private static BigDecimal money(Object value) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+        if (value instanceof BigDecimal decimal) {
+            return decimal;
+        }
+        if (value instanceof Number number) {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+        return new BigDecimal(value.toString());
+    }
+
+    private static void addMethodAmount(
+            LaporanPenjualanPerWaktuDTO dto,
+            String methodType,
+            BigDecimal amount
+    ) {
+        String type = methodType == null ? "" : methodType.trim().toLowerCase();
+        switch (type) {
+            case "transfer" -> dto.setTransferAmount(dto.getTransferAmount().add(amount));
+            case "qris" -> dto.setQrisAmount(dto.getQrisAmount().add(amount));
+            case "credit" -> dto.setCreditAmount(dto.getCreditAmount().add(amount));
+            default -> dto.setCashAmount(dto.getCashAmount().add(amount));
+        }
+    }
+
+    private static void addCustomerMethodAmount(
+            LaporanPenjualanPerPelangganDTO dto,
+            String methodType,
+            BigDecimal amount
+    ) {
+        String type = methodType == null ? "" : methodType.trim().toLowerCase();
+        switch (type) {
+            case "transfer" -> dto.setTransferAmount(dto.getTransferAmount().add(amount));
+            case "qris" -> dto.setQrisAmount(dto.getQrisAmount().add(amount));
+            case "credit" -> dto.setCreditAmount(dto.getCreditAmount().add(amount));
+            default -> dto.setCashAmount(dto.getCashAmount().add(amount));
+        }
+    }
+
+    private static void addProductMethodAmount(
+            LaporanPenjualanPerBarangDTO dto,
+            String methodType,
+            BigDecimal amount
+    ) {
+        String type = methodType == null ? "" : methodType.trim().toLowerCase();
+        switch (type) {
+            case "transfer" -> dto.setTransferAmount(dto.getTransferAmount().add(amount));
+            case "qris" -> dto.setQrisAmount(dto.getQrisAmount().add(amount));
+            case "credit" -> dto.setCreditAmount(dto.getCreditAmount().add(amount));
+            default -> dto.setCashAmount(dto.getCashAmount().add(amount));
+        }
     }
 
     public List<LaporanPembelianPerWaktuDTO> getLaporanPengeluaranDataByPeriode(
@@ -220,8 +306,30 @@ public class LaporanService {
                     toBigDecimal(row[3]),
                     toLong(row[4]),
                     toLong(row[5]),
-                    unpaidByCustomer.getOrDefault(customerId, BigDecimal.ZERO)
+                    unpaidByCustomer.getOrDefault(customerId, BigDecimal.ZERO),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO
             ));
+        }
+
+        Map<Long, LaporanPenjualanPerPelangganDTO> byCustomer = new HashMap<>();
+        for (LaporanPenjualanPerPelangganDTO dto : result) {
+            byCustomer.put(dto.getCustomerId(), dto);
+        }
+        for (Object[] methodRow : transactionRepository.getLaporanPenjualanMetodePerPelangganRaw(
+                clientId, startDate, endDate
+        )) {
+            LaporanPenjualanPerPelangganDTO dto = byCustomer.get(toLongOrNull(methodRow[0]));
+            if (dto == null) {
+                continue;
+            }
+            addCustomerMethodAmount(
+                    dto,
+                    methodRow[1] == null ? "cash" : methodRow[1].toString(),
+                    money(methodRow[2])
+            );
         }
 
         return result;
@@ -284,8 +392,30 @@ public class LaporanService {
                     toText(row[3]),
                     toLong(row[4]),
                     toBigDecimal(row[5]),
-                    toBigDecimal(row[6])
+                    toBigDecimal(row[6]),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO
             ));
+        }
+
+        Map<Long, LaporanPenjualanPerBarangDTO> byProduct = new HashMap<>();
+        for (LaporanPenjualanPerBarangDTO dto : rows) {
+            byProduct.put(dto.getProductId(), dto);
+        }
+        for (Object[] methodRow : transactionDetailRepository.findPenjualanMetodePerBarang(
+                clientId, startDate, endDate, supplierId
+        )) {
+            LaporanPenjualanPerBarangDTO dto = byProduct.get(toLong(methodRow[0]));
+            if (dto == null) {
+                continue;
+            }
+            addProductMethodAmount(
+                    dto,
+                    methodRow[1] == null ? "cash" : methodRow[1].toString(),
+                    money(methodRow[2]).setScale(0, RoundingMode.HALF_UP)
+            );
         }
 
         return LaporanPenjualanBarangView.apply(rows, q, sort, dir);

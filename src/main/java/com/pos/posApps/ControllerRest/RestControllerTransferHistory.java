@@ -14,6 +14,7 @@ import com.pos.posApps.Entity.CustomerEntity;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.BranchService;
 import com.pos.posApps.Service.PenjualanService;
+import com.pos.posApps.Util.PenjualanPaymentPreview;
 import com.pos.posApps.Util.TransferHistoryCustomerFilter;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -227,7 +228,11 @@ public class RestControllerTransferHistory {
                 penjualan.getPaymentMethodId(),
                 penjualan.getPaymentMethodName(),
                 penjualan.getPaymentMethodType(),
-                penjualan.getPaymentMethodRekening()
+                penjualan.getPaymentMethodRekening(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO
         );
     }
 
@@ -245,7 +250,8 @@ public class RestControllerTransferHistory {
                 penjualan.getTotalPrice(),
                 customer == null ? "" : nullToEmpty(customer.getCustomerName()),
                 nullToEmpty(penjualan.getAccountName()),
-                lines
+                lines,
+                PenjualanPaymentPreview.lines(penjualan)
         );
     }
 

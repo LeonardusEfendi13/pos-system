@@ -17,4 +17,8 @@ public class LaporanPenjualanPerBarangDTO {
     private Long qty;
     private BigDecimal totalHargaPenjualan;
     private BigDecimal labaPenjualan;
+    private BigDecimal cashAmount;
+    private BigDecimal transferAmount;
+    private BigDecimal qrisAmount;
+    private BigDecimal creditAmount;
 }

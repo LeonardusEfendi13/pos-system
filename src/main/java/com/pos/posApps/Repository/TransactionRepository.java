@@ -165,6 +165,37 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     @Query(value = """
                 SELECT
                     t.customer_id AS customerId,
+                    CASE
+                        WHEN t.is_cash = FALSE THEN 'credit'
+                        WHEN tp.transaction_payment_id IS NOT NULL
+                            THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
+                        ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
+                    END AS method_type,
+                    SUM(
+                        CASE
+                            WHEN t.is_cash = FALSE THEN COALESCE(t.total_price, 0)
+                            WHEN tp.transaction_payment_id IS NOT NULL THEN COALESCE(tp.amount, 0)
+                            ELSE COALESCE(t.total_price, 0)
+                        END
+                    ) AS amount
+                FROM transaction t
+                LEFT JOIN transaction_payment tp
+                    ON tp.transaction_id = t.transaction_id
+                   AND t.is_cash = TRUE
+                WHERE t.client_id = :clientId
+                  AND t.deleted_at IS NULL
+                  AND t.created_at BETWEEN :startDate AND :endDate
+                GROUP BY 1, 2
+            """, nativeQuery = true)
+    List<Object[]> getLaporanPenjualanMetodePerPelangganRaw(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
+    @Query(value = """
+                SELECT
+                    t.customer_id AS customerId,
                     SUM(COALESCE(t.total_price, 0)) AS unpaidTotal
                 FROM transaction t
                 WHERE t.client_id = :clientId
@@ -220,6 +251,50 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             ORDER BY period DESC
             """, nativeQuery = true)
     List<Object[]> getLaporanPenjualanPerWaktuRaw(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long customerId,
+            String filter
+    );
+
+    @Query(value = """
+            SELECT
+                CASE
+                    WHEN :filter = 'year'  THEN TO_CHAR(t.created_at, 'YYYY')
+                    WHEN :filter = 'month' THEN TO_CHAR(t.created_at, 'YYYY-MM')
+                    ELSE TO_CHAR(t.created_at, 'YYYY-MM-DD')
+                END AS period,
+                CASE
+                    WHEN t.is_cash = FALSE THEN 'credit'
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
+                    ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
+                END AS method_type,
+                SUM(
+                    CASE
+                        WHEN t.is_cash = FALSE THEN COALESCE(t.total_price, 0)
+                        WHEN tp.transaction_payment_id IS NOT NULL THEN COALESCE(tp.amount, 0)
+                        ELSE COALESCE(t.total_price, 0)
+                    END
+                ) AS amount
+            FROM transaction t
+            LEFT JOIN transaction_payment tp
+                ON tp.transaction_id = t.transaction_id
+               AND t.is_cash = TRUE
+            WHERE t.client_id = :clientId
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM branch b
+                    WHERE b.customer_id = t.customer_id
+              )
+              AND t.deleted_at IS NULL
+              AND t.created_at BETWEEN :startDate AND :endDate
+              AND (:customerId IS NULL OR t.customer_id = :customerId)
+            GROUP BY 1, 2
+            ORDER BY 1 DESC
+            """, nativeQuery = true)
+    List<Object[]> getLaporanPenjualanMetodePerWaktuRaw(
             Long clientId,
             LocalDateTime startDate,
             LocalDateTime endDate,

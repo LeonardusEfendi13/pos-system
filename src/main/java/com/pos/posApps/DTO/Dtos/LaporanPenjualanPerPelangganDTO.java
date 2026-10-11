@@ -18,4 +18,8 @@ public class LaporanPenjualanPerPelangganDTO {
     private Long transactionCount;
     private Long unpaidInvoiceCount;
     private BigDecimal unpaidTotal;
+    private BigDecimal cashAmount;
+    private BigDecimal transferAmount;
+    private BigDecimal qrisAmount;
+    private BigDecimal creditAmount;
 }

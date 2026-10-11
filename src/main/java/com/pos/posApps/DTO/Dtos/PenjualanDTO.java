@@ -33,4 +33,5 @@ public class PenjualanDTO {
     private String paymentMethodName;
     private String paymentMethodType;
     private String paymentMethodRekening;
+    private List<RecordedPaymentDTO> payments;
 }

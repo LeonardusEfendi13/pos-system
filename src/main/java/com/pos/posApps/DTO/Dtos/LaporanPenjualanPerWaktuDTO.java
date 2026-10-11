@@ -14,4 +14,8 @@ public class LaporanPenjualanPerWaktuDTO {
     private String period;
     private BigDecimal totalHargaPenjualan;
     private BigDecimal labaPenjualan;
+    private BigDecimal cashAmount;
+    private BigDecimal transferAmount;
+    private BigDecimal qrisAmount;
+    private BigDecimal creditAmount;
 }

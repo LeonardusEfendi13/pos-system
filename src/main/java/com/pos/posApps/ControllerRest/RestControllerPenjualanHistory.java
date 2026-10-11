@@ -16,6 +16,7 @@ import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.BranchService;
 import com.pos.posApps.Service.CustomerService;
 import com.pos.posApps.Service.PenjualanService;
+import com.pos.posApps.Util.PenjualanPaymentPreview;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -229,7 +230,8 @@ public class RestControllerPenjualanHistory {
                 penjualan.getTotalPrice(),
                 customer == null ? "" : nullToEmpty(customer.getCustomerName()),
                 nullToEmpty(penjualan.getAccountName()),
-                lines
+                lines,
+                PenjualanPaymentPreview.lines(penjualan)
         );
     }
 

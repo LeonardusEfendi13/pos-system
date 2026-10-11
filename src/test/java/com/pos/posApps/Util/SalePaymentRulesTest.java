@@ -130,6 +130,28 @@ class SalePaymentRulesTest {
     }
 
     @Test
+    void kasirReopensASettledCreditWhenTheTenderDrops() {
+        SalePaymentRules.Decision decision = SalePaymentRules.resolve(
+                false,
+                false,
+                new BigDecimal("4000"),
+                new BigDecimal("9000"),
+                null,
+                false,
+                true,
+                INVOICE,
+                TODAY,
+                true
+        );
+
+        assertTrue(decision.ok());
+        assertFalse(decision.cash());
+        assertFalse(decision.paid());
+        assertEquals(0, decision.paidAmount().compareTo(new BigDecimal("4000")));
+        assertEquals(LocalDateTime.of(2026, 10, 14, 0, 0), decision.dueDate());
+    }
+
+    @Test
     void settledCreditStaysPaidWhenTheTenderIsLowered() {
         SalePaymentRules.Decision decision = SalePaymentRules.resolve(
                 false,
@@ -278,8 +300,9 @@ class SalePaymentRulesTest {
         assertEquals(0, partial.paidAmount().compareTo(new BigDecimal("4000")));
         assertEquals(LocalDateTime.of(2026, 10, 14, 0, 0), partial.dueDate());
         assertTrue(covered.ok());
-        assertFalse(covered.paid());
-        assertEquals(LocalDateTime.of(2026, 10, 14, 0, 0), covered.dueDate());
+        assertTrue(covered.paid());
+        assertEquals(0, covered.paidAmount().compareTo(new BigDecimal("10000")));
+        assertNull(covered.dueDate());
         assertFalse(overpaid.ok());
         assertEquals("Uang muka tidak boleh melebihi Grand Total.", overpaid.error());
     }

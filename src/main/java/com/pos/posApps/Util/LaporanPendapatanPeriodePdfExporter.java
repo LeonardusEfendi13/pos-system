@@ -62,16 +62,20 @@ public class LaporanPendapatanPeriodePdfExporter {
             document.add(subtitle);
             document.add(Chunk.NEWLINE);
 
-            float[] columnWidths = {1, 3, 4, 4};
+            float[] columnWidths = {1, 3, 3, 3, 2.4f, 2.4f, 2.4f, 2.4f};
             String[] headers = {
                     "No",
                     "Periode",
                     "Total Pendapatan Kotor",
-                    "Total Pendapatan Bersih"
+                    "Total Pendapatan Bersih",
+                    "Cash",
+                    "TF",
+                    "QRIS",
+                    "Kredit"
             };
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
 
-            PdfPTable table = new PdfPTable(4);
+            PdfPTable table = new PdfPTable(8);
             table.setWidthPercentage(100);
             table.setWidths(columnWidths);
 
@@ -85,6 +89,10 @@ public class LaporanPendapatanPeriodePdfExporter {
                 table.addCell(createCell(formatPeriodLabel(row.getPeriod(), filter), Element.ALIGN_LEFT));
                 table.addCell(createCell(formatRupiah(row.getTotalHargaPenjualan()), Element.ALIGN_RIGHT));
                 table.addCell(createCell(formatRupiah(row.getLabaPenjualan()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getCashAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getTransferAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getQrisAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getCreditAmount()), Element.ALIGN_RIGHT));
                 index++;
             }
 
@@ -123,7 +131,7 @@ public class LaporanPendapatanPeriodePdfExporter {
     }
 
     private PdfPCell createCell(String content, int alignment) {
-        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 10), alignment, null);
+        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 8), alignment, null);
     }
 
     private PdfPCell createCell(String content, Font font, int alignment, Color bgColor) {

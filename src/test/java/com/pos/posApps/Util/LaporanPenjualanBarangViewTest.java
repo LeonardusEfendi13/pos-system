@@ -94,7 +94,11 @@ class LaporanPenjualanBarangViewTest {
                 supplierName,
                 qty,
                 BigDecimal.valueOf(qty * 1000),
-                BigDecimal.valueOf(qty * 100)
+                BigDecimal.valueOf(qty * 100),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO
         );
     }
 }

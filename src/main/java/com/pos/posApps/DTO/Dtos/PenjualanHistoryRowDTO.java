@@ -29,4 +29,8 @@ public class PenjualanHistoryRowDTO {
     private String paymentMethodName;
     private String paymentMethodType;
     private String paymentMethodRekening;
+    private BigDecimal cashAmount;
+    private BigDecimal transferAmount;
+    private BigDecimal qrisAmount;
+    private BigDecimal creditAmount;
 }

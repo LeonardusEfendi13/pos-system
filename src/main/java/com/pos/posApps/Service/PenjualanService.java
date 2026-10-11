@@ -5,6 +5,7 @@ import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
 import com.pos.posApps.Repository.*;
 import com.pos.posApps.Util.PenjualanHistoryCustomerFilter;
+import com.pos.posApps.Util.SaleMethodAmounts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +47,9 @@ public class PenjualanService {
 
     @Autowired
     PaymentMethodService paymentMethodService;
+
+    @Autowired
+    TransactionPaymentRepository transactionPaymentRepository;
 
     public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
@@ -101,7 +105,8 @@ public class PenjualanService {
                 transactions.getPaymentMethodId(),
                 transactions.getPaymentMethodName(),
                 transactions.getPaymentMethodType(),
-                transactions.getPaymentMethodRekening()
+                transactions.getPaymentMethodRekening(),
+                List.of()
 
         )).collect(Collectors.toList());
     }
@@ -210,7 +215,11 @@ public class PenjualanService {
                     pageable);
         };
 
-        return page.map(this::toHistoryRow);
+        Map<Long, List<TransactionPaymentEntity>> payments = paymentsByTransaction(page.getContent());
+        return page.map(transaction -> toHistoryRow(
+                transaction,
+                payments.getOrDefault(transaction.getTransactionId(), List.of())
+        ));
     }
 
     public Page<PenjualanDTO> searchPenjualanHistoryData(
@@ -257,7 +266,43 @@ public class PenjualanService {
         };
     }
 
-    private PenjualanHistoryRowDTO toHistoryRow(TransactionEntity transaction) {
+    private Map<Long, List<TransactionPaymentEntity>> paymentsByTransaction(
+            List<TransactionEntity> transactions
+    ) {
+        List<Long> ids = transactions.stream()
+                .map(TransactionEntity::getTransactionId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+
+        return transactionPaymentRepository.findByTransactionEntity_TransactionIdIn(ids).stream()
+                .collect(Collectors.groupingBy(row -> row.getTransactionEntity().getTransactionId()));
+    }
+
+    private List<RecordedPaymentDTO> recordedPayments(Long transactionId) {
+        if (transactionId == null) {
+            return List.of();
+        }
+
+        return transactionPaymentRepository
+                .findByTransactionEntity_TransactionIdOrderBySortOrderAsc(transactionId)
+                .stream()
+                .map(row -> new RecordedPaymentDTO(
+                        row.getPaymentMethodId(),
+                        row.getPaymentMethodName(),
+                        row.getPaymentMethodType(),
+                        row.getAmount(),
+                        row.getSortOrder()
+                ))
+                .toList();
+    }
+
+    private PenjualanHistoryRowDTO toHistoryRow(
+            TransactionEntity transaction,
+            List<TransactionPaymentEntity> paymentRows
+    ) {
         CustomerEntity customer = transaction.getCustomerEntity();
         String accountName = "Unknown";
         if (transaction.getAccountEntity() != null
@@ -265,6 +310,18 @@ public class PenjualanService {
                 && !transaction.getAccountEntity().getName().isBlank()) {
             accountName = transaction.getAccountEntity().getName();
         }
+
+        SaleMethodAmounts.Totals amounts = SaleMethodAmounts.allocate(
+                transaction.isCash(),
+                transaction.getTotalPrice(),
+                transaction.getPaymentMethodType(),
+                paymentRows.stream()
+                        .map(row -> new SaleMethodAmounts.Line(
+                                row.getPaymentMethodType(),
+                                row.getAmount()
+                        ))
+                        .toList()
+        );
 
         return new PenjualanHistoryRowDTO(
                 transaction.getTransactionId(),
@@ -281,7 +338,11 @@ public class PenjualanService {
                 transaction.getPaymentMethodId(),
                 transaction.getPaymentMethodName(),
                 transaction.getPaymentMethodType(),
-                transaction.getPaymentMethodRekening()
+                transaction.getPaymentMethodRekening(),
+                amounts.cash(),
+                amounts.transfer(),
+                amounts.qris(),
+                amounts.credit()
         );
     }
 
@@ -325,7 +386,8 @@ public class PenjualanService {
                 transactions.getPaymentMethodId(),
                 transactions.getPaymentMethodName(),
                 transactions.getPaymentMethodType(),
-                transactions.getPaymentMethodRekening()
+                transactions.getPaymentMethodRekening(),
+                List.of()
         );
     }
 
@@ -373,7 +435,8 @@ public class PenjualanService {
                 transactions.getPaymentMethodId(),
                 transactions.getPaymentMethodName(),
                 transactions.getPaymentMethodType(),
-                transactions.getPaymentMethodRekening()
+                transactions.getPaymentMethodRekening(),
+                recordedPayments(transactions.getTransactionId())
         );
     }
 

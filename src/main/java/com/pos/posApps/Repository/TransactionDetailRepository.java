@@ -81,6 +81,52 @@ public interface TransactionDetailRepository extends JpaRepository<TransactionDe
 
     @Query(value = """
             SELECT
+                d.product_id AS product_id,
+                CASE
+                    WHEN t.is_cash = FALSE THEN 'credit'
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
+                    ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
+                END AS method_type,
+                SUM(
+                    CASE
+                        WHEN t.is_cash = FALSE THEN COALESCE(d.total_price, 0)
+                        WHEN tp.transaction_payment_id IS NOT NULL THEN
+                            COALESCE(d.total_price, 0) * COALESCE(tp.amount, 0)
+                                / NULLIF(pay.pay_sum, 0)
+                        ELSE COALESCE(d.total_price, 0)
+                    END
+                ) AS amount
+            FROM transaction t
+            JOIN transaction_detail d ON d.transaction_id = t.transaction_id
+            LEFT JOIN product p
+                ON p.product_id = d.product_id
+               AND p.client_id = t.client_id
+            LEFT JOIN transaction_payment tp
+                ON tp.transaction_id = t.transaction_id
+               AND t.is_cash = TRUE
+            LEFT JOIN (
+                SELECT transaction_id, SUM(amount) AS pay_sum
+                FROM transaction_payment
+                GROUP BY transaction_id
+            ) pay ON pay.transaction_id = t.transaction_id
+            WHERE t.client_id = :clientId
+              AND t.deleted_at IS NULL
+              AND d.deleted_at IS NULL
+              AND d.product_id IS NOT NULL
+              AND t.created_at BETWEEN :startDate AND :endDate
+              AND (:supplierId IS NULL OR p.supplier_id = :supplierId)
+            GROUP BY 1, 2
+            """, nativeQuery = true)
+    List<Object[]> findPenjualanMetodePerBarang(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("supplierId") Long supplierId
+    );
+
+    @Query(value = """
+            SELECT
                 CASE
                     WHEN :filter = 'year' THEN TO_CHAR(t.created_at, 'YYYY')
                     WHEN :filter = 'month' THEN TO_CHAR(t.created_at, 'YYYY-MM')

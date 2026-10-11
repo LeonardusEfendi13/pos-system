@@ -70,20 +70,24 @@ public class LaporanPendapatanBarangPdfExporter {
 
             document.add(Chunk.NEWLINE);
 
-            float[] columnWidths = {1, 5, 3, 2, 3, 3};
+            float[] columnWidths = {0.7f, 3.4f, 2.2f, 1.4f, 1.8f, 1.8f, 1.4f, 1.4f, 1.4f, 1.4f};
             String[] headers = {
                     "No",
                     "Produk",
                     "Supplier",
                     "Jumlah Terjual",
                     "Omzet",
-                    "Laba"
+                    "Laba",
+                    "Cash",
+                    "TF",
+                    "QRIS",
+                    "Kredit"
             };
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-            Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
 
-            PdfPTable table = new PdfPTable(6);
+            PdfPTable table = new PdfPTable(10);
             table.setWidthPercentage(100);
             table.setWidths(columnWidths);
 
@@ -94,6 +98,10 @@ public class LaporanPendapatanBarangPdfExporter {
             long totalQty = 0L;
             BigDecimal totalKotor = BigDecimal.ZERO;
             BigDecimal totalBersih = BigDecimal.ZERO;
+            BigDecimal totalCash = BigDecimal.ZERO;
+            BigDecimal totalTransfer = BigDecimal.ZERO;
+            BigDecimal totalQris = BigDecimal.ZERO;
+            BigDecimal totalCredit = BigDecimal.ZERO;
             int index = 1;
 
             for (LaporanPenjualanPerBarangDTO row : rows) {
@@ -107,6 +115,10 @@ public class LaporanPendapatanBarangPdfExporter {
                 totalQty += qty;
                 totalKotor = totalKotor.add(kotor);
                 totalBersih = totalBersih.add(bersih);
+                totalCash = totalCash.add(row.getCashAmount() == null ? BigDecimal.ZERO : row.getCashAmount());
+                totalTransfer = totalTransfer.add(row.getTransferAmount() == null ? BigDecimal.ZERO : row.getTransferAmount());
+                totalQris = totalQris.add(row.getQrisAmount() == null ? BigDecimal.ZERO : row.getQrisAmount());
+                totalCredit = totalCredit.add(row.getCreditAmount() == null ? BigDecimal.ZERO : row.getCreditAmount());
 
                 table.addCell(createCell(String.valueOf(index), bodyFont, Element.ALIGN_CENTER, null));
                 table.addCell(createCell(nullToEmpty(row.getProductName()), bodyFont, Element.ALIGN_LEFT, null));
@@ -114,6 +126,10 @@ public class LaporanPendapatanBarangPdfExporter {
                 table.addCell(createCell(formatQty(qty), bodyFont, Element.ALIGN_RIGHT, null));
                 table.addCell(createCell(formatRupiah(kotor), bodyFont, Element.ALIGN_RIGHT, null));
                 table.addCell(createCell(formatRupiah(bersih), bodyFont, Element.ALIGN_RIGHT, null));
+                table.addCell(createCell(formatRupiah(row.getCashAmount()), bodyFont, Element.ALIGN_RIGHT, null));
+                table.addCell(createCell(formatRupiah(row.getTransferAmount()), bodyFont, Element.ALIGN_RIGHT, null));
+                table.addCell(createCell(formatRupiah(row.getQrisAmount()), bodyFont, Element.ALIGN_RIGHT, null));
+                table.addCell(createCell(formatRupiah(row.getCreditAmount()), bodyFont, Element.ALIGN_RIGHT, null));
                 index++;
             }
 
@@ -123,6 +139,10 @@ public class LaporanPendapatanBarangPdfExporter {
             table.addCell(createCell(formatQty(totalQty), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
             table.addCell(createCell(formatRupiah(totalKotor), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
             table.addCell(createCell(formatRupiah(totalBersih), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
+            table.addCell(createCell(formatRupiah(totalCash), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
+            table.addCell(createCell(formatRupiah(totalTransfer), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
+            table.addCell(createCell(formatRupiah(totalQris), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
+            table.addCell(createCell(formatRupiah(totalCredit), totalFont, Element.ALIGN_RIGHT, LIGHT_GRAY));
 
             document.add(table);
             document.close();

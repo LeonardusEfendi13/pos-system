@@ -78,7 +78,7 @@ public final class SalePaymentRules {
         }
 
         boolean settledCredit = Boolean.FALSE.equals(existingCash) && Boolean.TRUE.equals(existingPaid);
-        if (settledCredit) {
+        if (settledCredit && !automaticCreditDueDate) {
             boolean cash = requestedCash == null || requestedCash;
             return Decision.success(cash, true, total, null);
         }
@@ -99,6 +99,10 @@ public final class SalePaymentRules {
         if (automaticCreditDueDate) {
             if (tender.compareTo(total) > 0) {
                 return Decision.failure("Uang muka tidak boleh melebihi Grand Total.");
+            }
+
+            if (tender.compareTo(total) >= 0) {
+                return Decision.success(false, true, total, null);
             }
 
             LocalDate currentDay = today == null ? LocalDate.now() : today;

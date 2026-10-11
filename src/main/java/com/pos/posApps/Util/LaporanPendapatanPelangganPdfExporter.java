@@ -54,7 +54,9 @@ public class LaporanPendapatanPelangganPdfExporter {
             document.add(subtitle);
             document.add(Chunk.NEWLINE);
 
-            float[] columnWidths = {0.7f, 2.6f, 1.3f, 1.4f, 1.8f, 2.1f, 2.1f};
+            float[] columnWidths = {
+                    0.6f, 2.2f, 1.1f, 1.2f, 1.5f, 1.6f, 1.6f, 1.3f, 1.3f, 1.3f, 1.3f
+            };
             String[] headers = {
                     "No",
                     "Nama Pelanggan",
@@ -62,11 +64,15 @@ public class LaporanPendapatanPelangganPdfExporter {
                     "Nota Belum Lunas",
                     "Total Belum Lunas",
                     "Total Pendapatan Kotor",
-                    "Total Pendapatan Bersih"
+                    "Total Pendapatan Bersih",
+                    "Cash",
+                    "TF",
+                    "QRIS",
+                    "Kredit"
             };
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7);
 
-            PdfPTable table = new PdfPTable(7);
+            PdfPTable table = new PdfPTable(11);
             table.setWidthPercentage(100);
             table.setWidths(columnWidths);
 
@@ -86,6 +92,10 @@ public class LaporanPendapatanPelangganPdfExporter {
                 table.addCell(createCell(formatRupiah(row.getUnpaidTotal()), Element.ALIGN_RIGHT));
                 table.addCell(createCell(formatRupiah(row.getTotalHargaPenjualan()), Element.ALIGN_RIGHT));
                 table.addCell(createCell(formatRupiah(row.getLabaPenjualan()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getCashAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getTransferAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getQrisAmount()), Element.ALIGN_RIGHT));
+                table.addCell(createCell(formatRupiah(row.getCreditAmount()), Element.ALIGN_RIGHT));
                 index++;
             }
 
@@ -98,7 +108,7 @@ public class LaporanPendapatanPelangganPdfExporter {
     }
 
     private PdfPCell createCell(String content, int alignment) {
-        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 8), alignment, null);
+        return createCell(content, FontFactory.getFont(FontFactory.HELVETICA, 7), alignment, null);
     }
 
     private PdfPCell createCell(String content, Font font, int alignment, Color bgColor) {
