@@ -34,4 +34,10 @@ class MenuRoutePolicyTest {
         assertEquals(List.of("preorder.tambah"), MenuRoutePolicy.requiredKeys("POST", "/api/preorder/add"));
         assertEquals(List.of("preorder.riwayat"), MenuRoutePolicy.requiredKeys("GET", "/api/preorder/15"));
     }
+
+    @Test
+    void priceListImportUsesTheDataCenterMenu() {
+        assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/preview"));
+        assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/confirm"));
+    }
 }
