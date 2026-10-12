@@ -237,6 +237,22 @@ public class IndenService {
                     );
                 }
 
+                String notaNumber = indenEntity.getIndenNumber();
+                if (notaNumber == null || notaNumber.isBlank()) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseForWhatsapp(false, "Nomor inden tidak ditemukan", isOpenWa, "", "");
+                }
+
+                if (transactionRepository
+                        .findFirstByClientEntity_ClientIdAndTransactionNumberAndDeletedAtIsNull(
+                                clientData.getClientId(),
+                                notaNumber
+                        )
+                        .isPresent()) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return new ResponseForWhatsapp(false, "Nomor faktur sudah dipakai", isOpenWa, "", "");
+                }
+
                 boolean cash = handoverMethod == null
                         ? indenEntity.isCash()
                         : "cash".equalsIgnoreCase(handoverMethod.getMethodType());
@@ -252,12 +268,10 @@ public class IndenService {
 
                 CustomerEntity customerData = resolveHandoverCustomer(indenEntity, clientData);
 
-                String generatedNotaNumber = kasirService.generateTodayNota(clientData.getClientId());
-
                 //Insert into transaction
                 TransactionEntity transactionEntity = new TransactionEntity();
                 transactionEntity.setClientEntity(clientData);
-                transactionEntity.setTransactionNumber(generatedNotaNumber);
+                transactionEntity.setTransactionNumber(notaNumber);
                 transactionEntity.setCustomerEntity(customerData);
                 transactionEntity.setTotalPrice(indenEntity.getTotalPrice());
                 transactionEntity.setTotalDiscount(indenEntity.getTotalDiscount());
@@ -320,7 +334,7 @@ public class IndenService {
                     productRepository.save(productEntity);
                     stockMovementService.insertKartuStok(new AdjustStockDTO(
                             productEntity,
-                            generatedNotaNumber,
+                            notaNumber,
                             TipeKartuStok.PENJUALAN,
                             0L,
                             dtos.getQty(),
