@@ -36,6 +36,18 @@ class MenuRoutePolicyTest {
     }
 
     @Test
+    void hutangReportUsesItsOwnMenuKey() {
+        assertEquals(
+                List.of("laporan.penjualan.hutang"),
+                MenuRoutePolicy.requiredKeys("GET", "/api/laporan/penjualan/hutang")
+        );
+        assertEquals(
+                List.of("laporan.penjualan.hutang"),
+                MenuRoutePolicy.requiredKeys("GET", "/api/laporan/penjualan/hutang/15")
+        );
+    }
+
+    @Test
     void priceListImportUsesTheDataCenterMenu() {
         assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/preview"));
         assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/confirm"));

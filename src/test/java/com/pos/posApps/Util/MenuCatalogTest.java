@@ -15,6 +15,7 @@ class MenuCatalogTest {
         assertEquals("branch.daftar", MenuCatalog.matchId("/branch"));
         assertEquals("branch.transfer.kasir", MenuCatalog.matchId("/branch/transfer/kasir"));
         assertEquals("penjualan", MenuCatalog.matchId("/penjualan/detail"));
+        assertEquals("laporan.penjualan.hutang", MenuCatalog.matchId("/laporan/penjualan/hutang"));
         assertNull(MenuCatalog.matchId("/unknown"));
     }
 

@@ -1,6 +1,7 @@
 package com.pos.posApps.Repository;
 
 import com.pos.posApps.DTO.Dtos.ChartPointView;
+import com.pos.posApps.DTO.Dtos.HutangPenjualanTotalsDTO;
 import com.pos.posApps.Entity.TransactionEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -363,5 +364,111 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionNumberAndDeletedAtIsNull(
             Long clientId,
             String transactionNumber
+    );
+
+    String HUTANG_PENJUALAN_WHERE = """
+            WHERE t.clientEntity.clientId = :clientId
+              AND t.deletedAt IS NULL
+              AND t.isCash = false
+              AND (:applyStart = 0 OR t.createdAt >= :startDate)
+              AND (:applyEnd = 0 OR t.createdAt <= :endDate)
+              AND (:paid IS NULL OR t.isPaid = :paid)
+              AND (
+                :search = ''
+                OR LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR EXISTS (
+                  SELECT 1 FROM TransactionDetailEntity d
+                  WHERE d.transactionEntity = t
+                    AND d.deletedAt IS NULL
+                    AND (
+                      LOWER(d.shortName) LIKE LOWER(CONCAT('%', :search, '%'))
+                      OR LOWER(d.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    )
+                )
+              )
+            """;
+
+    String HUTANG_PENJUALAN_TOTALS = """
+            SELECT new com.pos.posApps.DTO.Dtos.HutangPenjualanTotalsDTO(
+                COALESCE(SUM(t.totalPrice), 0),
+                COALESCE(SUM(COALESCE(t.paidAmount, 0)), 0),
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(t.totalPrice, 0) > COALESCE(t.paidAmount, 0)
+                        THEN COALESCE(t.totalPrice, 0) - COALESCE(t.paidAmount, 0)
+                        ELSE 0
+                    END
+                ), 0)
+            )
+            FROM TransactionEntity t
+            """;
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + HUTANG_PENJUALAN_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + HUTANG_PENJUALAN_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)"
+    )
+    Page<TransactionEntity> findHutangPenjualanPage(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("applyStart") int applyStart,
+            @Param("applyEnd") int applyEnd,
+            @Param("customerId") Long customerId,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + HUTANG_PENJUALAN_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + HUTANG_PENJUALAN_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds"
+    )
+    Page<TransactionEntity> findHutangPenjualanPageExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("applyStart") int applyStart,
+            @Param("applyEnd") int applyEnd,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query(
+            HUTANG_PENJUALAN_TOTALS + HUTANG_PENJUALAN_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)"
+    )
+    HutangPenjualanTotalsDTO summarizeHutangPenjualan(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("applyStart") int applyStart,
+            @Param("applyEnd") int applyEnd,
+            @Param("customerId") Long customerId,
+            @Param("paid") Boolean paid,
+            @Param("search") String search
+    );
+
+    @Query(
+            HUTANG_PENJUALAN_TOTALS + HUTANG_PENJUALAN_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds"
+    )
+    HutangPenjualanTotalsDTO summarizeHutangPenjualanExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("applyStart") int applyStart,
+            @Param("applyEnd") int applyEnd,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("paid") Boolean paid,
+            @Param("search") String search
     );
 }

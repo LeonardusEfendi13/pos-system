@@ -222,6 +222,116 @@ public class PenjualanService {
         ));
     }
 
+    @Transactional(readOnly = true)
+    public HutangPenjualanSlice getHutangPenjualanRows(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int applyStart,
+            int applyEnd,
+            Long selectedCustomerId,
+            List<Long> cabangCustomerIds,
+            Boolean paid,
+            String search,
+            Pageable pageable) {
+        String trimmedSearch = search == null ? "" : search.trim();
+        PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
+
+        Page<TransactionEntity> page = switch (resolved.mode()) {
+            case EMPTY -> Page.empty(pageable);
+            case ALL -> transactionRepository.findHutangPenjualanPage(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    null,
+                    paid,
+                    trimmedSearch,
+                    pageable);
+            case INCLUDE -> transactionRepository.findHutangPenjualanPage(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    resolved.customerIds().get(0),
+                    paid,
+                    trimmedSearch,
+                    pageable);
+            case EXCLUDE -> transactionRepository.findHutangPenjualanPageExcludingCustomers(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    resolved.customerIds(),
+                    paid,
+                    trimmedSearch,
+                    pageable);
+        };
+
+        HutangPenjualanTotalsDTO totals = switch (resolved.mode()) {
+            case EMPTY -> zeroHutangTotals();
+            case ALL -> transactionRepository.summarizeHutangPenjualan(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    null,
+                    paid,
+                    trimmedSearch);
+            case INCLUDE -> transactionRepository.summarizeHutangPenjualan(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    resolved.customerIds().get(0),
+                    paid,
+                    trimmedSearch);
+            case EXCLUDE -> transactionRepository.summarizeHutangPenjualanExcludingCustomers(
+                    clientId,
+                    startDate,
+                    endDate,
+                    applyStart,
+                    applyEnd,
+                    resolved.customerIds(),
+                    paid,
+                    trimmedSearch);
+        };
+
+        Map<Long, List<TransactionPaymentEntity>> payments = paymentsByTransaction(page.getContent());
+        return new HutangPenjualanSlice(
+                page.map(transaction -> toHistoryRow(
+                        transaction,
+                        payments.getOrDefault(transaction.getTransactionId(), List.of())
+                )),
+                totals == null ? zeroHutangTotals() : totals
+        );
+    }
+
+    public PenjualanDTO getHutangPenjualanDetail(Long clientId, Long transactionId) {
+        Optional<TransactionEntity> found = transactionRepository
+                .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, transactionId);
+        if (found.isEmpty() || found.get().isCash()) {
+            return null;
+        }
+
+        return getPenjualanDataById(clientId, transactionId);
+    }
+
+    public record HutangPenjualanSlice(
+            Page<PenjualanHistoryRowDTO> rows,
+            HutangPenjualanTotalsDTO totals
+    ) {
+    }
+
+    private static HutangPenjualanTotalsDTO zeroHutangTotals() {
+        return new HutangPenjualanTotalsDTO(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+    }
+
     public Page<PenjualanDTO> searchPenjualanHistoryData(
             Long clientId,
             LocalDateTime startDate,
