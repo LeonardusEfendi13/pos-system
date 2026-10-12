@@ -86,7 +86,7 @@ public class RestControllerDashboard {
         List<DashboardHomeSupplierDTO> homeSupplierData =
                 dashboardSupplierService.getTopSuppliers(clientId, finalStartDate, finalEndDate);
         List<DashboardHomeReceivableCustomerDTO> homeReceivableCustomerData =
-                dashboardCustomerService.getTop10UnpaidCustomers(clientId, finalStartDate, finalEndDate);
+                dashboardCustomerService.getTop10UnpaidCustomers(clientId);
         ChartDTO chartDatas = homeService.getChartData(clientId, finalStartDate, finalEndDate, periodFilter);
         SidebarDTO sidebarData = sidebarService.getSidebarData(clientId, token);
 

@@ -86,12 +86,10 @@ public class DashboardCustomerService {
     }
 
     public List<DashboardHomeReceivableCustomerDTO> getTop10UnpaidCustomers(
-            Long clientId,
-            LocalDateTime startDate,
-            LocalDateTime endDate
+            Long clientId
     ) {
         List<TransactionEntity> transactionData =
-                transactionRepository.findFilteredTransactions(clientId, startDate, endDate);
+                transactionRepository.findUnpaidTransactions(clientId);
 
         Map<Long, Long> unpaidCountByCustomer = new HashMap<>();
         Map<Long, BigDecimal> unpaidTotalByCustomer = new HashMap<>();

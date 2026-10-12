@@ -77,6 +77,21 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             LocalDateTime endDate
     );
 
+    @Query(value = """
+    SELECT t.*
+    FROM transaction t
+    WHERE t.client_id = :clientId
+      AND NOT EXISTS (
+          SELECT 1
+          FROM branch b
+          WHERE b.customer_id = t.customer_id
+      )
+      AND t.deleted_at IS NULL
+      AND t.is_paid = FALSE
+    ORDER BY t.transaction_id DESC
+""", nativeQuery = true)
+    List<TransactionEntity> findUnpaidTransactions(Long clientId);
+
     Page<TransactionEntity> findAllByClientEntity_ClientIdAndCustomerEntity_CustomerIdInAndDeletedAtIsNullAndCreatedAtBetweenOrderByCreatedAtDesc(Long clientId, List<Long> customerId, LocalDateTime StartDate, LocalDateTime endDate, Pageable pageable);
 
     @Query("SELECT t FROM TransactionEntity t " +
