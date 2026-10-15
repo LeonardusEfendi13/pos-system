@@ -48,6 +48,15 @@ class MenuRoutePolicyTest {
     }
 
     @Test
+    void staffRoutesUseTheirOwnMenuKeys() {
+        assertEquals(List.of("staff"), MenuRoutePolicy.requiredKeys("GET", "/api/staff"));
+        assertEquals(List.of("staff"), MenuRoutePolicy.requiredKeys("PUT", "/api/staff/4"));
+        assertEquals(List.of("staff.absensi"), MenuRoutePolicy.requiredKeys("PUT", "/api/staff/attendance"));
+        assertEquals(List.of("staff.payroll"), MenuRoutePolicy.requiredKeys("POST", "/api/staff/payroll/preview"));
+        assertEquals(List.of("staff.payroll"), MenuRoutePolicy.requiredKeys("POST", "/api/staff/payroll"));
+    }
+
+    @Test
     void priceListImportUsesTheDataCenterMenu() {
         assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/preview"));
         assertEquals(List.of("data-center"), MenuRoutePolicy.requiredKeys("POST", "/api/data-center/price-list/confirm"));

@@ -16,6 +16,9 @@ class MenuCatalogTest {
         assertEquals("branch.transfer.kasir", MenuCatalog.matchId("/branch/transfer/kasir"));
         assertEquals("penjualan", MenuCatalog.matchId("/penjualan/detail"));
         assertEquals("laporan.penjualan.hutang", MenuCatalog.matchId("/laporan/penjualan/hutang"));
+        assertEquals("staff", MenuCatalog.matchId("/staff"));
+        assertEquals("staff.absensi", MenuCatalog.matchId("/staff/absensi"));
+        assertEquals("staff.payroll", MenuCatalog.matchId("/staff/payroll"));
         assertNull(MenuCatalog.matchId("/unknown"));
     }
 
