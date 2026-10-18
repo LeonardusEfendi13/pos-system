@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -16,11 +17,14 @@ public class PayrollRowDTO {
     private BigDecimal gajiPokok;
     private BigDecimal uangMakan;
     private BigDecimal insentif;
+    private BigDecimal totalGaji;
     private int daysInMonth;
+    private int workedDays;
     private int absenceCount;
     private int deductedDays;
     private BigDecimal dailyRate;
+    private BigDecimal gajiTerkumpul;
     private BigDecimal potongan;
-    private BigDecimal gajiPokokDibayar;
     private BigDecimal total;
+    private LocalDateTime paidAt;
 }

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 public final class PayrollCalculator {
@@ -16,20 +17,23 @@ public final class PayrollCalculator {
             BigDecimal uangMakan,
             BigDecimal insentif,
             int daysInMonth,
+            int workedDays,
             int absenceCount
     ) {
     }
 
     public record Result(
             int daysInMonth,
+            int workedDays,
             int absenceCount,
             int deductedDays,
-            BigDecimal dailyRate,
-            BigDecimal potongan,
             BigDecimal gajiPokok,
-            BigDecimal gajiPokokDibayar,
             BigDecimal uangMakan,
             BigDecimal insentif,
+            BigDecimal totalGaji,
+            BigDecimal dailyRate,
+            BigDecimal gajiTerkumpul,
+            BigDecimal potongan,
             BigDecimal total
     ) {
     }
@@ -51,56 +55,106 @@ public final class PayrollCalculator {
                 || status == AttendanceStatus.ALFA;
     }
 
+    /**
+     * Days of the month the salary has built up for: from the 1st (or join date)
+     * through the earliest of month end, resign date, and asOf (payday is the 1st,
+     * so a running month only pays up to today).
+     */
+    public static int workedDays(YearMonth month, LocalDate join, LocalDate resign, LocalDate asOf) {
+        LocalDate[] range = workedRange(month, join, resign, asOf);
+        if (range == null) {
+            return 0;
+        }
+        return (int) ChronoUnit.DAYS.between(range[0], range[1]) + 1;
+    }
+
+    /**
+     * Izin, sakit, and alfa count, and so does any worked day left unmarked once
+     * it has passed (treated as alfa). Today only counts after it is marked.
+     */
     public static int countAbsences(
             YearMonth month,
             LocalDate join,
             LocalDate resign,
+            LocalDate asOf,
             Map<LocalDate, AttendanceStatus> marks
     ) {
-        if (month == null || marks == null || marks.isEmpty()) {
+        LocalDate[] range = workedRange(month, join, resign, asOf);
+        if (range == null) {
             return 0;
         }
 
+        Map<LocalDate, AttendanceStatus> safeMarks = marks == null ? Map.of() : marks;
         int count = 0;
-        for (Map.Entry<LocalDate, AttendanceStatus> entry : marks.entrySet()) {
-            if (isChargeableAbsence(entry.getKey(), entry.getValue(), join, resign, month)) {
+        for (LocalDate date = range[0]; !date.isAfter(range[1]); date = date.plusDays(1)) {
+            AttendanceStatus status = safeMarks.get(date);
+            boolean absent = status == null
+                    ? asOf == null || date.isBefore(asOf)
+                    : countsAsAbsence(status);
+            if (absent) {
                 count++;
             }
         }
         return count;
     }
 
+    // From the 1st (or join) to the earliest of month end, resign, and asOf
+    private static LocalDate[] workedRange(YearMonth month, LocalDate join, LocalDate resign, LocalDate asOf) {
+        if (month == null) {
+            return null;
+        }
+
+        LocalDate start = month.atDay(1);
+        if (join != null && join.isAfter(start)) {
+            start = join;
+        }
+        LocalDate end = month.atEndOfMonth();
+        if (resign != null && resign.isBefore(end)) {
+            end = resign;
+        }
+        if (asOf != null && asOf.isBefore(end)) {
+            end = asOf;
+        }
+        return end.isBefore(start) ? null : new LocalDate[] {start, end};
+    }
+
+    /**
+     * Total gaji = pokok + makan + insentif, earned per day of the month. Absences
+     * past the free four cost one daily rate each, on the whole total.
+     */
     public static Result calculate(Input input) {
         int days = input == null || input.daysInMonth() < 1 ? 1 : input.daysInMonth();
+        int worked = input == null ? 0 : Math.min(Math.max(input.workedDays(), 0), days);
         BigDecimal pokok = money(input == null ? null : input.gajiPokok());
         BigDecimal makan = money(input == null ? null : input.uangMakan());
         BigDecimal insentif = money(input == null ? null : input.insentif());
+        BigDecimal totalGaji = pokok.add(makan).add(insentif);
         int absences = input == null ? 0 : Math.max(input.absenceCount(), 0);
         int deducted = Math.max(0, absences - FREE_ABSENCE_DAYS);
-        BigDecimal daily = pokok.divide(BigDecimal.valueOf(days), 0, RoundingMode.HALF_UP);
+        BigDecimal daily = totalGaji.divide(BigDecimal.valueOf(days), 0, RoundingMode.HALF_UP);
+        // A full month pays the exact total, not a rounded daily rate times days
+        BigDecimal terkumpul = worked == days
+                ? totalGaji
+                : daily.multiply(BigDecimal.valueOf(worked));
         BigDecimal potongan = daily.multiply(BigDecimal.valueOf(deducted));
-        if (potongan.compareTo(pokok) > 0) {
-            potongan = pokok;
+        if (potongan.compareTo(terkumpul) > 0) {
+            potongan = terkumpul;
         }
-        BigDecimal dibayar = pokok.subtract(potongan);
-        BigDecimal total = dibayar.add(makan).add(insentif);
-        return new Result(days, absences, deducted, daily, potongan, pokok, dibayar, makan, insentif, total);
-    }
-
-    private static boolean isChargeableAbsence(
-            LocalDate date,
-            AttendanceStatus status,
-            LocalDate join,
-            LocalDate resign,
-            YearMonth month
-    ) {
-        if (date == null || !countsAsAbsence(status) || !YearMonth.from(date).equals(month)) {
-            return false;
-        }
-        if (join != null && date.isBefore(join)) {
-            return false;
-        }
-        return resign == null || !date.isAfter(resign);
+        BigDecimal total = terkumpul.subtract(potongan);
+        return new Result(
+                days,
+                worked,
+                absences,
+                deducted,
+                pokok,
+                makan,
+                insentif,
+                totalGaji,
+                daily,
+                terkumpul,
+                potongan,
+                total
+        );
     }
 
     private static BigDecimal money(BigDecimal value) {

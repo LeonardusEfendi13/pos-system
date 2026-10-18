@@ -1,7 +1,6 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Enum.EnumRole.Roles;
-import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.ClientRoleEntity;
 import com.pos.posApps.Entity.RoleMenuGrantEntity;
 import com.pos.posApps.Repository.AccountRepository;

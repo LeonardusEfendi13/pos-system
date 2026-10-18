@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -187,61 +188,50 @@ public class RestControllerStaff {
         }
         try {
             YearMonth window = payrollService.window(month, year);
-            List<PayrollRowDTO> rows = payrollService.saved(account.getClientEntity().getClientId(), window);
-            return ResponseEntity.ok(monthResponse(account, window, !rows.isEmpty(), rows));
+            LocalDate today = LocalDate.now();
+            List<PayrollRowDTO> rows = payrollService.rows(account.getClientEntity().getClientId(), window, today);
+            return ResponseEntity.ok(new PayrollMonthResponse(
+                    window.getMonthValue(),
+                    window.getYear(),
+                    today,
+                    account.getRole().name(),
+                    account.getName(),
+                    rows
+            ));
         } catch (StaffRuleException exception) {
             return ResponseEntity.status(BAD_REQUEST).build();
         }
     }
 
-    @PostMapping("/payroll/preview")
-    public ResponseEntity<?> preview(HttpSession session, @RequestBody PayrollMonthRequest request) {
-        AccountEntity account = requireAccount(session);
-        if (account == null) {
-            return ResponseEntity.status(UNAUTHORIZED)
-                    .body(new ResponseInBoolean(false, "Harap login ulang"));
-        }
-        try {
-            YearMonth window = payrollService.window(
-                    request == null ? null : request.getMonth(),
-                    request == null ? null : request.getYear()
-            );
-            List<PayrollRowDTO> rows = payrollService.preview(account.getClientEntity().getClientId(), window);
-            return ResponseEntity.ok(monthResponse(account, window, false, rows));
-        } catch (StaffRuleException exception) {
-            return rule(exception);
-        }
-    }
-
-    @PostMapping("/payroll")
-    public ResponseEntity<ResponseInBoolean> savePayroll(
+    @PostMapping("/payroll/pay")
+    public ResponseEntity<ResponseInBoolean> payPayroll(
             HttpSession session,
             @RequestBody PayrollMonthRequest request
     ) {
         return mutate(session, account -> {
-            YearMonth window = payrollService.window(
-                    request == null ? null : request.getMonth(),
-                    request == null ? null : request.getYear()
-            );
-            payrollService.save(account.getClientEntity(), window);
-            return new ResponseInBoolean(true, "Payroll bulan ini disimpan");
+            YearMonth window = payrollWindow(request);
+            payrollService.markPaid(account.getClientEntity(), request.getStaffId(), window, LocalDate.now());
+            return new ResponseInBoolean(true, "Gaji ditandai sudah dibayar");
         });
     }
 
-    private PayrollMonthResponse monthResponse(
-            AccountEntity account,
-            YearMonth window,
-            boolean saved,
-            List<PayrollRowDTO> rows
+    @PostMapping("/payroll/unpay")
+    public ResponseEntity<ResponseInBoolean> unpayPayroll(
+            HttpSession session,
+            @RequestBody PayrollMonthRequest request
     ) {
-        return new PayrollMonthResponse(
-                window.getMonthValue(),
-                window.getYear(),
-                saved,
-                account.getRole().name(),
-                account.getName(),
-                rows
-        );
+        return mutate(session, account -> {
+            YearMonth window = payrollWindow(request);
+            payrollService.cancelPaid(account.getClientEntity().getClientId(), request.getStaffId(), window);
+            return new ResponseInBoolean(true, "Pembayaran gaji dibatalkan");
+        });
+    }
+
+    private YearMonth payrollWindow(PayrollMonthRequest request) {
+        if (request == null) {
+            throw new StaffRuleException("Data payroll tidak lengkap");
+        }
+        return payrollService.window(request.getMonth(), request.getYear());
     }
 
     private ResponseEntity<ResponseInBoolean> mutate(

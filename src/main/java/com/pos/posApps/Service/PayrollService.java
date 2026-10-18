@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,102 +35,137 @@ public class PayrollService {
         return YearMonth.of(year, month);
     }
 
-    public List<PayrollRowDTO> preview(Long clientId, YearMonth month) {
+    /** Always calculated live from current staff and attendance, up to today. */
+    public List<PayrollRowDTO> rows(Long clientId, YearMonth month, LocalDate today) {
         Map<Long, Map<LocalDate, AttendanceStatus>> marks = attendanceService.marksFor(clientId, month);
+        Map<Long, LocalDateTime> paidAt = new HashMap<>();
+        for (PayrollEntity entity : liveRows(clientId, month)) {
+            if (entity.getStaffEntity() != null && entity.getPaidAt() != null) {
+                paidAt.put(entity.getStaffEntity().getStaffId(), entity.getPaidAt());
+            }
+        }
+
         List<PayrollRowDTO> rows = new ArrayList<>();
         for (StaffEntity staff : attendanceService.employed(clientId, month)) {
-            rows.add(calculate(staff, month, marks.getOrDefault(staff.getStaffId(), Map.of())));
+            PayrollCalculator.Result result = calculate(
+                    staff,
+                    month,
+                    today,
+                    marks.getOrDefault(staff.getStaffId(), Map.of())
+            );
+            rows.add(toRow(staff, result, paidAt.get(staff.getStaffId())));
         }
         return rows;
     }
 
-    public List<PayrollRowDTO> saved(Long clientId, YearMonth month) {
-        return payrollRepository
-                .findByClientEntity_ClientIdAndPayrollYearAndPayrollMonthAndDeletedAtIsNull(
+    @Transactional
+    public void markPaid(ClientEntity client, Long staffId, YearMonth month, LocalDate today) {
+        Long clientId = client.getClientId();
+        StaffEntity staff = employedStaff(clientId, staffId, month);
+        PayrollEntity entity = payrollRepository
+                .findFirstByClientEntity_ClientIdAndStaffEntity_StaffIdAndPayrollYearAndPayrollMonthAndDeletedAtIsNull(
                         clientId,
+                        staffId,
                         month.getYear(),
                         month.getMonthValue()
                 )
-                .stream()
-                .map(this::fromEntity)
-                .sorted(Comparator.comparing(row -> row.getNama() == null ? "" : row.getNama(), String.CASE_INSENSITIVE_ORDER))
-                .toList();
+                .orElse(null);
+        if (entity != null && entity.getPaidAt() != null) {
+            throw new StaffRuleException("Gaji " + staff.getNama() + " sudah ditandai dibayar");
+        }
+        if (entity == null) {
+            entity = new PayrollEntity();
+            entity.setClientEntity(client);
+            entity.setStaffEntity(staff);
+            entity.setPayrollMonth(month.getMonthValue());
+            entity.setPayrollYear(month.getYear());
+        }
+
+        Map<LocalDate, AttendanceStatus> marks = attendanceService
+                .marksFor(clientId, month)
+                .getOrDefault(staffId, Map.of());
+        PayrollCalculator.Result result = calculate(staff, month, today, marks);
+        entity.setStaffName(staff.getNama());
+        entity.setDaysInMonth(result.daysInMonth());
+        entity.setAbsenceCount(result.absenceCount());
+        entity.setDeductedDays(result.deductedDays());
+        entity.setDailyRate(result.dailyRate());
+        entity.setGajiPokok(result.gajiPokok());
+        entity.setUangMakan(result.uangMakan());
+        entity.setInsentif(result.insentif());
+        entity.setPotongan(result.potongan());
+        // Legacy column: now holds the earned total before deductions
+        entity.setGajiPokokDibayar(result.gajiTerkumpul());
+        entity.setTotalPayroll(result.total());
+        entity.setPaidAt(LocalDateTime.now());
+        payrollRepository.save(entity);
     }
 
     @Transactional
-    public List<PayrollRowDTO> save(ClientEntity client, YearMonth month) {
-        Long clientId = client.getClientId();
-        List<StaffEntity> staffRows = attendanceService.employed(clientId, month);
-        if (staffRows.isEmpty()) {
-            throw new StaffRuleException("Tidak ada karyawan pada bulan ini");
-        }
-
-        Map<Long, Map<LocalDate, AttendanceStatus>> marks = attendanceService.marksFor(clientId, month);
-        List<PayrollEntity> liveRows = payrollRepository
-                .findByClientEntity_ClientIdAndPayrollYearAndPayrollMonthAndDeletedAtIsNull(
+    public void cancelPaid(Long clientId, Long staffId, YearMonth month) {
+        PayrollEntity entity = payrollRepository
+                .findFirstByClientEntity_ClientIdAndStaffEntity_StaffIdAndPayrollYearAndPayrollMonthAndDeletedAtIsNull(
                         clientId,
+                        staffId,
                         month.getYear(),
                         month.getMonthValue()
-                );
-        Map<Long, PayrollEntity> byStaff = new HashMap<>();
-        for (PayrollEntity row : liveRows) {
-            if (row.getStaffEntity() != null && row.getStaffEntity().getStaffId() != null) {
-                byStaff.put(row.getStaffEntity().getStaffId(), row);
-            }
+                )
+                .orElse(null);
+        if (entity == null || entity.getPaidAt() == null) {
+            throw new StaffRuleException("Gaji karyawan ini belum ditandai dibayar");
         }
-
-        LocalDateTime now = LocalDateTime.now();
-        List<PayrollRowDTO> calculated = new ArrayList<>();
-        for (StaffEntity staff : staffRows) {
-            PayrollRowDTO row = calculate(staff, month, marks.getOrDefault(staff.getStaffId(), Map.of()));
-            PayrollEntity entity = byStaff.remove(staff.getStaffId());
-            if (entity == null) {
-                entity = new PayrollEntity();
-                entity.setClientEntity(client);
-                entity.setStaffEntity(staff);
-                entity.setPayrollMonth(month.getMonthValue());
-                entity.setPayrollYear(month.getYear());
-            }
-            entity.setStaffName(row.getNama());
-            entity.setDaysInMonth(row.getDaysInMonth());
-            entity.setAbsenceCount(row.getAbsenceCount());
-            entity.setDeductedDays(row.getDeductedDays());
-            entity.setDailyRate(row.getDailyRate());
-            entity.setGajiPokok(row.getGajiPokok());
-            entity.setUangMakan(row.getUangMakan());
-            entity.setInsentif(row.getInsentif());
-            entity.setPotongan(row.getPotongan());
-            entity.setGajiPokokDibayar(row.getGajiPokokDibayar());
-            entity.setTotalPayroll(row.getTotal());
-            entity.setDeletedAt(null);
-            payrollRepository.save(entity);
-            calculated.add(row);
-        }
-        for (PayrollEntity leftover : byStaff.values()) {
-            leftover.setDeletedAt(now);
-            payrollRepository.save(leftover);
-        }
-        return calculated;
+        entity.setPaidAt(null);
+        payrollRepository.save(entity);
     }
 
-    private PayrollRowDTO calculate(
+    private List<PayrollEntity> liveRows(Long clientId, YearMonth month) {
+        return payrollRepository.findByClientEntity_ClientIdAndPayrollYearAndPayrollMonthAndDeletedAtIsNull(
+                clientId,
+                month.getYear(),
+                month.getMonthValue()
+        );
+    }
+
+    private StaffEntity employedStaff(Long clientId, Long staffId, YearMonth month) {
+        if (staffId == null) {
+            throw new StaffRuleException("Karyawan tidak ditemukan", true);
+        }
+        return attendanceService.employed(clientId, month).stream()
+                .filter(staff -> staffId.equals(staff.getStaffId()))
+                .findFirst()
+                .orElseThrow(() -> new StaffRuleException("Karyawan tidak bekerja pada bulan ini", true));
+    }
+
+    private PayrollCalculator.Result calculate(
             StaffEntity staff,
             YearMonth month,
+            LocalDate today,
             Map<LocalDate, AttendanceStatus> marks
     ) {
+        int worked = PayrollCalculator.workedDays(
+                month,
+                staff.getTanggalJoin(),
+                staff.getTanggalResign(),
+                today
+        );
         int absences = PayrollCalculator.countAbsences(
                 month,
                 staff.getTanggalJoin(),
                 staff.getTanggalResign(),
+                today,
                 marks
         );
-        PayrollCalculator.Result result = PayrollCalculator.calculate(new PayrollCalculator.Input(
+        return PayrollCalculator.calculate(new PayrollCalculator.Input(
                 staff.getGajiPokok(),
                 staff.getUangMakan(),
                 staff.getInsentif(),
                 month.lengthOfMonth(),
+                worked,
                 absences
         ));
+    }
+
+    private PayrollRowDTO toRow(StaffEntity staff, PayrollCalculator.Result result, LocalDateTime paidAt) {
         return new PayrollRowDTO(
                 staff.getStaffId(),
                 staff.getNama(),
@@ -139,34 +173,16 @@ public class PayrollService {
                 result.gajiPokok(),
                 result.uangMakan(),
                 result.insentif(),
+                result.totalGaji(),
                 result.daysInMonth(),
+                result.workedDays(),
                 result.absenceCount(),
                 result.deductedDays(),
                 result.dailyRate(),
+                result.gajiTerkumpul(),
                 result.potongan(),
-                result.gajiPokokDibayar(),
-                result.total()
-        );
-    }
-
-    private PayrollRowDTO fromEntity(PayrollEntity entity) {
-        StaffEntity staff = entity.getStaffEntity();
-        Long staffId = staff == null ? null : staff.getStaffId();
-        String jabatan = staff == null || staff.getJabatan() == null ? "" : staff.getJabatan().name();
-        return new PayrollRowDTO(
-                staffId,
-                entity.getStaffName(),
-                jabatan,
-                entity.getGajiPokok(),
-                entity.getUangMakan(),
-                entity.getInsentif(),
-                entity.getDaysInMonth(),
-                entity.getAbsenceCount(),
-                entity.getDeductedDays(),
-                entity.getDailyRate(),
-                entity.getPotongan(),
-                entity.getGajiPokokDibayar(),
-                entity.getTotalPayroll()
+                result.total(),
+                paidAt
         );
     }
 }

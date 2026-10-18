@@ -74,6 +74,10 @@ public class PayrollEntity {
     @Column(name = "total_payroll")
     private BigDecimal totalPayroll;
 
+    // Null until the month's salary is marked paid; the row keeps a snapshot
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -37,6 +37,7 @@ public class StaffAttendanceService {
                     month,
                     staff.getTanggalJoin(),
                     staff.getTanggalResign(),
+                    LocalDate.now(),
                     staffMarks
             );
             Map<Integer, String> byDay = new HashMap<>();
@@ -66,9 +67,13 @@ public class StaffAttendanceService {
             throw new StaffRuleException("Tidak ada perubahan absensi");
         }
 
+        LocalDate today = LocalDate.now();
         for (AttendanceItemRequest item : items) {
             if (item == null || item.getStaffId() == null || item.getDate() == null) {
                 throw new StaffRuleException("Data absensi tidak lengkap");
+            }
+            if (item.getDate().isAfter(today)) {
+                throw new StaffRuleException("Absensi tidak bisa diisi untuk tanggal yang akan datang");
             }
             StaffEntity staff = staffRepository
                     .findByStaffIdAndDeletedAtIsNullAndClientEntity_ClientId(item.getStaffId(), clientId)

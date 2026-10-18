@@ -559,7 +559,7 @@ public class ProductService {
                 .toList());
     }
 
-    private List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
+    public List<ProductEntity> fallbackSearch(Long clientId, String keyword, String field) {
         if ("shortName".equalsIgnoreCase(field)) {
             return productRepository.findByShortNameContaining(clientId, keyword);
         } else if ("fullName".equalsIgnoreCase(field)) {
