@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -21,4 +22,6 @@ public class LaporanPenjualanPerBarangDTO {
     private BigDecimal transferAmount;
     private BigDecimal qrisAmount;
     private BigDecimal creditAmount;
+    // Per type, then per method; the four amounts above stay for the PDFs
+    private List<LaporanPaymentTypeDTO> payments;
 }

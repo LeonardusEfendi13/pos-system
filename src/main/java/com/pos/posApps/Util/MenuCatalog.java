@@ -32,6 +32,7 @@ public final class MenuCatalog {
             new Entry("laporan.penjualan.pelanggan", "/laporan/penjualan/pelanggan"),
             new Entry("laporan.penjualan.barang", "/laporan/penjualan/barang"),
             new Entry("laporan.penjualan.hutang", "/laporan/penjualan/hutang"),
+            new Entry("laporan.penjualan.dihapus", "/laporan/penjualan/dihapus"),
             new Entry("laporan.pembelian", "/laporan/pembelian"),
             new Entry("laporan.pembelian.periode", "/laporan/pembelian/periode"),
             new Entry("laporan.pembelian.supplier", "/laporan/pembelian/supplier"),

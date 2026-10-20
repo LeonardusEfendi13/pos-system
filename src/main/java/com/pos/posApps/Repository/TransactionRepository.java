@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -187,6 +188,18 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                             THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
                         ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
                     END AS method_type,
+                    CASE
+                        WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                        WHEN tp.transaction_payment_id IS NOT NULL
+                            THEN COALESCE(NULLIF(tp.payment_type_name, ''), 'Cash')
+                        ELSE COALESCE(NULLIF(t.payment_type_name, ''), 'Cash')
+                    END AS type_name,
+                    CASE
+                        WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                        WHEN tp.transaction_payment_id IS NOT NULL
+                            THEN COALESCE(NULLIF(tp.payment_method_name, ''), NULLIF(tp.payment_type_name, ''), 'Cash')
+                        ELSE COALESCE(NULLIF(t.payment_method_name, ''), NULLIF(t.payment_type_name, ''), 'Cash')
+                    END AS method_name,
                     SUM(
                         CASE
                             WHEN t.is_cash = FALSE THEN COALESCE(t.total_price, 0)
@@ -201,7 +214,7 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                 WHERE t.client_id = :clientId
                   AND t.deleted_at IS NULL
                   AND t.created_at BETWEEN :startDate AND :endDate
-                GROUP BY 1, 2
+                GROUP BY 1, 2, 3, 4
             """, nativeQuery = true)
     List<Object[]> getLaporanPenjualanMetodePerPelangganRaw(
             Long clientId,
@@ -287,6 +300,18 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                         THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
                     ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
                 END AS method_type,
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS type_name,
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_method_name, ''), NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_method_name, ''), NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS method_name,
                 SUM(
                     CASE
                         WHEN t.is_cash = FALSE THEN COALESCE(t.total_price, 0)
@@ -307,7 +332,7 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
               AND t.deleted_at IS NULL
               AND t.created_at BETWEEN :startDate AND :endDate
               AND (:customerId IS NULL OR t.customer_id = :customerId)
-            GROUP BY 1, 2
+            GROUP BY 1, 2, 3, 4
             ORDER BY 1 DESC
             """, nativeQuery = true)
     List<Object[]> getLaporanPenjualanMetodePerWaktuRaw(
@@ -374,6 +399,94 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             @Param("paid") Boolean paid,
             @Param("search") String search,
             Pageable pageable
+    );
+
+    // Deleted sales: their detail lines are soft-deleted with them, so the
+    // product search does not filter detail deletedAt
+    String PENJUALAN_DELETED_WHERE = """
+            WHERE t.clientEntity.clientId = :clientId
+              AND t.deletedAt IS NOT NULL
+              AND t.createdAt BETWEEN :startDate AND :endDate
+              AND (:cash IS NULL OR t.isCash = :cash)
+              AND (:paid IS NULL OR t.isPaid = :paid)
+              AND (
+                :search = ''
+                OR LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR EXISTS (
+                  SELECT 1 FROM TransactionDetailEntity d
+                  WHERE d.transactionEntity = t
+                    AND (
+                      LOWER(d.shortName) LIKE LOWER(CONCAT('%', :search, '%'))
+                      OR LOWER(d.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    )
+                )
+              )
+            """;
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+                    "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)"
+    )
+    Page<TransactionEntity> findPenjualanDeletedPage(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("customerId") Long customerId,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
+    @Query(
+            value = "SELECT t FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds",
+            countQuery = "SELECT COUNT(t) FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+                    "AND t.customerEntity.customerId NOT IN :excludeCustomerIds"
+    )
+    Page<TransactionEntity> findPenjualanDeletedPageExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query("SELECT COALESCE(SUM(t.totalPrice), 0) FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+            "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)")
+    BigDecimal sumPenjualanDeleted(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("customerId") Long customerId,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search
+    );
+
+    @Query("SELECT COALESCE(SUM(t.totalPrice), 0) FROM TransactionEntity t " + PENJUALAN_DELETED_WHERE +
+            "AND t.customerEntity.customerId NOT IN :excludeCustomerIds")
+    BigDecimal sumPenjualanDeletedExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("search") String search
+    );
+
+    Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNotNull(
+            Long clientId,
+            Long transactionId
     );
 
     Optional<TransactionEntity> findFirstByClientEntity_ClientIdAndTransactionNumberAndDeletedAtIsNull(

@@ -6,8 +6,10 @@ import com.pos.posApps.DTO.Dtos.ResponseInBoolean;
 import com.pos.posApps.Entity.ClientEntity;
 import com.pos.posApps.Entity.IndenEntity;
 import com.pos.posApps.Entity.PaymentMethodEntity;
+import com.pos.posApps.Entity.PaymentTypeEntity;
 import com.pos.posApps.Entity.TransactionEntity;
 import com.pos.posApps.Repository.PaymentMethodRepository;
+import com.pos.posApps.Repository.PaymentTypeRepository;
 import com.pos.posApps.Util.PaymentMethodRules;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,9 @@ public class PaymentMethodService {
     @Autowired
     private PaymentMethodRepository paymentMethodRepository;
 
+    @Autowired
+    private PaymentTypeRepository paymentTypeRepository;
+
     public List<PaymentMethodDTO> list(Long clientId) {
         return paymentMethodRepository
                 .findByClientEntity_ClientIdAndDeletedAtIsNullOrderByPaymentMethodIdAsc(clientId)
@@ -30,9 +35,14 @@ public class PaymentMethodService {
     }
 
     public ResponseInBoolean create(ClientEntity client, PaymentMethodRequest request) {
+        PaymentTypeEntity type = resolveType(client.getClientId(), request);
+        if (type == null) {
+            return new ResponseInBoolean(false, "Tipe pembayaran tidak ditemukan");
+        }
+
         String error = PaymentMethodRules.validate(
                 request.getName(),
-                request.getMethodType(),
+                type.getBehavior(),
                 request.getRekening(),
                 false,
                 null
@@ -43,7 +53,7 @@ public class PaymentMethodService {
 
         PaymentMethodEntity entity = new PaymentMethodEntity();
         entity.setClientEntity(client);
-        apply(entity, request, false);
+        apply(entity, request, type, false);
         paymentMethodRepository.save(entity);
         return new ResponseInBoolean(true, "Metode pembayaran berhasil disimpan");
     }
@@ -56,9 +66,14 @@ public class PaymentMethodService {
             return new ResponseInBoolean(false, "Metode pembayaran tidak ditemukan");
         }
 
+        PaymentTypeEntity type = resolveType(clientId, request);
+        if (type == null) {
+            return new ResponseInBoolean(false, "Tipe pembayaran tidak ditemukan");
+        }
+
         String error = PaymentMethodRules.validate(
                 request.getName(),
-                request.getMethodType(),
+                type.getBehavior(),
                 request.getRekening(),
                 entity.isSystemDefault(),
                 entity.getMethodType()
@@ -67,7 +82,7 @@ public class PaymentMethodService {
             return new ResponseInBoolean(false, error);
         }
 
-        apply(entity, request, entity.isSystemDefault());
+        apply(entity, request, type, entity.isSystemDefault());
         paymentMethodRepository.save(entity);
         return new ResponseInBoolean(true, "Metode pembayaran berhasil disimpan");
     }
@@ -107,6 +122,7 @@ public class PaymentMethodService {
         transaction.setPaymentMethodName(method.getName());
         transaction.setPaymentMethodType(method.getMethodType());
         transaction.setPaymentMethodRekening(method.getRekening() == null ? "" : method.getRekening());
+        transaction.setPaymentTypeName(typeName(method));
     }
 
     public void copyToInden(IndenEntity inden, PaymentMethodEntity method) {
@@ -114,13 +130,50 @@ public class PaymentMethodService {
         inden.setPaymentMethodName(method.getName());
         inden.setPaymentMethodType(method.getMethodType());
         inden.setPaymentMethodRekening(method.getRekening() == null ? "" : method.getRekening());
+        inden.setPaymentTypeName(typeName(method));
     }
 
-    private void apply(PaymentMethodEntity entity, PaymentMethodRequest request, boolean systemDefault) {
-        String type = systemDefault ? "cash" : PaymentMethodRules.normalizeType(request.getMethodType());
+    // Snapshot of the method's type name for report grouping
+    public String typeName(PaymentMethodEntity method) {
+        PaymentTypeEntity type = method.getPaymentTypeEntity();
+        if (type != null && type.getName() != null && !type.getName().isBlank()) {
+            return type.getName();
+        }
+
+        return switch (PaymentMethodRules.normalizeType(method.getMethodType())) {
+            case "transfer" -> "Transfer";
+            case "qris" -> "QRIS";
+            case "credit" -> "Kredit";
+            default -> "Cash";
+        };
+    }
+
+    private PaymentTypeEntity resolveType(Long clientId, PaymentMethodRequest request) {
+        if (request.getPaymentTypeId() != null) {
+            return paymentTypeRepository
+                    .findByPaymentTypeIdAndClientEntity_ClientIdAndDeletedAtIsNull(request.getPaymentTypeId(), clientId)
+                    .orElse(null);
+        }
+
+        return paymentTypeRepository
+                .findFirstByClientEntity_ClientIdAndBehaviorAndDeletedAtIsNullOrderByPaymentTypeIdAsc(
+                        clientId,
+                        PaymentMethodRules.normalizeType(request.getMethodType())
+                )
+                .orElse(null);
+    }
+
+    private void apply(
+            PaymentMethodEntity entity,
+            PaymentMethodRequest request,
+            PaymentTypeEntity type,
+            boolean systemDefault
+    ) {
+        String behavior = type.getBehavior();
         entity.setName(request.getName().trim());
-        entity.setMethodType(type);
-        entity.setRekening(PaymentMethodRules.rekeningFor(type, request.getRekening()));
+        entity.setPaymentTypeEntity(type);
+        entity.setMethodType(behavior);
+        entity.setRekening(PaymentMethodRules.rekeningFor(behavior, request.getRekening()));
         entity.setSystemDefault(systemDefault);
     }
 
@@ -129,6 +182,8 @@ public class PaymentMethodService {
                 entity.getPaymentMethodId(),
                 entity.getName(),
                 entity.getMethodType(),
+                entity.getPaymentTypeEntity() == null ? null : entity.getPaymentTypeEntity().getPaymentTypeId(),
+                typeName(entity),
                 entity.getRekening() == null ? "" : entity.getRekening(),
                 entity.isSystemDefault()
         );

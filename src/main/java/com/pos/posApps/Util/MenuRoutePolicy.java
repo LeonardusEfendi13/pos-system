@@ -123,6 +123,7 @@ public final class MenuRoutePolicy {
                 rule(null, "/api/laporan/pendapatan/pelanggan", "laporan.penjualan.pelanggan"),
                 rule(null, "/api/laporan/pendapatan/barang", "laporan.penjualan.barang"),
                 rule(null, "/api/laporan/penjualan/hutang", "laporan.penjualan.hutang"),
+                rule(null, "/api/laporan/penjualan/dihapus", "laporan.penjualan.dihapus"),
                 rule(null, "/api/laporan/pengeluaran/periode", "laporan.pembelian.periode"),
                 rule(null, "/api/laporan/pengeluaran/pelanggan", "laporan.pembelian.supplier"),
                 rule(null, "/laporan/nilai_persediaan", "laporan.nilai-persediaan"),

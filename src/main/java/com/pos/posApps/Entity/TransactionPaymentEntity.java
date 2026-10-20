@@ -47,6 +47,9 @@ public class TransactionPaymentEntity {
     @Column(name = "payment_method_rekening")
     private String paymentMethodRekening;
 
+    @Column(name = "payment_type_name")
+    private String paymentTypeName;
+
     @Column(name = "amount")
     private BigDecimal amount;
 

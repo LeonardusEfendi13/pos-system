@@ -219,6 +219,10 @@ public class ProductService {
     //for non master products
     public Page<ProductDTO> getProductData(Long clientId, Pageable pageable, Long supplierId, Boolean isPurchasing) {
         Page<ProductEntity> productData = productRepository.findAllWithPricesByClientId(clientId, pageable, supplierId, null);
+        if (!Boolean.TRUE.equals(isPurchasing)) {
+            return markPage(clientId, productData.map(this::convertToDTO));
+        }
+        // Price list lookups are only needed to suggest a purchase price
         productData.getContent().forEach(product -> {
             SuggestedPricesDTO priceDto = priceListService.getSuggestedPriceByPartNumber(product.getShortName());
             String supplierPriceStr = priceDto.getBasicPrice();

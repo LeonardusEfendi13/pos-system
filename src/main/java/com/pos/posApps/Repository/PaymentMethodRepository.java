@@ -21,4 +21,8 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethodEnti
     Optional<PaymentMethodEntity> findFirstByClientEntity_ClientIdAndSystemDefaultTrueAndDeletedAtIsNull(
             Long clientId
     );
+
+    List<PaymentMethodEntity> findByPaymentTypeEntity_PaymentTypeIdAndDeletedAtIsNull(Long paymentTypeId);
+
+    boolean existsByPaymentTypeEntity_PaymentTypeIdAndDeletedAtIsNull(Long paymentTypeId);
 }

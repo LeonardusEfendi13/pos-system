@@ -69,7 +69,7 @@ public class LaporanPendapatanPeriodePdfExporter {
                     "Total Pendapatan Kotor",
                     "Total Pendapatan Bersih",
                     "Cash",
-                    "TF",
+                    "Transfer",
                     "QRIS",
                     "Kredit"
             };

@@ -80,6 +80,9 @@ public class IndenEntity {
     @Column(name = "payment_method_rekening")
     private String paymentMethodRekening;
 
+    @Column(name = "payment_type_name")
+    private String paymentTypeName;
+
     @Column(name = "bukti_original_name")
     private String buktiOriginalName;
 

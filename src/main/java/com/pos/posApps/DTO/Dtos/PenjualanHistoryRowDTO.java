@@ -33,4 +33,5 @@ public class PenjualanHistoryRowDTO {
     private BigDecimal transferAmount;
     private BigDecimal qrisAmount;
     private BigDecimal creditAmount;
+    private LocalDateTime deletedAt;
 }

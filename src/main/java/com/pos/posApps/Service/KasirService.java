@@ -49,6 +49,9 @@ public class KasirService {
     PaymentMethodService paymentMethodService;
 
     @Autowired
+    PaymentTypeService paymentTypeService;
+
+    @Autowired
     TransactionPaymentRepository transactionPaymentRepository;
 
     private ResponseInBoolean applyPaymentMethod(
@@ -71,6 +74,7 @@ public class KasirService {
         transaction.setPaymentMethodName(null);
         transaction.setPaymentMethodType(null);
         transaction.setPaymentMethodRekening(null);
+        transaction.setPaymentTypeName(null);
     }
 
     private TransactionPaymentEntity paymentRow(
@@ -85,6 +89,7 @@ public class KasirService {
         row.setPaymentMethodName(method.getName());
         row.setPaymentMethodType(method.getMethodType());
         row.setPaymentMethodRekening(method.getRekening() == null ? "" : method.getRekening());
+        row.setPaymentTypeName(paymentMethodService.typeName(method));
         row.setAmount(amount);
         row.setSortOrder(sortOrder);
         return row;
@@ -209,6 +214,7 @@ public class KasirService {
         }
 
         clearPaymentMethod(transaction);
+        transaction.setPaymentTypeName(paymentTypeService.creditTypeName(clientId));
         return new ResponseInBoolean(true, "");
     }
 

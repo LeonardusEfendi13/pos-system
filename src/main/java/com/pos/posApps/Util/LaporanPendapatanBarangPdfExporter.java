@@ -79,7 +79,7 @@ public class LaporanPendapatanBarangPdfExporter {
                     "Omzet",
                     "Laba",
                     "Cash",
-                    "TF",
+                    "Transfer",
                     "QRIS",
                     "Kredit"
             };

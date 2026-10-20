@@ -5,15 +5,18 @@ import com.lowagie.text.Font;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.Entity.PaymentTypeEntity;
 import com.pos.posApps.Entity.ProductEntity;
 import com.pos.posApps.Entity.PurchasingEntity;
 import com.pos.posApps.Entity.SupplierEntity;
+import com.pos.posApps.Repository.PaymentTypeRepository;
 import com.pos.posApps.Repository.ProductRepository;
 import com.pos.posApps.Repository.PurchasingRepository;
 import com.pos.posApps.Repository.SupplierRepository;
 import com.pos.posApps.Repository.TransactionDetailRepository;
 import com.pos.posApps.Repository.TransactionRepository;
 import com.pos.posApps.Util.LaporanPenjualanBarangView;
+import com.pos.posApps.Util.PaymentBreakdown;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -58,6 +61,22 @@ public class LaporanService {
     @Autowired
     SupplierRepository supplierRepository;
 
+    @Autowired
+    PaymentTypeRepository paymentTypeRepository;
+
+    // Report card order: the cash type first, the credit type last, others by id
+    private List<String> paymentTypeOrder(Long clientId) {
+        List<PaymentTypeEntity> types = paymentTypeRepository
+                .findByClientEntity_ClientIdAndDeletedAtIsNullOrderByPaymentTypeIdAsc(clientId);
+        List<String> order = new ArrayList<>();
+        types.stream().filter(type -> "cash".equals(type.getBehavior())).forEach(type -> order.add(type.getName()));
+        types.stream()
+                .filter(type -> !"cash".equals(type.getBehavior()) && !"credit".equals(type.getBehavior()))
+                .forEach(type -> order.add(type.getName()));
+        types.stream().filter(type -> "credit".equals(type.getBehavior())).forEach(type -> order.add(type.getName()));
+        return order;
+    }
+
     public String getTotalAsset(long clientId) {
         return formatRupiah(productRepository.sumInventoryValue(clientId));
 
@@ -81,6 +100,72 @@ public class LaporanService {
                 .toList();
 
         return new PageImpl<>(dtos, pageable, productIdsPage.getTotalElements());
+    }
+
+    private static final Map<String, String> NILAI_PERSEDIAAN_SORT = Map.of(
+            "shortName", "LOWER(p.short_name)",
+            "fullName", "LOWER(p.full_name)",
+            "qty", "p.stock",
+            "supplierPrice", "p.supplier_price",
+            "hargaJual", "harga_jual",
+            "totalPrice", "total_price"
+    );
+
+    // Filter, sort, and page in one query; the first price row is harga jual
+    public Page<LaporanNilaiPersediaanDTO> searchLaporanNilaiPersediaan(
+            long clientId,
+            String q,
+            String sort,
+            String dir,
+            Pageable pageable) {
+        String from = """
+                FROM product p
+                JOIN LATERAL (
+                    SELECT pp.price
+                    FROM product_prices pp
+                    WHERE pp.product_id = p.product_id
+                    ORDER BY pp.product_prices_id
+                    LIMIT 1
+                ) fp ON TRUE
+                WHERE p.client_id = ?
+                  AND p.deleted_at IS NULL
+                  AND (? = '' OR p.short_name ILIKE ? OR p.full_name ILIKE ?)
+                """;
+        String needle = q == null ? "" : q.trim();
+        String pattern = "%" + needle
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_") + "%";
+        Object[] filterArgs = {clientId, needle, pattern, pattern};
+
+        Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + from, Long.class, filterArgs);
+
+        // Map.of rejects null keys, and no sort is the default request
+        String orderColumn = sort == null
+                ? "LOWER(p.full_name)"
+                : NILAI_PERSEDIAAN_SORT.getOrDefault(sort, "LOWER(p.full_name)");
+        String orderDir = "desc".equalsIgnoreCase(dir) ? "DESC" : "ASC";
+        String sql = """
+                SELECT p.short_name,
+                       p.full_name,
+                       p.stock,
+                       p.supplier_price,
+                       COALESCE(fp.price, 0) AS harga_jual,
+                       COALESCE(p.stock, 0) * COALESCE(p.supplier_price, 0) AS total_price
+                """ + from + " ORDER BY " + orderColumn + " " + orderDir + ", p.product_id LIMIT ? OFFSET ?";
+
+        List<LaporanNilaiPersediaanDTO> rows = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new LaporanNilaiPersediaanDTO(
+                        rs.getString("short_name"),
+                        rs.getString("full_name"),
+                        rs.getObject("stock") == null ? null : rs.getLong("stock"),
+                        rs.getBigDecimal("supplier_price"),
+                        rs.getBigDecimal("harga_jual"),
+                        rs.getBigDecimal("total_price")),
+                clientId, needle, pattern, pattern, pageable.getPageSize(), pageable.getOffset());
+
+        return new PageImpl<>(rows, pageable, total == null ? 0 : total);
     }
 
 
@@ -111,7 +196,8 @@ public class LaporanService {
                                 BigDecimal.ZERO,
                                 BigDecimal.ZERO,
                                 BigDecimal.ZERO,
-                                BigDecimal.ZERO
+                                BigDecimal.ZERO,
+                                new ArrayList<>()
                         )
                 ));
 
@@ -119,6 +205,7 @@ public class LaporanService {
         List<Object[]> methodRows = transactionRepository.getLaporanPenjualanMetodePerWaktuRaw(
                 clientId, startDate, endDate, customerId, filter
         );
+        Map<String, PaymentBreakdown> breakdowns = new HashMap<>();
         for (Object[] row : methodRows) {
             String period = (String) row[0];
             LaporanPenjualanPerWaktuDTO dto = dbMap.computeIfAbsent(
@@ -130,11 +217,16 @@ public class LaporanService {
                             BigDecimal.ZERO,
                             BigDecimal.ZERO,
                             BigDecimal.ZERO,
-                            BigDecimal.ZERO
+                            BigDecimal.ZERO,
+                            new ArrayList<>()
                     )
             );
-            addMethodAmount(dto, row[1] == null ? "cash" : row[1].toString(), money(row[2]));
+            addMethodAmount(dto, row[1] == null ? "cash" : row[1].toString(), money(row[4]));
+            breakdowns.computeIfAbsent(period, key -> new PaymentBreakdown())
+                    .add(toText(row[2]), toText(row[3]), money(row[4]));
         }
+        List<String> typeOrder = paymentTypeOrder(clientId);
+        breakdowns.forEach((period, breakdown) -> dbMap.get(period).setPayments(breakdown.build(typeOrder)));
 
         List<String> allPeriods =
                 generateAllPeriods(startDate.toLocalDate(), endDate.toLocalDate(), filter);
@@ -155,7 +247,8 @@ public class LaporanService {
                                     BigDecimal.ZERO,
                                     BigDecimal.ZERO,
                                     BigDecimal.ZERO,
-                                    BigDecimal.ZERO
+                                    BigDecimal.ZERO,
+                                    new ArrayList<>()
                             )
                     )
             );
@@ -310,7 +403,8 @@ public class LaporanService {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    new ArrayList<>()
             ));
         }
 
@@ -318,6 +412,7 @@ public class LaporanService {
         for (LaporanPenjualanPerPelangganDTO dto : result) {
             byCustomer.put(dto.getCustomerId(), dto);
         }
+        Map<Long, PaymentBreakdown> breakdowns = new HashMap<>();
         for (Object[] methodRow : transactionRepository.getLaporanPenjualanMetodePerPelangganRaw(
                 clientId, startDate, endDate
         )) {
@@ -328,9 +423,14 @@ public class LaporanService {
             addCustomerMethodAmount(
                     dto,
                     methodRow[1] == null ? "cash" : methodRow[1].toString(),
-                    money(methodRow[2])
+                    money(methodRow[4])
             );
+            breakdowns.computeIfAbsent(dto.getCustomerId(), key -> new PaymentBreakdown())
+                    .add(toText(methodRow[2]), toText(methodRow[3]), money(methodRow[4]));
         }
+        List<String> typeOrder = paymentTypeOrder(clientId);
+        breakdowns.forEach((customerId, breakdown) ->
+                byCustomer.get(customerId).setPayments(breakdown.build(typeOrder)));
 
         return result;
     }
@@ -396,7 +496,8 @@ public class LaporanService {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    new ArrayList<>()
             ));
         }
 
@@ -404,6 +505,7 @@ public class LaporanService {
         for (LaporanPenjualanPerBarangDTO dto : rows) {
             byProduct.put(dto.getProductId(), dto);
         }
+        Map<Long, PaymentBreakdown> breakdowns = new HashMap<>();
         for (Object[] methodRow : transactionDetailRepository.findPenjualanMetodePerBarang(
                 clientId, startDate, endDate, supplierId
         )) {
@@ -411,12 +513,18 @@ public class LaporanService {
             if (dto == null) {
                 continue;
             }
+            BigDecimal amount = money(methodRow[4]).setScale(0, RoundingMode.HALF_UP);
             addProductMethodAmount(
                     dto,
                     methodRow[1] == null ? "cash" : methodRow[1].toString(),
-                    money(methodRow[2]).setScale(0, RoundingMode.HALF_UP)
+                    amount
             );
+            breakdowns.computeIfAbsent(dto.getProductId(), key -> new PaymentBreakdown())
+                    .add(toText(methodRow[2]), toText(methodRow[3]), amount);
         }
+        List<String> typeOrder = paymentTypeOrder(clientId);
+        breakdowns.forEach((productId, breakdown) ->
+                byProduct.get(productId).setPayments(breakdown.build(typeOrder)));
 
         return LaporanPenjualanBarangView.apply(rows, q, sort, dir);
     }

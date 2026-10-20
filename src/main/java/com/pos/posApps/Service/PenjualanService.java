@@ -452,7 +452,8 @@ public class PenjualanService {
                 amounts.cash(),
                 amounts.transfer(),
                 amounts.qris(),
-                amounts.credit()
+                amounts.credit(),
+                transaction.getDeletedAt()
         );
     }
 
@@ -503,11 +504,70 @@ public class PenjualanService {
 
     @Transactional
     public PenjualanDTO getPenjualanDataById(Long clientId, Long penjualanId) {
-        Optional<TransactionEntity> transactionsOpt = transactionRepository.findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, penjualanId);
-        if (transactionsOpt.isEmpty()) {
-            return null;
+        return transactionRepository
+                .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNull(clientId, penjualanId)
+                .map(transaction -> toPenjualanDto(clientId, transaction))
+                .orElse(null);
+    }
+
+    // Preview for the Penjualan Dihapus report; riwayat cannot open deleted sales
+    public PenjualanDTO getDeletedPenjualanDataById(Long clientId, Long penjualanId) {
+        return transactionRepository
+                .findFirstByClientEntity_ClientIdAndTransactionIdAndDeletedAtIsNotNull(clientId, penjualanId)
+                .map(transaction -> toPenjualanDto(clientId, transaction))
+                .orElse(null);
+    }
+
+    public record PenjualanDeletedSlice(Page<PenjualanHistoryRowDTO> rows, BigDecimal total) {
+    }
+
+    @Transactional(readOnly = true)
+    public PenjualanDeletedSlice getPenjualanDeletedRows(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long selectedCustomerId,
+            List<Long> cabangCustomerIds,
+            Boolean cash,
+            Boolean paid,
+            String search,
+            Pageable pageable) {
+        String trimmedSearch = search == null ? "" : search.trim();
+        PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
+
+        Page<TransactionEntity> page;
+        BigDecimal total;
+        switch (resolved.mode()) {
+            case EMPTY -> {
+                page = Page.empty(pageable);
+                total = BigDecimal.ZERO;
+            }
+            case EXCLUDE -> {
+                page = transactionRepository.findPenjualanDeletedPageExcludingCustomers(
+                        clientId, startDate, endDate, resolved.customerIds(), cash, paid, trimmedSearch, pageable);
+                total = transactionRepository.sumPenjualanDeletedExcludingCustomers(
+                        clientId, startDate, endDate, resolved.customerIds(), cash, paid, trimmedSearch);
+            }
+            default -> {
+                Long customerId = resolved.mode() == PenjualanHistoryCustomerFilter.Mode.INCLUDE
+                        ? resolved.customerIds().get(0)
+                        : null;
+                page = transactionRepository.findPenjualanDeletedPage(
+                        clientId, startDate, endDate, customerId, cash, paid, trimmedSearch, pageable);
+                total = transactionRepository.sumPenjualanDeleted(
+                        clientId, startDate, endDate, customerId, cash, paid, trimmedSearch);
+            }
         }
-        TransactionEntity transactions = transactionsOpt.get();
+
+        Map<Long, List<TransactionPaymentEntity>> payments = paymentsByTransaction(page.getContent());
+        Page<PenjualanHistoryRowDTO> rows = page.map(transaction -> toHistoryRow(
+                transaction,
+                payments.getOrDefault(transaction.getTransactionId(), List.of())
+        ));
+        return new PenjualanDeletedSlice(rows, total == null ? BigDecimal.ZERO : total);
+    }
+
+    private PenjualanDTO toPenjualanDto(Long clientId, TransactionEntity transactions) {
         CustomerEntity customer = transactions.getCustomerEntity();
         List<TransactionDetailDTO> details = new ArrayList<>();
         for (TransactionDetailEntity transactionDetail : transactions.getTransactionDetailEntities()) {
@@ -653,7 +713,10 @@ public class PenjualanService {
                 filePath = uploadDir + fileName;
             }
 
+            // A settled credit sale stays under its credit type in reports
+            String creditTypeName = transaction.getPaymentTypeName();
             paymentMethodService.copyToTransaction(transaction, method);
+            transaction.setPaymentTypeName(creditTypeName == null ? "Kredit" : creditTypeName);
             transaction.setPaid(true);
             transaction.setPaidAmount(
                     transaction.getTotalPrice() == null

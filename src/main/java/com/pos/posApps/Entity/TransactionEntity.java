@@ -65,6 +65,9 @@ public class TransactionEntity {
     @Column(name = "payment_method_rekening")
     private String paymentMethodRekening;
 
+    @Column(name = "payment_type_name")
+    private String paymentTypeName;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

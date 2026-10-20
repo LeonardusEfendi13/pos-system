@@ -60,9 +60,10 @@ public class RestControllerPreorderUnderstock {
             int safePage = page == null || page < 0 ? 0 : page;
             int safeSize = size == null || size < 1 ? 10 : size;
 
-            List<ProductDTO> products = new ArrayList<>(
-                    productService.getUnderstockProductData(clientId, supplierId)
-            );
+            // No products until a supplier is picked
+            List<ProductDTO> products = supplierId == null
+                    ? new ArrayList<>()
+                    : new ArrayList<>(productService.getUnderstockProductData(clientId, supplierId));
             products = filterByQuery(products, q);
             products = sortProducts(products, sort, dir);
 

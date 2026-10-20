@@ -11,6 +11,8 @@ public class PaymentMethodDTO {
     private Long paymentMethodId;
     private String name;
     private String methodType;
+    private Long paymentTypeId;
+    private String paymentTypeName;
     private String rekening;
     private boolean systemDefault;
 }

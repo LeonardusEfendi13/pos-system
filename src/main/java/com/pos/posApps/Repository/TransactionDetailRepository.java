@@ -88,6 +88,18 @@ public interface TransactionDetailRepository extends JpaRepository<TransactionDe
                         THEN COALESCE(NULLIF(LOWER(tp.payment_method_type), ''), 'cash')
                     ELSE COALESCE(NULLIF(LOWER(t.payment_method_type), ''), 'cash')
                 END AS method_type,
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS type_name,
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_method_name, ''), NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_method_name, ''), NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS method_name,
                 SUM(
                     CASE
                         WHEN t.is_cash = FALSE THEN COALESCE(d.total_price, 0)
@@ -116,7 +128,7 @@ public interface TransactionDetailRepository extends JpaRepository<TransactionDe
               AND d.product_id IS NOT NULL
               AND t.created_at BETWEEN :startDate AND :endDate
               AND (:supplierId IS NULL OR p.supplier_id = :supplierId)
-            GROUP BY 1, 2
+            GROUP BY 1, 2, 3, 4
             """, nativeQuery = true)
     List<Object[]> findPenjualanMetodePerBarang(
             @Param("clientId") Long clientId,

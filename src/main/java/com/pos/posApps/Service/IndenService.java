@@ -288,6 +288,7 @@ public class IndenService {
                     transactionEntity.setPaymentMethodName(indenEntity.getPaymentMethodName());
                     transactionEntity.setPaymentMethodType(indenEntity.getPaymentMethodType());
                     transactionEntity.setPaymentMethodRekening(indenEntity.getPaymentMethodRekening());
+                    transactionEntity.setPaymentTypeName(indenEntity.getPaymentTypeName());
                 }
                 transactionRepository.save(transactionEntity);
                 storeTransferBukti(
@@ -617,6 +618,7 @@ public class IndenService {
         inden.setPaymentMethodName(null);
         inden.setPaymentMethodType(null);
         inden.setPaymentMethodRekening(null);
+        inden.setPaymentTypeName(null);
     }
 
     @Transactional

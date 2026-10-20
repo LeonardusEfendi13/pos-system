@@ -37,6 +37,11 @@ public class PaymentMethodEntity {
     @Column(name = "name")
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "payment_type_id")
+    private PaymentTypeEntity paymentTypeEntity;
+
+    // Always equals the type's behavior; checkout reads it
     @Column(name = "method_type")
     private String methodType;
 
