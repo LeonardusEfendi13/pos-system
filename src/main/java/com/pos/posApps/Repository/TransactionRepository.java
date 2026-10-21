@@ -115,11 +115,21 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
 
     @Query(value = """
                 SELECT TO_CHAR(t.created_at, :dateFormat) AS label,
-                       SUM(td.total_profit) AS value
+                       SUM(COALESCE(t.total_price, 0) - d.hpp) AS value
                 FROM transaction t
-                JOIN transaction_detail td
-                  ON t.transaction_id = td.transaction_id
+                JOIN (
+                    SELECT transaction_id,
+                           SUM(total_price - COALESCE(total_profit, 0)) AS hpp
+                    FROM transaction_detail
+                    WHERE deleted_at IS NULL
+                    GROUP BY transaction_id
+                ) d ON d.transaction_id = t.transaction_id
                 WHERE t.client_id = :clientId
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM branch b
+                      WHERE b.customer_id = t.customer_id
+                  )
                   AND t.deleted_at IS NULL
                   AND t.created_at BETWEEN :start AND :end
                 GROUP BY label
@@ -159,16 +169,21 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                 SELECT
                     c.customer_id AS customerId,
                     COALESCE(c.name, 'Unknown Customer') AS customerName,
-                    SUM(d.total_price) AS totalHarga,
-                    SUM(COALESCE(d.total_profit, 0)) AS laba,
+                    SUM(COALESCE(t.total_price, 0)) AS totalHarga,
+                    SUM(COALESCE(t.total_price, 0) - d.hpp) AS laba,
                     COUNT(DISTINCT t.transaction_id) AS transactionCount,
                     COUNT(DISTINCT CASE WHEN t.is_paid = FALSE THEN t.transaction_id END) AS unpaidInvoiceCount
                 FROM transaction t
-                JOIN transaction_detail d ON d.transaction_id = t.transaction_id
+                JOIN (
+                    SELECT transaction_id,
+                           SUM(total_price - COALESCE(total_profit, 0)) AS hpp
+                    FROM transaction_detail
+                    WHERE deleted_at IS NULL
+                    GROUP BY transaction_id
+                ) d ON d.transaction_id = t.transaction_id
                 LEFT JOIN customer c ON c.customer_id = t.customer_id
                 WHERE t.client_id = :clientId
                   AND t.deleted_at IS NULL
-                  AND d.deleted_at IS NULL
                   AND t.created_at BETWEEN :startDate AND :endDate
                 GROUP BY c.customer_id, c.name
                 ORDER BY totalHarga DESC
@@ -261,11 +276,16 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                     WHEN :filter = 'month' THEN TO_CHAR(t.created_at, 'YYYY-MM')
                     ELSE TO_CHAR(t.created_at, 'YYYY-MM-DD')
                 END AS period,
-                SUM(d.total_price)               AS totalHarga,
-                SUM(COALESCE(d.total_profit, 0)) AS laba
+                SUM(COALESCE(t.total_price, 0))         AS totalHarga,
+                SUM(COALESCE(t.total_price, 0) - d.hpp) AS laba
             FROM transaction t
-            JOIN transaction_detail d
-                 ON d.transaction_id = t.transaction_id
+            JOIN (
+                SELECT transaction_id,
+                       SUM(total_price - COALESCE(total_profit, 0)) AS hpp
+                FROM transaction_detail
+                WHERE deleted_at IS NULL
+                GROUP BY transaction_id
+            ) d ON d.transaction_id = t.transaction_id
             WHERE t.client_id = :clientId
              AND NOT EXISTS (
                       SELECT 1
@@ -273,7 +293,6 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
                       WHERE b.customer_id = t.customer_id
                   )
               AND t.deleted_at IS NULL
-              AND d.deleted_at IS NULL
               AND t.created_at BETWEEN :startDate AND :endDate
               AND (:customerId IS NULL OR t.customer_id = :customerId)
             GROUP BY period

@@ -10,14 +10,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 public final class PayrollCalculator {
-    public static final int FREE_ABSENCE_DAYS = 4;
-
     public record Input(
             BigDecimal gajiPokok,
             BigDecimal uangMakan,
             BigDecimal insentif,
             int daysInMonth,
             int workedDays,
+            int presentCount,
             int absenceCount
     ) {
     }
@@ -25,6 +24,7 @@ public final class PayrollCalculator {
     public record Result(
             int daysInMonth,
             int workedDays,
+            int presentCount,
             int absenceCount,
             int deductedDays,
             BigDecimal gajiPokok,
@@ -98,6 +98,28 @@ public final class PayrollCalculator {
         return count;
     }
 
+    /** Worked days marked hadir; an unmarked today is neither present nor absent yet. */
+    public static int countPresent(
+            YearMonth month,
+            LocalDate join,
+            LocalDate resign,
+            LocalDate asOf,
+            Map<LocalDate, AttendanceStatus> marks
+    ) {
+        LocalDate[] range = workedRange(month, join, resign, asOf);
+        if (range == null || marks == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (LocalDate date = range[0]; !date.isAfter(range[1]); date = date.plusDays(1)) {
+            if (marks.get(date) == AttendanceStatus.HADIR) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     // From the 1st (or join) to the earliest of month end, resign, and asOf
     private static LocalDate[] workedRange(YearMonth month, LocalDate join, LocalDate resign, LocalDate asOf) {
         if (month == null) {
@@ -119,8 +141,9 @@ public final class PayrollCalculator {
     }
 
     /**
-     * Total gaji = pokok + makan + insentif, earned per day of the month. Absences
-     * past the free four cost one daily rate each, on the whole total.
+     * Total gaji = pokok + makan, earned per day of the month. Every absence costs
+     * one daily rate. Insentif is not part of the salary: it is saved in full each
+     * paid month and cashed out separately.
      */
     public static Result calculate(Input input) {
         int days = input == null || input.daysInMonth() < 1 ? 1 : input.daysInMonth();
@@ -128,9 +151,10 @@ public final class PayrollCalculator {
         BigDecimal pokok = money(input == null ? null : input.gajiPokok());
         BigDecimal makan = money(input == null ? null : input.uangMakan());
         BigDecimal insentif = money(input == null ? null : input.insentif());
-        BigDecimal totalGaji = pokok.add(makan).add(insentif);
+        BigDecimal totalGaji = pokok.add(makan);
+        int present = input == null ? 0 : Math.max(input.presentCount(), 0);
         int absences = input == null ? 0 : Math.max(input.absenceCount(), 0);
-        int deducted = Math.max(0, absences - FREE_ABSENCE_DAYS);
+        int deducted = absences;
         BigDecimal daily = totalGaji.divide(BigDecimal.valueOf(days), 0, RoundingMode.HALF_UP);
         // A full month pays the exact total, not a rounded daily rate times days
         BigDecimal terkumpul = worked == days
@@ -144,6 +168,7 @@ public final class PayrollCalculator {
         return new Result(
                 days,
                 worked,
+                present,
                 absences,
                 deducted,
                 pokok,

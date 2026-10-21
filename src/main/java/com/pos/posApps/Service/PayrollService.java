@@ -114,6 +114,9 @@ public class PayrollService {
         if (entity == null || entity.getPaidAt() == null) {
             throw new StaffRuleException("Gaji karyawan ini belum ditandai dibayar");
         }
+        if (entity.getInsentifPayoutId() != null) {
+            throw new StaffRuleException("Insentif bulan ini sudah dicairkan, pembayaran gaji tidak bisa dibatalkan");
+        }
         entity.setPaidAt(null);
         payrollRepository.save(entity);
     }
@@ -148,6 +151,13 @@ public class PayrollService {
                 staff.getTanggalResign(),
                 today
         );
+        int present = PayrollCalculator.countPresent(
+                month,
+                staff.getTanggalJoin(),
+                staff.getTanggalResign(),
+                today,
+                marks
+        );
         int absences = PayrollCalculator.countAbsences(
                 month,
                 staff.getTanggalJoin(),
@@ -161,6 +171,7 @@ public class PayrollService {
                 staff.getInsentif(),
                 month.lengthOfMonth(),
                 worked,
+                present,
                 absences
         ));
     }
@@ -176,6 +187,7 @@ public class PayrollService {
                 result.totalGaji(),
                 result.daysInMonth(),
                 result.workedDays(),
+                result.presentCount(),
                 result.absenceCount(),
                 result.deductedDays(),
                 result.dailyRate(),

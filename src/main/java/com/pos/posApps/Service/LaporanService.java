@@ -78,8 +78,53 @@ public class LaporanService {
     }
 
     public String getTotalAsset(long clientId) {
-        return formatRupiah(productRepository.sumInventoryValue(clientId));
+        return getTotalAsset(clientId, null);
+    }
 
+    // Same products as the report table (live, priced), optionally one category tree
+    public String getTotalAsset(long clientId, Long categoryId) {
+        return formatRupiah(sumInventoryValue(clientId, categoryId));
+    }
+
+    private BigDecimal sumInventoryValue(long clientId, Long categoryId) {
+        List<Object> args = new ArrayList<>(List.of(clientId));
+        String sql = """
+                SELECT COALESCE(SUM(COALESCE(p.stock, 0) * COALESCE(p.supplier_price, 0)), 0)
+                FROM product p
+                WHERE p.client_id = ?
+                  AND p.deleted_at IS NULL
+                  AND EXISTS (SELECT 1 FROM product_prices pp WHERE pp.product_id = p.product_id)
+                """ + categoryFilter(clientId, categoryId, args);
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, args.toArray());
+    }
+
+    /**
+     * Limits product p to a category and all its subcategories, appending the
+     * parameters to args. No category means no clause.
+     */
+    private String categoryFilter(long clientId, Long categoryId, List<Object> args) {
+        if (categoryId == null) {
+            return "";
+        }
+        args.add(categoryId);
+        args.add(clientId);
+        return """
+                  AND p.category_id IN (
+                      WITH RECURSIVE tree AS (
+                          SELECT c.category_id
+                          FROM category c
+                          WHERE c.category_id = ?
+                            AND c.client_id = ?
+                            AND c.deleted_at IS NULL
+                          UNION ALL
+                          SELECT child.category_id
+                          FROM category child
+                          JOIN tree ON child.parent_id = tree.category_id
+                          WHERE child.deleted_at IS NULL
+                      )
+                      SELECT category_id FROM tree
+                  )
+                """;
     }
 
     public Page<LaporanNilaiPersediaanDTO> getLaporanNilaiPersediaan(long clientId, Pageable pageable) {
@@ -115,10 +160,11 @@ public class LaporanService {
     public Page<LaporanNilaiPersediaanDTO> searchLaporanNilaiPersediaan(
             long clientId,
             String q,
+            Long categoryId,
             String sort,
             String dir,
             Pageable pageable) {
-        String from = """
+        String baseFrom = """
                 FROM product p
                 JOIN LATERAL (
                     SELECT pp.price
@@ -136,9 +182,10 @@ public class LaporanService {
                 .replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_") + "%";
-        Object[] filterArgs = {clientId, needle, pattern, pattern};
+        List<Object> filterArgs = new ArrayList<>(List.of(clientId, needle, pattern, pattern));
+        String from = baseFrom + categoryFilter(clientId, categoryId, filterArgs);
 
-        Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + from, Long.class, filterArgs);
+        Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + from, Long.class, filterArgs.toArray());
 
         // Map.of rejects null keys, and no sort is the default request
         String orderColumn = sort == null
@@ -163,9 +210,16 @@ public class LaporanService {
                         rs.getBigDecimal("supplier_price"),
                         rs.getBigDecimal("harga_jual"),
                         rs.getBigDecimal("total_price")),
-                clientId, needle, pattern, pattern, pageable.getPageSize(), pageable.getOffset());
+                pageArgs(filterArgs, pageable));
 
         return new PageImpl<>(rows, pageable, total == null ? 0 : total);
+    }
+
+    private Object[] pageArgs(List<Object> filterArgs, Pageable pageable) {
+        List<Object> args = new ArrayList<>(filterArgs);
+        args.add(pageable.getPageSize());
+        args.add(pageable.getOffset());
+        return args.toArray();
     }
 
 
@@ -758,8 +812,9 @@ public class LaporanService {
     }
 
     @SuppressWarnings("deprecation")
-public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outputStream) {
+public void exportLaporanNilaiPersediaanStream(Long clientId, Long categoryId, String categoryName, OutputStream outputStream) {
         Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
+        List<Object> args = new ArrayList<>(List.of(clientId));
         String sql = "SELECT p.short_name, p.full_name, p.stock, p.supplier_price, " +
                 "COALESCE(pp.price, 0) AS harga_jual " +
                 "FROM product p " +
@@ -771,11 +826,13 @@ public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outpu
                 ") pp ON pp.product_id = p.product_id " +
                 "WHERE p.client_id = ? " +
                 "AND p.deleted_at IS NULL " +
+                "AND EXISTS (SELECT 1 FROM product_prices ep WHERE ep.product_id = p.product_id) " +
+                categoryFilter(clientId, categoryId, args) +
                 "ORDER BY p.full_name ASC";
 
         try {
             //Get total asset
-            BigDecimal totalAsset = productRepository.sumInventoryValue(clientId);
+            BigDecimal totalAsset = sumInventoryValue(clientId, categoryId);
 
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
             writer.setFullCompression();
@@ -786,6 +843,12 @@ public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outpu
             Paragraph title = new Paragraph("Laporan Nilai Persediaan Barang", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
+
+            if (categoryName != null && !categoryName.isBlank()) {
+                Paragraph categoryInfo = new Paragraph("Kategori : " + categoryName);
+                categoryInfo.setAlignment(Element.ALIGN_CENTER);
+                document.add(categoryInfo);
+            }
 
             Paragraph clientInfo = new Paragraph("Total Nilai Barang : " + formatRupiah(totalAsset));
             clientInfo.setAlignment(Element.ALIGN_CENTER);
@@ -817,7 +880,7 @@ public void exportLaporanNilaiPersediaanStream(Long clientId, OutputStream outpu
             final int FLUSH_INTERVAL = 200;
             final int[] counter = {0};
 
-            jdbcTemplate.query(sql, new Object[]{clientId}, (ResultSet rs) -> {
+            jdbcTemplate.query(sql, args.toArray(), (ResultSet rs) -> {
                 try {
                     String kode = rs.getString("short_name");
                     String nama = rs.getString("full_name");

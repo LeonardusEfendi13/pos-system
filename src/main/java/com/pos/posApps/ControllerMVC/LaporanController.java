@@ -32,6 +32,7 @@ public class LaporanController {
     private LaporanService laporanService;
     private SupplierService supplierService;
     private SidebarService sidebarService;
+    private CategoryService categoryService;
 
     @GetMapping("/pendapatan/periode")
     public String laporanPendapatan(HttpSession session, Model model, String startDate, String endDate, Long customerId, String filterOptions) {
@@ -216,12 +217,21 @@ public class LaporanController {
     }
 
     @GetMapping("/nilai_persediaan/view-pdf")
-    public ResponseEntity<StreamingResponseBody> viewLaporanNilaiPersediaanPDF(HttpSession session) {
+    public ResponseEntity<StreamingResponseBody> viewLaporanNilaiPersediaanPDF(
+            HttpSession session,
+            @RequestParam(required = false) Long categoryId) {
         String token = (String) session.getAttribute(authSessionKey);
         Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+        String categoryName = categoryService.listAll(clientId).stream()
+                .filter(category -> category.getCategoryId().equals(categoryId))
+                .findFirst()
+                .map(category -> category.getParentName() == null
+                        ? category.getName()
+                        : category.getName() + " (" + category.getParentName() + ")")
+                .orElse(null);
 
         StreamingResponseBody stream = outputStream -> {
-            laporanService.exportLaporanNilaiPersediaanStream(clientId, outputStream);
+            laporanService.exportLaporanNilaiPersediaanStream(clientId, categoryId, categoryName, outputStream);
         };
 
         return ResponseEntity.ok()

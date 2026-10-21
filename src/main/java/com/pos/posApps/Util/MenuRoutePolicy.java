@@ -135,6 +135,7 @@ public final class MenuRoutePolicy {
                 rule(null, "/api/customer", "customer"),
                 rule(null, "/api/staff/attendance", "staff.absensi"),
                 rule(null, "/api/staff/payroll", "staff.payroll"),
+                rule(null, "/api/staff/insentif", "staff.insentif"),
                 rule(null, "/api/staff", "staff"),
                 rule(null, "/api/branch/kasir", "branch.transfer.kasir"),
                 rule(null, "/api/branch/transfer", "branch.transfer.riwayat"),

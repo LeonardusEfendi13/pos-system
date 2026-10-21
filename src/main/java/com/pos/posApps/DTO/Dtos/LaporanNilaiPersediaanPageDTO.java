@@ -17,4 +17,5 @@ public class LaporanNilaiPersediaanPageDTO {
     private String totalAsset;
     private String role;
     private String accountName;
+    private List<CategoryDTO> categories;
 }

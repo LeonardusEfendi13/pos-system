@@ -17,7 +17,5 @@ public class AttendanceRowDTO {
     private LocalDate tanggalJoin;
     private LocalDate tanggalResign;
     private int absenceCount;
-    private int remainingAllowance;
-    private int deductedDays;
     private Map<Integer, String> statuses;
 }

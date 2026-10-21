@@ -21,4 +21,9 @@ public interface PayrollRepository extends JpaRepository<PayrollEntity, Long> {
             int payrollYear,
             int payrollMonth
     );
+
+    // Paid months whose insentif is still saved, oldest first
+    List<PayrollEntity> findByClientEntity_ClientIdAndPaidAtIsNotNullAndInsentifPayoutIdIsNullAndDeletedAtIsNullOrderByPayrollYearAscPayrollMonthAsc(
+            Long clientId
+    );
 }

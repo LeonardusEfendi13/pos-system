@@ -3,6 +3,7 @@ package com.pos.posApps.ControllerRest;
 import com.pos.posApps.DTO.Dtos.LaporanNilaiPersediaanDTO;
 import com.pos.posApps.DTO.Dtos.LaporanNilaiPersediaanPageDTO;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.CategoryService;
 import com.pos.posApps.Service.LaporanService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -25,11 +26,13 @@ public class RestControllerLaporanNilaiPersediaan {
 
     private AuthService authService;
     private LaporanService laporanService;
+    private CategoryService categoryService;
 
     @GetMapping("/nilai-persediaan")
     public ResponseEntity<LaporanNilaiPersediaanPageDTO> nilaiPersediaan(
             HttpSession session,
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String sort,
@@ -43,16 +46,17 @@ public class RestControllerLaporanNilaiPersediaan {
             int safeSize = size == null || size < 1 ? 10 : Math.min(size, MAX_PAGE_SIZE);
 
             Page<LaporanNilaiPersediaanDTO> result = laporanService.searchLaporanNilaiPersediaan(
-                    clientId, q, sort, dir, PageRequest.of(safePage, safeSize));
+                    clientId, q, categoryId, sort, dir, PageRequest.of(safePage, safeSize));
 
             return ResponseEntity.ok(new LaporanNilaiPersediaanPageDTO(
                     result.getContent(),
                     result.getTotalElements(),
                     safePage,
                     safeSize,
-                    laporanService.getTotalAsset(clientId),
+                    laporanService.getTotalAsset(clientId, categoryId),
                     account.getRole().name(),
-                    account.getName()
+                    account.getName(),
+                    categoryService.listAll(clientId)
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();

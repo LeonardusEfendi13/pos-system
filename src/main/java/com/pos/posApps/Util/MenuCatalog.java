@@ -41,6 +41,7 @@ public final class MenuCatalog {
             new Entry("staff", "/staff"),
             new Entry("staff.absensi", "/staff/absensi"),
             new Entry("staff.payroll", "/staff/payroll"),
+            new Entry("staff.insentif", "/staff/insentif"),
             new Entry("user", "/user"),
             new Entry("branch.transfer.kasir", "/branch/transfer/kasir"),
             new Entry("branch.transfer.riwayat", "/branch/transfer/riwayat"),

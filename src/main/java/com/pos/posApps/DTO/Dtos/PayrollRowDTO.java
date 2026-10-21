@@ -20,6 +20,7 @@ public class PayrollRowDTO {
     private BigDecimal totalGaji;
     private int daysInMonth;
     private int workedDays;
+    private int presentCount;
     private int absenceCount;
     private int deductedDays;
     private BigDecimal dailyRate;

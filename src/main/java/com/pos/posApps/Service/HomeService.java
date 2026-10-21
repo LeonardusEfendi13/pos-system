@@ -52,12 +52,14 @@ public class HomeService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Sum Total profit
-        BigDecimal totalProfit = transactionData.stream()
+        // Profit after nota discount: header total minus HPP of the live detail rows
+        BigDecimal totalHpp = transactionData.stream()
                 .flatMap(t -> t.getTransactionDetailEntities().stream())
-                .map(TransactionDetailEntity::getTotalProfit)
-                .filter(Objects::nonNull)
+                .filter(d -> d.getDeletedAt() == null)
+                .map(d -> Objects.requireNonNullElse(d.getTotalPrice(), BigDecimal.ZERO)
+                        .subtract(Objects.requireNonNullElse(d.getTotalProfit(), BigDecimal.ZERO)))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalProfit = totalTransaction.subtract(totalHpp);
 
 
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);

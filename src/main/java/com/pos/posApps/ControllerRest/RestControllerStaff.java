@@ -2,6 +2,8 @@ package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.AttendanceMonthResponse;
 import com.pos.posApps.DTO.Dtos.AttendanceRowDTO;
+import com.pos.posApps.DTO.Dtos.InsentifPageResponse;
+import com.pos.posApps.DTO.Dtos.InsentifPayoutRequest;
 import com.pos.posApps.DTO.Dtos.PayrollMonthRequest;
 import com.pos.posApps.DTO.Dtos.PayrollMonthResponse;
 import com.pos.posApps.DTO.Dtos.PayrollRowDTO;
@@ -13,6 +15,7 @@ import com.pos.posApps.DTO.Dtos.StaffWriteRequest;
 import com.pos.posApps.Entity.AccountEntity;
 import com.pos.posApps.Entity.StaffEntity;
 import com.pos.posApps.Service.AuthService;
+import com.pos.posApps.Service.InsentifService;
 import com.pos.posApps.Service.PayrollService;
 import com.pos.posApps.Service.StaffAttendanceService;
 import com.pos.posApps.Service.StaffRuleException;
@@ -53,6 +56,7 @@ public class RestControllerStaff {
     private StaffService staffService;
     private StaffAttendanceService attendanceService;
     private PayrollService payrollService;
+    private InsentifService insentifService;
 
     @GetMapping
     public ResponseEntity<StaffPageResponse> list(
@@ -224,6 +228,30 @@ public class RestControllerStaff {
             YearMonth window = payrollWindow(request);
             payrollService.cancelPaid(account.getClientEntity().getClientId(), request.getStaffId(), window);
             return new ResponseInBoolean(true, "Pembayaran gaji dibatalkan");
+        });
+    }
+
+    @GetMapping("/insentif")
+    public ResponseEntity<InsentifPageResponse> insentif(HttpSession session) {
+        AccountEntity account = requireAccount(session);
+        if (account == null) {
+            return ResponseEntity.status(UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(new InsentifPageResponse(
+                account.getRole().name(),
+                account.getName(),
+                insentifService.rows(account.getClientEntity().getClientId())
+        ));
+    }
+
+    @PostMapping("/insentif/payout")
+    public ResponseEntity<ResponseInBoolean> payoutInsentif(
+            HttpSession session,
+            @RequestBody InsentifPayoutRequest request
+    ) {
+        return mutate(session, account -> {
+            insentifService.cashOut(account.getClientEntity(), request == null ? null : request.getStaffId());
+            return new ResponseInBoolean(true, "Insentif berhasil dicairkan");
         });
     }
 

@@ -78,6 +78,10 @@ public class PayrollEntity {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    // Set once this month's insentif is cashed out; null means it is still saved
+    @Column(name = "insentif_payout_id")
+    private Long insentifPayoutId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

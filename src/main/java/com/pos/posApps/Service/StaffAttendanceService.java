@@ -53,8 +53,6 @@ public class StaffAttendanceService {
                     staff.getTanggalJoin(),
                     staff.getTanggalResign(),
                     absences,
-                    Math.max(0, PayrollCalculator.FREE_ABSENCE_DAYS - absences),
-                    Math.max(0, absences - PayrollCalculator.FREE_ABSENCE_DAYS),
                     byDay
             ));
         }

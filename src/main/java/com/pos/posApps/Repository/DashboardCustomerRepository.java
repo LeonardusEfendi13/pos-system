@@ -12,11 +12,15 @@ import java.util.List;
 public interface DashboardCustomerRepository extends JpaRepository<TransactionEntity, Long> {
     @Query(value = """
             SELECT t.customer_id,
-                   COALESCE(SUM(d.total_profit), 0)
+                   COALESCE(SUM(COALESCE(t.total_price, 0) - d.hpp), 0)
             FROM transaction t
-            LEFT JOIN transaction_detail d
-              ON d.transaction_id = t.transaction_id
-             AND d.deleted_at IS NULL
+            JOIN (
+                SELECT transaction_id,
+                       SUM(total_price - COALESCE(total_profit, 0)) AS hpp
+                FROM transaction_detail
+                WHERE deleted_at IS NULL
+                GROUP BY transaction_id
+            ) d ON d.transaction_id = t.transaction_id
             WHERE t.client_id = :clientId
               AND t.deleted_at IS NULL
               AND t.created_at BETWEEN :startDate AND :endDate
