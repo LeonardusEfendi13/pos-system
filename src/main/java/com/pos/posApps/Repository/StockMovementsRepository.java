@@ -2,7 +2,6 @@ package com.pos.posApps.Repository;
 
 import com.pos.posApps.DTO.Dtos.StockMovementsDTO;
 import com.pos.posApps.Entity.StockMovementsEntity;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,30 +24,26 @@ public interface StockMovementsRepository extends JpaRepository<StockMovementsEn
 
     List<StockMovementsEntity> findByProductEntity_ProductIdAndDeletedAtIsNullAndCreatedAtBefore(Long productId, LocalDateTime startDate);
 
-    @Query(
-            value = """
-                    SELECT new com.pos.posApps.DTO.Dtos.StockMovementsDTO(
-                        s.stockMovementsId,
-                        s.referenceNo,
-                        s.tipeKartuStok,
-                        s.qtyIn,
-                        s.qtyOut,
-                        s.saldo,
-                        s.createdAt,
-                        s.invDate
-                    )
-                    FROM StockMovementsEntity s
-                    """ + KARTU_STOK_RANGE + """
-                    ORDER BY s.stockMovementsId ASC
-                    """,
-            countQuery = "SELECT COUNT(s) FROM StockMovementsEntity s " + KARTU_STOK_RANGE
-    )
-    Page<StockMovementsDTO> findKartuStokPage(
+    @Query("""
+            SELECT new com.pos.posApps.DTO.Dtos.StockMovementsDTO(
+                s.stockMovementsId,
+                s.referenceNo,
+                s.tipeKartuStok,
+                s.qtyIn,
+                s.qtyOut,
+                s.saldo,
+                s.createdAt,
+                s.invDate
+            )
+            FROM StockMovementsEntity s
+            """ + KARTU_STOK_RANGE + """
+            ORDER BY s.stockMovementsId ASC
+            """)
+    List<StockMovementsDTO> findKartuStok(
             @Param("clientId") Long clientId,
             @Param("productId") Long productId,
             @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable
+            @Param("endDate") LocalDateTime endDate
     );
 
     @Query(value = """

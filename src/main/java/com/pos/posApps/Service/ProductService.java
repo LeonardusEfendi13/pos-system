@@ -133,19 +133,16 @@ public class ProductService {
     }
 
 
-    public Page<StockMovementsDTO> getStockMovementPage(
+    public List<StockMovementsDTO> getStockMovements(
             Long clientId,
             Long productId,
             LocalDateTime startDate,
-            LocalDateTime endDate,
-            int page,
-            int size) {
-        return stockMovementsRepository.findKartuStokPage(
+            LocalDateTime endDate) {
+        return stockMovementsRepository.findKartuStok(
                 clientId,
                 productId,
                 startDate,
-                endDate,
-                PageRequest.of(page, size)
+                endDate
         );
     }
 

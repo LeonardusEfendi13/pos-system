@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.List;
 
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -125,9 +126,7 @@ public class RestControllerMasterProduct {
             HttpSession session,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "50") Integer size) {
+            @RequestParam(required = false) String endDate) {
         AccountEntity account;
         try {
             String token = (String) session.getAttribute(authSessionKey);
@@ -136,8 +135,6 @@ public class RestControllerMasterProduct {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }
 
-        int safePage = page == null || page < 0 ? 0 : page;
-        int safeSize = size == null || size < 1 ? 50 : Math.min(size, 200);
         LocalDate start = parseIsoDate(startDate, LocalDate.now().minusDays(7));
         LocalDate end = parseIsoDate(endDate, LocalDate.now());
         LocalDateTime inputStartDate = start.atStartOfDay();
@@ -145,8 +142,6 @@ public class RestControllerMasterProduct {
         Long clientId = account.getClientEntity().getClientId();
 
         KartuStokResponseDTO body = emptyKartuStok(account);
-        body.setPage(safePage);
-        body.setSize(safeSize);
 
         if (productId == null) {
             return ResponseEntity.ok(body);
@@ -162,13 +157,12 @@ public class RestControllerMasterProduct {
             ));
         }
 
-        Page<StockMovementsDTO> movementPage = productService.getStockMovementPage(
+        // Full range, no paging: the kartu stok screen virtualizes the rows
+        List<StockMovementsDTO> movements = productService.getStockMovements(
                 clientId,
                 productId,
                 inputStartDate,
-                inputEndDate,
-                safePage,
-                safeSize
+                inputEndDate
         );
         KartuStokTotals totals = productService.summarizeKartuStok(
                 clientId,
@@ -185,8 +179,8 @@ public class RestControllerMasterProduct {
                 stockAwal
         );
 
-        body.setMovements(movementPage.getContent());
-        body.setMovementTotal(movementPage.getTotalElements());
+        body.setMovements(movements);
+        body.setMovementTotal(movements.size());
         body.setStockAwal(stockAwal == null ? 0L : stockAwal);
         body.setQtyInTotal(totals.getQtyIn() == null ? 0L : totals.getQtyIn());
         body.setQtyOutTotal(totals.getQtyOut() == null ? 0L : totals.getQtyOut());
@@ -286,8 +280,6 @@ public class RestControllerMasterProduct {
         body.setSaldoAkhir(0L);
         body.setPretelTotal(0L);
         body.setMovementTotal(0L);
-        body.setPage(0);
-        body.setSize(50);
         body.setMovements(Collections.emptyList());
         return body;
     }
