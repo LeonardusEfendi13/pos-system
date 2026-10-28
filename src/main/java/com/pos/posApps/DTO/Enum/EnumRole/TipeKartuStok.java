@@ -8,5 +8,6 @@ public enum TipeKartuStok {
     KOREKSI_PEMBELIAN,
     TRANSFER_STOK,
     KOREKSI_TRANSFER_STOK,
-    PRETEL
+    PRETEL,
+    KOREKSI_PRETEL
 }

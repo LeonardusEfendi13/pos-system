@@ -1,6 +1,8 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.AdjustStockDTO;
+import com.pos.posApps.DTO.Dtos.KasirPretelComponentDTO;
+import com.pos.posApps.DTO.Dtos.KasirPretelDTO;
 import com.pos.posApps.DTO.Dtos.PretelDraftDTO;
 import com.pos.posApps.DTO.Dtos.PretelDraftLineDTO;
 import com.pos.posApps.DTO.Dtos.ProductSetComponentDTO;
@@ -237,6 +239,177 @@ public class ProductSetService {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ResponseInBoolean(false, "Gagal mempretel barang set");
         }
+    }
+
+    // Re-assembles every set this sale pretelled. Never fails: stock may go negative
+    @Transactional
+    public void reverseForSale(TransactionEntity transaction, ClientEntity clientData) {
+        for (TransactionPretelEntity pretel : activePretelEntities(transaction.getTransactionId())) {
+            reverse(pretel, clientData, transaction.getTransactionNumber());
+        }
+        entityManager.flush();
+    }
+
+    // Edit: only parents whose pretel count changed are re-assembled, then pretelled again
+    @Transactional
+    public ResponseInBoolean syncForEdit(
+            List<PretelDraftDTO> drafts,
+            TransactionEntity transaction,
+            ClientEntity clientData
+    ) {
+        try {
+            List<TransactionPretelEntity> active = activePretelEntities(transaction.getTransactionId());
+            Map<Long, Long> oldCounts = new HashMap<>();
+            for (TransactionPretelEntity pretel : active) {
+                oldCounts.merge(pretel.getParentProduct().getProductId(), pretel.getSetQty(), Long::sum);
+            }
+
+            Map<Long, PretelDraftDTO> draftByParent = new HashMap<>();
+            Map<Long, Long> newCounts = new HashMap<>();
+            for (PretelDraftDTO draft : drafts == null ? List.<PretelDraftDTO>of() : drafts) {
+                if (draft == null || draft.getParentProductId() == null) {
+                    return fail("Group set tidak ditemukan");
+                }
+                int count = draftCount(draft);
+                if (count > 0) {
+                    draftByParent.put(draft.getParentProductId(), draft);
+                    newCounts.put(draft.getParentProductId(), (long) count);
+                }
+            }
+
+            String notaNumber = transaction.getTransactionNumber();
+            for (PretelCount.CountChange change : PretelCount.changedCounts(oldCounts, newCounts)) {
+                for (TransactionPretelEntity pretel : active) {
+                    if (pretel.getParentProduct().getProductId().equals(change.parentProductId())) {
+                        reverse(pretel, clientData, notaNumber);
+                    }
+                }
+                entityManager.flush();
+                if (change.newCount() > 0) {
+                    ResponseInBoolean applied = applyDraft(
+                            draftByParent.get(change.parentProductId()),
+                            transaction,
+                            clientData,
+                            notaNumber
+                    );
+                    if (!applied.isStatus()) {
+                        return applied;
+                    }
+                }
+            }
+            entityManager.flush();
+            return new ResponseInBoolean(true, "OK");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ResponseInBoolean(false, "Gagal mempretel barang set");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<KasirPretelDTO> activePretels(Long transactionId) {
+        List<KasirPretelDTO> result = new ArrayList<>();
+        for (TransactionPretelEntity pretel : activePretelEntities(transactionId)) {
+            long setQty = pretel.getSetQty() == null ? 0L : pretel.getSetQty();
+            if (setQty <= 0) {
+                continue;
+            }
+            List<KasirPretelComponentDTO> components = activeSnapshot(pretel).stream()
+                    .map(component -> new KasirPretelComponentDTO(
+                            component.getChildProduct().getProductId(),
+                            component.getQtyIn() / setQty
+                    ))
+                    .toList();
+            result.add(new KasirPretelDTO(
+                    pretel.getParentProduct().getProductId(),
+                    pretel.getParentProduct().getFullName(),
+                    setQty,
+                    components
+            ));
+        }
+        return result;
+    }
+
+    private List<TransactionPretelEntity> activePretelEntities(Long transactionId) {
+        return transactionPretelRepository
+                .findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionPretelIdAsc(transactionId);
+    }
+
+    private List<TransactionPretelComponentEntity> activeSnapshot(TransactionPretelEntity pretel) {
+        if (pretel.getComponents() == null) {
+            return List.of();
+        }
+        return pretel.getComponents().stream()
+                .filter(component -> component.getDeletedAt() == null)
+                .sorted(Comparator.comparing(component -> component.getChildProduct().getProductId()))
+                .toList();
+    }
+
+    private int draftCount(PretelDraftDTO draft) {
+        int clickCount = draft.getClickCount() == null ? 0 : draft.getClickCount();
+        List<PretelCount.Line> lines = new ArrayList<>();
+        for (PretelDraftLineDTO line : draft.getLines() == null ? List.<PretelDraftLineDTO>of() : draft.getLines()) {
+            if (line == null || line.getQty() == null || line.getRecipeQty() == null) {
+                continue;
+            }
+            lines.add(new PretelCount.Line(line.getQty(), line.getRecipeQty()));
+        }
+        return PretelCount.resolve(clickCount, lines);
+    }
+
+    // Undo one recorded pretel from its snapshot, not the current recipe
+    private void reverse(TransactionPretelEntity pretel, ClientEntity clientData, String notaNumber) {
+        Long clientId = clientData.getClientId();
+        long setQty = pretel.getSetQty() == null ? 0L : pretel.getSetQty();
+        Optional<ProductEntity> parentOpt = productRepository.findAndLockByProductIdIncludingDeleted(
+                pretel.getParentProduct().getProductId(),
+                clientId
+        );
+
+        for (TransactionPretelComponentEntity component : activeSnapshot(pretel)) {
+            Optional<ProductEntity> childOpt = productRepository.findAndLockByProductIdIncludingDeleted(
+                    component.getChildProduct().getProductId(),
+                    clientId
+            );
+            long qtyOut = component.getQtyIn() == null ? 0L : component.getQtyIn();
+            if (childOpt.isPresent() && qtyOut > 0) {
+                ProductEntity child = childOpt.get();
+                long nextStock = (child.getStock() == null ? 0L : child.getStock()) - qtyOut;
+                child.setStock(nextStock);
+                productRepository.save(child);
+                stockMovementService.insertKartuStok(new AdjustStockDTO(
+                        child,
+                        notaNumber,
+                        TipeKartuStok.KOREKSI_PRETEL,
+                        0L,
+                        qtyOut,
+                        nextStock,
+                        clientData,
+                        getCurrentTimestamp()
+                ));
+            }
+            component.setDeletedAt(getCurrentTimestamp());
+            transactionPretelComponentRepository.save(component);
+        }
+
+        if (parentOpt.isPresent() && setQty > 0) {
+            ProductEntity parent = parentOpt.get();
+            long nextStock = (parent.getStock() == null ? 0L : parent.getStock()) + setQty;
+            parent.setStock(nextStock);
+            productRepository.save(parent);
+            stockMovementService.insertKartuStok(new AdjustStockDTO(
+                    parent,
+                    notaNumber,
+                    TipeKartuStok.KOREKSI_PRETEL,
+                    setQty,
+                    0L,
+                    nextStock,
+                    clientData,
+                    getCurrentTimestamp()
+            ));
+        }
+
+        pretel.setDeletedAt(getCurrentTimestamp());
+        transactionPretelRepository.save(pretel);
     }
 
     private ResponseInBoolean applyDraft(

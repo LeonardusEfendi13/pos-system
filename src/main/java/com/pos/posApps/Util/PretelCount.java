@@ -2,8 +2,10 @@ package com.pos.posApps.Util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 public final class PretelCount {
     private PretelCount() {
@@ -22,6 +24,9 @@ public final class PretelCount {
     }
 
     public record Movement(long productId, String tipe, long qtyIn, long qtyOut) {
+    }
+
+    public record CountChange(long parentProductId, long oldCount, long newCount) {
     }
 
     public static int resolve(int clickCount, List<Line> lines) {
@@ -67,6 +72,35 @@ public final class PretelCount {
         }
 
         return null;
+    }
+
+    // Parents whose pretel count differs between the saved sale and the edited cart
+    public static List<CountChange> changedCounts(Map<Long, Long> oldCounts, Map<Long, Long> newCounts) {
+        TreeSet<Long> parents = new TreeSet<>();
+        parents.addAll(oldCounts.keySet());
+        parents.addAll(newCounts.keySet());
+
+        List<CountChange> result = new ArrayList<>();
+        for (Long parent : parents) {
+            long oldCount = oldCounts.getOrDefault(parent, 0L);
+            long newCount = newCounts.getOrDefault(parent, 0L);
+            if (oldCount != newCount) {
+                result.add(new CountChange(parent, oldCount, newCount));
+            }
+        }
+        return result;
+    }
+
+    // A sale may hold the same product twice (pretel row + loose row)
+    public static Map<Long, Long> sumQtyByProduct(List<SaleLine> lines) {
+        Map<Long, Long> result = new HashMap<>();
+        if (lines == null) {
+            return result;
+        }
+        for (SaleLine line : lines) {
+            result.merge(line.productId(), line.qty(), Long::sum);
+        }
+        return result;
     }
 
     public static boolean enoughSetStock(long stock, int pretelCount) {

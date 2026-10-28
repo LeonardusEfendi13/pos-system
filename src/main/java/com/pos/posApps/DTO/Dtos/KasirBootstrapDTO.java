@@ -15,4 +15,20 @@ public class KasirBootstrapDTO {
     private PenjualanDTO transaction;
     private String role;
     private List<PaymentMethodDTO> paymentMethods;
+    // Active pretels of the edited sale, so the cart can tag its component rows
+    private List<KasirPretelDTO> pretels = List.of();
+
+    public KasirBootstrapDTO(
+            List<KasirCustomerDTO> customers,
+            KasirClientDTO client,
+            PenjualanDTO transaction,
+            String role,
+            List<PaymentMethodDTO> paymentMethods
+    ) {
+        this.customers = customers;
+        this.client = client;
+        this.transaction = transaction;
+        this.role = role;
+        this.paymentMethods = paymentMethods;
+    }
 }

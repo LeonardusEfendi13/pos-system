@@ -159,7 +159,8 @@ public class ProductService {
                 productId,
                 startDate,
                 endDate,
-                String.valueOf(TipeKartuStok.PRETEL.ordinal())
+                String.valueOf(TipeKartuStok.PRETEL.ordinal()),
+                String.valueOf(TipeKartuStok.KOREKSI_PRETEL.ordinal())
         );
         if (rows.isEmpty() || rows.get(0) == null || rows.get(0).length < 3) {
             return new KartuStokTotals(0L, 0L, 0L);

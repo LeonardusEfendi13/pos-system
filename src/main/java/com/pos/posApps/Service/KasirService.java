@@ -1,6 +1,7 @@
 package com.pos.posApps.Service;
 
 import com.pos.posApps.DTO.Dtos.*;
+import com.pos.posApps.Util.PretelCount;
 import com.pos.posApps.Util.SalePaymentRules;
 import com.pos.posApps.DTO.Enum.EnumRole.TipeKartuStok;
 import com.pos.posApps.Entity.*;
@@ -416,21 +417,32 @@ public class KasirService {
             transactionRepository.save(transaction);
             if (!isBranch) {
                 replacePaymentRows(transaction, paymentRows);
+
+                // Before the line diff, so sets are pretelled when lines are deducted
+                ResponseInBoolean pretelResult = productSetService.syncForEdit(
+                        req.getPretelDrafts(),
+                        transaction,
+                        clientData
+                );
+                if (!pretelResult.isStatus()) {
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    return pretelResult;
+                }
             }
 
             List<TransactionDetailEntity> oldDetails =
                     transactionDetailRepository
                             .findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
 
-            Map<Long, TransactionDetailEntity> oldMap = oldDetails.stream()
-                    .collect(java.util.stream.Collectors.toMap(
-                            TransactionDetailEntity::getProductId,
-                            java.util.function.Function.identity()));
+            // Summed per product: a pretel row and a loose row can share one product
+            Map<Long, Long> oldMap = PretelCount.sumQtyByProduct(oldDetails.stream()
+                    .filter(detail -> detail.getProductId() != null)
+                    .map(detail -> new PretelCount.SaleLine(detail.getProductId(), detail.getQty()))
+                    .toList());
 
-            Map<Long, TransactionDetailDTO> newMap = req.getTransactionDetailDTOS().stream()
-                    .collect(java.util.stream.Collectors.toMap(
-                            TransactionDetailDTO::getProductId,
-                            java.util.function.Function.identity()));
+            Map<Long, Long> newMap = PretelCount.sumQtyByProduct(req.getTransactionDetailDTOS().stream()
+                    .map(dto -> new PretelCount.SaleLine(dto.getProductId(), dto.getQty()))
+                    .toList());
 
             Set<Long> productIds = new HashSet<>();
             productIds.addAll(oldMap.keySet());
@@ -440,11 +452,8 @@ public class KasirService {
 
             for (Long productId : productIds) {
 
-                TransactionDetailEntity oldDetail = oldMap.get(productId);
-                TransactionDetailDTO newDetail = newMap.get(productId);
-
-                long oldQty = oldDetail == null ? 0 : oldDetail.getQty();
-                long newQty = newDetail == null ? 0 : newDetail.getQty();
+                long oldQty = oldMap.getOrDefault(productId, 0L);
+                long newQty = newMap.getOrDefault(productId, 0L);
 
                 long delta = newQty - oldQty;
 

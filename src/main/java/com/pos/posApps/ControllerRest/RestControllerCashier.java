@@ -16,6 +16,7 @@ import com.pos.posApps.Service.HomeService;
 import com.pos.posApps.Service.KasirService;
 import com.pos.posApps.Service.PaymentMethodService;
 import com.pos.posApps.Service.PenjualanService;
+import com.pos.posApps.Service.ProductSetService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,7 @@ public class RestControllerCashier {
     private CustomerService customerService;
     private ClientService clientService;
     private PaymentMethodService paymentMethodService;
+    private ProductSetService productSetService;
 
     @GetMapping("/bootstrap")
     public ResponseEntity<KasirBootstrapDTO> bootstrap(
@@ -67,13 +69,16 @@ public class RestControllerCashier {
             if (transactionId != null) {
                 transaction = penjualanService.getPenjualanDataById(clientId, transactionId);
             }
-            return ResponseEntity.ok(
-                    new KasirBootstrapDTO(
-                            customers,
-                            client,
-                            transaction,
-                            account.getRole().name(),
-                            paymentMethodService.list(clientId)));
+            KasirBootstrapDTO body = new KasirBootstrapDTO(
+                    customers,
+                    client,
+                    transaction,
+                    account.getRole().name(),
+                    paymentMethodService.list(clientId));
+            if (transaction != null) {
+                body.setPretels(productSetService.activePretels(transactionId));
+            }
+            return ResponseEntity.ok(body);
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();
         }

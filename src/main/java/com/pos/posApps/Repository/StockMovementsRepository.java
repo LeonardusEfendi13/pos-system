@@ -58,6 +58,8 @@ public interface StockMovementsRepository extends JpaRepository<StockMovementsEn
                 COALESCE(SUM(CASE
                     WHEN tipe = :pretel
                     THEN COALESCE(qty_in, 0) + COALESCE(qty_out, 0)
+                    WHEN tipe = :koreksiPretel
+                    THEN -(COALESCE(qty_in, 0) + COALESCE(qty_out, 0))
                     ELSE 0 END), 0)
             FROM stock_movements
             WHERE client_id = :clientId
@@ -70,7 +72,8 @@ public interface StockMovementsRepository extends JpaRepository<StockMovementsEn
             @Param("productId") Long productId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("pretel") String pretel
+            @Param("pretel") String pretel,
+            @Param("koreksiPretel") String koreksiPretel
     );
 
     @Query("""

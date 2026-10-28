@@ -51,6 +51,9 @@ public class PenjualanService {
     @Autowired
     TransactionPaymentRepository transactionPaymentRepository;
 
+    @Autowired
+    ProductSetService productSetService;
+
     public BigDecimal getTotalRevenues(Long clientId) {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = LocalDate.now().atTime(23, 59, 59);
@@ -640,7 +643,7 @@ public class PenjualanService {
         TransactionEntity transactionEntity = transactionEntityOpt.get();
 
 
-        // Restore sold lines only. Pretel snapshots stay until that reversal rule is confirmed.
+        // Restore sold lines, then re-assemble any set this sale pretelled
         List<TransactionDetailEntity> oldTransactions = transactionDetailRepository.findAllByTransactionEntity_TransactionIdAndDeletedAtIsNullOrderByTransactionDetailIdDesc(transactionId);
         for (TransactionDetailEntity old : oldTransactions) {
             ProductEntity product = productRepository.findAndLockProduct(old.getFullName(), old.getShortName(), clientData.getClientId());
@@ -663,6 +666,7 @@ public class PenjualanService {
             old.setDeletedAt(getCurrentTimestamp());
             transactionDetailRepository.save(old);
         }
+        productSetService.reverseForSale(transactionEntity, clientData);
 
         transactionEntity.setDeletedAt(getCurrentTimestamp());
         transactionRepository.save(transactionEntity);
