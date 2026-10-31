@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class DashboardSupplierService {
-    public static final int TOP_SUPPLIER_LIMIT = 5;
+    public static final int TOP_SUPPLIER_LIMIT = 10;
 
     private DashboardSupplierRepository dashboardSupplierRepository;
 
