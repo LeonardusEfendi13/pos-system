@@ -13,6 +13,10 @@ import java.util.List;
 public interface StagingPriceListRepository extends JpaRepository<StagingPriceListEntity, Long> {
     List<StagingPriceListEntity> findAllByMerkOrderByExcelRowAsc(String merk);
 
+    long countByMerk(String merk);
+
+    long countByMerkAndStatusNotIn(String merk, List<String> statuses);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from StagingPriceListEntity item where item.merk = :merk")
     int deleteByMerk(@Param("merk") String merk);
