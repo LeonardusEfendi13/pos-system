@@ -46,6 +46,8 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @RequestMapping("api/branch/transfer")
 @AllArgsConstructor
 public class RestControllerTransferHistory {
+    private static final LocalDate OPEN_START = LocalDate.of(1900, 1, 1);
+    private static final LocalDate OPEN_END = LocalDate.of(2999, 12, 31);
     private static final Set<String> SORTABLE = Set.of(
             "tanggalJual",
             "totalPrice",
@@ -116,8 +118,8 @@ public class RestControllerTransferHistory {
                     cabang.stream().map(this::toCustomerLookup).toList(),
                     account.getRole().name(),
                     account.getName(),
-                    resolvedStart.toString(),
-                    resolvedEnd.toString(),
+                    echoDate(resolvedStart, OPEN_START),
+                    echoDate(resolvedEnd, OPEN_END),
                     customerId,
                     null,
                     null
@@ -315,25 +317,30 @@ public class RestControllerTransferHistory {
         return value == null ? "" : value;
     }
 
+    // A blank or unparseable date means "no bound", so the history is not cut to a day or month.
     private static LocalDate parseOrDefaultStart(String startDate) {
         if (startDate == null || startDate.isBlank()) {
-            return LocalDate.now().withDayOfMonth(1);
+            return OPEN_START;
         }
         try {
             return LocalDate.parse(startDate);
         } catch (Exception e) {
-            return LocalDate.now().withDayOfMonth(1);
+            return OPEN_START;
         }
     }
 
     private static LocalDate parseOrDefaultEnd(String endDate) {
         if (endDate == null || endDate.isBlank()) {
-            return LocalDate.now();
+            return OPEN_END;
         }
         try {
             return LocalDate.parse(endDate);
         } catch (Exception e) {
-            return LocalDate.now();
+            return OPEN_END;
         }
+    }
+
+    private static String echoDate(LocalDate resolved, LocalDate open) {
+        return resolved.equals(open) ? "" : resolved.toString();
     }
 }
