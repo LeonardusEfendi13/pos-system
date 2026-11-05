@@ -72,7 +72,8 @@ public class RestControllerPenjualanHistory {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir,
             @RequestParam(required = false) String tunai,
-            @RequestParam(required = false) String lunas) {
+            @RequestParam(required = false) String lunas,
+            @RequestParam(required = false) Long paymentMethodId) {
         try {
             String token = (String) session.getAttribute(authSessionKey);
             AccountEntity account = authService.validateToken(token);
@@ -93,7 +94,7 @@ public class RestControllerPenjualanHistory {
 
             Boolean tunaiFlag = parseTriState(tunai);
             Boolean lunasFlag = parseTriState(lunas);
-            Page<PenjualanHistoryRowDTO> fetched = penjualanService.getPenjualanHistoryRows(
+            PenjualanService.PenjualanHistorySlice slice = penjualanService.getPenjualanHistoryRows(
                     clientId,
                     inputStart,
                     inputEnd,
@@ -101,9 +102,11 @@ public class RestControllerPenjualanHistory {
                     cabangIds,
                     tunaiFlag,
                     lunasFlag,
+                    paymentMethodId,
                     q,
                     PageRequest.of(safePage, safeSize, historySort(sort, dir))
             );
+            Page<PenjualanHistoryRowDTO> fetched = slice.rows();
 
             var customers = customerService.getCustomerList(clientId).stream()
                     .filter(customer -> customer.getCustomerId() != null
@@ -123,7 +126,9 @@ public class RestControllerPenjualanHistory {
                     resolvedEnd.toString(),
                     customerId,
                     tunaiFlag,
-                    lunasFlag
+                    lunasFlag,
+                    paymentMethodId,
+                    slice.total()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();

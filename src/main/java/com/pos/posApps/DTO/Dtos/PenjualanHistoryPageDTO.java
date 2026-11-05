@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -22,4 +23,7 @@ public class PenjualanHistoryPageDTO {
     private Long customerId;
     private Boolean tunai;
     private Boolean lunas;
+    private Long paymentMethodId;
+    // Sum of totalPrice over every row the filter matches, not just this page
+    private BigDecimal totalAmount;
 }

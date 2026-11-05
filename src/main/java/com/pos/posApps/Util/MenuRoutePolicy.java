@@ -89,6 +89,7 @@ public final class MenuRoutePolicy {
                 rule(null, "/api/customer/list", MenuCatalog.CUSTOMER_LOOKUP_KEYS),
                 rule(null, "/api/product-set", "products.barang-set"),
                 rule(null, "/api/master/product", "products"),
+                rule("GET", "/api/product", MenuCatalog.PRODUCT_LOOKUP_KEYS),
                 rule(null, "/api/product", "products"),
                 rule(null, "/api/category", "products.kategori"),
                 rule(null, "/api/vehicle", "products.vehicle"),

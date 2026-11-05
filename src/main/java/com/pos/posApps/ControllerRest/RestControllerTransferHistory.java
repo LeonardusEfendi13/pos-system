@@ -122,6 +122,8 @@ public class RestControllerTransferHistory {
                     echoDate(resolvedEnd, OPEN_END),
                     customerId,
                     null,
+                    null,
+                    null,
                     null
             ));
         } catch (Exception e) {

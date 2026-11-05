@@ -369,6 +369,15 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
               AND (:cash IS NULL OR t.isCash = :cash)
               AND (:paid IS NULL OR t.isPaid = :paid)
               AND (
+                :paymentMethodId IS NULL
+                OR t.paymentMethodId = :paymentMethodId
+                OR EXISTS (
+                  SELECT 1 FROM TransactionPaymentEntity p
+                  WHERE p.transactionEntity = t
+                    AND p.paymentMethodId = :paymentMethodId
+                )
+              )
+              AND (
                 :search = ''
                 OR LOWER(t.transactionNumber) LIKE LOWER(CONCAT('%', :search, '%'))
                 OR LOWER(t.customerEntity.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -398,8 +407,35 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             @Param("customerId") Long customerId,
             @Param("cash") Boolean cash,
             @Param("paid") Boolean paid,
+            @Param("paymentMethodId") Long paymentMethodId,
             @Param("search") String search,
             Pageable pageable
+    );
+
+    @Query("SELECT COALESCE(SUM(t.totalPrice), 0) FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+            "AND (:customerId IS NULL OR t.customerEntity.customerId = :customerId)")
+    BigDecimal sumPenjualanHistory(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("customerId") Long customerId,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("paymentMethodId") Long paymentMethodId,
+            @Param("search") String search
+    );
+
+    @Query("SELECT COALESCE(SUM(t.totalPrice), 0) FROM TransactionEntity t " + PENJUALAN_HISTORY_WHERE +
+            "AND t.customerEntity.customerId NOT IN :excludeCustomerIds")
+    BigDecimal sumPenjualanHistoryExcludingCustomers(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
+            @Param("cash") Boolean cash,
+            @Param("paid") Boolean paid,
+            @Param("paymentMethodId") Long paymentMethodId,
+            @Param("search") String search
     );
 
     @EntityGraph(attributePaths = {"customerEntity", "accountEntity"})
@@ -416,6 +452,7 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             @Param("excludeCustomerIds") List<Long> excludeCustomerIds,
             @Param("cash") Boolean cash,
             @Param("paid") Boolean paid,
+            @Param("paymentMethodId") Long paymentMethodId,
             @Param("search") String search,
             Pageable pageable
     );

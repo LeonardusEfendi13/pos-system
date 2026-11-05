@@ -173,8 +173,11 @@ public class PenjualanService {
         return transactionData.map(this::convertToDTO);
     }
 
+    public record PenjualanHistorySlice(Page<PenjualanHistoryRowDTO> rows, BigDecimal total) {
+    }
+
     @Transactional(readOnly = true)
-    public Page<PenjualanHistoryRowDTO> getPenjualanHistoryRows(
+    public PenjualanHistorySlice getPenjualanHistoryRows(
             Long clientId,
             LocalDateTime startDate,
             LocalDateTime endDate,
@@ -182,47 +185,55 @@ public class PenjualanService {
             List<Long> cabangCustomerIds,
             Boolean cash,
             Boolean paid,
+            Long paymentMethodId,
             String search,
             Pageable pageable) {
         String trimmedSearch = search == null ? "" : search.trim();
         PenjualanHistoryCustomerFilter.ResolvedType resolved = resolve(selectedCustomerId, cabangCustomerIds);
 
-        Page<TransactionEntity> page = switch (resolved.mode()) {
-            case EMPTY -> Page.empty(pageable);
-            case ALL -> transactionRepository.findPenjualanHistoryPage(
-                    clientId,
-                    startDate,
-                    endDate,
-                    null,
-                    cash,
-                    paid,
-                    trimmedSearch,
-                    pageable);
-            case INCLUDE -> transactionRepository.findPenjualanHistoryPage(
-                    clientId,
-                    startDate,
-                    endDate,
-                    resolved.customerIds().get(0),
-                    cash,
-                    paid,
-                    trimmedSearch,
-                    pageable);
-            case EXCLUDE -> transactionRepository.findPenjualanHistoryPageExcludingCustomers(
-                    clientId,
-                    startDate,
-                    endDate,
-                    resolved.customerIds(),
-                    cash,
-                    paid,
-                    trimmedSearch,
-                    pageable);
-        };
+        Page<TransactionEntity> page;
+        BigDecimal total;
+        switch (resolved.mode()) {
+            case EMPTY -> {
+                page = Page.empty(pageable);
+                total = BigDecimal.ZERO;
+            }
+            case ALL -> {
+                page = transactionRepository.findPenjualanHistoryPage(
+                        clientId, startDate, endDate, null,
+                        cash, paid, paymentMethodId, trimmedSearch, pageable);
+                total = transactionRepository.sumPenjualanHistory(
+                        clientId, startDate, endDate, null,
+                        cash, paid, paymentMethodId, trimmedSearch);
+            }
+            case INCLUDE -> {
+                Long customerId = resolved.customerIds().get(0);
+                page = transactionRepository.findPenjualanHistoryPage(
+                        clientId, startDate, endDate, customerId,
+                        cash, paid, paymentMethodId, trimmedSearch, pageable);
+                total = transactionRepository.sumPenjualanHistory(
+                        clientId, startDate, endDate, customerId,
+                        cash, paid, paymentMethodId, trimmedSearch);
+            }
+            case EXCLUDE -> {
+                page = transactionRepository.findPenjualanHistoryPageExcludingCustomers(
+                        clientId, startDate, endDate, resolved.customerIds(),
+                        cash, paid, paymentMethodId, trimmedSearch, pageable);
+                total = transactionRepository.sumPenjualanHistoryExcludingCustomers(
+                        clientId, startDate, endDate, resolved.customerIds(),
+                        cash, paid, paymentMethodId, trimmedSearch);
+            }
+            default -> throw new IllegalStateException("Unexpected mode: " + resolved.mode());
+        }
 
         Map<Long, List<TransactionPaymentEntity>> payments = paymentsByTransaction(page.getContent());
-        return page.map(transaction -> toHistoryRow(
-                transaction,
-                payments.getOrDefault(transaction.getTransactionId(), List.of())
-        ));
+        return new PenjualanHistorySlice(
+                page.map(transaction -> toHistoryRow(
+                        transaction,
+                        payments.getOrDefault(transaction.getTransactionId(), List.of())
+                )),
+                total
+        );
     }
 
     @Transactional(readOnly = true)
