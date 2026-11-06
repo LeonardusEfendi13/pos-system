@@ -65,6 +65,9 @@ public class StaffEntity {
     @Column(name = "uang_makan")
     private BigDecimal uangMakan;
 
+    @Column(name = "bonus")
+    private BigDecimal bonus;
+
     @Column(name = "insentif")
     private BigDecimal insentif;
 

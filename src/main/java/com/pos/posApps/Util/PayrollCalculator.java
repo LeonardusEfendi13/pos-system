@@ -13,6 +13,7 @@ public final class PayrollCalculator {
     public record Input(
             BigDecimal gajiPokok,
             BigDecimal uangMakan,
+            BigDecimal bonus,
             BigDecimal insentif,
             int daysInMonth,
             int workedDays,
@@ -29,6 +30,7 @@ public final class PayrollCalculator {
             int deductedDays,
             BigDecimal gajiPokok,
             BigDecimal uangMakan,
+            BigDecimal bonus,
             BigDecimal insentif,
             BigDecimal totalGaji,
             BigDecimal dailyRate,
@@ -141,7 +143,7 @@ public final class PayrollCalculator {
     }
 
     /**
-     * Total gaji = pokok + makan, earned per day of the month. Every absence costs
+     * Total gaji = pokok + makan + bonus, earned per day of the month. Every absence costs
      * one daily rate. Insentif is not part of the salary: it is saved in full each
      * paid month and cashed out separately.
      */
@@ -150,8 +152,9 @@ public final class PayrollCalculator {
         int worked = input == null ? 0 : Math.min(Math.max(input.workedDays(), 0), days);
         BigDecimal pokok = money(input == null ? null : input.gajiPokok());
         BigDecimal makan = money(input == null ? null : input.uangMakan());
+        BigDecimal bonus = money(input == null ? null : input.bonus());
         BigDecimal insentif = money(input == null ? null : input.insentif());
-        BigDecimal totalGaji = pokok.add(makan);
+        BigDecimal totalGaji = pokok.add(makan).add(bonus);
         int present = input == null ? 0 : Math.max(input.presentCount(), 0);
         int absences = input == null ? 0 : Math.max(input.absenceCount(), 0);
         int deducted = absences;
@@ -173,6 +176,7 @@ public final class PayrollCalculator {
                 deducted,
                 pokok,
                 makan,
+                bonus,
                 insentif,
                 totalGaji,
                 daily,

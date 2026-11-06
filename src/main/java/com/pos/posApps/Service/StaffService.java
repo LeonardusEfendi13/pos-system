@@ -63,6 +63,7 @@ public class StaffService {
                 staff.getJabatan() == null ? "" : staff.getJabatan().name(),
                 moneyOrZero(staff.getGajiPokok()),
                 moneyOrZero(staff.getUangMakan()),
+                moneyOrZero(staff.getBonus()),
                 moneyOrZero(staff.getInsentif()),
                 staff.getNoHp(),
                 staff.getNoHpDarurat(),
@@ -77,6 +78,7 @@ public class StaffService {
         }
         return moneyOrZero(staff.getGajiPokok())
                 .add(moneyOrZero(staff.getUangMakan()))
+                .add(moneyOrZero(staff.getBonus()))
                 .add(moneyOrZero(staff.getInsentif()));
     }
 
@@ -120,6 +122,7 @@ public class StaffService {
         staff.setJabatan(enumValue(request.getJabatan(), Jabatan.class, "Jabatan"));
         staff.setGajiPokok(money(request.getGajiPokok(), "Gaji pokok"));
         staff.setUangMakan(money(request.getUangMakan(), "Uang makan"));
+        staff.setBonus(money(request.getBonus(), "Bonus"));
         staff.setInsentif(money(request.getInsentif(), "Insentif"));
         staff.setNoHp(optionalText(request.getNoHp(), 20));
         staff.setNoHpDarurat(optionalText(request.getNoHpDarurat(), 20));

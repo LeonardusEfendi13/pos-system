@@ -16,6 +16,7 @@ public class PayrollRowDTO {
     private String jabatan;
     private BigDecimal gajiPokok;
     private BigDecimal uangMakan;
+    private BigDecimal bonus;
     private BigDecimal insentif;
     private BigDecimal totalGaji;
     private int daysInMonth;

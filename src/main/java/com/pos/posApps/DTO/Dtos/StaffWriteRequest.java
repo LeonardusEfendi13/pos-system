@@ -16,6 +16,7 @@ public class StaffWriteRequest {
     private String jabatan;
     private BigDecimal gajiPokok;
     private BigDecimal uangMakan;
+    private BigDecimal bonus;
     private BigDecimal insentif;
     private String noHp;
     private String noHpDarurat;

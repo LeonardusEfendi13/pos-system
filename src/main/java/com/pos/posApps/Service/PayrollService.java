@@ -92,6 +92,7 @@ public class PayrollService {
         entity.setDailyRate(result.dailyRate());
         entity.setGajiPokok(result.gajiPokok());
         entity.setUangMakan(result.uangMakan());
+        entity.setBonus(result.bonus());
         entity.setInsentif(result.insentif());
         entity.setPotongan(result.potongan());
         // Legacy column: now holds the earned total before deductions
@@ -168,6 +169,7 @@ public class PayrollService {
         return PayrollCalculator.calculate(new PayrollCalculator.Input(
                 staff.getGajiPokok(),
                 staff.getUangMakan(),
+                staff.getBonus(),
                 staff.getInsentif(),
                 month.lengthOfMonth(),
                 worked,
@@ -183,6 +185,7 @@ public class PayrollService {
                 staff.getJabatan() == null ? "" : staff.getJabatan().name(),
                 result.gajiPokok(),
                 result.uangMakan(),
+                result.bonus(),
                 result.insentif(),
                 result.totalGaji(),
                 result.daysInMonth(),

@@ -19,7 +19,7 @@ class PayrollCalculatorTest {
     @Test
     void deductsEveryAbsenceFromPokokAndMakanOnly() {
         PayrollCalculator.Result result = PayrollCalculator.calculate(new PayrollCalculator.Input(
-                rp(1_500_000), rp(300_000), rp(200_000), 31, 31, 29, 2
+                rp(1_500_000), rp(300_000), rp(0), rp(200_000), 31, 31, 29, 2
         ));
 
         assertEquals(rp(1_800_000), result.totalGaji());
@@ -32,9 +32,23 @@ class PayrollCalculatorTest {
     }
 
     @Test
+    void includesBonusInTheDailyRateAndDeductions() {
+        PayrollCalculator.Result result = PayrollCalculator.calculate(new PayrollCalculator.Input(
+                rp(1_500_000), rp(300_000), rp(310_000), rp(200_000), 31, 31, 29, 2
+        ));
+
+        assertEquals(rp(2_110_000), result.totalGaji());
+        assertEquals(rp(68_065), result.dailyRate());
+        assertEquals(rp(136_130), result.potongan());
+        assertEquals(rp(1_973_870), result.total());
+        assertEquals(rp(310_000), result.bonus());
+        assertEquals(rp(200_000), result.insentif());
+    }
+
+    @Test
     void paysTheFullSalaryWithoutAbsences() {
         PayrollCalculator.Result result = PayrollCalculator.calculate(new PayrollCalculator.Input(
-                rp(1_500_000), rp(300_000), rp(200_000), 31, 31, 31, 0
+                rp(1_500_000), rp(300_000), rp(0), rp(200_000), 31, 31, 31, 0
         ));
 
         assertEquals(rp(0), result.potongan());

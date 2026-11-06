@@ -319,6 +319,7 @@ public class RestControllerStaff {
             case "jabatan" -> Comparator.comparing(row -> text(row.getJabatan()), String.CASE_INSENSITIVE_ORDER);
             case "gajiPokok" -> Comparator.comparing(StaffDTO::getGajiPokok, Comparator.nullsLast(BigDecimal::compareTo));
             case "uangMakan" -> Comparator.comparing(StaffDTO::getUangMakan, Comparator.nullsLast(BigDecimal::compareTo));
+            case "bonus" -> Comparator.comparing(StaffDTO::getBonus, Comparator.nullsLast(BigDecimal::compareTo));
             case "insentif" -> Comparator.comparing(StaffDTO::getInsentif, Comparator.nullsLast(BigDecimal::compareTo));
             default -> Comparator.comparing(row -> text(row.getNama()), String.CASE_INSENSITIVE_ORDER);
         };
