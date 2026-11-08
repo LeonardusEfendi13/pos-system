@@ -362,6 +362,49 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             String filter
     );
 
+    // Same type/method rules as getLaporanPenjualanMetodePerWaktuRaw, grouped for the whole range
+    @Query(value = """
+            SELECT
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS type_name,
+                CASE
+                    WHEN t.is_cash = FALSE THEN COALESCE(NULLIF(t.payment_type_name, ''), 'Kredit')
+                    WHEN tp.transaction_payment_id IS NOT NULL
+                        THEN COALESCE(NULLIF(tp.payment_method_name, ''), NULLIF(tp.payment_type_name, ''), 'Cash')
+                    ELSE COALESCE(NULLIF(t.payment_method_name, ''), NULLIF(t.payment_type_name, ''), 'Cash')
+                END AS method_name,
+                SUM(
+                    CASE
+                        WHEN t.is_cash = FALSE THEN COALESCE(t.total_price, 0)
+                        WHEN tp.transaction_payment_id IS NOT NULL THEN COALESCE(tp.amount, 0)
+                        ELSE COALESCE(t.total_price, 0)
+                    END
+                ) AS amount,
+                COUNT(*) AS payment_count
+            FROM transaction t
+            LEFT JOIN transaction_payment tp
+                ON tp.transaction_id = t.transaction_id
+               AND t.is_cash = TRUE
+            WHERE t.client_id = :clientId
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM branch b
+                    WHERE b.customer_id = t.customer_id
+              )
+              AND t.deleted_at IS NULL
+              AND t.created_at BETWEEN :startDate AND :endDate
+            GROUP BY 1, 2
+            """, nativeQuery = true)
+    List<Object[]> getHomePaymentBreakdownRaw(
+            Long clientId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
     String PENJUALAN_HISTORY_WHERE = """
             WHERE t.clientEntity.clientId = :clientId
               AND t.deletedAt IS NULL

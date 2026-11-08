@@ -3,6 +3,7 @@ package com.pos.posApps.Service;
 import com.pos.posApps.DTO.Dtos.ChartPointDTO;
 import com.pos.posApps.DTO.Dtos.Home.ChartDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeCustomerDTO;
+import com.pos.posApps.DTO.Dtos.Home.HomePaymentBreakdownDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeProductDTO;
 import com.pos.posApps.DTO.Dtos.Home.HomeTopBarDTO;
 import com.pos.posApps.Entity.*;
@@ -64,6 +65,19 @@ public class HomeService {
 
         return new HomeTopBarDTO(transactionCount, totalTransaction, totalProfit);
     }
+    public List<HomePaymentBreakdownDTO> getPaymentBreakdown(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
+        return transactionRepository.getHomePaymentBreakdownRaw(clientId, startDate, endDate).stream()
+                .map(row -> new HomePaymentBreakdownDTO(
+                        String.valueOf(row[0]),
+                        String.valueOf(row[1]),
+                        row[2] == null ? BigDecimal.ZERO : new BigDecimal(row[2].toString()),
+                        row[3] == null ? 0L : ((Number) row[3]).longValue()
+                ))
+                .filter(dto -> dto.getAmount().signum() != 0 || dto.getCount() > 0)
+                .sorted(Comparator.comparing(HomePaymentBreakdownDTO::getAmount).reversed())
+                .toList();
+    }
+
     public List<HomeProductDTO> getTop10Product(Long clientId, LocalDateTime startDate, LocalDateTime endDate) {
         return transactionDetailRepository.findTopProducts(
                 clientId,
