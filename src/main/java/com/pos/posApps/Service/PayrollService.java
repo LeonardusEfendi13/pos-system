@@ -10,6 +10,7 @@ import com.pos.posApps.Util.PayrollCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -35,13 +36,17 @@ public class PayrollService {
         return YearMonth.of(year, month);
     }
 
-    /** Always calculated live from current staff and attendance, up to today. */
+    /**
+     * Calculated live from current staff and attendance, up to today. A month already
+     * marked paid shows the amounts saved when it was paid, so later changes to a
+     * staff's pay or insentif do not rewrite it.
+     */
     public List<PayrollRowDTO> rows(Long clientId, YearMonth month, LocalDate today) {
         Map<Long, Map<LocalDate, AttendanceStatus>> marks = attendanceService.marksFor(clientId, month);
-        Map<Long, LocalDateTime> paidAt = new HashMap<>();
+        Map<Long, PayrollEntity> paid = new HashMap<>();
         for (PayrollEntity entity : liveRows(clientId, month)) {
             if (entity.getStaffEntity() != null && entity.getPaidAt() != null) {
-                paidAt.put(entity.getStaffEntity().getStaffId(), entity.getPaidAt());
+                paid.put(entity.getStaffEntity().getStaffId(), entity);
             }
         }
 
@@ -53,9 +58,47 @@ public class PayrollService {
                     today,
                     marks.getOrDefault(staff.getStaffId(), Map.of())
             );
-            rows.add(toRow(staff, result, paidAt.get(staff.getStaffId())));
+            PayrollEntity saved = paid.get(staff.getStaffId());
+            if (saved != null) {
+                result = withSavedAmounts(result, saved);
+            }
+            rows.add(toRow(staff, result, saved == null ? null : saved.getPaidAt()));
         }
         return rows;
+    }
+
+    /**
+     * Swaps the live amounts for the snapshot saved at payment. Worked and present days
+     * are not saved, so they stay live. A legacy row without a saved total stays live.
+     */
+    private PayrollCalculator.Result withSavedAmounts(PayrollCalculator.Result live, PayrollEntity saved) {
+        if (saved.getTotalPayroll() == null) {
+            return live;
+        }
+
+        BigDecimal pokok = savedOr(saved.getGajiPokok(), live.gajiPokok());
+        BigDecimal makan = savedOr(saved.getUangMakan(), live.uangMakan());
+        BigDecimal bonus = savedOr(saved.getBonus(), live.bonus());
+        return new PayrollCalculator.Result(
+                saved.getDaysInMonth() > 0 ? saved.getDaysInMonth() : live.daysInMonth(),
+                live.workedDays(),
+                live.presentCount(),
+                saved.getAbsenceCount(),
+                saved.getDeductedDays(),
+                pokok,
+                makan,
+                bonus,
+                savedOr(saved.getInsentif(), live.insentif()),
+                pokok.add(makan).add(bonus),
+                savedOr(saved.getDailyRate(), live.dailyRate()),
+                savedOr(saved.getGajiPokokDibayar(), live.gajiTerkumpul()),
+                savedOr(saved.getPotongan(), live.potongan()),
+                saved.getTotalPayroll()
+        );
+    }
+
+    private BigDecimal savedOr(BigDecimal saved, BigDecimal live) {
+        return saved == null ? live : saved;
     }
 
     @Transactional
