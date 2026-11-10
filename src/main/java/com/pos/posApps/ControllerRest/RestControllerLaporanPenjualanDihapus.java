@@ -48,6 +48,9 @@ public class RestControllerLaporanPenjualanDihapus {
             "deletedAt"
     );
 
+    private static final LocalDate OPEN_START = LocalDate.of(1970, 1, 1);
+    private static final LocalDate OPEN_END = LocalDate.of(9999, 12, 31);
+
     private AuthService authService;
     private PenjualanService penjualanService;
     private CustomerService customerService;
@@ -73,8 +76,9 @@ public class RestControllerLaporanPenjualanDihapus {
 
             int safePage = page == null || page < 0 ? 0 : page;
             int safeSize = size == null || size < 1 ? 50 : Math.min(size, 200);
-            LocalDate resolvedStart = parseOrDefaultStart(startDate);
-            LocalDate resolvedEnd = parseOrDefaultEnd(endDate);
+            // A blank or unparsable date leaves that side of the range open
+            LocalDate resolvedStart = parseOrNull(startDate);
+            LocalDate resolvedEnd = parseOrNull(endDate);
             List<Long> cabangIds = cabangIdsOf(
                     branchService.getAllCabangToko().stream()
                             .filter(Objects::nonNull)
@@ -86,8 +90,8 @@ public class RestControllerLaporanPenjualanDihapus {
             Boolean lunasFlag = parseTriState(lunas);
             PenjualanService.PenjualanDeletedSlice fetched = penjualanService.getPenjualanDeletedRows(
                     clientId,
-                    resolvedStart.atStartOfDay(),
-                    resolvedEnd.atTime(23, 59, 59),
+                    (resolvedStart == null ? OPEN_START : resolvedStart).atStartOfDay(),
+                    (resolvedEnd == null ? OPEN_END : resolvedEnd).atTime(23, 59, 59),
                     customerId,
                     cabangIds,
                     tunaiFlag,
@@ -111,8 +115,8 @@ public class RestControllerLaporanPenjualanDihapus {
                     customers,
                     account.getRole().name(),
                     account.getName(),
-                    resolvedStart.toString(),
-                    resolvedEnd.toString(),
+                    resolvedStart == null ? "" : resolvedStart.toString(),
+                    resolvedEnd == null ? "" : resolvedEnd.toString(),
                     customerId,
                     tunaiFlag,
                     lunasFlag
@@ -209,25 +213,14 @@ public class RestControllerLaporanPenjualanDihapus {
         return value == null ? "" : value;
     }
 
-    private static LocalDate parseOrDefaultStart(String startDate) {
-        if (startDate == null || startDate.isBlank()) {
-            return LocalDate.now().withDayOfMonth(1);
+    private static LocalDate parseOrNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
         }
         try {
-            return LocalDate.parse(startDate);
+            return LocalDate.parse(value);
         } catch (Exception e) {
-            return LocalDate.now().withDayOfMonth(1);
-        }
-    }
-
-    private static LocalDate parseOrDefaultEnd(String endDate) {
-        if (endDate == null || endDate.isBlank()) {
-            return LocalDate.now();
-        }
-        try {
-            return LocalDate.parse(endDate);
-        } catch (Exception e) {
-            return LocalDate.now();
+            return null;
         }
     }
 }
