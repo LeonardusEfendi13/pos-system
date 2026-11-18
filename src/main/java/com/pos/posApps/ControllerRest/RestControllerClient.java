@@ -11,6 +11,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 import static com.pos.posApps.Constants.Constant.authSessionKey;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -23,6 +25,12 @@ public class RestControllerClient {
 
     private AuthService authService;
     private ClientService clientService;
+
+    @GetMapping("/public-name")
+    public ResponseEntity<Map<String, String>> getPublicName() {
+        String name = clientService.getPublicClientName();
+        return ResponseEntity.ok(Map.of("name", name == null ? "" : name));
+    }
 
     @GetMapping("/settings")
     public ResponseEntity<ClientDTO> getSettings(HttpSession session) {
