@@ -87,7 +87,8 @@ public class ProductService {
                 category == null ? null : category.getCategoryId(),
                 category == null ? null : category.getName(),
                 parent == null ? null : parent.getCategoryId(),
-                false
+                false,
+                null
         );
     }
 
@@ -221,14 +222,20 @@ public class ProductService {
             return markPage(clientId, productData.map(this::convertToDTO));
         }
         // Price list lookups are only needed to suggest a purchase price
+        Map<Long, BigDecimal> storedPrices = new HashMap<>();
         productData.getContent().forEach(product -> {
+            storedPrices.put(product.getProductId(), product.getSupplierPrice());
             SuggestedPricesDTO priceDto = priceListService.getSuggestedPriceByPartNumber(product.getShortName());
             String supplierPriceStr = priceDto.getBasicPrice();
             if (supplierPriceStr != null && !supplierPriceStr.isBlank() && isPurchasing) {
                 product.setSupplierPrice(new BigDecimal(supplierPriceStr));
             }
         });
-        return markPage(clientId, productData.map(this::convertToDTO));
+        return markPage(clientId, productData.map(product -> {
+            ProductDTO dto = convertToDTO(product);
+            dto.setHargaBeliLama(storedPrices.get(product.getProductId()));
+            return dto;
+        }));
     }
 
     public Page<ProductDTO> searchProductData(Long clientId, String search, Pageable pageable, Long supplierIdFilter) {
@@ -574,11 +581,14 @@ public class ProductService {
     public ProductDTO findProductByCode(Long clientId, String keyword, Boolean isPurchasing) {
         ProductEntity productData = productRepository.findByShortNameAndClientEntity_ClientIdAndDeletedAtIsNull(keyword, clientId);
         String code = productData.getShortName();
+        BigDecimal storedPrice = productData.getSupplierPrice();
         String supplierPrice = priceListService.getSuggestedPriceByPartNumber(code).getBasicPrice();
         if (supplierPrice != null && !supplierPrice.isBlank() && isPurchasing) {
             productData.setSupplierPrice(new BigDecimal(supplierPrice));
         }
-        return markProductSets(clientId, List.of(convertToDTO(productData))).get(0);
+        ProductDTO dto = convertToDTO(productData);
+        dto.setHargaBeliLama(storedPrice);
+        return markProductSets(clientId, List.of(dto)).get(0);
     }
 
     private Page<ProductDTO> markPage(Long clientId, Page<ProductDTO> page) {
