@@ -46,6 +46,17 @@ public class ClientService {
         }
     }
 
+    /** Store name for the login page title. Single-store installs only. */
+    public String getPublicClientName() {
+        try {
+            return clientRepository.findFirstByDeletedAtIsNullOrderByClientIdAsc()
+                    .map(ClientEntity::getName)
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public ResponseInBoolean updateClientField(Long clientId, String fieldKey, String fieldValue) {
         try {
             Optional<ClientEntity> clientOpt = clientRepository.findByClientIdAndDeletedAtIsNull(clientId);

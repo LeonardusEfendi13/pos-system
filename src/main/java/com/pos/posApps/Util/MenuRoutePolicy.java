@@ -40,6 +40,7 @@ public final class MenuRoutePolicy {
                 || normalized.equals("/doLogin")
                 || normalized.equals("/logout")
                 || normalized.equals("/error")
+                || normalized.equals("/api/client/public-name")
                 || normalized.startsWith("/uploads/")
                 || normalized.startsWith("/css/")
                 || normalized.startsWith("/js/")
