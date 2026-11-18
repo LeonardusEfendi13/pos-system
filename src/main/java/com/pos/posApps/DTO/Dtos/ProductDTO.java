@@ -25,4 +25,6 @@ public class ProductDTO {
     private String categoryName;
     private Long parentCategoryId;
     private Boolean hasProductSet;
+    // Stored supplier price before a purchasing lookup overwrites hargaBeli with the price list
+    private BigDecimal hargaBeliLama;
 }
