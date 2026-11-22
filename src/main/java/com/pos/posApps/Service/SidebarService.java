@@ -16,6 +16,9 @@ public class SidebarService {
     @Autowired
     private AccessResolver accessResolver;
 
+    @Autowired
+    private AccountSettingService accountSettingService;
+
     public SidebarDTO getSidebarData(Long clientId, String token) {
         String namaToko = clientService.getClientSettings(clientId).getName();
         AccountEntity account = authService.validateToken(token);
@@ -26,7 +29,8 @@ public class SidebarService {
                 account.getName(),
                 access.role(),
                 access.roleName(),
-                access.menuKeys()
+                access.menuKeys(),
+                accountSettingService.getFontWeightLevel(account.getAccountId())
         );
     }
 }
