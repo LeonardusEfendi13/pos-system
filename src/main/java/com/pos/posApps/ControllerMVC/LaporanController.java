@@ -219,9 +219,12 @@ public class LaporanController {
     @GetMapping("/nilai_persediaan/view-pdf")
     public ResponseEntity<StreamingResponseBody> viewLaporanNilaiPersediaanPDF(
             HttpSession session,
-            @RequestParam(required = false) Long categoryId) {
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String supplierId,
+            @RequestParam(required = false) String q) {
         String token = (String) session.getAttribute(authSessionKey);
         Long clientId = authService.validateToken(token).getClientEntity().getClientId();
+        String supplierName = resolveSupplierName(clientId, supplierId);
         String categoryName = categoryService.listAll(clientId).stream()
                 .filter(category -> category.getCategoryId().equals(categoryId))
                 .findFirst()
@@ -231,12 +234,29 @@ public class LaporanController {
                 .orElse(null);
 
         StreamingResponseBody stream = outputStream -> {
-            laporanService.exportLaporanNilaiPersediaanStream(clientId, categoryId, categoryName, outputStream);
+            laporanService.exportLaporanNilaiPersediaanStream(
+                    clientId, categoryId, categoryName, supplierId, supplierName, q, outputStream);
         };
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=laporan_nilai_persediaan.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(stream);
+    }
+
+    // Header label for the PDF: "Tanpa Supplier", the supplier's name, or null for no filter
+    private String resolveSupplierName(Long clientId, String supplierId) {
+        if (supplierId == null) {
+            return null;
+        }
+        String value = supplierId.trim();
+        if ("none".equals(value)) {
+            return "Tanpa Supplier";
+        }
+        return supplierService.getSupplierList(clientId).stream()
+                .filter(supplier -> String.valueOf(supplier.getSupplierId()).equals(value))
+                .findFirst()
+                .map(SupplierEntity::getSupplierName)
+                .orElse(null);
     }
 }

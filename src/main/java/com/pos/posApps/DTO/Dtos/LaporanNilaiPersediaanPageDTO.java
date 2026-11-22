@@ -18,4 +18,5 @@ public class LaporanNilaiPersediaanPageDTO {
     private String role;
     private String accountName;
     private List<CategoryDTO> categories;
+    private List<SupplierDTO> suppliers;
 }

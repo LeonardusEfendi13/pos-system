@@ -2,9 +2,11 @@ package com.pos.posApps.ControllerRest;
 
 import com.pos.posApps.DTO.Dtos.LaporanNilaiPersediaanDTO;
 import com.pos.posApps.DTO.Dtos.LaporanNilaiPersediaanPageDTO;
+import com.pos.posApps.DTO.Dtos.SupplierDTO;
 import com.pos.posApps.Service.AuthService;
 import com.pos.posApps.Service.CategoryService;
 import com.pos.posApps.Service.LaporanService;
+import com.pos.posApps.Service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,12 +29,14 @@ public class RestControllerLaporanNilaiPersediaan {
     private AuthService authService;
     private LaporanService laporanService;
     private CategoryService categoryService;
+    private SupplierService supplierService;
 
     @GetMapping("/nilai-persediaan")
     public ResponseEntity<LaporanNilaiPersediaanPageDTO> nilaiPersediaan(
             HttpSession session,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String supplierId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String sort,
@@ -46,17 +50,20 @@ public class RestControllerLaporanNilaiPersediaan {
             int safeSize = size == null || size < 1 ? 10 : Math.min(size, MAX_PAGE_SIZE);
 
             Page<LaporanNilaiPersediaanDTO> result = laporanService.searchLaporanNilaiPersediaan(
-                    clientId, q, categoryId, sort, dir, PageRequest.of(safePage, safeSize));
+                    clientId, q, categoryId, supplierId, sort, dir, PageRequest.of(safePage, safeSize));
 
             return ResponseEntity.ok(new LaporanNilaiPersediaanPageDTO(
                     result.getContent(),
                     result.getTotalElements(),
                     safePage,
                     safeSize,
-                    laporanService.getTotalAsset(clientId, categoryId),
+                    laporanService.getTotalAsset(clientId, categoryId, supplierId, q),
                     account.getRole().name(),
                     account.getName(),
-                    categoryService.listAll(clientId)
+                    categoryService.listAll(clientId),
+                    supplierService.getSupplierList(clientId).stream()
+                            .map(supplier -> new SupplierDTO(supplier.getSupplierId(), supplier.getSupplierName()))
+                            .toList()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(UNAUTHORIZED).build();

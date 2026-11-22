@@ -78,15 +78,15 @@ public class LaporanService {
     }
 
     public String getTotalAsset(long clientId) {
-        return getTotalAsset(clientId, null);
+        return getTotalAsset(clientId, null, null, null);
     }
 
-    // Same products as the report table (live, priced), optionally one category tree
-    public String getTotalAsset(long clientId, Long categoryId) {
-        return formatRupiah(sumInventoryValue(clientId, categoryId));
+    // Same products as the report table (live, priced), narrowed by the same filters
+    public String getTotalAsset(long clientId, Long categoryId, String supplierId, String q) {
+        return formatRupiah(sumInventoryValue(clientId, categoryId, supplierId, q));
     }
 
-    private BigDecimal sumInventoryValue(long clientId, Long categoryId) {
+    private BigDecimal sumInventoryValue(long clientId, Long categoryId, String supplierId, String q) {
         List<Object> args = new ArrayList<>(List.of(clientId));
         String sql = """
                 SELECT COALESCE(SUM(COALESCE(p.stock, 0) * COALESCE(p.supplier_price, 0)), 0)
@@ -94,8 +94,45 @@ public class LaporanService {
                 WHERE p.client_id = ?
                   AND p.deleted_at IS NULL
                   AND EXISTS (SELECT 1 FROM product_prices pp WHERE pp.product_id = p.product_id)
-                """ + categoryFilter(clientId, categoryId, args);
+                """ + searchFilter(q, args) + categoryFilter(clientId, categoryId, args) + supplierFilter(supplierId, args);
         return jdbcTemplate.queryForObject(sql, BigDecimal.class, args.toArray());
+    }
+
+    /**
+     * Limits product p to one supplier, or to products without a supplier when
+     * supplierId is "none". Blank or invalid input means no clause.
+     */
+    private String supplierFilter(String supplierId, List<Object> args) {
+        if (supplierId == null) {
+            return "";
+        }
+        String value = supplierId.trim();
+        if (NO_SUPPLIER.equals(value)) {
+            return " AND p.supplier_id IS NULL ";
+        }
+        if (!value.matches("[1-9]\\d{0,17}")) {
+            return "";
+        }
+        args.add(Long.parseLong(value));
+        return " AND p.supplier_id = ? ";
+    }
+
+    /**
+     * Matches short or full name, treating the search text literally. Blank
+     * means no clause. Shared by the table, the total, and the PDF.
+     */
+    private String searchFilter(String q, List<Object> args) {
+        String needle = q == null ? "" : q.trim();
+        if (needle.isEmpty()) {
+            return "";
+        }
+        String pattern = "%" + needle
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_") + "%";
+        args.add(pattern);
+        args.add(pattern);
+        return " AND (p.short_name ILIKE ? OR p.full_name ILIKE ?) ";
     }
 
     /**
@@ -147,6 +184,9 @@ public class LaporanService {
         return new PageImpl<>(dtos, pageable, productIdsPage.getTotalElements());
     }
 
+    // supplierId value that selects products without a supplier
+    private static final String NO_SUPPLIER = "none";
+
     private static final Map<String, String> NILAI_PERSEDIAAN_SORT = Map.of(
             "shortName", "LOWER(p.short_name)",
             "fullName", "LOWER(p.full_name)",
@@ -161,6 +201,7 @@ public class LaporanService {
             long clientId,
             String q,
             Long categoryId,
+            String supplierId,
             String sort,
             String dir,
             Pageable pageable) {
@@ -175,15 +216,12 @@ public class LaporanService {
                 ) fp ON TRUE
                 WHERE p.client_id = ?
                   AND p.deleted_at IS NULL
-                  AND (? = '' OR p.short_name ILIKE ? OR p.full_name ILIKE ?)
                 """;
-        String needle = q == null ? "" : q.trim();
-        String pattern = "%" + needle
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_") + "%";
-        List<Object> filterArgs = new ArrayList<>(List.of(clientId, needle, pattern, pattern));
-        String from = baseFrom + categoryFilter(clientId, categoryId, filterArgs);
+        List<Object> filterArgs = new ArrayList<>(List.of(clientId));
+        String from = baseFrom
+                + searchFilter(q, filterArgs)
+                + categoryFilter(clientId, categoryId, filterArgs)
+                + supplierFilter(supplierId, filterArgs);
 
         Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + from, Long.class, filterArgs.toArray());
 
@@ -812,7 +850,14 @@ public class LaporanService {
     }
 
     @SuppressWarnings("deprecation")
-public void exportLaporanNilaiPersediaanStream(Long clientId, Long categoryId, String categoryName, OutputStream outputStream) {
+public void exportLaporanNilaiPersediaanStream(
+            Long clientId,
+            Long categoryId,
+            String categoryName,
+            String supplierId,
+            String supplierName,
+            String q,
+            OutputStream outputStream) {
         Document document = new Document(PageSize.A4.rotate(), 20, 20, 20, 20);
         List<Object> args = new ArrayList<>(List.of(clientId));
         String sql = "SELECT p.short_name, p.full_name, p.stock, p.supplier_price, " +
@@ -827,12 +872,14 @@ public void exportLaporanNilaiPersediaanStream(Long clientId, Long categoryId, S
                 "WHERE p.client_id = ? " +
                 "AND p.deleted_at IS NULL " +
                 "AND EXISTS (SELECT 1 FROM product_prices ep WHERE ep.product_id = p.product_id) " +
+                searchFilter(q, args) +
                 categoryFilter(clientId, categoryId, args) +
+                supplierFilter(supplierId, args) +
                 "ORDER BY p.full_name ASC";
 
         try {
             //Get total asset
-            BigDecimal totalAsset = sumInventoryValue(clientId, categoryId);
+            BigDecimal totalAsset = sumInventoryValue(clientId, categoryId, supplierId, q);
 
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
             writer.setFullCompression();
@@ -848,6 +895,12 @@ public void exportLaporanNilaiPersediaanStream(Long clientId, Long categoryId, S
                 Paragraph categoryInfo = new Paragraph("Kategori : " + categoryName);
                 categoryInfo.setAlignment(Element.ALIGN_CENTER);
                 document.add(categoryInfo);
+            }
+
+            if (supplierName != null && !supplierName.isBlank()) {
+                Paragraph supplierInfo = new Paragraph("Supplier : " + supplierName);
+                supplierInfo.setAlignment(Element.ALIGN_CENTER);
+                document.add(supplierInfo);
             }
 
             Paragraph clientInfo = new Paragraph("Total Nilai Barang : " + formatRupiah(totalAsset));
