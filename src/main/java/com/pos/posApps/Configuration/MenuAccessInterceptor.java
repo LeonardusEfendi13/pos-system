@@ -37,7 +37,9 @@ public class MenuAccessInterceptor implements HandlerInterceptor {
         if (account == null) {
             return true;
         }
-        if (MenuRoutePolicy.isSession(path) || MenuRoutePolicy.isShellRead(request.getMethod(), path)) {
+        if (MenuRoutePolicy.isSession(path)
+                || MenuRoutePolicy.isShellRead(request.getMethod(), path)
+                || MenuRoutePolicy.isSelfService(request.getMethod(), path)) {
             return true;
         }
 

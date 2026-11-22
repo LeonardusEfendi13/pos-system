@@ -17,4 +17,5 @@ public class SidebarDTO {
     private Roles role;
     private String roleName;
     private List<String> menuKeys;
+    private int fontWeightLevel;
 }

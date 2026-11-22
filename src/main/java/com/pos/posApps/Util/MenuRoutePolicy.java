@@ -57,6 +57,11 @@ public final class MenuRoutePolicy {
         return "GET".equalsIgnoreCase(method) && "/api/client/settings".equals(normalize(path));
     }
 
+    // Preferences of the logged-in account itself: no menu key applies.
+    public static boolean isSelfService(String method, String path) {
+        return "PUT".equalsIgnoreCase(method) && "/api/account/me/font-weight".equals(normalize(path));
+    }
+
     private static boolean ruleMatches(Rule rule, String method, String path) {
         if (rule.method() != null && (method == null || !rule.method().equalsIgnoreCase(method))) {
             return false;
